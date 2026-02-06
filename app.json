@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "fri2plan-native",
+    "name": "FRI2PLAN",
     "slug": "fri2plan-native",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,26 +10,24 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#7c3aed"
     },
+    "plugins": [
+      "expo-dev-client"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "space.manus.fri2plan.twa",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#7c3aed"
       },
+      "package": "com.fri2plan.native",
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
-      }
     }
   }
 }

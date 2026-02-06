@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '../lib/api';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -31,26 +30,23 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
 
     setLoading(true);
-    try {
-      const result = await api.login(email, password);
-      
-      if (result.success && result.token) {
-        // Store token
-        await AsyncStorage.setItem('authToken', result.token);
-        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+    
+    // Simulate login (replace with real API call later)
+    setTimeout(async () => {
+      try {
+        // Store fake token for now
+        await AsyncStorage.setItem('authToken', 'fake-token-123');
+        await AsyncStorage.setItem('user', JSON.stringify({ email, name: 'Utilisateur' }));
         
+        setLoading(false);
         Alert.alert('Succès', 'Connexion réussie !', [
           { text: 'OK', onPress: onLoginSuccess }
         ]);
-      } else {
-        Alert.alert('Erreur', result.message || 'Identifiants incorrects');
+      } catch (error) {
+        setLoading(false);
+        Alert.alert('Erreur', 'Erreur de connexion');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Erreur', 'Impossible de se connecter au serveur');
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   return (

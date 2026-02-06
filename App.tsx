@@ -6,7 +6,6 @@ import DashboardScreen from './screens/DashboardScreen';
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState('dashboard');
 
   // Check if user is already logged in
   useEffect(() => {
@@ -30,13 +29,6 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setCurrentScreen('dashboard');
-  };
-
-  const handleNavigate = (screen: string) => {
-    setCurrentScreen(screen);
-    // TODO: Implémenter la navigation vers les autres écrans
-    console.log('Navigate to:', screen);
   };
 
   if (isLoading) {
@@ -44,12 +36,7 @@ export default function App() {
   }
 
   if (isLoggedIn) {
-    return (
-      <DashboardScreen 
-        onLogout={handleLogout}
-        onNavigate={handleNavigate}
-      />
-    );
+    return <DashboardScreen onLogout={handleLogout} />;
   }
 
   return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
