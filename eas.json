@@ -6,12 +6,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "node": "22.11.0",
-      "npm": {
-        "install": "npm install --legacy-peer-deps"
-      },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "latest"
       }
     },
     "preview": {
