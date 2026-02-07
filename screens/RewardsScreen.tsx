@@ -1,98 +1,70 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { useAuth } from '../contexts/AuthContext';
 
 interface RewardsScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Reward {
-  id: string;
-  title: string;
-  description: string;
-  points: number;
-  category: string;
-  icon: string;
-  isUnlocked: boolean;
-}
-
-interface UserPoints {
-  name: string;
-  points: number;
-  level: number;
-  avatar: string;
-}
-
 export default function RewardsScreen({ onNavigate }: RewardsScreenProps) {
-  const [selectedUser, setSelectedUser] = useState(0);
+  const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock user points data
-  const users: UserPoints[] = [
-    { name: 'Enfant 1', points: 450, level: 5, avatar: '👦' },
-    { name: 'Enfant 2', points: 320, level: 4, avatar: '👧' },
-  ];
+  // Fetch rewards from API
+  const { data: rewards, isLoading, refetch } = trpc.rewards.list.useQuery();
 
-  // Mock rewards data
-  const rewards: Reward[] = [
-    {
-      id: '1',
-      title: 'Sortie cinéma',
-      description: 'Une séance de cinéma au choix',
-      points: 100,
-      category: 'Loisirs',
-      icon: '🎬',
-      isUnlocked: true,
+  // Mutation to redeem reward
+  const redeemMutation = trpc.rewards.redeem.useMutation({
+    onSuccess: () => {
+      Alert.alert('Succès', 'Récompense échangée avec succès !');
+      refetch();
     },
-    {
-      id: '2',
-      title: 'Jeu vidéo',
-      description: 'Un nouveau jeu vidéo',
-      points: 300,
-      category: 'Loisirs',
-      icon: '🎮',
-      isUnlocked: true,
+    onError: (error) => {
+      Alert.alert('Erreur', error.message || 'Impossible d\'échanger cette récompense');
     },
-    {
-      id: '3',
-      title: 'Soirée pyjama',
-      description: 'Inviter un ami à dormir',
-      points: 150,
-      category: 'Social',
-      icon: '🏠',
-      isUnlocked: true,
-    },
-    {
-      id: '4',
-      title: 'Argent de poche bonus',
-      description: '10€ d\'argent de poche supplémentaire',
-      points: 200,
-      category: 'Financier',
-      icon: '💰',
-      isUnlocked: true,
-    },
-    {
-      id: '5',
-      title: 'Parc d\'attractions',
-      description: 'Une journée au parc d\'attractions',
-      points: 500,
-      category: 'Loisirs',
-      icon: '🎡',
-      isUnlocked: false,
-    },
-    {
-      id: '6',
-      title: 'Console de jeux',
-      description: 'Une nouvelle console de jeux',
-      points: 1000,
-      category: 'Loisirs',
-      icon: '🕹️',
-      isUnlocked: false,
-    },
-  ];
+  });
 
-  const currentUser = users[selectedUser];
-  const nextLevelPoints = (currentUser.level + 1) * 100;
-  const levelProgress = (currentUser.points % 100) / 100 * 100;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const handleRedeem = (rewardId: number, points: number) => {
+    Alert.alert(
+      'Échanger une récompense',
+      `Voulez-vous échanger cette récompense pour ${points} points ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: () => redeemMutation.mutate({ id: rewardId }),
+        },
+      ]
+    );
+  };
+
+  const getRewardIcon = (title: string) => {
+    const icons: Record<string, string> = {
+      'Sortie cinéma': '🎬',
+      'Jeu vidéo': '🎮',
+      'Soirée pyjama': '🏠',
+      'Argent de poche': '💰',
+      'Parc d\'attractions': '🎡',
+      'Restaurant': '🍽️',
+      'Livre': '📚',
+      'Sport': '⚽',
+    };
+    
+    for (const [key, icon] of Object.entries(icons)) {
+      if (title.toLowerCase().includes(key.toLowerCase())) {
+        return icon;
+      }
+    }
+    return '🎁';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,130 +73,80 @@ export default function RewardsScreen({ onNavigate }: RewardsScreenProps) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Récompenses</Text>
+        <TouchableOpacity style={styles.addButton}>
+          <Text style={styles.addButtonText}>+ Nouvelle récompense</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* User Selector */}
-      <View style={styles.userSelector}>
-        {users.map((user, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.userTab, selectedUser === index && styles.userTabActive]}
-            onPress={() => setSelectedUser(index)}
-          >
-            <Text style={styles.userAvatar}>{user.avatar}</Text>
-            <Text style={[styles.userName, selectedUser === index && styles.userNameActive]}>
-              {user.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Points Card */}
-        <View style={styles.pointsCard}>
-          <View style={styles.pointsHeader}>
-            <View>
-              <Text style={styles.pointsLabel}>Points totaux</Text>
-              <Text style={styles.pointsValue}>{currentUser.points} pts</Text>
-            </View>
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>Niveau {currentUser.level}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.progressContainer}>
-            <Text style={styles.progressLabel}>
-              Progression vers le niveau {currentUser.level + 1}
-            </Text>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${levelProgress}%` }]} />
-            </View>
-            <Text style={styles.progressText}>
-              {currentUser.points % 100} / 100 points
-            </Text>
+      {/* User Points Card */}
+      <View style={styles.pointsCard}>
+        <View style={styles.pointsHeader}>
+          <Text style={styles.pointsTitle}>Mes points</Text>
+          <View style={styles.pointsBadge}>
+            <Text style={styles.pointsValue}>⭐ {user?.name || 'Utilisateur'}</Text>
           </View>
         </View>
+        <Text style={styles.pointsSubtext}>
+          Complétez des tâches pour gagner des points et débloquer des récompenses !
+        </Text>
+      </View>
 
-        {/* Rewards List */}
-        <View style={styles.rewardsContainer}>
-          <Text style={styles.sectionTitle}>Récompenses disponibles</Text>
-          
-          {rewards.map(reward => {
-            const canAfford = currentUser.points >= reward.points;
-            
-            return (
-              <View
-                key={reward.id}
-                style={[
-                  styles.rewardCard,
-                  !reward.isUnlocked && styles.rewardCardLocked
-                ]}
-              >
-                <View style={styles.rewardIcon}>
-                  <Text style={styles.rewardIconText}>{reward.icon}</Text>
-                  {!reward.isUnlocked && (
-                    <View style={styles.lockOverlay}>
-                      <Text style={styles.lockIcon}>🔒</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.rewardContent}>
-                  <Text style={[
-                    styles.rewardTitle,
-                    !reward.isUnlocked && styles.rewardTitleLocked
-                  ]}>
-                    {reward.title}
-                  </Text>
-                  <Text style={[
-                    styles.rewardDescription,
-                    !reward.isUnlocked && styles.rewardDescriptionLocked
-                  ]}>
-                    {reward.description}
-                  </Text>
-                  <View style={styles.rewardFooter}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{reward.category}</Text>
-                    </View>
-                    <Text style={[
-                      styles.rewardPoints,
-                      canAfford && styles.rewardPointsAffordable
-                    ]}>
-                      {reward.points} pts
-                    </Text>
-                  </View>
-                </View>
-
-                {reward.isUnlocked && canAfford && (
-                  <TouchableOpacity style={styles.claimButton}>
-                    <Text style={styles.claimButtonText}>Échanger</Text>
-                  </TouchableOpacity>
-                )}
+      {/* Rewards List */}
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : rewards && rewards.length > 0 ? (
+          rewards.map(reward => (
+            <View key={reward.id} style={styles.rewardCard}>
+              <View style={styles.rewardIcon}>
+                <Text style={styles.rewardIconText}>{getRewardIcon(reward.title)}</Text>
               </View>
-            );
-          })}
-        </View>
 
-        {/* How to Earn Points */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Comment gagner des points ? 🌟</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>✅</Text>
-            <Text style={styles.infoText}>Terminer une tâche : 10 points</Text>
+              <View style={styles.rewardContent}>
+                <Text style={styles.rewardTitle}>{reward.title}</Text>
+                {reward.description && (
+                  <Text style={styles.rewardDescription}>{reward.description}</Text>
+                )}
+
+                <View style={styles.rewardFooter}>
+                  <View style={styles.rewardPoints}>
+                    <Text style={styles.rewardPointsText}>⭐ {reward.pointsCost} points</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.redeemButton,
+                      redeemMutation.isLoading && styles.redeemButtonDisabled
+                    ]}
+                    onPress={() => handleRedeem(reward.id, reward.pointsCost)}
+                    disabled={redeemMutation.isLoading}
+                  >
+                    {redeemMutation.isLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.redeemButtonText}>Échanger</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Aucune récompense disponible</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Les récompenses seront ajoutées par les parents
+            </Text>
           </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>📚</Text>
-            <Text style={styles.infoText}>Faire ses devoirs : 20 points</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>🧹</Text>
-            <Text style={styles.infoText}>Ranger sa chambre : 15 points</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoEmoji}>🍽️</Text>
-            <Text style={styles.infoText}>Aider à la cuisine : 10 points</Text>
-          </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -236,6 +158,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
@@ -245,52 +170,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
   },
-  userSelector: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  userTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-  },
-  userTabActive: {
+  addButton: {
     backgroundColor: '#7c3aed',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
-  userAvatar: {
-    fontSize: 24,
-    marginRight: 8,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  userNameActive: {
+  addButtonText: {
     color: '#fff',
-  },
-  content: {
-    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
   },
   pointsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#7c3aed',
     margin: 16,
-    padding: 20,
     borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
   },
@@ -298,185 +197,126 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  pointsLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  pointsValue: {
-    fontSize: 32,
+  pointsTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#7c3aed',
+    color: '#fff',
   },
-  levelBadge: {
-    backgroundColor: '#fef3c7',
+  pointsBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  levelText: {
+  pointsValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#92400e',
+    color: '#fff',
   },
-  progressContainer: {
-    marginTop: 8,
-  },
-  progressLabel: {
+  pointsSubtext: {
     fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 8,
+    color: '#e9d5ff',
+    lineHeight: 20,
   },
-  progressBar: {
-    height: 10,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#7c3aed',
-    borderRadius: 5,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'right',
-  },
-  rewardsContainer: {
+  content: {
+    flex: 1,
     padding: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16,
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
   },
   rewardCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  rewardCardLocked: {
-    opacity: 0.6,
-  },
   rewardIcon: {
     width: 60,
     height: 60,
-    borderRadius: 12,
+    borderRadius: 30,
     backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    position: 'relative',
+    justifyContent: 'center',
+    marginRight: 16,
   },
   rewardIconText: {
     fontSize: 32,
-  },
-  lockOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lockIcon: {
-    fontSize: 24,
   },
   rewardContent: {
     flex: 1,
   },
   rewardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 4,
   },
-  rewardTitleLocked: {
-    color: '#9ca3af',
-  },
   rewardDescription: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 8,
-  },
-  rewardDescriptionLocked: {
-    color: '#9ca3af',
+    marginBottom: 12,
+    lineHeight: 20,
   },
   rewardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  categoryBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
   rewardPoints: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  rewardPointsText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#6b7280',
+    fontWeight: '600',
+    color: '#92400e',
   },
-  rewardPointsAffordable: {
-    color: '#7c3aed',
-  },
-  claimButton: {
+  redeemButton: {
     backgroundColor: '#7c3aed',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 8,
-    justifyContent: 'center',
-    marginLeft: 8,
   },
-  claimButtonText: {
+  redeemButtonDisabled: {
+    backgroundColor: '#d1d5db',
+  },
+  redeemButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
-  infoCard: {
-    backgroundColor: '#fff',
-    margin: 16,
-    padding: 20,
-    borderRadius: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16,
-  },
-  infoItem: {
-    flexDirection: 'row',
+  emptyState: {
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
-  infoEmoji: {
-    fontSize: 20,
-    marginRight: 12,
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
   },
-  infoText: {
+  emptyStateSubtext: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });

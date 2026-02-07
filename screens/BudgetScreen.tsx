@@ -1,52 +1,65 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface BudgetScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: string;
-  date: string;
-  paidBy: string;
-  isRecurring: boolean;
-}
-
-interface Budget {
-  category: string;
-  allocated: number;
-  spent: number;
-  color: string;
-}
-
 export default function BudgetScreen({ onNavigate }: BudgetScreenProps) {
-  const [view, setView] = useState<'overview' | 'expenses'>('overview');
+  const [view, setView] = useState<'overview' | 'transactions'>('overview');
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock budget data
-  const budgets: Budget[] = [
-    { category: 'Alimentation', allocated: 500, spent: 320, color: '#10b981' },
-    { category: 'Transport', allocated: 200, spent: 180, color: '#3b82f6' },
-    { category: 'Loisirs', allocated: 150, spent: 95, color: '#f59e0b' },
-    { category: 'Santé', allocated: 100, spent: 45, color: '#ef4444' },
-    { category: 'Éducation', allocated: 250, spent: 250, color: '#8b5cf6' },
-  ];
+  const currentMonth = format(new Date(), 'yyyy-MM');
 
-  // Mock expenses data
-  const expenses: Expense[] = [
-    { id: '1', title: 'Courses Carrefour', amount: 85.50, category: 'Alimentation', date: 'Aujourd\'hui', paidBy: 'Papa', isRecurring: false },
-    { id: '2', title: 'Essence', amount: 60.00, category: 'Transport', date: 'Hier', paidBy: 'Maman', isRecurring: false },
-    { id: '3', title: 'Cinéma', amount: 45.00, category: 'Loisirs', date: 'Il y a 2 jours', paidBy: 'Papa', isRecurring: false },
-    { id: '4', title: 'Pharmacie', amount: 25.50, category: 'Santé', date: 'Il y a 3 jours', paidBy: 'Maman', isRecurring: false },
-    { id: '5', title: 'Cours de musique', amount: 80.00, category: 'Éducation', date: 'Il y a 1 semaine', paidBy: 'Papa', isRecurring: true },
-  ];
+  // Fetch budget and transactions from API
+  const { data: budget, isLoading: budgetLoading, refetch: refetchBudget } = trpc.budget.get.useQuery({ month: currentMonth });
+  const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = trpc.budget.transactions.useQuery();
 
-  const totalAllocated = budgets.reduce((sum, b) => sum + b.allocated, 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
-  const remaining = totalAllocated - totalSpent;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchBudget(), refetchTransactions()]);
+    setRefreshing(false);
+  };
+
+  const totalIncome = budget?.totalIncome || 0;
+  const totalExpenses = budget?.totalExpenses || 0;
+  const remaining = totalIncome - totalExpenses;
+
+  // Group transactions by category
+  const expensesByCategory = (transactions || [])
+    .filter(t => t.type === 'expense')
+    .reduce((acc, t) => {
+      if (!acc[t.category]) {
+        acc[t.category] = 0;
+      }
+      acc[t.category] += t.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+  const categories = Object.entries(expensesByCategory).map(([category, amount]) => ({
+    category,
+    spent: amount,
+    color: getCategoryColor(category),
+  }));
+
+  function getCategoryColor(category: string): string {
+    const colors: Record<string, string> = {
+      'Alimentation': '#10b981',
+      'Transport': '#3b82f6',
+      'Loisirs': '#f59e0b',
+      'Santé': '#ef4444',
+      'Éducation': '#8b5cf6',
+      'Logement': '#06b6d4',
+      'Autre': '#6b7280',
+    };
+    return colors[category] || '#6b7280';
+  }
+
+  const isLoading = budgetLoading || transactionsLoading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,7 +69,7 @@ export default function BudgetScreen({ onNavigate }: BudgetScreenProps) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Budget</Text>
         <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle dépense</Text>
+          <Text style={styles.addButtonText}>+ Nouvelle transaction</Text>
         </TouchableOpacity>
       </View>
 
@@ -67,94 +80,111 @@ export default function BudgetScreen({ onNavigate }: BudgetScreenProps) {
           onPress={() => setView('overview')}
         >
           <Text style={[styles.toggleText, view === 'overview' && styles.toggleTextActive]}>
-            Vue d\'ensemble
+            Vue d'ensemble
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.toggleButton, view === 'expenses' && styles.toggleButtonActive]}
-          onPress={() => setView('expenses')}
+          style={[styles.toggleButton, view === 'transactions' && styles.toggleButtonActive]}
+          onPress={() => setView('transactions')}
         >
-          <Text style={[styles.toggleText, view === 'expenses' && styles.toggleTextActive]}>
-            Dépenses
+          <Text style={[styles.toggleText, view === 'transactions' && styles.toggleTextActive]}>
+            Transactions
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        {view === 'overview' ? (
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : view === 'overview' ? (
           <>
             {/* Summary Cards */}
             <View style={styles.summaryContainer}>
               <View style={[styles.summaryCard, { backgroundColor: '#dbeafe' }]}>
-                <Text style={styles.summaryLabel}>Budget total</Text>
-                <Text style={styles.summaryAmount}>{totalAllocated.toFixed(2)} €</Text>
+                <Text style={styles.summaryLabel}>Revenus</Text>
+                <Text style={styles.summaryAmount}>{totalIncome.toFixed(2)} €</Text>
               </View>
               <View style={[styles.summaryCard, { backgroundColor: '#fee2e2' }]}>
-                <Text style={styles.summaryLabel}>Dépensé</Text>
-                <Text style={styles.summaryAmount}>{totalSpent.toFixed(2)} €</Text>
+                <Text style={styles.summaryLabel}>Dépenses</Text>
+                <Text style={styles.summaryAmount}>{totalExpenses.toFixed(2)} €</Text>
               </View>
-              <View style={[styles.summaryCard, { backgroundColor: '#d1fae5' }]}>
-                <Text style={styles.summaryLabel}>Restant</Text>
-                <Text style={styles.summaryAmount}>{remaining.toFixed(2)} €</Text>
+              <View style={[styles.summaryCard, { backgroundColor: remaining >= 0 ? '#d1fae5' : '#fee2e2' }]}>
+                <Text style={styles.summaryLabel}>Solde</Text>
+                <Text style={[styles.summaryAmount, remaining < 0 && { color: '#ef4444' }]}>
+                  {remaining.toFixed(2)} €
+                </Text>
               </View>
             </View>
 
-            {/* Budget Categories */}
-            <View style={styles.categoriesContainer}>
-              <Text style={styles.sectionTitle}>Budgets par catégorie</Text>
-              {budgets.map((budget, index) => {
-                const percentage = (budget.spent / budget.allocated) * 100;
-                const isOverBudget = percentage > 100;
-
-                return (
-                  <View key={index} style={styles.budgetCard}>
+            {/* Budget by Category */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Dépenses par catégorie</Text>
+              {categories.length > 0 ? (
+                categories.map((cat, index) => (
+                  <View key={index} style={styles.budgetItem}>
                     <View style={styles.budgetHeader}>
-                      <Text style={styles.budgetCategory}>{budget.category}</Text>
-                      <Text style={[styles.budgetAmount, isOverBudget && styles.budgetAmountOver]}>
-                        {budget.spent.toFixed(2)} € / {budget.allocated.toFixed(2)} €
-                      </Text>
+                      <View style={styles.budgetInfo}>
+                        <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
+                        <Text style={styles.budgetCategory}>{cat.category}</Text>
+                      </View>
+                      <Text style={styles.budgetAmount}>{cat.spent.toFixed(2)} €</Text>
                     </View>
                     <View style={styles.progressBar}>
-                      <View
+                      <View 
                         style={[
-                          styles.progressFill,
-                          { width: `${Math.min(percentage, 100)}%`, backgroundColor: isOverBudget ? '#ef4444' : budget.color }
-                        ]}
+                          styles.progressFill, 
+                          { 
+                            width: `${Math.min((cat.spent / totalExpenses) * 100, 100)}%`,
+                            backgroundColor: cat.color 
+                          }
+                        ]} 
                       />
                     </View>
-                    <Text style={[styles.budgetPercentage, isOverBudget && styles.budgetPercentageOver]}>
-                      {percentage.toFixed(0)}% utilisé
-                    </Text>
                   </View>
-                );
-              })}
+                ))
+              ) : (
+                <Text style={styles.emptyText}>Aucune dépense pour ce mois</Text>
+              )}
             </View>
           </>
         ) : (
-          <>
-            {/* Expenses List */}
-            <View style={styles.expensesContainer}>
-              <Text style={styles.sectionTitle}>Dernières dépenses</Text>
-              {expenses.map(expense => (
-                <View key={expense.id} style={styles.expenseCard}>
-                  <View style={styles.expenseHeader}>
-                    <Text style={styles.expenseTitle}>{expense.title}</Text>
-                    <Text style={styles.expenseAmount}>-{expense.amount.toFixed(2)} €</Text>
-                  </View>
-                  <View style={styles.expenseMeta}>
-                    <Text style={styles.expenseCategory}>📂 {expense.category}</Text>
-                    <Text style={styles.expensePaidBy}>👤 {expense.paidBy}</Text>
-                    <Text style={styles.expenseDate}>📅 {expense.date}</Text>
-                  </View>
-                  {expense.isRecurring && (
-                    <View style={styles.recurringBadge}>
-                      <Text style={styles.recurringText}>🔄 Récurrent</Text>
+          /* Transactions List */
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Transactions récentes</Text>
+            {transactions && transactions.length > 0 ? (
+              transactions.map(transaction => (
+                <View key={transaction.id} style={styles.transactionCard}>
+                  <View style={styles.transactionHeader}>
+                    <View style={styles.transactionInfo}>
+                      <Text style={styles.transactionCategory}>{transaction.category}</Text>
+                      {transaction.description && (
+                        <Text style={styles.transactionDescription}>{transaction.description}</Text>
+                      )}
                     </View>
-                  )}
+                    <Text style={[
+                      styles.transactionAmount,
+                      transaction.type === 'income' ? styles.incomeAmount : styles.expenseAmount
+                    ]}>
+                      {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toFixed(2)} €
+                    </Text>
+                  </View>
+                  <Text style={styles.transactionDate}>
+                    {format(new Date(transaction.date), 'dd MMMM yyyy', { locale: fr })}
+                  </Text>
                 </View>
-              ))}
-            </View>
-          </>
+              ))
+            ) : (
+              <Text style={styles.emptyText}>Aucune transaction</Text>
+            )}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -194,6 +224,7 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: 'row',
     padding: 16,
+    gap: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -201,8 +232,6 @@ const styles = StyleSheet.create({
   toggleButton: {
     flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginHorizontal: 4,
     borderRadius: 8,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
@@ -221,6 +250,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+  },
   summaryContainer: {
     flexDirection: 'row',
     padding: 16,
@@ -228,22 +267,21 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    padding: 16,
     borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
   },
   summaryLabel: {
     fontSize: 12,
-    fontWeight: '600',
     color: '#6b7280',
     marginBottom: 8,
   },
   summaryAmount: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1f2937',
   },
-  categoriesContainer: {
+  section: {
     padding: 16,
   },
   sectionTitle: {
@@ -252,7 +290,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     marginBottom: 16,
   },
-  budgetCard: {
+  budgetItem: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
@@ -269,42 +307,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  budgetInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  categoryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
   budgetCategory: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
   },
   budgetAmount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  budgetAmountOver: {
-    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
   progressBar: {
     height: 8,
     backgroundColor: '#e5e7eb',
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   progressFill: {
     height: '100%',
     borderRadius: 4,
   },
-  budgetPercentage: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  budgetPercentageOver: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  expensesContainer: {
-    padding: 16,
-  },
-  expenseCard: {
+  transactionCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
@@ -315,51 +348,44 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  expenseHeader: {
+  transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  expenseTitle: {
+  transactionInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  transactionCategory: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    flex: 1,
+    marginBottom: 4,
+  },
+  transactionDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  transactionAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  incomeAmount: {
+    color: '#10b981',
   },
   expenseAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#ef4444',
   },
-  expenseMeta: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  expenseCategory: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  expensePaidBy: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  expenseDate: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  recurringBadge: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: '#dbeafe',
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  recurringText: {
+  transactionDate: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#1f2937',
+    color: '#9ca3af',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 });

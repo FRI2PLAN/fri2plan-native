@@ -1,94 +1,44 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { useAuth } from '../contexts/AuthContext';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Member {
-  id: string;
-  name: string;
-  role: 'parent' | 'child';
-  avatar: string;
-  email?: string;
-  age?: number;
-  status: 'active' | 'pending';
-  tasksCompleted: number;
-  points: number;
-}
-
 export default function MembersScreen({ onNavigate }: MembersScreenProps) {
-  const [selectedCircle, setSelectedCircle] = useState<'family' | 'extended'>('family');
+  const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock members data
-  const familyMembers: Member[] = [
-    {
-      id: '1',
-      name: 'Papa',
-      role: 'parent',
-      avatar: '👨',
-      email: 'papa@example.com',
-      status: 'active',
-      tasksCompleted: 45,
-      points: 0,
-    },
-    {
-      id: '2',
-      name: 'Maman',
-      role: 'parent',
-      avatar: '👩',
-      email: 'maman@example.com',
-      status: 'active',
-      tasksCompleted: 52,
-      points: 0,
-    },
-    {
-      id: '3',
-      name: 'Enfant 1',
-      role: 'child',
-      avatar: '👦',
-      age: 12,
-      status: 'active',
-      tasksCompleted: 38,
-      points: 450,
-    },
-    {
-      id: '4',
-      name: 'Enfant 2',
-      role: 'child',
-      avatar: '👧',
-      age: 9,
-      status: 'active',
-      tasksCompleted: 25,
-      points: 320,
-    },
-  ];
+  // Fetch family info from API
+  const { data: families, isLoading, refetch } = trpc.family.list.useQuery();
 
-  const extendedMembers: Member[] = [
-    {
-      id: '5',
-      name: 'Grand-mère',
-      role: 'parent',
-      avatar: '👵',
-      email: 'grandmere@example.com',
-      status: 'active',
-      tasksCompleted: 12,
-      points: 0,
-    },
-    {
-      id: '6',
-      name: 'Tante Marie',
-      role: 'parent',
-      avatar: '👩',
-      email: 'marie@example.com',
-      status: 'pending',
-      tasksCompleted: 0,
-      points: 0,
-    },
-  ];
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
-  const currentMembers = selectedCircle === 'family' ? familyMembers : extendedMembers;
+  const currentFamily = families && families.length > 0 ? families[0] : null;
+
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case 'admin': return 'Administrateur';
+      case 'superadmin': return 'Super Admin';
+      case 'user': return 'Membre';
+      default: return 'Membre';
+    }
+  };
+
+  const getRoleColor = (role?: string) => {
+    switch (role) {
+      case 'admin': return '#7c3aed';
+      case 'superadmin': return '#ef4444';
+      default: return '#10b981';
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,137 +46,79 @@ export default function MembersScreen({ onNavigate }: MembersScreenProps) {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Membres</Text>
+        <Text style={styles.headerTitle}>Cercles</Text>
         <TouchableOpacity style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Inviter</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Circle Selector */}
-      <View style={styles.circleSelector}>
-        <TouchableOpacity
-          style={[styles.circleTab, selectedCircle === 'family' && styles.circleTabActive]}
-          onPress={() => setSelectedCircle('family')}
-        >
-          <Text style={[styles.circleText, selectedCircle === 'family' && styles.circleTextActive]}>
-            👨‍👩‍👧‍👦 Famille ({familyMembers.length})
+      {/* Family Info Card */}
+      {currentFamily && (
+        <View style={styles.familyCard}>
+          <Text style={styles.familyName}>{currentFamily.name}</Text>
+          <View style={styles.familyInfo}>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Code d'invitation</Text>
+              <View style={styles.inviteCodeContainer}>
+                <Text style={styles.inviteCode}>{currentFamily.inviteCode}</Text>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.familySubtext}>
+            Partagez ce code avec votre famille pour les inviter
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.circleTab, selectedCircle === 'extended' && styles.circleTabActive]}
-          onPress={() => setSelectedCircle('extended')}
-        >
-          <Text style={[styles.circleText, selectedCircle === 'extended' && styles.circleTextActive]}>
-            🏡 Cercle élargi ({extendedMembers.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
 
-      {/* Info Card */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoText}>
-          {selectedCircle === 'family'
-            ? '👨‍👩‍👧‍👦 Votre famille proche avec accès complet'
-            : '🏡 Famille élargie et amis proches avec accès limité'}
-        </Text>
+      {/* Current User Card */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Mon profil</Text>
+        <View style={styles.memberCard}>
+          <View style={styles.memberAvatar}>
+            <Text style={styles.memberAvatarText}>👤</Text>
+          </View>
+          <View style={styles.memberInfo}>
+            <Text style={styles.memberName}>{user?.name || 'Utilisateur'}</Text>
+            <Text style={styles.memberEmail}>{user?.email || 'email@example.com'}</Text>
+            <View style={[styles.roleBadge, { backgroundColor: getRoleColor(user?.role) }]}>
+              <Text style={styles.roleBadgeText}>{getRoleLabel(user?.role)}</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
       {/* Members List */}
-      <ScrollView style={styles.content}>
-        {currentMembers.map(member => (
-          <View key={member.id} style={styles.memberCard}>
-            <View style={styles.memberHeader}>
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatar}>{member.avatar}</Text>
-                {member.status === 'pending' && (
-                  <View style={styles.pendingBadge}>
-                    <Text style={styles.pendingText}>En attente</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>{member.name}</Text>
-                <Text style={styles.memberRole}>
-                  {member.role === 'parent' ? '👤 Parent' : '👶 Enfant'}
-                  {member.age && ` • ${member.age} ans`}
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Membres de la famille</Text>
+            
+            {currentFamily ? (
+              <View style={styles.infoCard}>
+                <Text style={styles.infoCardText}>
+                  Les autres membres de votre famille apparaîtront ici une fois qu'ils auront rejoint avec le code d'invitation.
                 </Text>
-                {member.email && (
-                  <Text style={styles.memberEmail}>📧 {member.email}</Text>
-                )}
               </View>
-
-              <TouchableOpacity style={styles.menuButton}>
-                <Text style={styles.menuIcon}>⋮</Text>
-              </TouchableOpacity>
-            </View>
-
-            {member.status === 'active' && (
-              <View style={styles.memberStats}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{member.tasksCompleted}</Text>
-                  <Text style={styles.statLabel}>Tâches</Text>
-                </View>
-                {member.role === 'child' && (
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{member.points}</Text>
-                    <Text style={styles.statLabel}>Points</Text>
-                  </View>
-                )}
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>✓</Text>
-                  <Text style={styles.statLabel}>Actif</Text>
-                </View>
-              </View>
-            )}
-
-            {member.status === 'pending' && (
-              <View style={styles.pendingActions}>
-                <TouchableOpacity style={styles.resendButton}>
-                  <Text style={styles.resendButtonText}>Renvoyer l'invitation</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.cancelButton}>
-                  <Text style={styles.cancelButtonText}>Annuler</Text>
-                </TouchableOpacity>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Aucune famille</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Créez une famille ou rejoignez-en une avec un code d'invitation
+                </Text>
               </View>
             )}
           </View>
-        ))}
-
-        {/* Invite Card */}
-        <TouchableOpacity style={styles.inviteCard}>
-          <Text style={styles.inviteIcon}>➕</Text>
-          <Text style={styles.inviteTitle}>Inviter un nouveau membre</Text>
-          <Text style={styles.inviteDescription}>
-            Ajoutez des membres de votre famille ou cercle proche
-          </Text>
-        </TouchableOpacity>
-
-        {/* Permissions Info */}
-        <View style={styles.permissionsCard}>
-          <Text style={styles.permissionsTitle}>Permissions et rôles 🔐</Text>
-          
-          <View style={styles.permissionItem}>
-            <Text style={styles.permissionRole}>👤 Parents</Text>
-            <Text style={styles.permissionDescription}>
-              Accès complet : création, modification, suppression de tous les contenus
-            </Text>
-          </View>
-
-          <View style={styles.permissionItem}>
-            <Text style={styles.permissionRole}>👶 Enfants</Text>
-            <Text style={styles.permissionDescription}>
-              Accès limité : consultation, création de requêtes, gestion de leurs tâches
-            </Text>
-          </View>
-
-          <View style={styles.permissionItem}>
-            <Text style={styles.permissionRole}>🏡 Cercle élargi</Text>
-            <Text style={styles.permissionDescription}>
-              Accès en lecture seule : consultation du calendrier et des informations partagées
-            </Text>
-          </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -262,53 +154,67 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  circleSelector: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+  familyCard: {
+    backgroundColor: '#7c3aed',
+    margin: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  circleTab: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginHorizontal: 4,
+  familyName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  familyInfo: {
+    marginBottom: 12,
+  },
+  infoItem: {
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#e9d5ff',
+    marginBottom: 8,
+  },
+  inviteCodeContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    padding: 12,
     alignItems: 'center',
   },
-  circleTabActive: {
-    backgroundColor: '#7c3aed',
-  },
-  circleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  circleTextActive: {
+  inviteCode: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#fff',
+    letterSpacing: 2,
   },
-  infoCard: {
-    backgroundColor: '#eff6ff',
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  infoText: {
+  familySubtext: {
     fontSize: 14,
-    color: '#1e40af',
+    color: '#e9d5ff',
+    lineHeight: 20,
   },
   content: {
     flex: 1,
+  },
+  section: {
     padding: 16,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
   memberCard: {
+    flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
@@ -317,34 +223,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  memberHeader: {
-    flexDirection: 'row',
+  memberAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginRight: 16,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  avatar: {
-    fontSize: 48,
-  },
-  pendingBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  pendingText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#fff',
+  memberAvatarText: {
+    fontSize: 32,
   },
   memberInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   memberName: {
     fontSize: 18,
@@ -352,120 +245,62 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     marginBottom: 4,
   },
-  memberRole: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 2,
-  },
   memberEmail: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  menuButton: {
-    padding: 8,
-  },
-  menuIcon: {
-    fontSize: 24,
-    color: '#6b7280',
-  },
-  memberStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#7c3aed',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  pendingActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  resendButton: {
-    flex: 1,
-    backgroundColor: '#7c3aed',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  resendButtonText: {
-    color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
     color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  inviteCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    marginBottom: 12,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
-  },
-  inviteIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  inviteTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
     marginBottom: 8,
   },
-  inviteDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
+  roleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  permissionsCard: {
+  roleBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  infoCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  permissionsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16,
-  },
-  permissionItem: {
-    marginBottom: 16,
-  },
-  permissionRole: {
+  infoCardText: {
     fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  permissionDescription: {
-    fontSize: 13,
-    color: '#6b7280',
-    lineHeight: 18,
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });
