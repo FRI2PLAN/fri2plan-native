@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#7c3aed"
       },
-      "package": "com.fri2plan.native",
+      "package": "com.fri2plan.app",
       "edgeToEdgeEnabled": true
     },
     "web": {
