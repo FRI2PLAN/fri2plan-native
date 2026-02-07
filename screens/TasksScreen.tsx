@@ -1,42 +1,42 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface TasksScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  assignedTo: string;
-  dueDate: string;
-  priority: 'low' | 'medium' | 'high';
-}
-
 export default function TasksScreen({ onNavigate }: TasksScreenProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock tasks data
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', title: 'Faire les courses', completed: false, assignedTo: 'Papa', dueDate: 'Aujourd\'hui', priority: 'high' },
-    { id: '2', title: 'Préparer le dîner', completed: false, assignedTo: 'Maman', dueDate: 'Aujourd\'hui', priority: 'medium' },
-    { id: '3', title: 'Ranger la chambre', completed: true, assignedTo: 'Enfant 1', dueDate: 'Hier', priority: 'low' },
-    { id: '4', title: 'Sortir les poubelles', completed: false, assignedTo: 'Enfant 2', dueDate: 'Demain', priority: 'low' },
-    { id: '5', title: 'Réviser les maths', completed: false, assignedTo: 'Enfant 1', dueDate: 'Demain', priority: 'high' },
-  ]);
+  // Fetch tasks from API
+  const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery();
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  // Mutation to complete a task
+  const completeMutation = trpc.tasks.complete.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
   };
 
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
+  const toggleTask = (id: number) => {
+    completeMutation.mutate({ id });
+  };
+
+  const filteredTasks = (tasks || []).filter(task => {
+    if (filter === 'active') return task.status !== 'completed';
+    if (filter === 'completed') return task.status === 'completed';
     return true;
   }).filter(task => 
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -57,6 +57,15 @@ export default function TasksScreen({ onNavigate }: TasksScreenProps) {
       case 'medium': return 'Moyen';
       case 'low': return 'Faible';
       default: return '';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return 'À faire';
+      case 'in_progress': return 'En cours';
+      case 'completed': return 'Terminée';
+      default: return status;
     }
   };
 
@@ -89,7 +98,7 @@ export default function TasksScreen({ onNavigate }: TasksScreenProps) {
           onPress={() => setFilter('all')}
         >
           <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-            Toutes ({tasks.length})
+            Toutes ({tasks?.length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -97,7 +106,7 @@ export default function TasksScreen({ onNavigate }: TasksScreenProps) {
           onPress={() => setFilter('active')}
         >
           <Text style={[styles.filterText, filter === 'active' && styles.filterTextActive]}>
-            En cours ({tasks.filter(t => !t.completed).length})
+            En cours ({tasks?.filter(t => t.status !== 'completed').length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -105,48 +114,79 @@ export default function TasksScreen({ onNavigate }: TasksScreenProps) {
           onPress={() => setFilter('completed')}
         >
           <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>
-            Terminées ({tasks.filter(t => t.completed).length})
+            Terminées ({tasks?.filter(t => t.status === 'completed').length || 0})
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Tasks List */}
-      <ScrollView style={styles.content}>
-        {filteredTasks.length > 0 ? (
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : filteredTasks.length > 0 ? (
           filteredTasks.map(task => (
             <View key={task.id} style={styles.taskCard}>
-              <TouchableOpacity
-                style={styles.checkbox}
+              <TouchableOpacity 
+                style={styles.taskCheckbox}
                 onPress={() => toggleTask(task.id)}
               >
                 <View style={[
-                  styles.checkboxInner,
-                  task.completed && styles.checkboxChecked
+                  styles.checkbox,
+                  task.status === 'completed' && styles.checkboxChecked
                 ]}>
-                  {task.completed && <Text style={styles.checkmark}>✓</Text>}
+                  {task.status === 'completed' && <Text style={styles.checkmark}>✓</Text>}
                 </View>
               </TouchableOpacity>
 
               <View style={styles.taskContent}>
                 <Text style={[
                   styles.taskTitle,
-                  task.completed && styles.taskTitleCompleted
+                  task.status === 'completed' && styles.taskTitleCompleted
                 ]}>
                   {task.title}
                 </Text>
+                
+                {task.description && (
+                  <Text style={styles.taskDescription}>{task.description}</Text>
+                )}
+
                 <View style={styles.taskMeta}>
                   <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(task.priority) }]}>
                     <Text style={styles.priorityText}>{getPriorityLabel(task.priority)}</Text>
                   </View>
-                  <Text style={styles.taskAssignee}>👤 {task.assignedTo}</Text>
-                  <Text style={styles.taskDueDate}>📅 {task.dueDate}</Text>
+
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusText}>{getStatusLabel(task.status)}</Text>
+                  </View>
+
+                  {task.dueDate && (
+                    <Text style={styles.dueDateText}>
+                      📅 {format(new Date(task.dueDate), 'dd MMM', { locale: fr })}
+                    </Text>
+                  )}
                 </View>
+
+                {task.points && task.points > 0 && (
+                  <View style={styles.pointsBadge}>
+                    <Text style={styles.pointsText}>⭐ {task.points} points</Text>
+                  </View>
+                )}
               </View>
             </View>
           ))
         ) : (
-          <View style={styles.noTasks}>
-            <Text style={styles.noTasksText}>Aucune tâche trouvée</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {searchQuery ? 'Aucune tâche trouvée' : 'Aucune tâche pour le moment'}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -190,15 +230,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   filterContainer: {
     flexDirection: 'row',
     padding: 16,
+    gap: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -207,7 +246,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginHorizontal: 4,
     borderRadius: 8,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
@@ -227,6 +265,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+  },
   taskCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -239,22 +287,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  checkbox: {
+  taskCheckbox: {
     marginRight: 12,
     paddingTop: 2,
   },
-  checkboxInner: {
+  checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: '#d1d5db',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#7c3aed',
-    borderColor: '#7c3aed',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   checkmark: {
     color: '#fff',
@@ -268,43 +316,67 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   taskTitleCompleted: {
     textDecorationLine: 'line-through',
     color: '#9ca3af',
   },
+  taskDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
   taskMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
+    alignItems: 'center',
   },
   priorityBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 4,
   },
   priorityText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
   },
-  taskAssignee: {
-    fontSize: 14,
+  statusBadge: {
+    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  statusText: {
+    color: '#1f2937',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dueDateText: {
+    fontSize: 12,
     color: '#6b7280',
   },
-  taskDueDate: {
-    fontSize: 14,
-    color: '#6b7280',
+  pointsBadge: {
+    marginTop: 8,
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
   },
-  noTasks: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 40,
+  pointsText: {
+    color: '#92400e',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyState: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
-  noTasksText: {
+  emptyStateText: {
     fontSize: 16,
     color: '#9ca3af',
   },

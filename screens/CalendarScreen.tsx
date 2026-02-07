@@ -1,32 +1,21 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { trpc } from '../lib/trpc';
 
 interface CalendarScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Event {
-  id: string;
-  title: string;
-  date: Date;
-  time: string;
-  color: string;
-  type: 'event' | 'task';
-}
-
 export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock events data
-  const mockEvents: Event[] = [
-    { id: '1', title: 'Réunion d\'équipe', date: new Date(), time: '10:30', color: '#7c3aed', type: 'event' },
-    { id: '2', title: 'Rendez-vous médecin', date: new Date(), time: '14:00', color: '#ef4444', type: 'event' },
-    { id: '3', title: 'Faire les courses', date: new Date(), time: '16:30', color: '#10b981', type: 'task' },
-  ];
+  // Fetch events from API
+  const { data: events, isLoading, refetch } = trpc.events.list.useQuery();
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -44,8 +33,18 @@ export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
     setSelectedDate(date);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
   const getEventsForDate = (date: Date) => {
-    return mockEvents.filter(event => isSameDay(event.date, date));
+    if (!events) return [];
+    return events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return isSameDay(eventDate, date);
+    });
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -62,7 +61,12 @@ export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
         {/* Month Navigation */}
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={handlePreviousMonth} style={styles.navButton}>
@@ -124,18 +128,28 @@ export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
             {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
           </Text>
           
-          {selectedDateEvents.length > 0 ? (
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#7c3aed" />
+            </View>
+          ) : selectedDateEvents.length > 0 ? (
             selectedDateEvents.map(event => (
-              <View key={event.id} style={[styles.eventCard, { borderLeftColor: event.color }]}>
+              <View key={event.id} style={styles.eventCard}>
                 <View style={styles.eventHeader}>
-                  <Text style={styles.eventTime}>{event.time}</Text>
-                  <View style={[styles.eventBadge, { backgroundColor: event.color }]}>
-                    <Text style={styles.eventBadgeText}>
-                      {event.type === 'event' ? 'Événement' : 'Tâche'}
-                    </Text>
+                  <Text style={styles.eventTime}>
+                    {format(new Date(event.startTime), 'HH:mm')}
+                  </Text>
+                  <View style={styles.eventBadge}>
+                    <Text style={styles.eventBadgeText}>Événement</Text>
                   </View>
                 </View>
                 <Text style={styles.eventTitle}>{event.title}</Text>
+                {event.description && (
+                  <Text style={styles.eventDescription}>{event.description}</Text>
+                )}
+                {event.location && (
+                  <Text style={styles.eventLocation}>📍 {event.location}</Text>
+                )}
               </View>
             ))
           ) : (
@@ -258,29 +272,37 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   eventDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#7c3aed',
     position: 'absolute',
-    bottom: 5,
+    bottom: 2,
   },
   eventsSection: {
+    margin: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     padding: 20,
   },
   eventsTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 16,
     textTransform: 'capitalize',
   },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
   eventCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
+    borderLeftColor: '#7c3aed',
   },
   eventHeader: {
     flexDirection: 'row',
@@ -289,11 +311,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   eventTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#7c3aed',
   },
   eventBadge: {
+    backgroundColor: '#7c3aed',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -307,10 +330,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
+    marginBottom: 4,
+  },
+  eventDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  eventLocation: {
+    fontSize: 14,
+    color: '#6b7280',
   },
   noEvents: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
     padding: 40,
     alignItems: 'center',
   },
