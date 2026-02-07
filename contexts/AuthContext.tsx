@@ -48,6 +48,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (userData: User, authToken: string) => {
     try {
+      // Ensure we never pass undefined values to AsyncStorage
+      if (!authToken || !userData) {
+        throw new Error('Invalid login data');
+      }
       await Promise.all([
         AsyncStorage.setItem('authToken', authToken),
         AsyncStorage.setItem('user', JSON.stringify(userData)),
@@ -76,6 +80,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const updateUser = async (userData: User) => {
     try {
+      // Ensure we never pass undefined values to AsyncStorage
+      if (!userData) {
+        throw new Error('Invalid user data');
+      }
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
