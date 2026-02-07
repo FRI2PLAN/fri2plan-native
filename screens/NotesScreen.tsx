@@ -1,71 +1,29 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface NotesScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  date: string;
-  category: string;
-  isPrivate: boolean;
-  color: string;
-}
-
 export default function NotesScreen({ onNavigate }: NotesScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'private' | 'public'>('all');
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock notes data
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: 'Liste des courses',
-      content: 'Pain, lait, œufs, fromage, fruits...',
-      author: 'Maman',
-      date: 'Aujourd\'hui',
-      category: 'Courses',
-      isPrivate: false,
-      color: '#fef3c7',
-    },
-    {
-      id: '2',
-      title: 'Idées cadeaux anniversaire Papa',
-      content: 'Montre, livre de cuisine, chemise...',
-      author: 'Maman',
-      date: 'Hier',
-      category: 'Personnel',
-      isPrivate: true,
-      color: '#dbeafe',
-    },
-    {
-      id: '3',
-      title: 'Recette gâteau au chocolat',
-      content: '200g chocolat, 150g beurre, 4 œufs, 100g sucre...',
-      author: 'Maman',
-      date: 'Il y a 2 jours',
-      category: 'Recettes',
-      isPrivate: false,
-      color: '#fce7f3',
-    },
-    {
-      id: '4',
-      title: 'Numéros d\'urgence',
-      content: 'Médecin: 01 23 45 67 89, Plombier: 06 12 34 56 78...',
-      author: 'Papa',
-      date: 'Il y a 1 semaine',
-      category: 'Important',
-      isPrivate: false,
-      color: '#fee2e2',
-    },
-  ]);
+  // Fetch notes from API
+  const { data: notes, isLoading, refetch } = trpc.notes.list.useQuery();
 
-  const filteredNotes = notes.filter(note => {
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const filteredNotes = (notes || []).filter(note => {
     if (filter === 'private' && !note.isPrivate) return false;
     if (filter === 'public' && note.isPrivate) return false;
     if (searchQuery && !note.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -74,6 +32,11 @@ export default function NotesScreen({ onNavigate }: NotesScreenProps) {
     }
     return true;
   });
+
+  const getNoteColor = (index: number) => {
+    const colors = ['#fef3c7', '#dbeafe', '#fce7f3', '#fee2e2', '#e0e7ff', '#d1fae5'];
+    return colors[index % colors.length];
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -104,15 +67,7 @@ export default function NotesScreen({ onNavigate }: NotesScreenProps) {
           onPress={() => setFilter('all')}
         >
           <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-            Toutes ({notes.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, filter === 'public' && styles.filterTabActive]}
-          onPress={() => setFilter('public')}
-        >
-          <Text style={[styles.filterText, filter === 'public' && styles.filterTextActive]}>
-            Publiques ({notes.filter(n => !n.isPrivate).length})
+            Toutes ({notes?.length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -120,43 +75,74 @@ export default function NotesScreen({ onNavigate }: NotesScreenProps) {
           onPress={() => setFilter('private')}
         >
           <Text style={[styles.filterText, filter === 'private' && styles.filterTextActive]}>
-            Privées ({notes.filter(n => n.isPrivate).length})
+            Privées ({notes?.filter(n => n.isPrivate).length || 0})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterTab, filter === 'public' && styles.filterTabActive]}
+          onPress={() => setFilter('public')}
+        >
+          <Text style={[styles.filterText, filter === 'public' && styles.filterTextActive]}>
+            Publiques ({notes?.filter(n => !n.isPrivate).length || 0})
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Notes Grid */}
-      <ScrollView style={styles.content}>
-        <View style={styles.notesGrid}>
-          {filteredNotes.length > 0 ? (
-            filteredNotes.map(note => (
-              <TouchableOpacity key={note.id} style={[styles.noteCard, { backgroundColor: note.color }]}>
+      {/* Notes List */}
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : filteredNotes.length > 0 ? (
+          <View style={styles.notesGrid}>
+            {filteredNotes.map((note, index) => (
+              <TouchableOpacity
+                key={note.id}
+                style={[styles.noteCard, { backgroundColor: getNoteColor(index) }]}
+              >
                 <View style={styles.noteHeader}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{note.category}</Text>
-                  </View>
+                  <Text style={styles.noteTitle} numberOfLines={2}>
+                    {note.title}
+                  </Text>
                   {note.isPrivate && (
                     <View style={styles.privateBadge}>
-                      <Text style={styles.privateBadgeText}>🔒 Privée</Text>
+                      <Text style={styles.privateBadgeText}>🔒</Text>
                     </View>
                   )}
                 </View>
 
-                <Text style={styles.noteTitle} numberOfLines={2}>{note.title}</Text>
-                <Text style={styles.noteContent} numberOfLines={4}>{note.content}</Text>
+                <Text style={styles.noteContent} numberOfLines={4}>
+                  {note.content}
+                </Text>
 
                 <View style={styles.noteFooter}>
-                  <Text style={styles.noteAuthor}>👤 {note.author}</Text>
-                  <Text style={styles.noteDate}>📅 {note.date}</Text>
+                  <Text style={styles.noteDate}>
+                    {formatDistanceToNow(new Date(note.createdAt), {
+                      addSuffix: true,
+                      locale: fr,
+                    })}
+                  </Text>
                 </View>
               </TouchableOpacity>
-            ))
-          ) : (
-            <View style={styles.noNotes}>
-              <Text style={styles.noNotesText}>Aucune note trouvée</Text>
-            </View>
-          )}
-        </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {searchQuery ? 'Aucune note trouvée' : 'Aucune note pour le moment'}
+            </Text>
+            <Text style={styles.emptyStateSubtext}>
+              Créez votre première note !
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -198,15 +184,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   filterContainer: {
     flexDirection: 'row',
     padding: 16,
+    gap: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -215,7 +200,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginHorizontal: 4,
     borderRadius: 8,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
@@ -233,14 +217,28 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    padding: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
   },
   notesGrid: {
-    padding: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   noteCard: {
+    width: '48%',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    minHeight: 150,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -250,66 +248,50 @@ const styles = StyleSheet.create({
   noteHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 12,
   },
-  categoryBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  privateBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  privateBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
   noteTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 8,
+    flex: 1,
+  },
+  privateBadge: {
+    marginLeft: 8,
+  },
+  privateBadgeText: {
+    fontSize: 16,
   },
   noteContent: {
     fontSize: 14,
     color: '#4b5563',
     lineHeight: 20,
     marginBottom: 12,
+    flex: 1,
   },
   noteFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  noteAuthor: {
-    fontSize: 12,
-    color: '#6b7280',
+    borderTopColor: 'rgba(0,0,0,0.1)',
+    paddingTop: 8,
   },
   noteDate: {
     fontSize: 12,
     color: '#6b7280',
   },
-  noNotes: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 40,
+  emptyState: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
-  noNotesText: {
-    fontSize: 16,
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
     color: '#9ca3af',
   },
 });

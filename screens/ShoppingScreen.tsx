@@ -1,91 +1,55 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
 
 interface ShoppingScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface ShoppingItem {
-  id: string;
-  name: string;
-  quantity: string;
-  category: string;
-  checked: boolean;
-}
-
-interface ShoppingList {
-  id: string;
-  name: string;
-  items: ShoppingItem[];
-  createdDate: string;
-}
-
 export default function ShoppingScreen({ onNavigate }: ShoppingScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Mock shopping lists data
-  const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([
-    {
-      id: '1',
-      name: 'Courses de la semaine',
-      createdDate: 'Aujourd\'hui',
-      items: [
-        { id: '1', name: 'Pain', quantity: '2', category: 'Boulangerie', checked: false },
-        { id: '2', name: 'Lait', quantity: '1L', category: 'Produits laitiers', checked: false },
-        { id: '3', name: 'Pommes', quantity: '1kg', category: 'Fruits', checked: true },
-        { id: '4', name: 'Poulet', quantity: '1', category: 'Viande', checked: false },
-        { id: '5', name: 'Riz', quantity: '500g', category: 'Épicerie', checked: false },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Produits d\'entretien',
-      createdDate: 'Hier',
-      items: [
-        { id: '6', name: 'Lessive', quantity: '1', category: 'Entretien', checked: false },
-        { id: '7', name: 'Éponges', quantity: '3', category: 'Entretien', checked: false },
-      ],
-    },
-  ]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeListId, setActiveListId] = useState<number | null>(null);
 
-  const [activeListId, setActiveListId] = useState('1');
+  // Fetch shopping lists from API
+  const { data: shoppingLists, isLoading: listsLoading, refetch: refetchLists } = trpc.shopping.lists.useQuery();
 
-  const toggleItem = (listId: string, itemId: string) => {
-    setShoppingLists(shoppingLists.map(list => 
-      list.id === listId 
-        ? {
-            ...list,
-            items: list.items.map(item =>
-              item.id === itemId ? { ...item, checked: !item.checked } : item
-            )
-          }
-        : list
-    ));
+  // Fetch items for active list
+  const { data: items, isLoading: itemsLoading, refetch: refetchItems } = trpc.shopping.items.useQuery(
+    { listId: activeListId! },
+    { enabled: activeListId !== null }
+  );
+
+  // Mutation to toggle item
+  const toggleMutation = trpc.shopping.toggleItem.useMutation({
+    onSuccess: () => {
+      refetchItems();
+    },
+  });
+
+  // Set first list as active if not set
+  if (!activeListId && shoppingLists && shoppingLists.length > 0) {
+    setActiveListId(shoppingLists[0].id);
+  }
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchLists(), activeListId ? refetchItems() : Promise.resolve()]);
+    setRefreshing(false);
   };
 
-  const activeList = shoppingLists.find(list => list.id === activeListId);
-  const filteredItems = activeList?.items.filter(item =>
+  const toggleItem = (itemId: number) => {
+    toggleMutation.mutate({ id: itemId });
+  };
+
+  const activeList = shoppingLists?.find(list => list.id === activeListId);
+  const filteredItems = (items || []).filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  );
 
-  const getCategoryEmoji = (category: string) => {
-    const emojiMap: { [key: string]: string } = {
-      'Boulangerie': '🥖',
-      'Produits laitiers': '🥛',
-      'Fruits': '🍎',
-      'Légumes': '🥕',
-      'Viande': '🍗',
-      'Poisson': '🐟',
-      'Épicerie': '🛒',
-      'Entretien': '🧹',
-      'Hygiène': '🧴',
-    };
-    return emojiMap[category] || '📦';
-  };
-
-  const completedCount = activeList?.items.filter(item => item.checked).length || 0;
-  const totalCount = activeList?.items.length || 0;
+  const completedCount = items?.filter(item => item.checked).length || 0;
+  const totalCount = items?.length || 0;
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
@@ -101,22 +65,35 @@ export default function ShoppingScreen({ onNavigate }: ShoppingScreenProps) {
       </View>
 
       {/* Lists Tabs */}
-      <ScrollView horizontal style={styles.listsContainer} showsHorizontalScrollIndicator={false}>
-        {shoppingLists.map(list => (
-          <TouchableOpacity
-            key={list.id}
-            style={[styles.listTab, activeListId === list.id && styles.listTabActive]}
-            onPress={() => setActiveListId(list.id)}
-          >
-            <Text style={[styles.listTabText, activeListId === list.id && styles.listTabTextActive]}>
-              {list.name}
-            </Text>
-            <Text style={[styles.listTabDate, activeListId === list.id && styles.listTabDateActive]}>
-              {list.createdDate}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {listsLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#7c3aed" />
+        </View>
+      ) : (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.listsContainer}
+        >
+          {shoppingLists?.map(list => (
+            <TouchableOpacity
+              key={list.id}
+              style={[
+                styles.listTab,
+                activeListId === list.id && styles.listTabActive
+              ]}
+              onPress={() => setActiveListId(list.id)}
+            >
+              <Text style={[
+                styles.listTabText,
+                activeListId === list.id && styles.listTabTextActive
+              ]}>
+                {list.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Progress Bar */}
       {activeList && (
@@ -143,51 +120,64 @@ export default function ShoppingScreen({ onNavigate }: ShoppingScreenProps) {
         />
       </View>
 
-      {/* Shopping Items */}
-      <ScrollView style={styles.content}>
-        {filteredItems.length > 0 ? (
+      {/* Items List */}
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {itemsLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : filteredItems.length > 0 ? (
           filteredItems.map(item => (
-            <View key={item.id} style={styles.itemCard}>
-              <TouchableOpacity
-                style={styles.checkbox}
-                onPress={() => toggleItem(activeListId, item.id)}
-              >
+            <TouchableOpacity
+              key={item.id}
+              style={styles.itemCard}
+              onPress={() => toggleItem(item.id)}
+            >
+              <View style={styles.itemCheckbox}>
                 <View style={[
-                  styles.checkboxInner,
+                  styles.checkbox,
                   item.checked && styles.checkboxChecked
                 ]}>
                   {item.checked && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-              </TouchableOpacity>
+              </View>
 
               <View style={styles.itemContent}>
-                <View style={styles.itemHeader}>
-                  <Text style={[
-                    styles.itemName,
-                    item.checked && styles.itemNameChecked
-                  ]}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.itemQuantity}>{item.quantity}</Text>
-                </View>
-                <View style={styles.itemCategory}>
-                  <Text style={styles.categoryEmoji}>{getCategoryEmoji(item.category)}</Text>
-                  <Text style={styles.categoryText}>{item.category}</Text>
-                </View>
+                <Text style={[
+                  styles.itemName,
+                  item.checked && styles.itemNameChecked
+                ]}>
+                  {item.name}
+                </Text>
+                {item.quantity && (
+                  <Text style={styles.itemQuantity}>Quantité: {item.quantity}</Text>
+                )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         ) : (
-          <View style={styles.noItems}>
-            <Text style={styles.noItemsText}>Aucun article trouvé</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {searchQuery ? 'Aucun article trouvé' : 'Aucun article dans cette liste'}
+            </Text>
           </View>
         )}
-
-        {/* Add Item Button */}
-        <TouchableOpacity style={styles.addItemButton}>
-          <Text style={styles.addItemButtonText}>+ Ajouter un article</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      {/* Add Item Button */}
+      {activeList && (
+        <View style={styles.addItemContainer}>
+          <TouchableOpacity style={styles.addItemButton}>
+            <Text style={styles.addItemButtonText}>+ Ajouter un article</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -224,41 +214,32 @@ const styles = StyleSheet.create({
   },
   listsContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   listTab: {
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    marginRight: 12,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    minWidth: 150,
+    paddingHorizontal: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   listTabActive: {
-    backgroundColor: '#7c3aed',
+    borderBottomColor: '#7c3aed',
   },
   listTabText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   listTabTextActive: {
-    color: '#fff',
-  },
-  listTabDate: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  listTabDateActive: {
-    color: '#e9d5ff',
+    color: '#7c3aed',
+    fontWeight: '600',
   },
   progressContainer: {
-    padding: 16,
     backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -267,8 +248,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
+    color: '#6b7280',
   },
   progressPercent: {
     fontSize: 14,
@@ -283,7 +263,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#10b981',
     borderRadius: 4,
   },
   searchContainer: {
@@ -292,15 +272,23 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   content: {
     flex: 1,
     padding: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
   },
   itemCard: {
     flexDirection: 'row',
@@ -314,22 +302,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  checkbox: {
+  itemCheckbox: {
     marginRight: 12,
     paddingTop: 2,
   },
-  checkboxInner: {
+  checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: '#d1d5db',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#7c3aed',
-    borderColor: '#7c3aed',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   checkmark: {
     color: '#fff',
@@ -339,17 +327,11 @@ const styles = StyleSheet.create({
   itemContent: {
     flex: 1,
   },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   itemName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    flex: 1,
+    marginBottom: 4,
   },
   itemNameChecked: {
     textDecorationLine: 'line-through',
@@ -357,45 +339,35 @@ const styles = StyleSheet.create({
   },
   itemQuantity: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7c3aed',
-    marginLeft: 8,
-  },
-  itemCategory: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryEmoji: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  categoryText: {
-    fontSize: 14,
     color: '#6b7280',
   },
-  noItems: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 40,
+  emptyState: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
-  noItemsText: {
+  emptyStateText: {
     fontSize: 16,
     color: '#9ca3af',
   },
-  addItemButton: {
+  addItemContainer: {
+    padding: 16,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  addItemButton: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    marginTop: 8,
     borderWidth: 2,
-    borderColor: '#7c3aed',
+    borderColor: '#e5e7eb',
     borderStyle: 'dashed',
   },
   addItemButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#7c3aed',
+    color: '#6b7280',
   },
 });

@@ -1,81 +1,56 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { trpc } from '../lib/trpc';
+import { useAuth } from '../contexts/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface RequestsScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
-interface Request {
-  id: string;
-  title: string;
-  description: string;
-  requester: string;
-  status: 'pending' | 'approved' | 'rejected';
-  date: string;
-  category: string;
-  isFavorite: boolean;
-}
-
 export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'favorite'>('all');
+  const { user } = useAuth();
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock requests data
-  const [requests, setRequests] = useState<Request[]>([
-    {
-      id: '1',
-      title: 'Sortie au cinéma',
-      description: 'Aller voir le nouveau film Marvel samedi après-midi',
-      requester: 'Enfant 1',
-      status: 'pending',
-      date: 'Aujourd\'hui',
-      category: 'Loisirs',
-      isFavorite: true,
-    },
-    {
-      id: '2',
-      title: 'Augmentation argent de poche',
-      description: 'Demande d\'augmentation de 5€ par semaine',
-      requester: 'Enfant 2',
-      status: 'pending',
-      date: 'Hier',
-      category: 'Financier',
-      isFavorite: false,
-    },
-    {
-      id: '3',
-      title: 'Soirée pyjama chez un ami',
-      description: 'Dormir chez Thomas vendredi soir',
-      requester: 'Enfant 1',
-      status: 'approved',
-      date: 'Il y a 2 jours',
-      category: 'Social',
-      isFavorite: false,
-    },
-    {
-      id: '4',
-      title: 'Nouveau jeu vidéo',
-      description: 'Acheter le dernier FIFA',
-      requester: 'Enfant 2',
-      status: 'rejected',
-      date: 'Il y a 3 jours',
-      category: 'Loisirs',
-      isFavorite: false,
-    },
-  ]);
+  // Fetch requests from API
+  const { data: requests, isLoading, refetch } = trpc.requests.list.useQuery();
 
-  const toggleFavorite = (id: string) => {
-    setRequests(requests.map(req =>
-      req.id === id ? { ...req, isFavorite: !req.isFavorite } : req
-    ));
+  // Mutation to review request
+  const reviewMutation = trpc.requests.review.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (filter === 'favorite') return req.isFavorite;
+  const handleReview = (id: number, status: 'approved' | 'rejected') => {
+    const statusText = status === 'approved' ? 'approuver' : 'rejeter';
+    Alert.alert(
+      'Confirmation',
+      `Voulez-vous ${statusText} cette demande ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: () => reviewMutation.mutate({ id, status }),
+        },
+      ]
+    );
+  };
+
+  const filteredRequests = (requests || []).filter(req => {
     if (filter !== 'all' && req.status !== filter) return false;
     if (searchQuery && !req.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !req.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+        !req.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
     return true;
@@ -94,13 +69,12 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
     switch (status) {
       case 'pending': return 'En attente';
       case 'approved': return 'Approuvée';
-      case 'rejected': return 'Refusée';
-      default: return '';
+      case 'rejected': return 'Rejetée';
+      default: return status;
     }
   };
 
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const favoriteCount = requests.filter(r => r.isFavorite).length;
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -108,9 +82,9 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Requêtes</Text>
+        <Text style={styles.headerTitle}>Demandes</Text>
         <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle requête</Text>
+          <Text style={styles.addButtonText}>+ Nouvelle demande</Text>
         </TouchableOpacity>
       </View>
 
@@ -118,28 +92,20 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Rechercher une requête..."
+          placeholder="Rechercher une demande..."
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
       {/* Filter Tabs */}
-      <ScrollView horizontal style={styles.filterContainer} showsHorizontalScrollIndicator={false}>
+      <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
           onPress={() => setFilter('all')}
         >
           <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-            Toutes ({requests.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, filter === 'favorite' && styles.filterTabActive]}
-          onPress={() => setFilter('favorite')}
-        >
-          <Text style={[styles.filterText, filter === 'favorite' && styles.filterTextActive]}>
-            ⭐ Favoris ({favoriteCount})
+            Toutes ({requests?.length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -147,7 +113,7 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
           onPress={() => setFilter('pending')}
         >
           <Text style={[styles.filterText, filter === 'pending' && styles.filterTextActive]}>
-            En attente ({pendingCount})
+            En attente ({requests?.filter(r => r.status === 'pending').length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -155,7 +121,7 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
           onPress={() => setFilter('approved')}
         >
           <Text style={[styles.filterText, filter === 'approved' && styles.filterTextActive]}>
-            Approuvées
+            Approuvées ({requests?.filter(r => r.status === 'approved').length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -163,51 +129,75 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
           onPress={() => setFilter('rejected')}
         >
           <Text style={[styles.filterText, filter === 'rejected' && styles.filterTextActive]}>
-            Refusées
+            Rejetées ({requests?.filter(r => r.status === 'rejected').length || 0})
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       {/* Requests List */}
-      <ScrollView style={styles.content}>
-        {filteredRequests.length > 0 ? (
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Chargement...</Text>
+          </View>
+        ) : filteredRequests.length > 0 ? (
           filteredRequests.map(request => (
             <View key={request.id} style={styles.requestCard}>
               <View style={styles.requestHeader}>
+                <Text style={styles.requestTitle}>{request.title}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
                   <Text style={styles.statusText}>{getStatusLabel(request.status)}</Text>
                 </View>
-                <TouchableOpacity onPress={() => toggleFavorite(request.id)}>
-                  <Text style={styles.favoriteIcon}>
-                    {request.isFavorite ? '⭐' : '☆'}
-                  </Text>
-                </TouchableOpacity>
               </View>
 
-              <Text style={styles.requestTitle}>{request.title}</Text>
-              <Text style={styles.requestDescription}>{request.description}</Text>
+              {request.description && (
+                <Text style={styles.requestDescription}>{request.description}</Text>
+              )}
 
               <View style={styles.requestMeta}>
-                <Text style={styles.requestRequester}>👤 {request.requester}</Text>
-                <Text style={styles.requestCategory}>📂 {request.category}</Text>
-                <Text style={styles.requestDate}>📅 {request.date}</Text>
+                <Text style={styles.requestMetaText}>
+                  Demandé par: Utilisateur #{request.requestedBy}
+                </Text>
+                <Text style={styles.requestMetaText}>
+                  {formatDistanceToNow(new Date(request.createdAt), {
+                    addSuffix: true,
+                    locale: fr,
+                  })}
+                </Text>
               </View>
 
-              {request.status === 'pending' && (
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity style={[styles.actionButton, styles.approveButton]}>
+              {/* Admin Actions */}
+              {isAdmin && request.status === 'pending' && (
+                <View style={styles.actionsContainer}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.approveButton]}
+                    onPress={() => handleReview(request.id, 'approved')}
+                    disabled={reviewMutation.isLoading}
+                  >
                     <Text style={styles.actionButtonText}>✓ Approuver</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.actionButton, styles.rejectButton]}>
-                    <Text style={styles.actionButtonText}>✗ Refuser</Text>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.rejectButton]}
+                    onPress={() => handleReview(request.id, 'rejected')}
+                    disabled={reviewMutation.isLoading}
+                  >
+                    <Text style={styles.actionButtonText}>✗ Rejeter</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           ))
         ) : (
-          <View style={styles.noRequests}>
-            <Text style={styles.noRequestsText}>Aucune requête trouvée</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {searchQuery ? 'Aucune demande trouvée' : 'Aucune demande pour le moment'}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -251,31 +241,31 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   filterContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 8,
     backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   filterTab: {
+    flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
+    paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
   },
   filterTabActive: {
     backgroundColor: '#7c3aed',
   },
   filterText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6b7280',
   },
@@ -285,6 +275,16 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
   },
   requestCard: {
     backgroundColor: '#fff',
@@ -300,12 +300,19 @@ const styles = StyleSheet.create({
   requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  requestTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    flex: 1,
+    marginRight: 12,
   },
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   statusText: {
@@ -313,43 +320,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  favoriteIcon: {
-    fontSize: 24,
-  },
-  requestTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
   requestDescription: {
     fontSize: 14,
     color: '#6b7280',
-    lineHeight: 20,
     marginBottom: 12,
+    lineHeight: 20,
   },
   requestMeta: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
   },
-  requestRequester: {
-    fontSize: 14,
-    color: '#6b7280',
+  requestMetaText: {
+    fontSize: 12,
+    color: '#9ca3af',
   },
-  requestCategory: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  requestDate: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  actionButtons: {
+  actionsContainer: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
+    gap: 12,
+    marginTop: 12,
   },
   actionButton: {
     flex: 1,
@@ -368,13 +359,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  noRequests: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 40,
+  emptyState: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
-  noRequestsText: {
+  emptyStateText: {
     fontSize: 16,
     color: '#9ca3af',
   },
