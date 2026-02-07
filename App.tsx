@@ -1,49 +1,59 @@
 import 'react-native-gesture-handler';
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { trpc, createTRPCClient } from './lib/trpc';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
-export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+// Create QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5000,
+    },
+  },
+});
 
-  // Check if user is already logged in
-  useEffect(() => {
-    checkLoginStatus();
-  }, []);
+// Create tRPC client
+const trpcClient = createTRPCClient();
 
-  const checkLoginStatus = async () => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      setIsLoggedIn(!!token);
-    } catch (error) {
-      console.error('Error checking login status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('authToken');
-      setIsLoggedIn(false);
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
+function AppContent() {
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7c3aed" />
+      </View>
+    );
   }
 
-  if (isLoggedIn) {
-    return <AppNavigator onLogout={handleLogout} />;
+  if (isAuthenticated) {
+    return <AppNavigator onLogout={logout} />;
   }
 
-  return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  return <LoginScreen />;
 }
+
+export default function App() {
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+});

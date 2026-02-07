@@ -12,16 +12,33 @@ import {
   Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trpc } from '../lib/trpc';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginScreenProps {
-  onLoginSuccess: () => void;
-}
-
-export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
+export default function LoginScreen() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // tRPC mutation for login
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: async (data) => {
+      try {
+        // Store token and user data using AuthContext
+        await login(data.user, data.token);
+        setLoading(false);
+        // User will be automatically redirected by AuthContext
+      } catch (error) {
+        setLoading(false);
+        Alert.alert('Erreur', 'Erreur lors de la sauvegarde des données');
+      }
+    },
+    onError: (error) => {
+      setLoading(false);
+      Alert.alert('Erreur', error.message || 'Identifiants incorrects');
+    },
+  });
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -30,23 +47,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
 
     setLoading(true);
-    
-    // Simulate login (replace with real API call later)
-    setTimeout(async () => {
-      try {
-        // Store fake token for now
-        await AsyncStorage.setItem('authToken', 'fake-token-123');
-        await AsyncStorage.setItem('user', JSON.stringify({ email, name: 'Utilisateur' }));
-        
-        setLoading(false);
-        Alert.alert('Succès', 'Connexion réussie !', [
-          { text: 'OK', onPress: onLoginSuccess }
-        ]);
-      } catch (error) {
-        setLoading(false);
-        Alert.alert('Erreur', 'Erreur de connexion');
-      }
-    }, 1000);
+    loginMutation.mutate({ email, password });
   };
 
   return (
