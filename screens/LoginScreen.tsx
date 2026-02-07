@@ -25,16 +25,28 @@ export default function LoginScreen() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
       try {
+        console.log('Login response:', data);
+        
+        // Validate response data
+        if (!data || !data.user || !data.token) {
+          console.error('Invalid login response:', data);
+          Alert.alert('Erreur', 'Réponse invalide du serveur');
+          setLoading(false);
+          return;
+        }
+        
         // Store token and user data using AuthContext
         await login(data.user, data.token);
         setLoading(false);
         // User will be automatically redirected by AuthContext
       } catch (error) {
+        console.error('Error saving user data:', error);
         setLoading(false);
-        Alert.alert('Erreur', 'Erreur lors de la sauvegarde des données');
+        Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde des données');
       }
     },
     onError: (error) => {
+      console.error('Login error:', error);
       setLoading(false);
       Alert.alert('Erreur', error.message || 'Identifiants incorrects');
     },
