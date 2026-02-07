@@ -1,7 +1,8 @@
+import 'react-native-gesture-handler';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from './screens/LoginScreen';
-import DashboardScreen from './screens/DashboardScreen';
+import AppNavigator from './navigation/AppNavigator';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,8 +28,13 @@ export default function App() {
     setIsLoggedIn(true);
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('authToken');
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   if (isLoading) {
@@ -36,7 +42,7 @@ export default function App() {
   }
 
   if (isLoggedIn) {
-    return <DashboardScreen onLogout={handleLogout} />;
+    return <AppNavigator onLogout={handleLogout} />;
   }
 
   return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
