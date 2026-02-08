@@ -77,3 +77,31 @@
 - 11 écrans principaux
 - Connexion au backend tRPC (app.fri2plan.ch)
 - Build APK avec Expo Dev Client
+
+## Version 0.2.1 - UI Fixes & Immersive Mode (Février 2026)
+
+### 🐛 Corrections de bugs
+
+#### Écran de connexion (LoginScreen)
+- ✅ Suppression du header "FRI2PLAN" en haut (dupliqué)
+- ✅ Correction du débordement du texte "Mot de passe oublié ?"
+- ✅ Amélioration du layout responsive avec flexWrap
+- ✅ Centrage vertical de la card de connexion
+
+#### Mode immersif Android
+- ✅ Création de MainActivity.kt avec mode immersif
+- ✅ Masquage automatique de la barre de navigation Android
+- ✅ Compatible Android 11+ (WindowInsetsController)
+- ✅ Compatible Android 10 et inférieur (systemUiVisibility)
+- ✅ Réactivation automatique après swipe
+
+### 📁 Fichiers ajoutés
+- `MainActivity_IMMERSIVE_V2.kt` - MainActivity avec mode immersif
+- `IMMERSIVE_MODE_INSTRUCTIONS.md` - Instructions d'installation
+
+### 🔧 Modifications techniques
+- Suppression du header dupliqué dans LoginScreen
+- Ajout de flexWrap et gap pour éviter le débordement de texte
+- justifyContent: 'center' pour centrer la card verticalement
+- Mode immersive sticky pour Android
+

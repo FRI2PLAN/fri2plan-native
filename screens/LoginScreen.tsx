@@ -89,16 +89,6 @@ export default function LoginScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.content}
         >
-          {/* Header avec logo et nom */}
-          <View style={styles.header}>
-            <Image
-              source={require('../assets/logo.jpg')}
-              style={styles.headerLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.headerTitle}>FRI2PLAN</Text>
-          </View>
-
           {/* Card sombre de connexion */}
           <View style={styles.card}>
             {/* Logo centré dans la card */}
@@ -220,23 +210,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    justifyContent: 'center',
     paddingBottom: 40,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  headerLogo: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   card: {
     backgroundColor: '#1f2937', // Card sombre
@@ -286,13 +261,17 @@ const styles = StyleSheet.create({
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     width: '100%',
     marginBottom: 25,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 150,
   },
   checkbox: {
     width: 20,
@@ -320,6 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#c084fc',
     fontWeight: '600',
+    flexShrink: 1,
   },
   button: {
     backgroundColor: '#ec4899', // Rose/Magenta
