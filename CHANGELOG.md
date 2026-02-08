@@ -144,3 +144,50 @@ eas build --platform android --profile development
 - Swipe depuis le bas pour afficher temporairement la barre
 - Retour automatique en mode immersif
 
+
+## Version 0.3.0 - Dashboard Web Design Recreation (Février 2026)
+
+### ✨ Nouvelle fonctionnalité majeure : Dashboard complet
+
+#### Design et structure
+- ✅ Recreation complète du design du Dashboard web
+- ✅ Header amélioré avec avatar, nom utilisateur, famille et nombre de membres
+- ✅ Barre de favoris personnalisable (max 5 pages favorites)
+- ✅ Design cohérent avec l'application web
+
+#### Widgets intelligents
+- ✅ **Widget Demandes en attente** : Visible uniquement pour les admins de famille
+- ✅ **Widget Résumé du jour** : Statistiques (événements, tâches, messages)
+- ✅ **Widget Prochains anniversaires** : Affiche les anniversaires du mois à venir
+- ✅ **Widget Tâches récentes** : 5 dernières tâches avec priorités
+- ✅ **Widget Événements du jour** : Liste des événements d'aujourd'hui
+
+#### Intégration tRPC complète
+- ✅ `trpc.family.list` - Liste des familles
+- ✅ `trpc.family.members` - Membres de la famille avec rôles
+- ✅ `trpc.tasks.list` - Liste des tâches avec filtres
+- ✅ `trpc.events.list` - Liste des événements
+- ✅ `trpc.messages.list` - Liste des messages avec compteur non lus
+- ✅ `trpc.requests.list` - Liste des demandes (pour admins)
+- ✅ `trpc.settings.get` - Paramètres utilisateur (favoris)
+
+#### Fonctionnalités
+- ✅ Pull-to-refresh pour actualiser toutes les données
+- ✅ Calcul automatique des statistiques en temps réel
+- ✅ Détection automatique du rôle admin dans la famille
+- ✅ Calcul intelligent des anniversaires à venir
+- ✅ Affichage conditionnel selon les données disponibles
+- ✅ Message d'accueil si aucune famille n'est active
+
+### 🔧 Modifications techniques
+- `screens/DashboardScreen.tsx` : Refonte complète avec tous les widgets
+- Utilisation de `useMemo` pour optimiser les calculs
+- Gestion des états de chargement et d'erreur
+- Format de date avec `date-fns` et locale française
+
+### 📱 Résultat attendu
+- Dashboard identique à la version web
+- Données en temps réel depuis la base de données
+- Interface fluide et réactive
+- Widgets adaptatifs selon le rôle utilisateur
+

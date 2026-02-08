@@ -41,10 +41,36 @@
 - [x] Configurer app.json pour cacher la barre de navigation en mode immersif
 
 ## Design de la page de connexion (style app web)
-- [ ] Refaire LoginScreen avec card sombre (#1f2937 ou plus foncé)
-- [ ] Ajouter bouton rose/magenta pour "Se connecter" (au lieu de violet)
-- [ ] Ajouter checkbox "Se souvenir de moi"
-- [ ] Centrer le logo en haut de la card (pas dans le header)
-- [ ] Ajouter description "Connectez-vous à votre compte Fri2Plan - Votre agenda familial"
-- [ ] Mettre à jour RegisterScreen avec le même design
-- [ ] Mettre à jour ForgotPasswordScreen avec le même design
+- [x] Refaire LoginScreen avec card sombre (#1f2937 ou plus foncé)
+- [x] Ajouter bouton rose/magenta pour "Se connecter" (au lieu de violet)
+- [x] Ajouter checkbox "Se souvenir de moi"
+- [x] Centrer le logo en haut de la card (pas dans le header)
+- [x] Ajouter description "Connectez-vous à votre compte Fri2Plan - Votre agenda familial"
+- [x] Mettre à jour RegisterScreen avec le même design
+- [x] Mettre à jour ForgotPasswordScreen avec le même design
+
+## PRIORITÉS ACTUELLES (ordre d'implémentation)
+
+### Priorité 1 : Copier le design de la page d'accueil (Dashboard)
+- [x] Créer DashboardScreen.tsx avec structure complète
+- [x] Implémenter le header avec avatar, nom, famille
+- [x] Créer DashboardFavorites component (barre de favoris)
+- [x] Créer PendingRequestsWidget (demandes en attente pour admins)
+- [x] Créer DailySummaryWidget (résumé quotidien)
+- [x] Créer UpcomingBirthdaysWidget (prochains anniversaires)
+- [x] Intégrer tRPC pour récupérer les données réelles
+- [ ] Tester l'affichage avec données de la BD
+
+### Priorité 2 : Fixer le mode immersif
+- [x] Ajouter expo-navigation-bar
+- [ ] Tester une autre approche si nécessaire (le swipe ne fonctionne pas)
+
+### Priorité 3 : Traduction EN/FR
+- [ ] Implémenter react-i18next
+- [ ] Créer fichiers de traduction (fr.json, en.json)
+- [ ] Ajouter détection automatique de la langue
+
+### Priorité 4 : OAuth natif
+- [ ] Configuration Google Sign-In
+- [ ] Configuration Apple Auth
+- [ ] Configuration Microsoft Auth
