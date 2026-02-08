@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { trpc } from '../lib/trpc';
@@ -62,6 +63,22 @@ export default function LoginScreen() {
     loginMutation.mutate({ email, password });
   };
 
+  const handleForgotPassword = () => {
+    Alert.alert(
+      'Mot de passe oublié',
+      'Veuillez contacter l\'administrateur pour réinitialiser votre mot de passe.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleRegister = () => {
+    Alert.alert(
+      'Inscription',
+      'Pour créer un compte, veuillez contacter l\'administrateur de votre famille.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -71,7 +88,14 @@ export default function LoginScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logo}>FRI2PLAN</Text>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../assets/logo.jpg')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.logo}>FRI2PLAN</Text>
+          </View>
           <Text style={styles.subtitle}>Organiseur Familial</Text>
         </View>
 
@@ -121,8 +145,12 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkButton}>
+          <TouchableOpacity style={styles.linkButton} onPress={handleForgotPassword}>
             <Text style={styles.linkText}>Mot de passe oublié ?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            <Text style={styles.registerText}>Pas encore de compte ? <Text style={styles.registerTextBold}>S'inscrire</Text></Text>
           </TouchableOpacity>
         </View>
 
@@ -149,11 +177,20 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  logoImage: {
+    width: 60,
+    height: 60,
+    marginRight: 15,
+  },
   logo: {
     fontSize: 48,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
@@ -212,6 +249,21 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#7c3aed',
     fontSize: 16,
+  },
+  registerButton: {
+    marginTop: 30,
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  registerText: {
+    color: '#6b7280',
+    fontSize: 16,
+  },
+  registerTextBold: {
+    color: '#7c3aed',
+    fontWeight: '600',
   },
   footer: {
     padding: 20,
