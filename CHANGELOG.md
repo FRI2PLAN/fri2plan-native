@@ -281,3 +281,27 @@ eas build --platform android --profile development
 - Expérience utilisateur internationale
 - Facilité d'ajout de nouvelles langues
 
+
+## Version 0.5.1 - Add German Language (Février 2026)
+
+### ✨ Nouvelle langue : Allemand (DE)
+
+#### Fonctionnalité
+- ✅ Ajout de l'Allemand comme 3ème langue supportée
+- ✅ Traduction complète en allemand de toute l'application
+- ✅ Option Deutsch dans le sélecteur de langue
+
+#### Langues supportées
+- 🇫🇷 Français (par défaut)
+- 🇬🇧 English
+- 🇩🇪 Deutsch (nouveau)
+
+#### Implémentation technique
+- `locales/de.json` : Traductions allemandes complètes
+- `i18n.ts` : Ajout de l'allemand dans la configuration
+- `screens/SettingsScreen.tsx` : Option Deutsch dans le modal
+
+### 📱 Résultat
+- Application trilingue : FR, EN, DE
+- Expérience utilisateur internationale élargie
+

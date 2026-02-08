@@ -95,3 +95,10 @@
 - [x] Ajouter sélecteur de langue dans SettingsScreen avec modal
 - [x] Sauvegarder la préférence de langue dans AsyncStorage
 - [x] Changement de langue en temps réel fonctionnel
+
+
+## Ajout de l'Allemand (DE) - Terminé
+- [x] Créer fichier de traduction locales/de.json
+- [x] Ajouter l'Allemand dans i18n.ts
+- [x] Ajouter l'option Deutsch dans SettingsScreen
+- [x] Changement de langue vers l'Allemand fonctionnel

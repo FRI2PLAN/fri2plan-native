@@ -25,7 +25,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   };
 
   const getLanguageLabel = (lang: string) => {
-    return lang === 'fr' ? 'Français' : 'English';
+    if (lang === 'fr') return 'Français';
+    if (lang === 'en') return 'English';
+    if (lang === 'de') return 'Deutsch';
+    return 'Français';
   };
 
   return (
@@ -61,6 +64,14 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             >
               <Text style={styles.languageOptionText}>🇬🇧 English</Text>
               {currentLanguage === 'en' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.languageOption, currentLanguage === 'de' && styles.languageOptionSelected]}
+              onPress={() => handleLanguageChange('de')}
+            >
+              <Text style={styles.languageOptionText}>🇩🇪 Deutsch</Text>
+              {currentLanguage === 'de' && <Text style={styles.checkmark}>✓</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity 
