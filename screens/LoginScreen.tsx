@@ -15,12 +15,17 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
+import RegisterScreen from './RegisterScreen';
+import ForgotPasswordScreen from './ForgotPasswordScreen';
+
+type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [screenMode, setScreenMode] = useState<ScreenMode>('login');
 
   // tRPC mutation for login
   const loginMutation = trpc.auth.login.useMutation({
@@ -63,22 +68,17 @@ export default function LoginScreen() {
     loginMutation.mutate({ email, password });
   };
 
-  const handleForgotPassword = () => {
-    Alert.alert(
-      'Mot de passe oublié',
-      'Veuillez contacter l\'administrateur pour réinitialiser votre mot de passe.',
-      [{ text: 'OK' }]
-    );
-  };
+  // Show Register screen
+  if (screenMode === 'register') {
+    return <RegisterScreen onBackToLogin={() => setScreenMode('login')} />;
+  }
 
-  const handleRegister = () => {
-    Alert.alert(
-      'Inscription',
-      'Pour créer un compte, veuillez contacter l\'administrateur de votre famille.',
-      [{ text: 'OK' }]
-    );
-  };
+  // Show Forgot Password screen
+  if (screenMode === 'forgotPassword') {
+    return <ForgotPasswordScreen onBackToLogin={() => setScreenMode('login')} />;
+  }
 
+  // Show Login screen (default)
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -145,11 +145,11 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkButton} onPress={handleForgotPassword}>
+          <TouchableOpacity style={styles.linkButton} onPress={() => setScreenMode('forgotPassword')}>
             <Text style={styles.linkText}>Mot de passe oublié ?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <TouchableOpacity style={styles.registerButton} onPress={() => setScreenMode('register')}>
             <Text style={styles.registerText}>Pas encore de compte ? <Text style={styles.registerTextBold}>S'inscrire</Text></Text>
           </TouchableOpacity>
         </View>

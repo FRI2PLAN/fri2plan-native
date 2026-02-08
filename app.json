@@ -24,7 +24,13 @@
         "backgroundColor": "#7c3aed"
       },
       "package": "com.fri2plan.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "navigationBar": {
+        "visible": "immersive",
+        "barStyle": "dark-content",
+        "backgroundColor": "#7c3aed"
+      },
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
