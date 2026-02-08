@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { trpc } from '../lib/trpc';
@@ -25,6 +26,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
 
   // tRPC mutation for login
@@ -82,83 +84,127 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.content}
+        >
+          {/* Header avec logo et nom */}
+          <View style={styles.header}>
             <Image
               source={require('../assets/logo.jpg')}
-              style={styles.logoImage}
+              style={styles.headerLogo}
               resizeMode="contain"
             />
-            <Text style={styles.logo}>FRI2PLAN</Text>
+            <Text style={styles.headerTitle}>FRI2PLAN</Text>
           </View>
-          <Text style={styles.subtitle}>Organiseur Familial</Text>
-        </View>
 
-        {/* Login Form */}
-        <View style={styles.form}>
-          <Text style={styles.title}>Connexion</Text>
+          {/* Card sombre de connexion */}
+          <View style={styles.card}>
+            {/* Logo centré dans la card */}
+            <Image
+              source={require('../assets/logo.jpg')}
+              style={styles.cardLogo}
+              resizeMode="contain"
+            />
 
-          <View style={styles.inputContainer}>
+            <Text style={styles.title}>Connexion</Text>
+            <Text style={styles.subtitle}>
+              Connectez-vous à votre compte Fri2Plan - Votre agenda familial
+            </Text>
+
+            {/* Email */}
             <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="votre@email.com"
-              placeholderTextColor="#9ca3af"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
-          </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="ixarialexandre@gmail.com"
+                placeholderTextColor="#6b7280"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
 
-          <View style={styles.inputContainer}>
+            {/* Mot de passe */}
             <Text style={styles.label}>Mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#6b7280"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
+
+            {/* Se souvenir de moi + Mot de passe oublié */}
+            <View style={styles.optionsRow}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setRememberMe(!rememberMe)}
+                disabled={loading}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Se souvenir de moi</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setScreenMode('forgotPassword')} disabled={loading}>
+                <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bouton Se connecter (rose/magenta) */}
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Se connecter</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Pas encore de compte */}
+            <TouchableOpacity onPress={() => setScreenMode('register')} disabled={loading}>
+              <Text style={styles.registerText}>
+                Pas encore de compte ? <Text style={styles.registerLink}>S'inscrire</Text>
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OU</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* OAuth buttons (disabled for now) */}
+            <TouchableOpacity style={styles.oauthButton} disabled>
+              <Text style={styles.oauthButtonText}>Continuer avec Manus</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.oauthButton} disabled>
+              <Text style={styles.oauthButtonText}>Continuer avec Google</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.oauthButton} disabled>
+              <Text style={styles.oauthButtonText}>Continuer avec Apple</Text>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Se connecter</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.linkButton} onPress={() => setScreenMode('forgotPassword')}>
-            <Text style={styles.linkText}>Mot de passe oublié ?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.registerButton} onPress={() => setScreenMode('register')}>
-            <Text style={styles.registerText}>Pas encore de compte ? <Text style={styles.registerTextBold}>S'inscrire</Text></Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Version Native • React Native</Text>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -166,111 +212,168 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#7c3aed', // Fond violet
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 40,
-    alignItems: 'center',
-  },
-  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 30,
   },
-  logoImage: {
-    width: 60,
-    height: 60,
-    marginRight: 15,
+  headerLogo: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
   },
-  logo: {
-    fontSize: 48,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#e9d5ff',
-  },
-  form: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+  card: {
+    backgroundColor: '#1f2937', // Card sombre
+    borderRadius: 20,
     padding: 30,
+    alignItems: 'center',
+  },
+  cardLogo: {
+    width: 80,
+    height: 80,
+    marginBottom: 20,
+    borderRadius: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 30,
+    color: '#fff',
+    marginBottom: 10,
   },
-  inputContainer: {
-    marginBottom: 20,
+  subtitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#fff',
+    alignSelf: 'flex-start',
     marginBottom: 8,
+    marginTop: 10,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
   },
   input: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    padding: 14,
     fontSize: 16,
-    color: '#1f2937',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    color: '#fff',
+    width: '100%',
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 25,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#06b6d4',
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#06b6d4',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  forgotPassword: {
+    fontSize: 14,
+    color: '#c084fc',
+    fontWeight: '600',
   },
   button: {
-    backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    padding: 18,
+    backgroundColor: '#ec4899', // Rose/Magenta
+    borderRadius: 8,
+    padding: 16,
+    width: '100%',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 20,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  linkButton: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#7c3aed',
     fontSize: 16,
-  },
-  registerButton: {
-    marginTop: 30,
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    fontWeight: 'bold',
   },
   registerText: {
-    color: '#6b7280',
-    fontSize: 16,
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 25,
   },
-  registerTextBold: {
-    color: '#7c3aed',
+  registerLink: {
+    color: '#c084fc',
     fontWeight: '600',
   },
-  footer: {
-    padding: 20,
+  divider: {
+    flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
   },
-  footerText: {
-    color: '#e9d5ff',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#374151',
+  },
+  dividerText: {
+    color: '#9ca3af',
     fontSize: 14,
+    marginHorizontal: 15,
+  },
+  oauthButton: {
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    padding: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+    opacity: 0.5,
+  },
+  oauthButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

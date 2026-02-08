@@ -39,3 +39,12 @@
 
 ## Mode immersif Android
 - [x] Configurer app.json pour cacher la barre de navigation en mode immersif
+
+## Design de la page de connexion (style app web)
+- [ ] Refaire LoginScreen avec card sombre (#1f2937 ou plus foncé)
+- [ ] Ajouter bouton rose/magenta pour "Se connecter" (au lieu de violet)
+- [ ] Ajouter checkbox "Se souvenir de moi"
+- [ ] Centrer le logo en haut de la card (pas dans le header)
+- [ ] Ajouter description "Connectez-vous à votre compte Fri2Plan - Votre agenda familial"
+- [ ] Mettre à jour RegisterScreen avec le même design
+- [ ] Mettre à jour ForgotPasswordScreen avec le même design
