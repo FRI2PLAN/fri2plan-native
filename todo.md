@@ -102,3 +102,19 @@
 - [x] Ajouter l'Allemand dans i18n.ts
 - [x] Ajouter l'option Deutsch dans SettingsScreen
 - [x] Changement de langue vers l'Allemand fonctionnel
+
+
+## Implémentation Calendrier (terminé ✅)
+- [x] Analyser le code du Calendrier web
+- [x] Créer CalendarScreen avec vue mois
+- [x] Implémenter ajout d'événement (modal complet)
+- [x] Implémenter modification d'événement (modal complet)
+- [x] Implémenter suppression d'événement
+- [x] Intégrer requêtes tRPC (events.list, events.create, events.update, events.delete)
+- [x] Ajouter catégories avec icônes et couleurs (6 catégories)
+- [x] Highlight du jour actuel (bordure violette)
+- [x] Affichage heures précises (HH:mm)
+- [x] Système de rappels (5min, 15min défaut, 30min, 1h, 2h, 1 jour)
+- [x] Option privé (🔒)
+- [x] Support multilingue (FR/EN/DE)
+- [ ] Tester toutes les fonctionnalités

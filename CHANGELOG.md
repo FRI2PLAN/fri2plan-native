@@ -305,3 +305,33 @@ eas build --platform android --profile development
 - Application trilingue : FR, EN, DE
 - Expérience utilisateur internationale élargie
 
+
+## v0.5.0 - Calendrier complet ($(date +%Y-%m-%d))
+
+### ✅ Calendrier implémenté
+
+**Fonctionnalités**:
+- Vue mois avec grille de calendrier
+- Modal de création d'événement complet
+- Modal de modification d'événement
+- Suppression d'événements
+- 6 catégories avec icônes et couleurs (Repas, Anniversaire, Travail, Personnel, Sport, Autre)
+- Système de rappels (5min, 15min défaut, 30min, 1h, 2h, 1 jour)
+- Option privé (🔒)
+- Highlight du jour actuel (bordure violette)
+- Affichage heures précises (HH:mm)
+- Support multilingue (FR/EN/DE)
+
+**Requêtes tRPC**:
+- events.list
+- events.create
+- events.update
+- events.delete
+
+**Design**:
+- Cohérent avec l'application web
+- Modals élégants avec formulaires complets
+- Catégories scrollables horizontalement
+- Rappels scrollables horizontalement
+- Pull-to-refresh
+
