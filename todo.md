@@ -84,3 +84,14 @@
 - [x] Garder le header fixe pendant les transitions
 - [x] Animation de transition fluide
 - [x] Coexistence avec le Drawer (menu hamburger)
+
+
+## Priorité 3 : Traduction EN/FR (terminé)
+- [x] Installer i18next et react-i18next
+- [x] Créer fichiers de traduction (locales/fr.json, locales/en.json)
+- [x] Créer configuration i18n (i18n.ts)
+- [x] Détecter automatiquement la langue du téléphone
+- [x] Créer traductions complètes (auth, navigation, dashboard, etc.)
+- [x] Ajouter sélecteur de langue dans SettingsScreen avec modal
+- [x] Sauvegarder la préférence de langue dans AsyncStorage
+- [x] Changement de langue en temps réel fonctionnel

@@ -1,6 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage, getCurrentLanguage } from '../i18n';
 
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -8,24 +10,136 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenProps) {
+  const { t } = useTranslation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+
+  const handleLanguageChange = async (language: string) => {
+    await changeLanguage(language);
+    setCurrentLanguage(language);
+    setShowLanguageModal(false);
+  };
+
+  const getLanguageLabel = (lang: string) => {
+    return lang === 'fr' ? 'Français' : 'English';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Paramètres</Text>
-      </View>
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.selectLanguage')}</Text>
+            
+            <TouchableOpacity 
+              style={[styles.languageOption, currentLanguage === 'fr' && styles.languageOptionSelected]}
+              onPress={() => handleLanguageChange('fr')}
+            >
+              <Text style={styles.languageOptionText}>🇫🇷 Français</Text>
+              {currentLanguage === 'fr' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.languageOption, currentLanguage === 'en' && styles.languageOptionSelected]}
+              onPress={() => handleLanguageChange('en')}
+            >
+              <Text style={styles.languageOptionText}>🇬🇧 English</Text>
+              {currentLanguage === 'en' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <ScrollView style={styles.content}>
-        {/* Profile Section */}
+        {/* Appearance Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profil</Text>
+          <Text style={styles.sectionTitle}>{t('settings.general')}</Text>
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>🌙</Text>
+              <Text style={styles.settingLabel}>{t('settings.darkMode')}</Text>
+            </View>
+            <Switch
+              value={darkMode}
+              onValueChange={setDarkMode}
+              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowLanguageModal(true)}
+          >
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>🌍</Text>
+              <Text style={styles.settingLabel}>{t('settings.language')}</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{getLanguageLabel(currentLanguage)}</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Notifications Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>🔔</Text>
+              <Text style={styles.settingLabel}>{t('settings.pushNotifications')}</Text>
+            </View>
+            <Switch
+              value={pushNotifications}
+              onValueChange={setPushNotifications}
+              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>📧</Text>
+              <Text style={styles.settingLabel}>{t('settings.emailNotifications')}</Text>
+            </View>
+            <Switch
+              value={emailNotifications}
+              onValueChange={setEmailNotifications}
+              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+              thumbColor="#fff"
+            />
+          </View>
+        </View>
+
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
@@ -42,144 +156,11 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>📧</Text>
-              <Text style={styles.settingLabel}>Email et téléphone</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🔔</Text>
-              <Text style={styles.settingLabel}>Activer les notifications</Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          {notificationsEnabled && (
-            <>
-              <View style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Text style={styles.settingIcon}>📧</Text>
-                  <Text style={styles.settingLabel}>Notifications par email</Text>
-                </View>
-                <Switch
-                  value={emailNotifications}
-                  onValueChange={setEmailNotifications}
-                  trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
-                  thumbColor="#fff"
-                />
-              </View>
-
-              <View style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Text style={styles.settingIcon}>📱</Text>
-                  <Text style={styles.settingLabel}>Notifications push</Text>
-                </View>
-                <Switch
-                  value={pushNotifications}
-                  onValueChange={setPushNotifications}
-                  trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
-                  thumbColor="#fff"
-                />
-              </View>
-            </>
-          )}
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>⚙️</Text>
-              <Text style={styles.settingLabel}>Gérer les préférences</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Appearance Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Apparence</Text>
-          
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🌙</Text>
-              <Text style={styles.settingLabel}>Mode sombre</Text>
-            </View>
-            <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🌍</Text>
-              <Text style={styles.settingLabel}>Langue</Text>
-            </View>
-            <View style={styles.settingRight}>
-              <Text style={styles.settingValue}>Français</Text>
-              <Text style={styles.settingArrow}>›</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🎨</Text>
-              <Text style={styles.settingLabel}>Thème de couleur</Text>
-            </View>
-            <View style={styles.settingRight}>
-              <Text style={styles.settingValue}>Violet</Text>
-              <Text style={styles.settingArrow}>›</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Family Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Famille</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>👨‍👩‍👧‍👦</Text>
-              <Text style={styles.settingLabel}>Gérer les membres</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🔐</Text>
-              <Text style={styles.settingLabel}>Permissions et rôles</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>🏡</Text>
-              <Text style={styles.settingLabel}>Cercle élargi</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Privacy Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Confidentialité et sécurité</Text>
+          <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
           
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
@@ -196,89 +177,23 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>📜</Text>
-              <Text style={styles.settingLabel}>Données personnelles</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Subscription Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Abonnement</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>⭐</Text>
-              <Text style={styles.settingLabel}>Passer à Premium</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>💳</Text>
-              <Text style={styles.settingLabel}>Moyens de paiement</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>📊</Text>
-              <Text style={styles.settingLabel}>Historique des paiements</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Support Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aide et support</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>❓</Text>
-              <Text style={styles.settingLabel}>Centre d'aide</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>💬</Text>
-              <Text style={styles.settingLabel}>Contacter le support</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>📝</Text>
-              <Text style={styles.settingLabel}>Envoyer un feedback</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
         </View>
 
         {/* About Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À propos</Text>
+          <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
           
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>ℹ️</Text>
-              <Text style={styles.settingLabel}>Version de l'application</Text>
+              <Text style={styles.settingLabel}>{t('settings.version')}</Text>
             </View>
             <Text style={styles.settingValue}>1.0.0</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Text style={styles.settingIcon}>📄</Text>
+              <Text style={styles.settingIcon}>📜</Text>
               <Text style={styles.settingLabel}>Conditions d'utilisation</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
@@ -294,14 +209,13 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutButtonText}>🚪 Déconnexion</Text>
-        </TouchableOpacity>
-
-        {/* Delete Account */}
-        <TouchableOpacity style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>Supprimer mon compte</Text>
-        </TouchableOpacity>
+        {onLogout && (
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+              <Text style={styles.logoutText}>{t('settings.logout')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -321,33 +235,35 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
   },
   content: {
     flex: 1,
   },
   section: {
     marginTop: 24,
+    backgroundColor: '#fff',
     paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6b7280',
     textTransform: 'uppercase',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    marginTop: 8,
   },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 1,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -367,37 +283,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingValue: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#6b7280',
     marginRight: 8,
   },
   settingArrow: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#9ca3af',
   },
   logoutButton: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 32,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
     padding: 16,
-    borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#7c3aed',
+    marginVertical: 16,
   },
-  logoutButtonText: {
+  logoutText: {
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#7c3aed',
+    fontWeight: '600',
   },
-  deleteButton: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  deleteButtonText: {
-    fontSize: 14,
-    color: '#ef4444',
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    marginBottom: 12,
+  },
+  languageOptionSelected: {
+    borderColor: '#7c3aed',
+    backgroundColor: '#f3f4f6',
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: '#1f2937',
+    fontWeight: '500',
+  },
+  checkmark: {
+    fontSize: 20,
+    color: '#7c3aed',
+    fontWeight: 'bold',
+  },
+  modalCloseButton: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalCloseButtonText: {
+    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

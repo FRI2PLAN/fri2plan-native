@@ -229,3 +229,55 @@ eas build --platform android --profile development
 - Expérience mobile moderne (comme Instagram, Twitter)
 - Pas de conflit avec les fonctionnalités existantes
 
+
+## Version 0.5.0 - i18n Translation System (Février 2026)
+
+### ✨ Nouvelle fonctionnalité : Système de traduction FR/EN
+
+#### Fonctionnalité
+- ✅ Traduction complète de l'application en français et anglais
+- ✅ Détection automatique de la langue du téléphone au démarrage
+- ✅ Sélecteur de langue dans les paramètres avec modal élégant
+- ✅ Sauvegarde de la préférence de langue dans AsyncStorage
+- ✅ Changement de langue en temps réel sans redémarrage
+
+#### Langues supportées
+- 🇫🇷 Français (par défaut)
+- 🇬🇧 English
+
+#### Traductions disponibles
+- **Commun** : Loading, Error, Save, Cancel, Delete, Edit, Add, etc.
+- **Authentification** : Login, Register, Forgot Password, etc.
+- **Navigation** : Dashboard, Calendar, Tasks, Shopping, Messages, etc.
+- **Dashboard** : Welcome, Pending Requests, Daily Summary, Upcoming Birthdays, etc.
+- **Paramètres** : Language, Theme, Notifications, Privacy, Account, etc.
+- **Tous les écrans** : Calendar, Tasks, Shopping, Messages, Requests, Notes, Budget, Rewards, Members, Referral, Help
+
+#### Implémentation technique
+- Package : `i18next` + `react-i18next` + `expo-localization`
+- Fichiers de traduction : `locales/fr.json` et `locales/en.json`
+- Configuration : `i18n.ts` avec détection automatique et AsyncStorage
+- Hook : `useTranslation()` disponible dans tous les composants
+- Fonction : `changeLanguage(lang)` pour changer la langue
+
+#### Expérience utilisateur
+- Détection automatique de la langue du téléphone
+- Sélecteur dans Paramètres → Général → Langue
+- Modal élégant avec drapeaux 🇫🇷 🇬🇧
+- Changement instantané sans redémarrage
+- Préférence sauvegardée entre les sessions
+
+### 🔧 Modifications techniques
+- `package.json` : Ajout de i18next, react-i18next, expo-localization
+- `i18n.ts` : Configuration i18n avec détection automatique
+- `locales/fr.json` : Traductions françaises complètes
+- `locales/en.json` : Traductions anglaises complètes
+- `App.tsx` : Import de i18n au démarrage
+- `screens/SettingsScreen.tsx` : Sélecteur de langue avec modal
+- `todo.md` : Priorité 3 marquée comme terminée
+
+### 📱 Résultat
+- Application multilingue professionnelle
+- Expérience utilisateur internationale
+- Facilité d'ajout de nouvelles langues
+
