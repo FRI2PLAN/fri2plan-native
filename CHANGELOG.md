@@ -105,3 +105,42 @@
 - justifyContent: 'center' pour centrer la card verticalement
 - Mode immersive sticky pour Android
 
+
+## Version 0.2.2 - Mode immersif React Native (Février 2026)
+
+### ✨ Nouvelle fonctionnalité
+
+#### Mode immersif Android
+- ✅ Ajout du package `expo-navigation-bar`
+- ✅ Masquage automatique de la barre de navigation Android au démarrage
+- ✅ Comportement "overlay-swipe" : l'utilisateur peut swiper pour afficher temporairement la barre
+- ✅ La barre se cache automatiquement après utilisation
+- ✅ Fonctionne uniquement sur Android (iOS n'a pas de barre de navigation)
+
+### 📦 Dépendances ajoutées
+- `expo-navigation-bar`: ~4.0.5
+
+### 🔧 Modifications
+- `App.tsx`: Ajout du hook useEffect pour masquer la barre au démarrage
+- `package.json`: Ajout de la dépendance expo-navigation-bar
+
+### 📱 Installation
+
+Après avoir fait `git pull`, exécutez :
+
+```bash
+npm install
+```
+
+Puis recompilez l'APK :
+
+```bash
+eas build --platform android --profile development
+```
+
+### ✅ Résultat attendu
+- Application en plein écran sur Android
+- Barre de navigation masquée par défaut
+- Swipe depuis le bas pour afficher temporairement la barre
+- Retour automatique en mode immersif
+

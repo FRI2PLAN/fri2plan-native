@@ -4,7 +4,9 @@ import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
+import { useEffect } from 'react';
+import * as NavigationBar from 'expo-navigation-bar';
 
 // Create QueryClient
 const queryClient = new QueryClient({
@@ -38,6 +40,14 @@ function AppContent() {
 }
 
 export default function App() {
+  // Hide Android navigation bar on app startup
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+    }
+  }, []);
+
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
