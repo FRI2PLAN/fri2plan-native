@@ -191,3 +191,41 @@ eas build --platform android --profile development
 - Interface fluide et réactive
 - Widgets adaptatifs selon le rôle utilisateur
 
+
+## Version 0.4.0 - Circular Swipe Navigation (Février 2026)
+
+### ✨ Nouvelle fonctionnalité : Navigation par swipe circulaire
+
+#### Fonctionnalité
+- ✅ Navigation circulaire par swipe gauche/droite entre tous les écrans
+- ✅ Swipe gauche → écran suivant dans l'ordre
+- ✅ Swipe droite → écran précédent dans l'ordre
+- ✅ Navigation circulaire : après le dernier écran, retour au premier
+- ✅ Coexistence avec le Drawer (menu hamburger) pour accès direct
+
+#### Ordre de navigation
+1. Dashboard → 2. Calendar → 3. Tasks → 4. Shopping → 5. Messages → 6. Requests → 7. Notes → 8. Budget → 9. Rewards → 10. Members → 11. Referral → 12. Settings → 13. Help → (retour à 1)
+
+#### Implémentation technique
+- Nouveau composant `SwipeNavigator.tsx` avec React Native Gesture Handler
+- Utilisation de `react-native-reanimated` pour animations fluides
+- Détection de swipe avec seuil de 30% de la largeur de l'écran
+- Animation de transition de 300ms
+- Support de la vélocité du geste pour navigation rapide
+
+#### Expérience utilisateur
+- Header reste fixe pendant les transitions (pas de déplacement)
+- Animation fluide et naturelle
+- Double méthode de navigation : swipe + drawer
+- Flexibilité maximale pour l'utilisateur
+
+### 🔧 Modifications techniques
+- `navigation/SwipeNavigator.tsx` : Nouveau composant de navigation par geste
+- `navigation/AppNavigator.tsx` : Wrapper de tous les écrans avec SwipeNavigator
+- Tous les écrans (Dashboard, Calendar, Tasks, etc.) supportent le swipe
+
+### 📱 Résultat
+- Navigation intuitive et rapide entre les écrans
+- Expérience mobile moderne (comme Instagram, Twitter)
+- Pas de conflit avec les fonctionnalités existantes
+

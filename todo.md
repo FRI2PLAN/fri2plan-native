@@ -74,3 +74,13 @@
 - [ ] Configuration Google Sign-In
 - [ ] Configuration Apple Auth
 - [ ] Configuration Microsoft Auth
+
+
+## Navigation par swipe (nouvelle demande)
+- [x] Implémenter navigation circulaire par swipe gauche/droite entre les écrans
+- [x] Swipe gauche → écran suivant
+- [x] Swipe droite → écran précédent
+- [x] Navigation circulaire (après le dernier écran, retour au premier)
+- [x] Garder le header fixe pendant les transitions
+- [x] Animation de transition fluide
+- [x] Coexistence avec le Drawer (menu hamburger)

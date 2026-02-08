@@ -1,5 +1,6 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useRoute } from '@react-navigation/native';
+import SwipeNavigator from './SwipeNavigator';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
@@ -15,6 +16,32 @@ import SettingsScreen from '../screens/SettingsScreen';
 import HelpScreen from '../screens/HelpScreen';
 
 const Drawer = createDrawerNavigator();
+
+// Define screen order for swipe navigation
+const SCREEN_ORDER = [
+  'Dashboard',
+  'Calendar',
+  'Tasks',
+  'Shopping',
+  'Messages',
+  'Requests',
+  'Notes',
+  'Budget',
+  'Rewards',
+  'Members',
+  'Referral',
+  'Settings',
+  'Help',
+];
+
+// Wrapper component to add swipe navigation
+function ScreenWrapper({ children, screenName }: { children: React.ReactNode; screenName: string }) {
+  return (
+    <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
+      {children}
+    </SwipeNavigator>
+  );
+}
 
 interface AppNavigatorProps {
   onLogout: () => void;
@@ -53,98 +80,152 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
             drawerLabel: '🏠 Accueil',
           }}
         >
-          {(props) => <DashboardScreen {...props} onLogout={onLogout} />}
+          {(props) => (
+            <ScreenWrapper screenName="Dashboard">
+              <DashboardScreen {...props} onLogout={onLogout} />
+            </ScreenWrapper>
+          )}
         </Drawer.Screen>
 
         <Drawer.Screen
           name="Calendar"
-          component={CalendarScreen}
           options={{
             title: '📅 Calendrier',
             drawerLabel: '📅 Calendrier',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Calendar">
+              <CalendarScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Tasks"
-          component={TasksScreen}
           options={{
             title: '✅ Tâches',
             drawerLabel: '✅ Tâches',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Tasks">
+              <TasksScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Shopping"
-          component={ShoppingScreen}
           options={{
             title: '🛒 Courses',
             drawerLabel: '🛒 Courses',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Shopping">
+              <ShoppingScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Messages"
-          component={MessagesScreen}
           options={{
             title: '💬 Messages',
             drawerLabel: '💬 Messages',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Messages">
+              <MessagesScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Requests"
-          component={RequestsScreen}
           options={{
             title: '📋 Requêtes',
             drawerLabel: '📋 Requêtes',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Requests">
+              <RequestsScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Notes"
-          component={NotesScreen}
           options={{
             title: '📝 Notes',
             drawerLabel: '📝 Notes',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Notes">
+              <NotesScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Budget"
-          component={BudgetScreen}
           options={{
             title: '💰 Budget',
             drawerLabel: '💰 Budget',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Budget">
+              <BudgetScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Rewards"
-          component={RewardsScreen}
           options={{
             title: '🎁 Récompenses',
             drawerLabel: '🎁 Récompenses',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Rewards">
+              <RewardsScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Members"
-          component={MembersScreen}
           options={{
             title: '👥 Membres',
             drawerLabel: '👥 Membres',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Members">
+              <MembersScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Referral"
-          component={ReferralScreen}
           options={{
             title: '🤝 Parrainer',
             drawerLabel: '🤝 Parrainer',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Referral">
+              <ReferralScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
 
         <Drawer.Screen
           name="Settings"
@@ -153,17 +234,26 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
             drawerLabel: '⚙️ Paramètres',
           }}
         >
-          {(props) => <SettingsScreen {...props} onLogout={onLogout} />}
+          {(props) => (
+            <ScreenWrapper screenName="Settings">
+              <SettingsScreen {...props} onLogout={onLogout} />
+            </ScreenWrapper>
+          )}
         </Drawer.Screen>
 
         <Drawer.Screen
           name="Help"
-          component={HelpScreen}
           options={{
             title: '❓ Aide',
             drawerLabel: '❓ Centre d\'aide',
           }}
-        />
+        >
+          {(props) => (
+            <ScreenWrapper screenName="Help">
+              <HelpScreen {...props} />
+            </ScreenWrapper>
+          )}
+        </Drawer.Screen>
       </Drawer.Navigator>
     </NavigationContainer>
   );
