@@ -138,29 +138,9 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
-          </View>
-          <View>
-            <Text style={styles.headerName}>{user?.name || 'Utilisateur'}</Text>
-            {activeFamily && (
-              <Text style={styles.headerFamily}>
-                {activeFamily.name} • {familyMembers.length} membre{familyMembers.length > 1 ? 's' : ''}
-              </Text>
-            )}
-          </View>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>🚪</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Content */}
       <ScrollView 
         style={styles.content}
@@ -318,7 +298,7 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -326,49 +306,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#7c3aed',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  headerName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  headerFamily: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  logoutButton: {
-    padding: 8,
-  },
-  logoutText: {
-    fontSize: 24,
   },
   content: {
     flex: 1,

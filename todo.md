@@ -175,3 +175,11 @@
 - [x] Optimiser espacements et padding
 - [x] Corriger chargement du nom utilisateur (placeholder "Utilisateur")
 - [x] Rendre le header plus compact et élégant
+
+
+## Corrections safe zone et duplication (urgent)
+- [x] Vérifier SafeAreaView dans FixedHeaderLayout
+- [x] Header doit commencer sous la barre de statut (fond violet sur SafeAreaView)
+- [x] Supprimer header utilisateur de DashboardScreen (avatar + nom + famille)
+- [x] Garder uniquement titre "Accueil" et widgets dans Dashboard
+- [x] Vérifier que le nom n'apparaît qu'une fois (dans header fixe)

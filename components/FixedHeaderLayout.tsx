@@ -90,9 +90,10 @@ export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#7c3aed', // Purple background for safe area (status bar)
   },
   content: {
     flex: 1,
+    backgroundColor: '#f3f4f6', // Gray background for content
   },
 });
