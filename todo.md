@@ -200,3 +200,12 @@
 - [x] Animation plus rapide (250ms au lieu de spring)
 - [x] Garder les pages en cache (pas de unmount)
 - [ ] Tester fluidité du swipe horizontal
+
+
+## Transition fondu entre pages (cross-fade)
+- [x] Implémenter fade out de la page actuelle pendant swipe
+- [x] Implémenter fade in de la page suivante pendant swipe
+- [x] Ajouter opacity animée basée sur translateX (interpolate)
+- [x] Transition douce comme WebView (pas de changement brusque)
+- [x] Duration 300ms (0.3s) comme préférence utilisateur
+- [ ] Tester que le texte ne "saute" plus

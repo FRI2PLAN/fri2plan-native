@@ -96,7 +96,7 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
         translateX.value = withTiming(
           -SCREEN_WIDTH,
           {
-            duration: 250, // Faster animation
+            duration: 300, // 0.3s as per user preference
             easing: Easing.out(Easing.cubic),
           },
           () => {
@@ -110,7 +110,7 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
         translateX.value = withTiming(
           SCREEN_WIDTH,
           {
-            duration: 250, // Faster animation
+            duration: 300, // 0.3s as per user preference
             easing: Easing.out(Easing.cubic),
           },
           () => {
@@ -130,9 +130,22 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
     .activeOffsetX([-10, 10]) // Require 10px horizontal movement to activate
     .failOffsetY([-25, 25]); // Fail if vertical movement exceeds 25px
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
+  // Animated style with cross-fade effect
+  const animatedStyle = useAnimatedStyle(() => {
+    // Calculate opacity based on translation
+    // When swiping, the current page fades out
+    const opacity = interpolate(
+      Math.abs(translateX.value),
+      [0, SCREEN_WIDTH * 0.5, SCREEN_WIDTH],
+      [1, 0.5, 0], // Fade from 1 (visible) to 0 (invisible)
+      Extrapolate.CLAMP
+    );
+
+    return {
+      transform: [{ translateX: translateX.value }],
+      opacity,
+    };
+  });
 
   return (
     <GestureHandlerRootView style={styles.container}>
