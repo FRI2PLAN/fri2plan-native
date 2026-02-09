@@ -9,7 +9,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { trpc } from '../lib/trpc';
-import { useTranslation } from 'react-i18next';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -27,7 +26,6 @@ export default function RichHeader({
   isDarkMode = true,
 }: RichHeaderProps) {
   const navigation = useNavigation();
-  const { t } = useTranslation();
 
   // Récupérer les données utilisateur
   const { data: user } = trpc.user.me.useQuery();
@@ -41,10 +39,9 @@ export default function RichHeader({
 
   return (
     <View style={styles.container}>
-      {/* Ligne 1 : Avatar + Nom + Menu Hamburger */}
-      <View style={styles.topRow}>
-        {/* Avatar + Nom */}
-        <View style={styles.userInfo}>
+      <View style={styles.row}>
+        {/* Left: Avatar + Name */}
+        <View style={styles.leftSection}>
           {user?.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
@@ -55,55 +52,54 @@ export default function RichHeader({
             </View>
           )}
           <Text style={styles.userName} numberOfLines={1}>
-            {user?.name || t('common.loading')}
+            {user?.name || 'Utilisateur'}
           </Text>
         </View>
 
-        {/* Menu Hamburger */}
-        <TouchableOpacity onPress={openDrawer} style={styles.iconButton}>
-          <Ionicons name="menu" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
+        {/* Right: Actions */}
+        <View style={styles.rightSection}>
+          {/* Quick Actions - Icon only */}
+          <TouchableOpacity
+            onPress={onQuickActionsPress}
+            style={styles.iconButton}
+          >
+            <Ionicons name="flash" size={22} color="#fff" />
+          </TouchableOpacity>
 
-      {/* Ligne 2 : Actions rapides + Notifications + Mode sombre + Déconnexion */}
-      <View style={styles.bottomRow}>
-        {/* Actions rapides */}
-        <TouchableOpacity
-          onPress={onQuickActionsPress}
-          style={styles.actionButton}
-        >
-          <Ionicons name="flash" size={20} color="#fff" />
-          <Text style={styles.actionText}>{t('dashboard.quickActions')}</Text>
-        </TouchableOpacity>
+          {/* Notifications with badge */}
+          <TouchableOpacity
+            onPress={onNotificationsPress}
+            style={styles.iconButton}
+          >
+            <Ionicons name="notifications" size={22} color="#fff" />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-        {/* Notifications avec badge */}
-        <TouchableOpacity
-          onPress={onNotificationsPress}
-          style={styles.iconButton}
-        >
-          <Ionicons name="notifications" size={24} color="#fff" />
-          {unreadCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          {/* Theme toggle */}
+          <TouchableOpacity onPress={onThemeToggle} style={styles.iconButton}>
+            <Ionicons
+              name={isDarkMode ? 'sunny' : 'moon'}
+              size={22}
+              color="#fff"
+            />
+          </TouchableOpacity>
 
-        {/* Toggle mode sombre */}
-        <TouchableOpacity onPress={onThemeToggle} style={styles.iconButton}>
-          <Ionicons
-            name={isDarkMode ? 'sunny' : 'moon'}
-            size={24}
-            color="#fff"
-          />
-        </TouchableOpacity>
+          {/* Logout */}
+          <TouchableOpacity onPress={onLogout} style={styles.iconButton}>
+            <Ionicons name="log-out" size={22} color="#fff" />
+          </TouchableOpacity>
 
-        {/* Déconnexion */}
-        <TouchableOpacity onPress={onLogout} style={styles.iconButton}>
-          <Ionicons name="log-out" size={24} color="#fff" />
-        </TouchableOpacity>
+          {/* Hamburger Menu */}
+          <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
+            <Ionicons name="menu" size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -111,28 +107,27 @@ export default function RichHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#7c3aed', // Violet comme l'app
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: '#7c3aed', // Violet
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  topRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  userInfo: {
+  leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 10,
   },
   avatarPlaceholder: {
     backgroundColor: '#ec4899', // Rose/magenta
@@ -141,55 +136,43 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   userName: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     flex: 1,
   },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   iconButton: {
-    padding: 8,
+    padding: 6,
     position: 'relative',
   },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flex: 1,
-    marginRight: 12,
-  },
-  actionText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
+  menuButton: {
+    padding: 6,
+    marginLeft: 4,
   },
   badge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: '#ef4444', // Rouge pour les notifications
+    top: 2,
+    right: 2,
+    backgroundColor: '#ef4444', // Rouge
     borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
   },
 });

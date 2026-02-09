@@ -166,3 +166,12 @@
 - [x] Supprimer titre du header (garder uniquement dans contenu pages)
 - [ ] Tester que le header reste fixe pendant swipe
 - [ ] Vérifier responsive et safe area
+
+
+## Corrections design header (urgent)
+- [x] Mettre tout le header sur 1 seule ligne (pas 2)
+- [x] Remplacer texte "dashboard.quickActions" par juste icône flash
+- [x] Réduire taille avatar (32px au lieu de 40px)
+- [x] Optimiser espacements et padding
+- [x] Corriger chargement du nom utilisateur (placeholder "Utilisateur")
+- [x] Rendre le header plus compact et élégant
