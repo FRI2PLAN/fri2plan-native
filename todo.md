@@ -209,3 +209,12 @@
 - [x] Transition douce comme WebView (pas de changement brusque)
 - [x] Duration 300ms (0.3s) comme préférence utilisateur
 - [ ] Tester que le texte ne "saute" plus
+
+
+## Correction transition après fade out
+- [x] Éliminer réapparition brève de la page après fade out
+- [x] Ajouter délai avant reset translateX (50ms pour montage nouvelle page)
+- [x] Corriger sursaut au premier swipe (isTransitioning state)
+- [x] Garder opacity à 0 pendant changement de page (>90% translateX)
+- [x] Bloquer swipe pendant transition
+- [ ] Transition fluide sans artefacts visuels

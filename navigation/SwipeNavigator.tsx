@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Dimensions } from 'react-native';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
   runOnJS,
   interpolate,
   Extrapolate,
@@ -16,6 +17,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3; // 30% of screen width - lower for easier swipe
 const VELOCITY_THRESHOLD = 800; // Lower velocity threshold for more responsive swipe
 const MAX_TRANSLATE = SCREEN_WIDTH * 0.8; // Maximum translation during swipe (80% of screen)
+const TRANSITION_DURATION = 300; // 0.3s as per user preference
+const RESET_DELAY = 50; // Small delay before reset to allow new page to mount
 
 interface SwipeNavigatorProps {
   children: React.ReactNode;
@@ -29,6 +32,12 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
   const isHorizontalSwipe = useSharedValue(false);
+  const isTransitioning = useSharedValue(false);
+
+  // Reset transitioning state when screen changes
+  useEffect(() => {
+    isTransitioning.value = false;
+  }, [currentScreen]);
 
   const navigateToScreen = (screenName: string) => {
     navigation.navigate(screenName as never);
@@ -55,6 +64,9 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
       isHorizontalSwipe.value = false;
     })
     .onUpdate((event) => {
+      // Don't allow swipe during transition
+      if (isTransitioning.value) return;
+
       // Detect if it's a horizontal or vertical swipe
       const deltaX = Math.abs(event.translationX);
       const deltaY = Math.abs(event.translationY);
@@ -93,29 +105,43 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
       // Swipe left (next screen) - requires either distance OR high velocity
       if (translation < -SWIPE_THRESHOLD || velocity < -VELOCITY_THRESHOLD) {
+        isTransitioning.value = true;
         translateX.value = withTiming(
           -SCREEN_WIDTH,
           {
-            duration: 300, // 0.3s as per user preference
+            duration: TRANSITION_DURATION,
             easing: Easing.out(Easing.cubic),
           },
-          () => {
-            runOnJS(navigateToScreen)(getNextScreen());
-            translateX.value = 0;
+          (finished) => {
+            if (finished) {
+              runOnJS(navigateToScreen)(getNextScreen());
+              // Reset with delay to allow new page to mount
+              translateX.value = withDelay(
+                RESET_DELAY,
+                withTiming(0, { duration: 0 })
+              );
+            }
           }
         );
       }
       // Swipe right (previous screen) - requires either distance OR high velocity
       else if (translation > SWIPE_THRESHOLD || velocity > VELOCITY_THRESHOLD) {
+        isTransitioning.value = true;
         translateX.value = withTiming(
           SCREEN_WIDTH,
           {
-            duration: 300, // 0.3s as per user preference
+            duration: TRANSITION_DURATION,
             easing: Easing.out(Easing.cubic),
           },
-          () => {
-            runOnJS(navigateToScreen)(getPreviousScreen());
-            translateX.value = 0;
+          (finished) => {
+            if (finished) {
+              runOnJS(navigateToScreen)(getPreviousScreen());
+              // Reset with delay to allow new page to mount
+              translateX.value = withDelay(
+                RESET_DELAY,
+                withTiming(0, { duration: 0 })
+              );
+            }
           }
         );
       }
@@ -132,6 +158,14 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
   // Animated style with cross-fade effect
   const animatedStyle = useAnimatedStyle(() => {
+    // If transitioning, keep opacity at 0 to prevent flash
+    if (isTransitioning.value && Math.abs(translateX.value) > SCREEN_WIDTH * 0.9) {
+      return {
+        transform: [{ translateX: translateX.value }],
+        opacity: 0,
+      };
+    }
+
     // Calculate opacity based on translation
     // When swiping, the current page fades out
     const opacity = interpolate(
