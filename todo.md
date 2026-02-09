@@ -299,3 +299,11 @@
 - [x] Ajouter léger zoom (scale 0.1) pour effet de profondeur
 - [x] Éliminer complètement le freinage/accroc en fin de transition
 - [ ] Tester transition ultra-douce comme WebView
+
+## Bug chevauchement pages + freinage persistant
+- [x] Transition verticale cause chevauchement des pages (identifié)
+- [x] Freinage en fin de transition toujours présent (75-100%)
+- [x] Retirer customAnimation (cause chevauchement)
+- [x] Utiliser animation native spring avec config optimisée
+- [x] Config: damping=20, stiffness=90, mass=0.8 (ultra-fluide)
+- [ ] Tester transition ultra-fluide comme WebView sans freinage

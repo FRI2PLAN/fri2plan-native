@@ -85,16 +85,15 @@ function HomeScreen({
           activeOffsetX: [-10, 10],
         }}
         windowSize={3}
-        customAnimation={(value) => {
-          'worklet';
-          // Slide vertical de bas en haut avec fade (comme WebView)
-          const translateY = value * SCREEN_HEIGHT * 0.3; // 30% de la hauteur
-          const opacity = 1 - Math.abs(value) * 0.6; // Fade plus prononcé
-          const scale = 1 - Math.abs(value) * 0.1; // Léger zoom pour effet de profondeur
-          return {
-            transform: [{ translateY }, { scale }],
-            opacity,
-          };
+        // Animation native par défaut (plus fluide)
+        defaultAnimation="spring"
+        withAnimation={{
+          type: 'spring',
+          config: {
+            damping: 20,
+            stiffness: 90,
+            mass: 0.8,
+          },
         }}
       />
     </FixedHeaderLayout>
