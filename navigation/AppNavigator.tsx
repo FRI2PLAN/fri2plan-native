@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import PagerView from 'react-native-pager-view';
+import Carousel from 'react-native-reanimated-carousel';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -20,6 +20,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import HelpScreen from '../screens/HelpScreen';
 
 const Drawer = createDrawerNavigator();
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface AppNavigatorProps {
   onLogout: () => void;
@@ -27,7 +28,7 @@ interface AppNavigatorProps {
 
 interface HomeScreenProps {
   onLogout: () => void;
-  pagerRef: React.RefObject<PagerView>;
+  carouselRef: React.RefObject<any>;
   currentPage: number;
   onPageChange: (page: number) => void;
 }
@@ -51,68 +52,51 @@ const PAGES = [
 
 function HomeScreen({
   onLogout,
-  pagerRef,
+  carouselRef,
   currentPage,
   onPageChange,
 }: HomeScreenProps) {
-  const TOTAL_PAGES = PAGES.length;
-  const [isScrolling, setIsScrolling] = useState(false);
-
-  const handlePageScroll = (e: any) => {
-    const { position } = e.nativeEvent;
-    onPageChange(position);
-  };
-
-  // Handle circular navigation
-  const handlePageScrollStateChanged = (e: any) => {
-    const state = e.nativeEvent.pageScrollState;
+  const renderItem = ({ index }: { index: number }) => {
+    const page = PAGES[index];
+    const PageComponent = page.component;
     
-    if (state === 'dragging') {
-      setIsScrolling(true);
-    } else if (state === 'idle' && isScrolling) {
-      setIsScrolling(false);
-      
-      // Wrap around logic
-      // Note: PagerView doesn't natively support circular scroll
-      // This is a limitation we'll document for the user
-    }
+    return (
+      <View style={styles.page}>
+        {index === 0 ? (
+          <PageComponent onLogout={onLogout} />
+        ) : (
+          <PageComponent />
+        )}
+      </View>
+    );
   };
 
   return (
     <FixedHeaderLayout>
-      <PagerView
-        ref={pagerRef}
-        style={styles.pager}
-        initialPage={0}
-        onPageSelected={handlePageScroll}
-        onPageScrollStateChanged={handlePageScrollStateChanged}
-        overdrag={false}
-        offscreenPageLimit={1}
-      >
-        {PAGES.map((page, index) => {
-          const PageComponent = page.component;
-          return (
-            <View key={page.key} style={styles.page}>
-              {index === 0 ? (
-                <PageComponent onLogout={onLogout} />
-              ) : (
-                <PageComponent />
-              )}
-            </View>
-          );
-        })}
-      </PagerView>
+      <Carousel
+        ref={carouselRef}
+        loop
+        width={SCREEN_WIDTH}
+        height={SCREEN_HEIGHT}
+        data={PAGES}
+        renderItem={renderItem}
+        onSnapToItem={(index) => onPageChange(index)}
+        panGestureHandlerProps={{
+          activeOffsetX: [-10, 10],
+        }}
+        windowSize={3}
+      />
     </FixedHeaderLayout>
   );
 }
 
 export default function AppNavigator({ onLogout }: AppNavigatorProps) {
-  const pagerRef = useRef<PagerView>(null);
+  const carouselRef = useRef<any>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePageSelect = (pageIndex: number) => {
     console.log('handlePageSelect called with:', pageIndex);
-    pagerRef.current?.setPage(pageIndex);
+    carouselRef.current?.scrollTo({ index: pageIndex, animated: false });
     setCurrentPage(pageIndex);
   };
 
@@ -141,7 +125,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           {() => (
             <HomeScreen
               onLogout={onLogout}
-              pagerRef={pagerRef}
+              carouselRef={carouselRef}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
             />
@@ -153,9 +137,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
 }
 
 const styles = StyleSheet.create({
-  pager: {
-    flex: 1,
-  },
   page: {
     flex: 1,
     backgroundColor: '#f3f4f6',

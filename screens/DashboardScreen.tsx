@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
@@ -38,9 +38,6 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
-
-  // Fetch settings for favorites
-  const { data: settings } = trpc.settings.get.useQuery();
 
   // Determine if user is family admin
   const currentMember = familyMembers.find(m => m.id === user?.id);
@@ -86,31 +83,7 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
     return requests.filter(r => r.status === 'pending').length;
   }, [requests]);
 
-  // Parse favorites from settings
-  const favorites: string[] = useMemo(() => {
-    try {
-      if (!settings?.dashboardFavorites) return [];
-      return JSON.parse(settings.dashboardFavorites);
-    } catch {
-      return [];
-    }
-  }, [settings?.dashboardFavorites]);
-
-  // Available pages for favorites
-  const AVAILABLE_PAGES = [
-    { path: "/calendar", label: "Calendrier", icon: "📅" },
-    { path: "/tasks", label: "Tâches", icon: "✅" },
-    { path: "/notes", label: "Notes", icon: "📝" },
-    { path: "/budget", label: "Budget", icon: "💰" },
-    { path: "/requests", label: "Demandes", icon: "📋" },
-    { path: "/rewards", label: "Récompenses", icon: "🎁" },
-    { path: "/shopping", label: "Courses", icon: "🛒" },
-    { path: "/messages", label: "Messages", icon: "💬" },
-    { path: "/members", label: "Membres", icon: "👥" },
-    { path: "/statistics", label: "Statistiques", icon: "📊" },
-  ];
-
-  // Get upcoming birthdays
+  // Get upcoming birthdays (max 3)
   const upcomingBirthdays = useMemo(() => {
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
@@ -132,8 +105,18 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
         };
       })
       .filter(m => m.upcomingBirthday <= nextMonth)
-      .sort((a, b) => a.daysUntil - b.daysUntil);
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .slice(0, 3); // Max 3 birthdays
   }, [familyMembers]);
+
+  // Get today's events
+  const todayEventsList = useMemo(() => {
+    const today = new Date().toDateString();
+    return events.filter(e => {
+      const eventDate = new Date(e.startDate).toDateString();
+      return eventDate === today;
+    });
+  }, [events]);
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
@@ -165,28 +148,6 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
           </View>
         ) : (
           <>
-            {/* Favorites Bar */}
-            {favorites.length > 0 && (
-              <View style={styles.favoritesBar}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {favorites.map((favPath, index) => {
-                    const page = AVAILABLE_PAGES.find(p => p.path === favPath);
-                    if (!page) return null;
-                    return (
-                      <TouchableOpacity key={index} style={styles.favoriteItem}>
-                        <Text style={styles.favoriteIcon}>{page.icon}</Text>
-                        <Text style={styles.favoriteLabel}>{page.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                  <TouchableOpacity style={styles.favoriteItem}>
-                    <Text style={styles.favoriteIcon}>➕</Text>
-                    <Text style={styles.favoriteLabel}>Ajouter</Text>
-                  </TouchableOpacity>
-                </ScrollView>
-              </View>
-            )}
-
             {isLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#7c3aed" />
@@ -212,30 +173,47 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
                   </View>
                 )}
 
-                {/* Daily Summary Widget */}
+                {/* Daily Summary Widget with clickable links */}
                 <View style={styles.widget}>
                   <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
                   <View style={styles.summaryGrid}>
-                    <View style={styles.summaryItem}>
+                    <TouchableOpacity style={styles.summaryItem}>
                       <Text style={styles.summaryNumber}>{todayEvents}</Text>
                       <Text style={styles.summaryLabel}>Événements</Text>
-                    </View>
-                    <View style={styles.summaryItem}>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.summaryItem}>
                       <Text style={styles.summaryNumber}>{pendingTasks}</Text>
                       <Text style={styles.summaryLabel}>Tâches</Text>
-                    </View>
-                    <View style={styles.summaryItem}>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.summaryItem}>
                       <Text style={styles.summaryNumber}>{unreadMessages}</Text>
                       <Text style={styles.summaryLabel}>Messages</Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Upcoming Birthdays Widget */}
+                {/* Today's Events */}
+                {todayEventsList.length > 0 && (
+                  <View style={styles.widget}>
+                    <Text style={styles.widgetTitle}>📅 Événements du jour</Text>
+                    {todayEventsList.map((event) => (
+                      <View key={event.id} style={styles.eventItem}>
+                        <View style={styles.eventInfo}>
+                          <Text style={styles.eventTitle}>{event.title}</Text>
+                          <Text style={styles.eventTime}>
+                            {format(new Date(event.startDate), 'HH:mm', { locale: fr })}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Upcoming Birthdays Widget (max 3) */}
                 {upcomingBirthdays.length > 0 && (
                   <View style={styles.widget}>
                     <Text style={styles.widgetTitle}>🎂 Prochains anniversaires</Text>
-                    {upcomingBirthdays.slice(0, 3).map((member, index) => (
+                    {upcomingBirthdays.map((member) => (
                       <View key={member.id} style={styles.birthdayItem}>
                         <View style={styles.birthdayAvatar}>
                           <Text style={styles.birthdayAvatarText}>{member.name.charAt(0)}</Text>
@@ -250,47 +228,6 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
                         </View>
                       </View>
                     ))}
-                  </View>
-                )}
-
-                {/* Recent Tasks */}
-                {tasks.length > 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>✅ Tâches récentes</Text>
-                    {tasks.slice(0, 5).map((task) => (
-                      <View key={task.id} style={styles.taskItem}>
-                        <View style={styles.taskInfo}>
-                          <Text style={styles.taskTitle}>{task.title}</Text>
-                          <Text style={styles.taskMeta}>
-                            {task.priority === 'urgent' ? '🔴' : 
-                             task.priority === 'high' ? '🟠' : 
-                             task.priority === 'medium' ? '🟡' : '🟢'}
-                            {' '}{task.status === 'completed' ? '✅ Terminée' : '⏳ En cours'}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {/* Today's Events */}
-                {todayEvents > 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>📅 Événements du jour</Text>
-                    {events
-                      .filter(e => {
-                        const eventDate = new Date(e.startDate).toDateString();
-                        const today = new Date().toDateString();
-                        return eventDate === today;
-                      })
-                      .map((event) => (
-                        <View key={event.id} style={styles.eventItem}>
-                          <Text style={styles.eventTitle}>{event.title}</Text>
-                          <Text style={styles.eventTime}>
-                            {format(new Date(event.startDate), 'HH:mm', { locale: fr })}
-                          </Text>
-                        </View>
-                      ))}
                   </View>
                 )}
               </>
@@ -356,30 +293,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  favoritesBar: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  favoriteItem: {
-    alignItems: 'center',
-    marginRight: 16,
-    padding: 8,
-  },
-  favoriteIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  favoriteLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
   loadingContainer: {
+    padding: 40,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
   },
   loadingText: {
     marginTop: 12,
@@ -390,8 +306,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    margin: 16,
-    marginTop: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -400,8 +316,8 @@ const styles = StyleSheet.create({
   },
   widgetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
   widgetTitle: {
@@ -414,10 +330,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6b7280',
     marginBottom: 12,
-    lineHeight: 22,
   },
   widgetButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f3e8ff',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -428,16 +343,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   badge: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#7c3aed',
     borderRadius: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    minWidth: 24,
-    alignItems: 'center',
   },
   badgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   summaryGrid: {
@@ -446,6 +359,7 @@ const styles = StyleSheet.create({
   },
   summaryItem: {
     alignItems: 'center',
+    padding: 12,
   },
   summaryNumber: {
     fontSize: 32,
@@ -454,7 +368,27 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  eventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  eventTime: {
+    fontSize: 14,
     color: '#6b7280',
   },
   birthdayItem: {
@@ -468,14 +402,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#ec4899',
-    justifyContent: 'center',
+    backgroundColor: '#7c3aed',
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   birthdayAvatarText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   birthdayInfo: {
@@ -485,50 +419,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   birthdayDate: {
     fontSize: 14,
     color: '#6b7280',
-  },
-  taskItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  taskInfo: {
-    flex: 1,
-  },
-  taskTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  taskMeta: {
-    fontSize: 13,
-    color: '#6b7280',
-  },
-  eventItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  eventTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1f2937',
-    flex: 1,
-  },
-  eventTime: {
-    fontSize: 14,
-    color: '#7c3aed',
-    fontWeight: '600',
   },
 });

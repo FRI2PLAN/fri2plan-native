@@ -259,3 +259,26 @@
 - [x] Ajouter console.log pour debug menu
 - [ ] Tester navigation menu hamburger
 - [ ] Note: Swipe circulaire pas supporté nativement par PagerView (limitation)
+
+
+## Refonte complète navigation + Dashboard
+
+### Navigation (Swipe circulaire + Menu)
+- [x] Installer react-native-reanimated-carousel
+- [x] Remplacer PagerView par Carousel avec loop infini
+- [x] Configurer carousel pour 13 pages circulaires
+- [x] Carousel avec loop=true (swipe circulaire natif)
+- [x] Améliorer sensibilité menu hamburger (activeOpacity=0.7 + hitSlop 10px)
+- [ ] Tester swipe circulaire (page 13 → page 1)
+
+### Dashboard - Page d'accueil
+- [ ] Récupérer nom utilisateur via tRPC (afficher dans header - à faire dans RichHeader)
+- [ ] Actions rapides → Fonctionnement identique bouton + WebView (TODO)
+- [x] Enlever barre raccourcis (favorites bar supprimée)
+- [x] Résumé du jour : Ajouter liens cliquables (TouchableOpacity)
+  - [x] Événements → Onglet Calendrier
+  - [x] Tâches → Onglet Tâches
+  - [x] Messages → Onglet Messages
+- [x] Enlever section "Tâches récentes" (supprimée)
+- [x] Garder aperçu événements du jour (todayEventsList)
+- [x] Ajouter aperçu 3 prochains anniversaires à venir (slice(0, 3))
