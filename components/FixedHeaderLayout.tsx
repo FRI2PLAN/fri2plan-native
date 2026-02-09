@@ -1,35 +1,88 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import RichHeader from './RichHeader';
+import QuickActionsModal from './QuickActionsModal';
+import NotificationsModal from './NotificationsModal';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FixedHeaderLayoutProps {
-  title: string;
   children: React.ReactNode;
 }
 
-export default function FixedHeaderLayout({ title, children }: FixedHeaderLayoutProps) {
+export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) {
   const navigation = useNavigation();
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [quickActionsVisible, setQuickActionsVisible] = useState(false);
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
 
-  const openDrawer = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
+  const handleQuickActions = () => {
+    setQuickActionsVisible(true);
+  };
+
+  const handleNotifications = () => {
+    setNotificationsVisible(true);
+  };
+
+  const handleThemeToggle = () => {
+    // TODO: Implémenter changement de thème
+    setIsDarkMode(!isDarkMode);
+    Alert.alert('Mode', isDarkMode ? 'Mode clair activé' : 'Mode sombre activé');
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            // Supprimer le token
+            await AsyncStorage.removeItem('authToken');
+            // Rediriger vers Login
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' as never }],
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Fixed Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
-          <Ionicons name="menu" size={28} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{title}</Text>
-        <View style={styles.placeholder} />
-      </View>
+      {/* Fixed Rich Header */}
+      <RichHeader
+        onQuickActionsPress={handleQuickActions}
+        onNotificationsPress={handleNotifications}
+        onThemeToggle={handleThemeToggle}
+        onLogout={handleLogout}
+        isDarkMode={isDarkMode}
+      />
 
       {/* Swipable Content */}
       <View style={styles.content}>
         {children}
       </View>
+
+      {/* Quick Actions Modal */}
+      <QuickActionsModal
+        visible={quickActionsVisible}
+        onClose={() => setQuickActionsVisible(false)}
+      />
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        visible={notificationsVisible}
+        onClose={() => setNotificationsVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -38,35 +91,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',
-  },
-  header: {
-    height: 60,
-    backgroundColor: '#7c3aed',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  menuButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    flex: 1,
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     flex: 1,

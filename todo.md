@@ -153,3 +153,16 @@
 - [x] Garder le Drawer (menu hamburger) fonctionnel
 - [ ] Tester navigation swipe avec header fixe
 - [ ] Tester que tous les écrans fonctionnent correctement
+
+
+## Header fixe complet comme WebView
+- [x] Créer composant RichHeader avec layout complet
+- [x] Ajouter avatar + nom utilisateur (récupéré via tRPC)
+- [x] Intégrer menu hamburger dans le header
+- [x] Déplacer Actions Rapides depuis Dashboard vers header (modal)
+- [x] Implémenter onglet Notifications avec badge (nombre non lues)
+- [x] Ajouter toggle mode sombre (clair/sombre)
+- [x] Ajouter bouton déconnexion avec icône
+- [x] Supprimer titre du header (garder uniquement dans contenu pages)
+- [ ] Tester que le header reste fixe pendant swipe
+- [ ] Vérifier responsive et safe area

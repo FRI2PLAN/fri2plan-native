@@ -35,24 +35,8 @@ const SCREEN_ORDER = [
   'Help',
 ];
 
-// Screen titles mapping
-const SCREEN_TITLES: Record<string, string> = {
-  Dashboard: '🏠 Tableau de bord',
-  Calendar: '📅 Calendrier',
-  Tasks: '✅ Tâches',
-  Shopping: '🛒 Courses',
-  Messages: '💬 Messages',
-  Requests: '📋 Requêtes',
-  Notes: '📝 Notes',
-  Budget: '💰 Budget',
-  Rewards: '🎁 Récompenses',
-  Members: '👥 Membres',
-  Referral: '🤝 Parrainer',
-  Settings: '⚙️ Paramètres',
-  Help: '❓ Aide',
-};
-
 // Wrapper component to add fixed header and swipe navigation
+// Note: Title is now removed from header - each page displays its own title in content
 function ScreenWrapper({ 
   children, 
   screenName,
@@ -61,7 +45,7 @@ function ScreenWrapper({
   screenName: string;
 }) {
   return (
-    <FixedHeaderLayout title={SCREEN_TITLES[screenName] || screenName}>
+    <FixedHeaderLayout>
       <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
         {children}
       </SwipeNavigator>
