@@ -330,3 +330,13 @@
 - [x] Configurer animation fluide (animateCardOpacity)
 - [x] stackSize=3, stackSeparation=0, stackScale=0 (pas d'effet pile)
 - [ ] Tester fluidité ultra-douce comme WebView
+
+## Bug flash rapide entre pages (deck-swiper)
+- [x] Flash/aperçu très rapide de la page précédente avant affichage nouvelle page
+- [x] Augmenter stackSize de 3 à 5 (plus de pages en mémoire)
+- [x] Désactiver animateCardOpacity (cause du flash)
+- [x] stackScale=1 au lieu de 0 (meilleur rendu)
+- [x] backgroundColor="#ffffff" au lieu de transparent
+- [x] swipeAnimationDuration=200ms (transition rapide)
+- [x] outputRotationRange pour rotation légère pendant swipe
+- [ ] Tester si le flash a disparu
