@@ -124,3 +124,11 @@
 - [x] Corriger l'erreur "Tried to synchronously call a non-worklet function getNextScreen"
 - [x] Marquer getNextScreen et getPreviousScreen comme 'worklet' pour React Native Reanimated
 - [ ] Tester le swipe gauche/droite après correction
+
+
+## Problèmes UI/UX à corriger
+- [x] LoginScreen : Carte commence trop haut, doit commencer après la safe zone (ajout padding-top: 60)
+- [x] Swipe navigation saccadé et lent (amélioration avec withSpring)
+- [x] Scroll vertical bloqué par le SwipeNavigator (détection horizontal vs vertical)
+- [x] Différencier swipe horizontal (navigation) vs vertical (scroll) (activeOffsetX + failOffsetY)
+- [ ] Tester les corrections

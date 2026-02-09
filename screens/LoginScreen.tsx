@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 60, // Start card after safe zone
     justifyContent: 'center',
     paddingBottom: 40,
   },
