@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import PageDeckSwiper from '../components/PageDeckSwiper';
+import SimpleSwipeNavigator from '../components/SimpleSwipeNavigator';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -72,7 +72,7 @@ function HomeScreen({
 
   return (
     <FixedHeaderLayout>
-      <PageDeckSwiper
+      <SimpleSwipeNavigator
         pages={pageNodes}
         currentIndex={currentPage}
         onPageChange={onPageChange}

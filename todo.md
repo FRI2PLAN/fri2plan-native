@@ -340,3 +340,15 @@
 - [x] swipeAnimationDuration=200ms (transition rapide)
 - [x] outputRotationRange pour rotation légère pendant swipe
 - [ ] Tester si le flash a disparu
+
+## SimpleSwipeNavigator - Reproduction exacte WebView
+- [x] Analyser code WebView (useSwipeNavigation + PageTransition)
+- [x] Identifier animations: withTiming 200ms + easeInOut
+- [x] Créer SimpleSwipeNavigator avec PanGestureHandler
+- [x] Seuil 80px minimum (comme WebView)
+- [x] Animation slide + fade (comme framer-motion)
+- [x] 3 pages en mémoire (préc, actuelle, suiv)
+- [x] Navigation circulaire (modulo)
+- [x] Bloquer pendant transition (isTransitioning)
+- [x] withTiming 200ms + Easing.inOut (pas spring!)
+- [ ] Tester fluidité identique WebView
