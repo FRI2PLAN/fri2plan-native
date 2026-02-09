@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
@@ -32,15 +32,50 @@ interface HomeScreenProps {
   onPageChange: (page: number) => void;
 }
 
+// All pages in order
+const PAGES = [
+  { key: '0', component: DashboardScreen, name: 'Dashboard' },
+  { key: '1', component: CalendarScreen, name: 'Calendar' },
+  { key: '2', component: TasksScreen, name: 'Tasks' },
+  { key: '3', component: ShoppingScreen, name: 'Shopping' },
+  { key: '4', component: MessagesScreen, name: 'Messages' },
+  { key: '5', component: RequestsScreen, name: 'Requests' },
+  { key: '6', component: NotesScreen, name: 'Notes' },
+  { key: '7', component: BudgetScreen, name: 'Budget' },
+  { key: '8', component: RewardsScreen, name: 'Rewards' },
+  { key: '9', component: MembersScreen, name: 'Members' },
+  { key: '10', component: ReferralScreen, name: 'Referral' },
+  { key: '11', component: SettingsScreen, name: 'Settings' },
+  { key: '12', component: HelpScreen, name: 'Help' },
+];
+
 function HomeScreen({
   onLogout,
   pagerRef,
   currentPage,
   onPageChange,
 }: HomeScreenProps) {
+  const TOTAL_PAGES = PAGES.length;
+  const [isScrolling, setIsScrolling] = useState(false);
+
   const handlePageScroll = (e: any) => {
     const { position } = e.nativeEvent;
     onPageChange(position);
+  };
+
+  // Handle circular navigation
+  const handlePageScrollStateChanged = (e: any) => {
+    const state = e.nativeEvent.pageScrollState;
+    
+    if (state === 'dragging') {
+      setIsScrolling(true);
+    } else if (state === 'idle' && isScrolling) {
+      setIsScrolling(false);
+      
+      // Wrap around logic
+      // Note: PagerView doesn't natively support circular scroll
+      // This is a limitation we'll document for the user
+    }
   };
 
   return (
@@ -50,48 +85,22 @@ function HomeScreen({
         style={styles.pager}
         initialPage={0}
         onPageSelected={handlePageScroll}
+        onPageScrollStateChanged={handlePageScrollStateChanged}
         overdrag={false}
         offscreenPageLimit={1}
       >
-        <View key="0" style={styles.page}>
-          <DashboardScreen onLogout={onLogout} />
-        </View>
-        <View key="1" style={styles.page}>
-          <CalendarScreen />
-        </View>
-        <View key="2" style={styles.page}>
-          <TasksScreen />
-        </View>
-        <View key="3" style={styles.page}>
-          <ShoppingScreen />
-        </View>
-        <View key="4" style={styles.page}>
-          <MessagesScreen />
-        </View>
-        <View key="5" style={styles.page}>
-          <RequestsScreen />
-        </View>
-        <View key="6" style={styles.page}>
-          <NotesScreen />
-        </View>
-        <View key="7" style={styles.page}>
-          <BudgetScreen />
-        </View>
-        <View key="8" style={styles.page}>
-          <RewardsScreen />
-        </View>
-        <View key="9" style={styles.page}>
-          <MembersScreen />
-        </View>
-        <View key="10" style={styles.page}>
-          <ReferralScreen />
-        </View>
-        <View key="11" style={styles.page}>
-          <SettingsScreen />
-        </View>
-        <View key="12" style={styles.page}>
-          <HelpScreen />
-        </View>
+        {PAGES.map((page, index) => {
+          const PageComponent = page.component;
+          return (
+            <View key={page.key} style={styles.page}>
+              {index === 0 ? (
+                <PageComponent onLogout={onLogout} />
+              ) : (
+                <PageComponent />
+              )}
+            </View>
+          );
+        })}
       </PagerView>
     </FixedHeaderLayout>
   );
@@ -102,6 +111,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePageSelect = (pageIndex: number) => {
+    console.log('handlePageSelect called with:', pageIndex);
     pagerRef.current?.setPage(pageIndex);
     setCurrentPage(pageIndex);
   };

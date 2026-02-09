@@ -250,3 +250,12 @@
 - [x] Synchronisation drawer/PagerView stable (ref partagée)
 - [x] Header fixe (ne bouge jamais)
 - [ ] Tester navigation drawer + swipe
+
+
+## Corrections finales swipe + menu
+- [x] Corriger synchronisation pagerRef dans CustomDrawerContent (handlePageSelect)
+- [x] Activer liens menu hamburger (tous les onglets cliquables)
+- [x] Nettoyer code AppNavigator (PAGES array)
+- [x] Ajouter console.log pour debug menu
+- [ ] Tester navigation menu hamburger
+- [ ] Note: Swipe circulaire pas supporté nativement par PagerView (limitation)
