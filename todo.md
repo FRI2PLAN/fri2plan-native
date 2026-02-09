@@ -142,3 +142,14 @@
 - [x] Ratio plus strict pour détection horizontale (2x au lieu de 1.5x)
 - [x] Augmenter activeOffsetX à 15px et failOffsetY à 25px
 - [ ] Tester la nouvelle version
+
+
+## Refonte architecture : Header fixe + Swipe fluide (comme WebView)
+- [x] Analyser structure actuelle AppNavigator
+- [x] Créer composant FixedHeaderLayout avec header en haut
+- [x] Extraire le header du Drawer Navigator (headerShown: false)
+- [x] Créer zone de contenu swipable en dessous du header
+- [x] Adapter SwipeNavigator pour fonctionner avec le nouveau layout
+- [x] Garder le Drawer (menu hamburger) fonctionnel
+- [ ] Tester navigation swipe avec header fixe
+- [ ] Tester que tous les écrans fonctionnent correctement

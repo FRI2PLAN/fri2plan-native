@@ -1,6 +1,7 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer, useRoute } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import SwipeNavigator from './SwipeNavigator';
+import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
@@ -34,12 +35,37 @@ const SCREEN_ORDER = [
   'Help',
 ];
 
-// Wrapper component to add swipe navigation
-function ScreenWrapper({ children, screenName }: { children: React.ReactNode; screenName: string }) {
+// Screen titles mapping
+const SCREEN_TITLES: Record<string, string> = {
+  Dashboard: '🏠 Tableau de bord',
+  Calendar: '📅 Calendrier',
+  Tasks: '✅ Tâches',
+  Shopping: '🛒 Courses',
+  Messages: '💬 Messages',
+  Requests: '📋 Requêtes',
+  Notes: '📝 Notes',
+  Budget: '💰 Budget',
+  Rewards: '🎁 Récompenses',
+  Members: '👥 Membres',
+  Referral: '🤝 Parrainer',
+  Settings: '⚙️ Paramètres',
+  Help: '❓ Aide',
+};
+
+// Wrapper component to add fixed header and swipe navigation
+function ScreenWrapper({ 
+  children, 
+  screenName,
+}: { 
+  children: React.ReactNode; 
+  screenName: string;
+}) {
   return (
-    <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
-      {children}
-    </SwipeNavigator>
+    <FixedHeaderLayout title={SCREEN_TITLES[screenName] || screenName}>
+      <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
+        {children}
+      </SwipeNavigator>
+    </FixedHeaderLayout>
   );
 }
 
@@ -53,14 +79,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
       <Drawer.Navigator
         initialRouteName="Dashboard"
         screenOptions={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: '#7c3aed',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          headerShown: false, // Disable Drawer header - we use FixedHeaderLayout instead
           drawerActiveTintColor: '#7c3aed',
           drawerInactiveTintColor: '#6b7280',
           drawerLabelStyle: {
@@ -76,7 +95,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Dashboard"
           options={{
-            title: '🏠 Tableau de bord',
             drawerLabel: '🏠 Accueil',
           }}
         >
@@ -90,7 +108,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Calendar"
           options={{
-            title: '📅 Calendrier',
             drawerLabel: '📅 Calendrier',
           }}
         >
@@ -104,7 +121,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Tasks"
           options={{
-            title: '✅ Tâches',
             drawerLabel: '✅ Tâches',
           }}
         >
@@ -118,7 +134,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Shopping"
           options={{
-            title: '🛒 Courses',
             drawerLabel: '🛒 Courses',
           }}
         >
@@ -132,7 +147,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Messages"
           options={{
-            title: '💬 Messages',
             drawerLabel: '💬 Messages',
           }}
         >
@@ -146,7 +160,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Requests"
           options={{
-            title: '📋 Requêtes',
             drawerLabel: '📋 Requêtes',
           }}
         >
@@ -160,7 +173,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Notes"
           options={{
-            title: '📝 Notes',
             drawerLabel: '📝 Notes',
           }}
         >
@@ -174,7 +186,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Budget"
           options={{
-            title: '💰 Budget',
             drawerLabel: '💰 Budget',
           }}
         >
@@ -188,7 +199,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Rewards"
           options={{
-            title: '🎁 Récompenses',
             drawerLabel: '🎁 Récompenses',
           }}
         >
@@ -202,7 +212,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Members"
           options={{
-            title: '👥 Membres',
             drawerLabel: '👥 Membres',
           }}
         >
@@ -216,7 +225,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Referral"
           options={{
-            title: '🤝 Parrainer',
             drawerLabel: '🤝 Parrainer',
           }}
         >
@@ -230,7 +238,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Settings"
           options={{
-            title: '⚙️ Paramètres',
             drawerLabel: '⚙️ Paramètres',
           }}
         >
@@ -244,7 +251,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Help"
           options={{
-            title: '❓ Aide',
             drawerLabel: '❓ Centre d\'aide',
           }}
         >
