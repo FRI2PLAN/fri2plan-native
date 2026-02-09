@@ -307,3 +307,16 @@
 - [x] Utiliser animation native spring avec config optimisée
 - [x] Config: damping=20, stiffness=90, mass=0.8 (ultra-fluide)
 - [ ] Tester transition ultra-fluide comme WebView sans freinage
+
+## Migration vers InfiniteSwiper personnalisé - Solution finale
+- [x] Créer composant InfiniteSwiper personnalisé
+- [x] Utiliser react-native-gesture-handler + reanimated (natif 60fps)
+- [x] Remplacer react-native-reanimated-carousel par InfiniteSwiper
+- [x] Implémenter navigation avec 3 pages en mémoire (préc, actuelle, suiv)
+- [x] Swipe gauche/droite pour changer de page
+- [x] Animation withTiming 250ms (ultra-fluide, pas d'accroc)
+- [x] Swipe circulaire infini (page 13 → page 1, calcul modulo)
+- [x] Seuil 30% ou vélocité > 500 pour déclencher swipe
+- [x] activeOffsetX=20 + failOffsetY=10 (pas d'interférence drawer)
+- [x] Effet fade léger pendant transition (opacity)
+- [ ] Tester fluidité ultra-douce comme WebView
