@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, StyleSheet, Alert, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import RichHeader from './RichHeader';
 import QuickActionsModal from './QuickActionsModal';
 import NotificationsModal from './NotificationsModal';
@@ -57,8 +58,16 @@ export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) 
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Fixed Rich Header */}
+    <View style={styles.container}>
+      {/* StatusBar with light content (white icons) */}
+      <StatusBar barStyle="light-content" backgroundColor="#7c3aed" />
+      
+      {/* Safe Area (status bar zone) with purple background */}
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Empty - just for purple background on status bar */}
+      </SafeAreaView>
+
+      {/* Fixed Rich Header - AFTER safe zone */}
       <RichHeader
         onQuickActionsPress={handleQuickActions}
         onNotificationsPress={handleNotifications}
@@ -83,17 +92,20 @@ export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) 
         visible={notificationsVisible}
         onClose={() => setNotificationsVisible(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#7c3aed', // Purple background for safe area (status bar)
+    backgroundColor: '#f3f4f6',
+  },
+  safeArea: {
+    backgroundColor: '#7c3aed', // Purple background for status bar
   },
   content: {
     flex: 1,
-    backgroundColor: '#f3f4f6', // Gray background for content
+    backgroundColor: '#f3f4f6',
   },
 });

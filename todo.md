@@ -183,3 +183,10 @@
 - [x] Supprimer header utilisateur de DashboardScreen (avatar + nom + famille)
 - [x] Garder uniquement titre "Accueil" et widgets dans Dashboard
 - [x] Vérifier que le nom n'apparaît qu'une fois (dans header fixe)
+
+
+## Correction header safe zone (urgent)
+- [x] Utiliser SafeAreaView uniquement pour la zone de statut (fond violet)
+- [x] Header commence APRÈS la safe zone (pas dedans)
+- [x] Safe zone vide avec fond violet
+- [x] Header fixe en dessous de la safe zone
