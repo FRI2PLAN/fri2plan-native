@@ -5,7 +5,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
   runOnJS,
   interpolate,
   Extrapolate,
@@ -18,7 +17,6 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3; // 30% of screen width - lower for e
 const VELOCITY_THRESHOLD = 800; // Lower velocity threshold for more responsive swipe
 const MAX_TRANSLATE = SCREEN_WIDTH * 0.8; // Maximum translation during swipe (80% of screen)
 const TRANSITION_DURATION = 300; // 0.3s as per user preference
-const RESET_DELAY = 50; // Small delay before reset to allow new page to mount
 
 interface SwipeNavigatorProps {
   children: React.ReactNode;
@@ -36,7 +34,9 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
   // Reset transitioning state when screen changes
   useEffect(() => {
+    // Reset transition state when new screen is mounted
     isTransitioning.value = false;
+    translateX.value = 0;
   }, [currentScreen]);
 
   const navigateToScreen = (screenName: string) => {
@@ -59,6 +59,9 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
   const panGesture = Gesture.Pan()
     .onStart((event) => {
+      // Don't allow swipe during transition
+      if (isTransitioning.value) return;
+      
       startX.value = event.absoluteX;
       startY.value = event.absoluteY;
       isHorizontalSwipe.value = false;
@@ -115,11 +118,7 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
           (finished) => {
             if (finished) {
               runOnJS(navigateToScreen)(getNextScreen());
-              // Reset with delay to allow new page to mount
-              translateX.value = withDelay(
-                RESET_DELAY,
-                withTiming(0, { duration: 0 })
-              );
+              // isTransitioning will be reset by useEffect when new screen mounts
             }
           }
         );
@@ -136,11 +135,7 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
           (finished) => {
             if (finished) {
               runOnJS(navigateToScreen)(getPreviousScreen());
-              // Reset with delay to allow new page to mount
-              translateX.value = withDelay(
-                RESET_DELAY,
-                withTiming(0, { duration: 0 })
-              );
+              // isTransitioning will be reset by useEffect when new screen mounts
             }
           }
         );
@@ -158,7 +153,7 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
   // Animated style with cross-fade effect
   const animatedStyle = useAnimatedStyle(() => {
-    // If transitioning, keep opacity at 0 to prevent flash
+    // If transitioning and almost off-screen, keep opacity at 0 to prevent flash
     if (isTransitioning.value && Math.abs(translateX.value) > SCREEN_WIDTH * 0.9) {
       return {
         transform: [{ translateX: translateX.value }],

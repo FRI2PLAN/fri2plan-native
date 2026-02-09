@@ -1,3 +1,4 @@
+import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import SwipeNavigator from './SwipeNavigator';
@@ -35,8 +36,8 @@ const SCREEN_ORDER = [
   'Help',
 ];
 
-// Wrapper component to add fixed header and swipe navigation
-// Note: Title is now removed from header - each page displays its own title in content
+// Wrapper component with fixed header and swipable content
+// CRITICAL: Header is OUTSIDE SwipeNavigator to stay fixed during swipe
 function ScreenWrapper({ 
   children, 
   screenName,
@@ -46,6 +47,7 @@ function ScreenWrapper({
 }) {
   return (
     <FixedHeaderLayout>
+      {/* SwipeNavigator wraps ONLY the content, NOT the header */}
       <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
         {children}
       </SwipeNavigator>
@@ -145,7 +147,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Requests"
           options={{
-            drawerLabel: '📋 Requêtes',
+            drawerLabel: '🙏 Demandes',
           }}
         >
           {(props) => (
@@ -210,7 +212,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Referral"
           options={{
-            drawerLabel: '🤝 Parrainer',
+            drawerLabel: '🔗 Parrainage',
           }}
         >
           {(props) => (
@@ -228,7 +230,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         >
           {(props) => (
             <ScreenWrapper screenName="Settings">
-              <SettingsScreen {...props} onLogout={onLogout} />
+              <SettingsScreen {...props} />
             </ScreenWrapper>
           )}
         </Drawer.Screen>
@@ -236,7 +238,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         <Drawer.Screen
           name="Help"
           options={{
-            drawerLabel: '❓ Centre d\'aide',
+            drawerLabel: '❓ Aide',
           }}
         >
           {(props) => (

@@ -218,3 +218,13 @@
 - [x] Garder opacity à 0 pendant changement de page (>90% translateX)
 - [x] Bloquer swipe pendant transition
 - [ ] Transition fluide sans artefacts visuels
+
+
+## Séparation header et correction swipe bloqué (CRITIQUE)
+- [x] Déplacer RichHeader EN DEHORS de SwipeNavigator (dans FixedHeaderLayout)
+- [x] Header doit être TOUJOURS fixe (ne jamais bouger pendant swipe)
+- [x] Seul le contenu doit swiper (pas le header)
+- [x] Corriger bug swipe bloqué après un tour complet
+- [x] Corriger logique isTransitioning (reset via useEffect)
+- [x] Bloquer swipe pendant transition (onStart + onUpdate)
+- [ ] Tester que header ne bouge plus pendant swipe
