@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import PagerNavigator from './PagerNavigator';
+import PagerView from 'react-native-pager-view';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
+import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
@@ -20,474 +21,120 @@ import HelpScreen from '../screens/HelpScreen';
 
 const Drawer = createDrawerNavigator();
 
-// Define screen order for swipe navigation
-const SCREEN_ORDER = [
-  'Dashboard',
-  'Calendar',
-  'Tasks',
-  'Shopping',
-  'Messages',
-  'Requests',
-  'Notes',
-  'Budget',
-  'Rewards',
-  'Members',
-  'Referral',
-  'Settings',
-  'Help',
-];
-
-// Screen components wrapped in View for PagerView
-const DashboardPage = (props: any) => (
-  <View style={styles.page}>
-    <DashboardScreen {...props} onLogout={props.onLogout} />
-  </View>
-);
-
-const CalendarPage = (props: any) => (
-  <View style={styles.page}>
-    <CalendarScreen {...props} />
-  </View>
-);
-
-const TasksPage = (props: any) => (
-  <View style={styles.page}>
-    <TasksScreen {...props} />
-  </View>
-);
-
-const ShoppingPage = (props: any) => (
-  <View style={styles.page}>
-    <ShoppingScreen {...props} />
-  </View>
-);
-
-const MessagesPage = (props: any) => (
-  <View style={styles.page}>
-    <MessagesScreen {...props} />
-  </View>
-);
-
-const RequestsPage = (props: any) => (
-  <View style={styles.page}>
-    <RequestsScreen {...props} />
-  </View>
-);
-
-const NotesPage = (props: any) => (
-  <View style={styles.page}>
-    <NotesScreen {...props} />
-  </View>
-);
-
-const BudgetPage = (props: any) => (
-  <View style={styles.page}>
-    <BudgetScreen {...props} />
-  </View>
-);
-
-const RewardsPage = (props: any) => (
-  <View style={styles.page}>
-    <RewardsScreen {...props} />
-  </View>
-);
-
-const MembersPage = (props: any) => (
-  <View style={styles.page}>
-    <MembersScreen {...props} />
-  </View>
-);
-
-const ReferralPage = (props: any) => (
-  <View style={styles.page}>
-    <ReferralScreen {...props} />
-  </View>
-);
-
-const SettingsPage = (props: any) => (
-  <View style={styles.page}>
-    <SettingsScreen {...props} />
-  </View>
-);
-
-const HelpPage = (props: any) => (
-  <View style={styles.page}>
-    <HelpScreen {...props} />
-  </View>
-);
-
 interface AppNavigatorProps {
   onLogout: () => void;
 }
 
+interface HomeScreenProps {
+  onLogout: () => void;
+  pagerRef: React.RefObject<PagerView>;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}
+
+function HomeScreen({
+  onLogout,
+  pagerRef,
+  currentPage,
+  onPageChange,
+}: HomeScreenProps) {
+  const handlePageScroll = (e: any) => {
+    const { position } = e.nativeEvent;
+    onPageChange(position);
+  };
+
+  return (
+    <FixedHeaderLayout>
+      <PagerView
+        ref={pagerRef}
+        style={styles.pager}
+        initialPage={0}
+        onPageSelected={handlePageScroll}
+        overdrag={false}
+        offscreenPageLimit={1}
+      >
+        <View key="0" style={styles.page}>
+          <DashboardScreen onLogout={onLogout} />
+        </View>
+        <View key="1" style={styles.page}>
+          <CalendarScreen />
+        </View>
+        <View key="2" style={styles.page}>
+          <TasksScreen />
+        </View>
+        <View key="3" style={styles.page}>
+          <ShoppingScreen />
+        </View>
+        <View key="4" style={styles.page}>
+          <MessagesScreen />
+        </View>
+        <View key="5" style={styles.page}>
+          <RequestsScreen />
+        </View>
+        <View key="6" style={styles.page}>
+          <NotesScreen />
+        </View>
+        <View key="7" style={styles.page}>
+          <BudgetScreen />
+        </View>
+        <View key="8" style={styles.page}>
+          <RewardsScreen />
+        </View>
+        <View key="9" style={styles.page}>
+          <MembersScreen />
+        </View>
+        <View key="10" style={styles.page}>
+          <ReferralScreen />
+        </View>
+        <View key="11" style={styles.page}>
+          <SettingsScreen />
+        </View>
+        <View key="12" style={styles.page}>
+          <HelpScreen />
+        </View>
+      </PagerView>
+    </FixedHeaderLayout>
+  );
+}
+
 export default function AppNavigator({ onLogout }: AppNavigatorProps) {
+  const pagerRef = useRef<PagerView>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const handlePageSelect = (pageIndex: number) => {
+    pagerRef.current?.setPage(pageIndex);
+    setCurrentPage(pageIndex);
+  };
+
   return (
     <NavigationContainer>
       <Drawer.Navigator
-        initialRouteName="Dashboard"
+        initialRouteName="Home"
+        drawerContent={(props) => (
+          <CustomDrawerContent
+            {...props}
+            onPageSelect={handlePageSelect}
+            currentPage={currentPage}
+          />
+        )}
         screenOptions={{
           headerShown: false,
-          lazy: false, // Keep all screens mounted
           drawerActiveTintColor: '#7c3aed',
           drawerInactiveTintColor: '#6b7280',
-          drawerLabelStyle: {
-            fontSize: 16,
-            fontWeight: '600',
-          },
           drawerStyle: {
             backgroundColor: '#fff',
             width: 280,
           },
         }}
       >
-        <Drawer.Screen
-          name="Dashboard"
-          options={{
-            drawerLabel: '🏠 Accueil',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Calendar"
-          options={{
-            drawerLabel: '📅 Calendrier',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Tasks"
-          options={{
-            drawerLabel: '✅ Tâches',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Shopping"
-          options={{
-            drawerLabel: '🛒 Courses',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Messages"
-          options={{
-            drawerLabel: '💬 Messages',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Requests"
-          options={{
-            drawerLabel: '🙏 Demandes',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Notes"
-          options={{
-            drawerLabel: '📝 Notes',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Budget"
-          options={{
-            drawerLabel: '💰 Budget',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Rewards"
-          options={{
-            drawerLabel: '🎁 Récompenses',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Members"
-          options={{
-            drawerLabel: '👥 Membres',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Referral"
-          options={{
-            drawerLabel: '🔗 Parrainage',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Settings"
-          options={{
-            drawerLabel: '⚙️ Paramètres',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
-          )}
-        </Drawer.Screen>
-
-        <Drawer.Screen
-          name="Help"
-          options={{
-            drawerLabel: '❓ Aide',
-          }}
-        >
-          {(props) => (
-            <FixedHeaderLayout>
-              <PagerNavigator screens={SCREEN_ORDER}>
-                <DashboardPage {...props} onLogout={onLogout} />
-                <CalendarPage {...props} />
-                <TasksPage {...props} />
-                <ShoppingPage {...props} />
-                <MessagesPage {...props} />
-                <RequestsPage {...props} />
-                <NotesPage {...props} />
-                <BudgetPage {...props} />
-                <RewardsPage {...props} />
-                <MembersPage {...props} />
-                <ReferralPage {...props} />
-                <SettingsPage {...props} />
-                <HelpPage {...props} />
-              </PagerNavigator>
-            </FixedHeaderLayout>
+        <Drawer.Screen name="Home">
+          {() => (
+            <HomeScreen
+              onLogout={onLogout}
+              pagerRef={pagerRef}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           )}
         </Drawer.Screen>
       </Drawer.Navigator>
@@ -496,6 +143,9 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
 }
 
 const styles = StyleSheet.create({
+  pager: {
+    flex: 1,
+  },
   page: {
     flex: 1,
     backgroundColor: '#f3f4f6',

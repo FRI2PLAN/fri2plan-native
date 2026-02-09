@@ -239,3 +239,14 @@
 - [x] Toutes les pages restent montées (offscreenPageLimit=1)
 - [ ] Tester swipe fluide sans sursaut
 - [ ] Tester swipe infini (pas de blocage)
+
+
+## Refonte architecture drawer + PagerView (STABLE)
+- [x] Créer CustomDrawerContent avec liste des 13 pages
+- [x] 1 seul écran Drawer "Home" (pas 13)
+- [x] PagerView à l'intérieur du Drawer avec ref
+- [x] Clic drawer → setPage() instantané (pas d'animation)
+- [x] Swipe → Animation fluide PagerView
+- [x] Synchronisation drawer/PagerView stable (ref partagée)
+- [x] Header fixe (ne bouge jamais)
+- [ ] Tester navigation drawer + swipe
