@@ -291,3 +291,11 @@
 - [x] Retour au swipe horizontal classique avec fade léger (opacity 0.3)
 - [x] Optimiser animation pour masquer freinage à 75%
 - [ ] Tester transition ultra-douce comme WebView
+
+## Amélioration transition swipe - Slide vertical avec fondu (comme WebView)
+- [x] Remplacer translateX par translateY (slide de bas en haut)
+- [x] Page actuelle : fade out pendant swipe (opacity 0.6)
+- [x] Nouvelle page : entre par le bas avec fade in (translateY 30%)
+- [x] Ajouter léger zoom (scale 0.1) pour effet de profondeur
+- [x] Éliminer complètement le freinage/accroc en fin de transition
+- [ ] Tester transition ultra-douce comme WebView

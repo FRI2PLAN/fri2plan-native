@@ -87,10 +87,12 @@ function HomeScreen({
         windowSize={3}
         customAnimation={(value) => {
           'worklet';
-          const translateX = value * SCREEN_WIDTH;
-          const opacity = 1 - Math.abs(value) * 0.3;
+          // Slide vertical de bas en haut avec fade (comme WebView)
+          const translateY = value * SCREEN_HEIGHT * 0.3; // 30% de la hauteur
+          const opacity = 1 - Math.abs(value) * 0.6; // Fade plus prononcé
+          const scale = 1 - Math.abs(value) * 0.1; // Léger zoom pour effet de profondeur
           return {
-            transform: [{ translateX }],
+            transform: [{ translateY }, { scale }],
             opacity,
           };
         }}
