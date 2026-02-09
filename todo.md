@@ -320,3 +320,13 @@
 - [x] activeOffsetX=20 + failOffsetY=10 (pas d'interférence drawer)
 - [x] Effet fade léger pendant transition (opacity)
 - [ ] Tester fluidité ultra-douce comme WebView
+
+## Migration vers react-native-deck-swiper (bibliothèque mature)
+- [x] Installer react-native-deck-swiper
+- [x] Créer PageDeckSwiper wrapper pour navigation
+- [x] Adapter pour navigation entre pages (pas juste cartes Tinder)
+- [x] Implémenter swipe circulaire infini (3 copies des 13 pages)
+- [x] Désactiver swipe vertical (horizontalSwipe only)
+- [x] Configurer animation fluide (animateCardOpacity)
+- [x] stackSize=3, stackSeparation=0, stackScale=0 (pas d'effet pile)
+- [ ] Tester fluidité ultra-douce comme WebView
