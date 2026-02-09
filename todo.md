@@ -132,3 +132,13 @@
 - [x] Scroll vertical bloqué par le SwipeNavigator (détection horizontal vs vertical)
 - [x] Différencier swipe horizontal (navigation) vs vertical (scroll) (activeOffsetX + failOffsetY)
 - [ ] Tester les corrections
+
+
+## Amélioration swipe navigation (version optimisée)
+- [x] Augmenter seuil à 50% pour éviter navigations accidentelles
+- [x] Augmenter vélocité threshold à 1200 pour swipes intentionnels
+- [x] Ajouter rubber band effect (limite à 70% de l'écran)
+- [x] Améliorer animation withSpring (damping: 25, stiffness: 120)
+- [x] Ratio plus strict pour détection horizontale (2x au lieu de 1.5x)
+- [x] Augmenter activeOffsetX à 15px et failOffsetY à 25px
+- [ ] Tester la nouvelle version
