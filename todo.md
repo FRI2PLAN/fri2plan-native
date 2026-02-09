@@ -272,7 +272,7 @@
 - [ ] Tester swipe circulaire (page 13 → page 1)
 
 ### Dashboard - Page d'accueil
-- [ ] Récupérer nom utilisateur via tRPC (afficher dans header - à faire dans RichHeader)
+- [x] Récupérer nom utilisateur via tRPC (afficher dans header - Déjà fait dans RichHeader)
 - [ ] Actions rapides → Fonctionnement identique bouton + WebView (TODO)
 - [x] Enlever barre raccourcis (favorites bar supprimée)
 - [x] Résumé du jour : Ajouter liens cliquables (TouchableOpacity)
@@ -282,3 +282,11 @@
 - [x] Enlever section "Tâches récentes" (supprimée)
 - [x] Garder aperçu événements du jour (todayEventsList)
 - [x] Ajouter aperçu 3 prochains anniversaires à venir (slice(0, 3))
+
+
+## Amélioration transition swipe (Option 4)
+- [x] Ajouter effet de fondu (opacity) pendant le swipe (customAnimation)
+- [x] Ajouter mode parallax pour effet de profondeur
+- [x] Ajouter léger zoom (scale 0.95) pendant transition
+- [x] Optimiser animation pour masquer freinage à 75%
+- [ ] Tester transition ultra-douce comme WebView
