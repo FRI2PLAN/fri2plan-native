@@ -118,3 +118,9 @@
 - [x] Option privé (🔒)
 - [x] Support multilingue (FR/EN/DE)
 - [ ] Tester toutes les fonctionnalités
+
+
+## Bug swipe navigation - Worklet error
+- [x] Corriger l'erreur "Tried to synchronously call a non-worklet function getNextScreen"
+- [x] Marquer getNextScreen et getPreviousScreen comme 'worklet' pour React Native Reanimated
+- [ ] Tester le swipe gauche/droite après correction

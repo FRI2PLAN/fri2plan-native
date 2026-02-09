@@ -28,12 +28,14 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
   };
 
   const getNextScreen = () => {
+    'worklet';
     const currentIndex = screens.indexOf(currentScreen);
     const nextIndex = (currentIndex + 1) % screens.length; // Circular: wrap to 0 after last
     return screens[nextIndex];
   };
 
   const getPreviousScreen = () => {
+    'worklet';
     const currentIndex = screens.indexOf(currentScreen);
     const previousIndex = (currentIndex - 1 + screens.length) % screens.length; // Circular: wrap to last if at 0
     return screens[previousIndex];
