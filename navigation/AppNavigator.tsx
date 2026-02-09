@@ -85,17 +85,12 @@ function HomeScreen({
           activeOffsetX: [-10, 10],
         }}
         windowSize={3}
-        mode="parallax"
-        modeConfig={{
-          parallaxScrollingScale: 0.95,
-          parallaxScrollingOffset: 50,
-        }}
         customAnimation={(value) => {
           'worklet';
-          const opacity = 1 - Math.abs(value) * 0.5;
-          const scale = 1 - Math.abs(value) * 0.05;
+          const translateX = value * SCREEN_WIDTH;
+          const opacity = 1 - Math.abs(value) * 0.3;
           return {
-            transform: [{ scale }],
+            transform: [{ translateX }],
             opacity,
           };
         }}

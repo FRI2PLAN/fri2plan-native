@@ -286,7 +286,8 @@
 
 ## Amélioration transition swipe (Option 4)
 - [x] Ajouter effet de fondu (opacity) pendant le swipe (customAnimation)
-- [x] Ajouter mode parallax pour effet de profondeur
-- [x] Ajouter léger zoom (scale 0.95) pendant transition
+- [x] ~~Ajouter mode parallax pour effet de profondeur~~ (retiré car chevauchement)
+- [x] ~~Ajouter léger zoom (scale 0.95) pendant transition~~ (retiré car chevauchement)
+- [x] Retour au swipe horizontal classique avec fade léger (opacity 0.3)
 - [x] Optimiser animation pour masquer freinage à 75%
 - [ ] Tester transition ultra-douce comme WebView
