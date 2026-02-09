@@ -4,17 +4,18 @@ import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-g
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   runOnJS,
   interpolate,
   Extrapolate,
+  Easing,
 } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.5; // 50% of screen width - higher threshold to avoid accidental navigation
-const VELOCITY_THRESHOLD = 1200; // Higher velocity threshold for intentional swipes
-const MAX_TRANSLATE = SCREEN_WIDTH * 0.7; // Maximum translation during swipe (70% of screen)
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3; // 30% of screen width - lower for easier swipe
+const VELOCITY_THRESHOLD = 800; // Lower velocity threshold for more responsive swipe
+const MAX_TRANSLATE = SCREEN_WIDTH * 0.8; // Maximum translation during swipe (80% of screen)
 
 interface SwipeNavigatorProps {
   children: React.ReactNode;
@@ -59,8 +60,8 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
       const deltaY = Math.abs(event.translationY);
 
       // Only activate horizontal swipe if horizontal movement is dominant
-      if (!isHorizontalSwipe.value && deltaX > 15) {
-        if (deltaX > deltaY * 2) { // Stricter ratio: horizontal must be 2x vertical
+      if (!isHorizontalSwipe.value && deltaX > 10) {
+        if (deltaX > deltaY * 1.5) { // Horizontal must be 1.5x vertical
           isHorizontalSwipe.value = true;
         }
       }
@@ -80,10 +81,9 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
     .onEnd((event) => {
       // Only navigate if it was a horizontal swipe
       if (!isHorizontalSwipe.value) {
-        translateX.value = withSpring(0, {
-          damping: 25,
-          stiffness: 120,
-          mass: 0.5,
+        translateX.value = withTiming(0, {
+          duration: 200,
+          easing: Easing.out(Easing.cubic),
         });
         return;
       }
@@ -93,12 +93,11 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
 
       // Swipe left (next screen) - requires either distance OR high velocity
       if (translation < -SWIPE_THRESHOLD || velocity < -VELOCITY_THRESHOLD) {
-        translateX.value = withSpring(
+        translateX.value = withTiming(
           -SCREEN_WIDTH,
           {
-            damping: 30,
-            stiffness: 150,
-            mass: 0.8,
+            duration: 250, // Faster animation
+            easing: Easing.out(Easing.cubic),
           },
           () => {
             runOnJS(navigateToScreen)(getNextScreen());
@@ -108,12 +107,11 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
       }
       // Swipe right (previous screen) - requires either distance OR high velocity
       else if (translation > SWIPE_THRESHOLD || velocity > VELOCITY_THRESHOLD) {
-        translateX.value = withSpring(
+        translateX.value = withTiming(
           SCREEN_WIDTH,
           {
-            damping: 30,
-            stiffness: 150,
-            mass: 0.8,
+            duration: 250, // Faster animation
+            easing: Easing.out(Easing.cubic),
           },
           () => {
             runOnJS(navigateToScreen)(getPreviousScreen());
@@ -121,17 +119,16 @@ export default function SwipeNavigator({ children, currentScreen, screens }: Swi
           }
         );
       }
-      // Reset with rubber band effect if threshold not met
+      // Reset with smooth animation if threshold not met
       else {
-        translateX.value = withSpring(0, {
-          damping: 25,
-          stiffness: 120,
-          mass: 0.5,
+        translateX.value = withTiming(0, {
+          duration: 200,
+          easing: Easing.out(Easing.cubic),
         });
       }
     })
-    .activeOffsetX([-15, 15]) // Require 15px horizontal movement to activate (increased from 10px)
-    .failOffsetY([-25, 25]); // Fail if vertical movement exceeds 25px (increased from 20px)
+    .activeOffsetX([-10, 10]) // Require 10px horizontal movement to activate
+    .failOffsetY([-25, 25]); // Fail if vertical movement exceeds 25px
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

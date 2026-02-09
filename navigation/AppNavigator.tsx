@@ -64,6 +64,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
         initialRouteName="Dashboard"
         screenOptions={{
           headerShown: false, // Disable Drawer header - we use FixedHeaderLayout instead
+          lazy: false, // Disable lazy loading - keep all screens mounted for smooth swipe
           drawerActiveTintColor: '#7c3aed',
           drawerInactiveTintColor: '#6b7280',
           drawerLabelStyle: {

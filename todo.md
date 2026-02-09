@@ -190,3 +190,13 @@
 - [x] Header commence APRÈS la safe zone (pas dedans)
 - [x] Safe zone vide avec fond violet
 - [x] Header fixe en dessous de la safe zone
+
+
+## Optimisation swipe fluide (pre-loading + lazy loading)
+- [x] Désactiver lazy loading dans Drawer Navigator (lazy={false})
+- [x] Optimiser animation swipe avec withTiming au lieu de withSpring
+- [x] Réduire seuil de swipe (30% au lieu de 50%)
+- [x] Réduire velocity threshold (800 au lieu de 1200)
+- [x] Animation plus rapide (250ms au lieu de spring)
+- [x] Garder les pages en cache (pas de unmount)
+- [ ] Tester fluidité du swipe horizontal
