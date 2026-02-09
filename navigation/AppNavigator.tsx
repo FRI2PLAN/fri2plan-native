@@ -1,7 +1,8 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import SwipeNavigator from './SwipeNavigator';
+import PagerNavigator from './PagerNavigator';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
@@ -36,24 +37,84 @@ const SCREEN_ORDER = [
   'Help',
 ];
 
-// Wrapper component with fixed header and swipable content
-// CRITICAL: Header is OUTSIDE SwipeNavigator to stay fixed during swipe
-function ScreenWrapper({ 
-  children, 
-  screenName,
-}: { 
-  children: React.ReactNode; 
-  screenName: string;
-}) {
-  return (
-    <FixedHeaderLayout>
-      {/* SwipeNavigator wraps ONLY the content, NOT the header */}
-      <SwipeNavigator currentScreen={screenName} screens={SCREEN_ORDER}>
-        {children}
-      </SwipeNavigator>
-    </FixedHeaderLayout>
-  );
-}
+// Screen components wrapped in View for PagerView
+const DashboardPage = (props: any) => (
+  <View style={styles.page}>
+    <DashboardScreen {...props} onLogout={props.onLogout} />
+  </View>
+);
+
+const CalendarPage = (props: any) => (
+  <View style={styles.page}>
+    <CalendarScreen {...props} />
+  </View>
+);
+
+const TasksPage = (props: any) => (
+  <View style={styles.page}>
+    <TasksScreen {...props} />
+  </View>
+);
+
+const ShoppingPage = (props: any) => (
+  <View style={styles.page}>
+    <ShoppingScreen {...props} />
+  </View>
+);
+
+const MessagesPage = (props: any) => (
+  <View style={styles.page}>
+    <MessagesScreen {...props} />
+  </View>
+);
+
+const RequestsPage = (props: any) => (
+  <View style={styles.page}>
+    <RequestsScreen {...props} />
+  </View>
+);
+
+const NotesPage = (props: any) => (
+  <View style={styles.page}>
+    <NotesScreen {...props} />
+  </View>
+);
+
+const BudgetPage = (props: any) => (
+  <View style={styles.page}>
+    <BudgetScreen {...props} />
+  </View>
+);
+
+const RewardsPage = (props: any) => (
+  <View style={styles.page}>
+    <RewardsScreen {...props} />
+  </View>
+);
+
+const MembersPage = (props: any) => (
+  <View style={styles.page}>
+    <MembersScreen {...props} />
+  </View>
+);
+
+const ReferralPage = (props: any) => (
+  <View style={styles.page}>
+    <ReferralScreen {...props} />
+  </View>
+);
+
+const SettingsPage = (props: any) => (
+  <View style={styles.page}>
+    <SettingsScreen {...props} />
+  </View>
+);
+
+const HelpPage = (props: any) => (
+  <View style={styles.page}>
+    <HelpScreen {...props} />
+  </View>
+);
 
 interface AppNavigatorProps {
   onLogout: () => void;
@@ -65,8 +126,8 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
       <Drawer.Navigator
         initialRouteName="Dashboard"
         screenOptions={{
-          headerShown: false, // Disable Drawer header - we use FixedHeaderLayout instead
-          lazy: false, // Disable lazy loading - keep all screens mounted for smooth swipe
+          headerShown: false,
+          lazy: false, // Keep all screens mounted
           drawerActiveTintColor: '#7c3aed',
           drawerInactiveTintColor: '#6b7280',
           drawerLabelStyle: {
@@ -86,9 +147,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Dashboard">
-              <DashboardScreen {...props} onLogout={onLogout} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -99,9 +174,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Calendar">
-              <CalendarScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -112,9 +201,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Tasks">
-              <TasksScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -125,9 +228,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Shopping">
-              <ShoppingScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -138,9 +255,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Messages">
-              <MessagesScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -151,9 +282,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Requests">
-              <RequestsScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -164,9 +309,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Notes">
-              <NotesScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -177,9 +336,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Budget">
-              <BudgetScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -190,9 +363,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Rewards">
-              <RewardsScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -203,9 +390,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Members">
-              <MembersScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -216,9 +417,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Referral">
-              <ReferralScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -229,9 +444,23 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Settings">
-              <SettingsScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
 
@@ -242,12 +471,33 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           }}
         >
           {(props) => (
-            <ScreenWrapper screenName="Help">
-              <HelpScreen {...props} />
-            </ScreenWrapper>
+            <FixedHeaderLayout>
+              <PagerNavigator screens={SCREEN_ORDER}>
+                <DashboardPage {...props} onLogout={onLogout} />
+                <CalendarPage {...props} />
+                <TasksPage {...props} />
+                <ShoppingPage {...props} />
+                <MessagesPage {...props} />
+                <RequestsPage {...props} />
+                <NotesPage {...props} />
+                <BudgetPage {...props} />
+                <RewardsPage {...props} />
+                <MembersPage {...props} />
+                <ReferralPage {...props} />
+                <SettingsPage {...props} />
+                <HelpPage {...props} />
+              </PagerNavigator>
+            </FixedHeaderLayout>
           )}
         </Drawer.Screen>
       </Drawer.Navigator>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+  },
+});

@@ -228,3 +228,14 @@
 - [x] Corriger logique isTransitioning (reset via useEffect)
 - [x] Bloquer swipe pendant transition (onStart + onUpdate)
 - [ ] Tester que header ne bouge plus pendant swipe
+
+
+## Migration vers PagerView (swipe natif fluide)
+- [x] Installer react-native-pager-view
+- [x] Créer PagerNavigator avec toutes les 13 pages
+- [x] Remplacer SwipeNavigator par PagerView
+- [x] Synchroniser PagerView avec Drawer Navigator (useNavigationState)
+- [x] Header reste fixe (en dehors de PagerView)
+- [x] Toutes les pages restent montées (offscreenPageLimit=1)
+- [ ] Tester swipe fluide sans sursaut
+- [ ] Tester swipe infini (pas de blocage)
