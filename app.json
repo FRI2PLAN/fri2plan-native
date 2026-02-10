@@ -2,7 +2,7 @@
   "expo": {
     "name": "FRI2PLAN",
     "slug": "fri2plan-native",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,6 +24,7 @@
         "backgroundColor": "#7c3aed"
       },
       "package": "com.fri2plan.app",
+      "versionCode": 3,
       "edgeToEdgeEnabled": true,
       "navigationBar": {
         "visible": "immersive",
@@ -34,6 +35,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
+      }
+    },
+    "owner": "fri2plan"
   }
 }
