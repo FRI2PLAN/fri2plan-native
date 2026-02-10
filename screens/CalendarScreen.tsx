@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Mod
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import PageHeader from '../components/PageHeader';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
@@ -27,9 +27,11 @@ const REMINDER_OPTIONS = [
 
 interface CalendarScreenProps {
   onNavigate?: (screen: string) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
-export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
+export default function CalendarScreen({ onNavigate, onPrevious, onNext }: CalendarScreenProps) {
   const { t, i18n } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -190,10 +192,12 @@ export default function CalendarScreen({ onNavigate }: CalendarScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeader
+      <PageHeaderWithArrows
         title={t('calendar.title')}
         buttonText={t('calendar.addEvent')}
         onButtonPress={() => setCreateModalOpen(true)}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       <ScrollView 

@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 interface Favorite {
   id: string;
   name: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string; // Emoji or icon name
+  color?: string; // Optional color for icon
   pageIndex: number;
 }
 
@@ -33,8 +34,8 @@ export default function FavoritesBar({ favorites, onFavoritePress }: FavoritesBa
             style={styles.favoriteButton}
             onPress={() => onFavoritePress(favorite.pageIndex)}
           >
-            <View style={styles.iconContainer}>
-              <Ionicons name={favorite.icon} size={24} color="#7c3aed" />
+            <View style={[styles.iconContainer, favorite.color && { backgroundColor: favorite.color }]}>
+              <Text style={styles.iconEmoji}>{favorite.icon}</Text>
             </View>
             <Text style={styles.favoriteText}>{favorite.name}</Text>
           </TouchableOpacity>
@@ -73,6 +74,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  iconEmoji: {
+    fontSize: 28,
   },
   favoriteText: {
     fontSize: 12,

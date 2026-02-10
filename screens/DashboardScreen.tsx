@@ -1,5 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import FavoritesBar from '../components/FavoritesBar';
@@ -9,9 +10,11 @@ import { fr } from 'date-fns/locale';
 
 interface DashboardScreenProps {
   onLogout: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
-export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
+export default function DashboardScreen({ onLogout, onPrevious, onNext }: DashboardScreenProps) {
   const { user, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -123,10 +126,10 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
 
   // Default favorites (user can customize later)
   const defaultFavorites = [
-    { id: '1', name: 'Calendrier', icon: 'calendar' as const, pageIndex: 1 },
-    { id: '2', name: 'Tâches', icon: 'checkmark-circle' as const, pageIndex: 2 },
-    { id: '3', name: 'Courses', icon: 'cart' as const, pageIndex: 3 },
-    { id: '4', name: 'Messages', icon: 'chatbubbles' as const, pageIndex: 4 },
+    { id: '1', name: 'Calendrier', icon: '📅', color: '#dbeafe', pageIndex: 1 },
+    { id: '2', name: 'Tâches', icon: '✅', color: '#dcfce7', pageIndex: 2 },
+    { id: '3', name: 'Courses', icon: '🛒', color: '#fef3c7', pageIndex: 3 },
+    { id: '4', name: 'Messages', icon: '💬', color: '#e0e7ff', pageIndex: 4 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
@@ -137,6 +140,21 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
+      
+      {/* Title Row with Arrows */}
+      <View style={styles.titleRow}>
+        {onPrevious && (
+          <TouchableOpacity style={styles.arrow} onPress={onPrevious} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={28} color="#7c3aed" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.title}>Accueil</Text>
+        {onNext && (
+          <TouchableOpacity style={styles.arrow} onPress={onNext} activeOpacity={0.7}>
+            <Ionicons name="chevron-forward" size={28} color="#7c3aed" />
+          </TouchableOpacity>
+        )}
+      </View>
       
       {/* Favorites Bar */}
       <FavoritesBar 
@@ -151,10 +169,6 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
         }
       >
-        {/* Title */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Accueil</Text>
-        </View>
 
         {!activeFamily ? (
           <View style={styles.noFamilyCard}>
@@ -264,18 +278,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f3f4f6',
   },
-  content: {
-    flex: 1,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
   },
-  titleContainer: {
-    padding: 16,
-    paddingBottom: 8,
+  arrow: {
+    padding: 8,
+    position: 'absolute',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1f2937',
     textAlign: 'center',
+  },
+  content: {
+    flex: 1,
+  },
+  titleContainer: {
+    padding: 16,
+    paddingBottom: 8,
   },
   noFamilyCard: {
     backgroundColor: '#fff',

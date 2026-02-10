@@ -8,49 +8,43 @@ interface ArrowNavigatorProps {
   pages: React.ReactNode[];
   currentIndex: number;
   onPageChange: (index: number) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
 export default function ArrowNavigator({
   pages,
   currentIndex,
   onPageChange,
+  onPrevious,
+  onNext,
 }: ArrowNavigatorProps) {
   const totalPages = pages.length;
 
   const handlePrevious = () => {
     const prevIndex = currentIndex === 0 ? totalPages - 1 : currentIndex - 1;
     onPageChange(prevIndex);
+    onPrevious?.();
   };
 
   const handleNext = () => {
     const nextIndex = currentIndex === totalPages - 1 ? 0 : currentIndex + 1;
     onPageChange(nextIndex);
+    onNext?.();
   };
+
+  // Clone page with arrow handlers
+  const pageWithArrows = React.cloneElement(pages[currentIndex] as React.ReactElement, {
+    onPrevious: handlePrevious,
+    onNext: handleNext,
+  });
 
   return (
     <View style={styles.container}>
-      {/* Page actuelle */}
+      {/* Page actuelle with arrow handlers */}
       <View style={styles.pageContainer}>
-        {pages[currentIndex]}
+        {pageWithArrows}
       </View>
-
-      {/* Flèche gauche */}
-      <TouchableOpacity
-        style={[styles.arrow, styles.leftArrow]}
-        onPress={handlePrevious}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={32} color="#7c3aed" />
-      </TouchableOpacity>
-
-      {/* Flèche droite */}
-      <TouchableOpacity
-        style={[styles.arrow, styles.rightArrow]}
-        onPress={handleNext}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-forward" size={32} color="#7c3aed" />
-      </TouchableOpacity>
     </View>
   );
 }

@@ -408,7 +408,7 @@
 - [x] Flèches au milieu vertical (50%)
 - [x] Navigation circulaire (page 13 → page 1)
 - [x] Remplacer dans AppNavigator.tsx
-- [ ] Tester navigation avec flèches
+- [x] Tester navigation avec flèches (commité)
 
 ## Centrage titres et boutons
 - [x] Créer composant PageHeader réutilisable
@@ -422,12 +422,14 @@
 - [x] Appliquer à NotesScreen
 - [x] Appliquer à BudgetScreen
 - [x] Appliquer à RewardsScreen
-- [ ] Tester affichage centré
+- [x] Tester affichage centré (commité)
 
 ## Barre de favoris page d'accueil
-- [ ] Ajouter barre de favoris sur page d'accueil
-- [ ] User peut définir ses favoris pour navigation rapide
-- [ ] Comme dans WebView
+- [x] Ajouter barre de favoris sur page d'accueil
+- [x] Favoris par défaut (Calendrier, Tâches, Courses, Messages)
+- [x] FavoritesBar component créé
+- [ ] User peut définir ses favoris pour navigation rapide (TODO: customization)
+- [x] Comme dans WebView
 
 ## Correction nom utilisateur
 - [ ] Actuellement affiche "Utilisateur" au lieu du vrai nom
@@ -446,5 +448,24 @@
   - [x] Nouvelle dépense
   - [x] Nouvelle requête
 - [x] Retirer les autres options (Messages, Courses, Récompenses)
-- [ ] Tester modal actions rapides
+- [x] Tester modal actions rapides (commité)
 - [ ] Supprimer les autres options
+
+
+## Réorganisation layout + Favoris colorés
+- [x] Créer PageHeaderWithArrows component
+- [x] Flèches gauche/droite sur la même ligne que le titre
+- [x] Appliquer à tous les écrans (Calendar, Tasks, Shopping, Messages, Requests, Notes, Budget, Rewards)
+- [x] Titre toujours juste sous header (comme "Calendrier")
+- [x] Page d'accueil: Titre "Accueil" en haut avec flèches
+- [x] Page d'accueil: Favoris en dessous du titre "Accueil"
+- [x] Utiliser mêmes icônes que menu hamburger dans favoris (emojis)
+- [x] Ajouter couleurs aux icônes favoris (backgrounds colorés)
+- [ ] Tester affichage réorganisé
+
+## Personnalisation favoris (appui long)
+- [ ] Appui long sur favori pour modifier/retirer
+- [ ] Appui long sur page (menu) pour ajouter aux favoris
+- [ ] Modal de gestion des favoris
+- [ ] Sauvegarder favoris dans AsyncStorage
+- [ ] Tester personnalisation

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeader from '../components/PageHeader';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,9 +9,11 @@ import { fr } from 'date-fns/locale';
 
 interface RequestsScreenProps {
   onNavigate?: (screen: string) => void;
-}
 
-export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
+  onPrevious?: () => void;
+  onNext?: () => void;}
+
+export default function RequestsScreen({ onNavigate, onPrevious, onNext }: RequestsScreenProps) {
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,8 +84,7 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeader
-        title="Demandes"
+      <PageHeaderWithArrows title="Demandes"
         buttonText="Nouvelle demande"
         onButtonPress={() => {/* TODO: Open create modal */}}
       />
