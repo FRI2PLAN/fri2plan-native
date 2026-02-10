@@ -49,7 +49,6 @@ export default function MessagesScreen({ onNavigate }: MessagesScreenProps) {
         buttonText="Nouveau message"
         onButtonPress={() => {/* TODO: Open create modal */}}
       />
-      </View>
 
       {/* Messages List */}
       <ScrollView 
