@@ -390,3 +390,12 @@
 - [x] Rendu conditionnel: {!isTransitioning && <PrevPage />}
 - [x] Ne montrer QUE currentPage pendant chargement
 - [ ] Tester si flash page d'après a disparu
+
+## Bug double chargement page (accroc pendant fade in)
+- [x] Séquence: Fade out ✅ → Fade in commence ✅ → Fade in ne finit pas ❌ → Page recharge → ACCROC
+- [x] Cause: onPageChange appelé AVANT animation → React re-render pendant fade in
+- [x] Double chargement: page charge pendant fade in, puis recharge après
+- [x] Solution: Appeler onPageChange APRÈS animation (dans callback)
+- [x] Déplacé onPageChange dans withTiming callback (2 occurrences)
+- [x] Ordre correct: Fade out → Fade in → onPageChange → Pas de double chargement
+- [ ] Tester si accroc a disparu

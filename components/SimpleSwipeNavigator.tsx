@@ -76,15 +76,14 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
         swipeDirection = 'right';
         runOnJS(setDirection)(swipeDirection);
         
-        // Changer la page AVANT l'animation
-        runOnJS(onPageChange)(targetIndex);
-        
         // Animation: page actuelle sort vers la droite
         translateX.value = withTiming(SCREEN_WIDTH, {
           duration: 300,
           easing: Easing.inOut(Easing.ease),
         }, () => {
-          // Reset APRÈS l'animation
+          // Changer la page APRÈS l'animation (pas avant!)
+          runOnJS(onPageChange)(targetIndex);
+          // Reset
           translateX.value = 0;
           runOnJS(setIsTransitioning)(false);
           runOnJS(setDirection)(null);
@@ -96,15 +95,14 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
         swipeDirection = 'left';
         runOnJS(setDirection)(swipeDirection);
         
-        // Changer la page AVANT l'animation
-        runOnJS(onPageChange)(targetIndex);
-        
         // Animation: page actuelle sort vers la gauche
         translateX.value = withTiming(-SCREEN_WIDTH, {
           duration: 300,
           easing: Easing.inOut(Easing.ease),
         }, () => {
-          // Reset APRÈS l'animation
+          // Changer la page APRÈS l'animation (pas avant!)
+          runOnJS(onPageChange)(targetIndex);
+          // Reset
           translateX.value = 0;
           runOnJS(setIsTransitioning)(false);
           runOnJS(setDirection)(null);
