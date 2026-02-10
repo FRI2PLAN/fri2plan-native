@@ -8,7 +8,6 @@ interface PageHeaderWithArrowsProps {
   onButtonPress?: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
-  showArrows?: boolean;
 }
 
 export default function PageHeaderWithArrows({
@@ -17,36 +16,41 @@ export default function PageHeaderWithArrows({
   onButtonPress,
   onPrevious,
   onNext,
-  showArrows = true,
 }: PageHeaderWithArrowsProps) {
   return (
     <View style={styles.container}>
-      {/* Title Row with Arrows */}
+      {/* Title Row with Arrows - SIMPLE FLEXBOX */}
       <View style={styles.titleRow}>
         {/* Left Arrow */}
-        {showArrows && onPrevious && (
-          <TouchableOpacity
-            style={styles.arrowLeft}
-            onPress={onPrevious}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-back" size={28} color="#7c3aed" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.arrowButton}
+          onPress={onPrevious}
+          activeOpacity={0.6}
+          disabled={!onPrevious}
+        >
+          {onPrevious ? (
+            <Ionicons name="chevron-back" size={32} color="#7c3aed" />
+          ) : (
+            <View style={styles.placeholder} />
+          )}
+        </TouchableOpacity>
 
         {/* Title */}
         <Text style={styles.title}>{title}</Text>
 
         {/* Right Arrow */}
-        {showArrows && onNext && (
-          <TouchableOpacity
-            style={styles.arrowRight}
-            onPress={onNext}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-forward" size={28} color="#7c3aed" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.arrowButton}
+          onPress={onNext}
+          activeOpacity={0.6}
+          disabled={!onNext}
+        >
+          {onNext ? (
+            <Ionicons name="chevron-forward" size={32} color="#7c3aed" />
+          ) : (
+            <View style={styles.placeholder} />
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Button (if provided) */}
@@ -61,27 +65,28 @@ export default function PageHeaderWithArrows({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: '#ffffff',
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
-  arrowLeft: {
-    padding: 8,
-    position: 'absolute',
-    left: 0,
+  arrowButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  arrowRight: {
-    padding: 8,
-    position: 'absolute',
-    right: 0,
+  placeholder: {
+    width: 32,
+    height: 32,
   },
   title: {
+    flex: 1,
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1f2937',
