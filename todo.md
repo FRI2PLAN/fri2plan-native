@@ -352,3 +352,12 @@
 - [x] Bloquer pendant transition (isTransitioning)
 - [x] withTiming 200ms + Easing.inOut (pas spring!)
 - [ ] Tester fluidité identique WebView
+
+## Bug flash page précédente (SimpleSwipeNavigator)
+- [x] Séquence bugguée: Accueil → swipe → Calendrier entre → Flash Accueil → Calendrier
+- [x] Problème de timing dans onPageChange (appelé trop tard)
+- [x] Nettoyer modules inutilisés (carousel, deck-swiper) pour éviter interférences
+- [x] Supprimer fichiers obsolètes (InfiniteSwiper.tsx, PageDeckSwiper.tsx)
+- [x] Corriger timing: onPageChange appelé AVANT animation (pas après)
+- [x] Reset translateX APRÈS animation (dans callback)
+- [ ] Tester transition fluide sans flash

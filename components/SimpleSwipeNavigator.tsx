@@ -67,20 +67,24 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
       let targetIndex: number;
       let swipeDirection: 'left' | 'right';
 
+      // Bloquer les interactions pendant la transition
+      runOnJS(setIsTransitioning)(true);
+
       // Swipe vers la droite (page précédente)
       if (swipeDistanceX > 0) {
         targetIndex = currentIndex === 0 ? totalPages - 1 : currentIndex - 1;
         swipeDirection = 'right';
+        runOnJS(setDirection)(swipeDirection);
+        
+        // Changer la page AVANT l'animation
+        runOnJS(onPageChange)(targetIndex);
         
         // Animation: page actuelle sort vers la droite
         translateX.value = withTiming(SCREEN_WIDTH, {
           duration: 200,
           easing: Easing.inOut(Easing.ease),
         }, () => {
-          runOnJS(setIsTransitioning)(true);
-          runOnJS(setDirection)(swipeDirection);
-          runOnJS(onPageChange)(targetIndex);
-          // Reset après changement de page
+          // Reset APRÈS l'animation
           translateX.value = 0;
           runOnJS(setIsTransitioning)(false);
           runOnJS(setDirection)(null);
@@ -90,16 +94,17 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
       else {
         targetIndex = currentIndex === totalPages - 1 ? 0 : currentIndex + 1;
         swipeDirection = 'left';
+        runOnJS(setDirection)(swipeDirection);
+        
+        // Changer la page AVANT l'animation
+        runOnJS(onPageChange)(targetIndex);
         
         // Animation: page actuelle sort vers la gauche
         translateX.value = withTiming(-SCREEN_WIDTH, {
           duration: 200,
           easing: Easing.inOut(Easing.ease),
         }, () => {
-          runOnJS(setIsTransitioning)(true);
-          runOnJS(setDirection)(swipeDirection);
-          runOnJS(onPageChange)(targetIndex);
-          // Reset après changement de page
+          // Reset APRÈS l'animation
           translateX.value = 0;
           runOnJS(setIsTransitioning)(false);
           runOnJS(setDirection)(null);
