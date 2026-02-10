@@ -366,7 +366,9 @@
 - [x] Observation: Flash plus marqué au début (Accueil, Calendrier) qu'à la fin (Demandes, Notes)
 - [x] Cause: Problème rendu/chargement premières pages
 - [x] Variante 1: Fade out horizontal prononcé (coefficient 1.5 au lieu de 1)
-- [x] Page sortante disparait plus vite (opacity 0 à 66% du swipe)
-- [ ] Variante 2: Fade out vertical (translateY + opacity) comme WebView
-- [ ] Tester variante 1 en priorité
-- [ ] Si insuffisant, passer à variante 2
+- [x] Variante 1 insuffisante: accroc toujours présent en fin de chargement
+- [x] Variante 2: Fade out vertical (translateY + opacity) comme WebView
+- [x] Page sortante: translateY -50px + fade out (monte et disparait)
+- [x] Page entrante: translateY 50px → 0 + fade in (descend et apparait)
+- [x] Exactement comme framer-motion WebView
+- [ ] Tester variante 2 (devrait masquer complètement l'accroc)

@@ -113,41 +113,62 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
     },
   });
 
-  // Style animé pour la page actuelle (fade out prononcé)
+  // Style animé pour la page actuelle (fade out vertical)
   const currentPageStyle = useAnimatedStyle(() => {
-    // Fade out plus rapide (coefficient 1.5 au lieu de 1)
     const progress = Math.abs(translateX.value) / SCREEN_WIDTH;
+    // Fade out prononcé (coefficient 1.5)
     const opacity = 1 - (progress * 1.5);
+    // Monte légèrement pendant le fade out (-50px)
+    const translateY = -50 * progress;
     return {
-      transform: [{ translateX: translateX.value }],
+      transform: [
+        { translateX: translateX.value },
+        { translateY },
+      ],
       opacity: Math.max(0, opacity),
     };
   });
 
-  // Style animé pour la page suivante (entre de la droite si swipe gauche)
+  // Style animé pour la page suivante (entre avec fade in vertical)
   const nextPageStyle = useAnimatedStyle(() => {
-    if (translateX.value >= 0) return { opacity: 0, transform: [{ translateX: SCREEN_WIDTH }] };
+    if (translateX.value >= 0) return { 
+      opacity: 0, 
+      transform: [{ translateX: SCREEN_WIDTH }, { translateY: 50 }] 
+    };
     
     const progress = Math.abs(translateX.value) / SCREEN_WIDTH;
     const opacity = progress;
-    const translateValue = SCREEN_WIDTH - (progress * SCREEN_WIDTH);
+    const translateXValue = SCREEN_WIDTH - (progress * SCREEN_WIDTH);
+    // Descend pendant le fade in (50px → 0)
+    const translateY = 50 - (50 * progress);
     
     return {
-      transform: [{ translateX: translateValue }],
+      transform: [
+        { translateX: translateXValue },
+        { translateY },
+      ],
       opacity,
     };
   });
 
-  // Style animé pour la page précédente (entre de la gauche si swipe droite)
+  // Style animé pour la page précédente (entre avec fade in vertical)
   const prevPageStyle = useAnimatedStyle(() => {
-    if (translateX.value <= 0) return { opacity: 0, transform: [{ translateX: -SCREEN_WIDTH }] };
+    if (translateX.value <= 0) return { 
+      opacity: 0, 
+      transform: [{ translateX: -SCREEN_WIDTH }, { translateY: 50 }] 
+    };
     
     const progress = translateX.value / SCREEN_WIDTH;
     const opacity = progress;
-    const translateValue = -SCREEN_WIDTH + (progress * SCREEN_WIDTH);
+    const translateXValue = -SCREEN_WIDTH + (progress * SCREEN_WIDTH);
+    // Descend pendant le fade in (50px → 0)
+    const translateY = 50 - (50 * progress);
     
     return {
-      transform: [{ translateX: translateValue }],
+      transform: [
+        { translateX: translateXValue },
+        { translateY },
+      ],
       opacity,
     };
   });
