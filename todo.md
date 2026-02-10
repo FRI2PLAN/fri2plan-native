@@ -563,3 +563,26 @@
 
 ### Anniversaires
 - [x] Ajouter flèches → à droite de chaque personne
+
+
+## CORRECTIONS URGENTES - Page Accueil
+
+### Bugs de navigation et raccourcis
+- [x] Favoris : Les raccourcis ne fonctionnent pas → corriger la navigation
+- [ ] Flèches navigation droite/gauche dans PageHeader → ne fonctionnent pas (dépend de ArrowNavigator)
+- [x] Carte "Tâches à faire" : Raccourci/renvoi ne fonctionne pas
+- [x] Événements à venir : Rendre cliquables → navigation vers Calendrier + jour respectif
+- [x] Messages : Raccourci/renvoi ne fonctionne pas
+- [x] Anniversaires : Chaque ligne cliquable → navigation vers Calendrier + jour respectif
+
+### Modifications design
+- [x] Enlever le graphique de tendance de la page Accueil (le mettre dans Tâches plus tard)
+- [x] Créer une carte séparée pour "Prochains anniversaires" (actuellement dans le widget)
+- [x] Diminuer l'espace entre titre "Accueil" et étoile favoris de moitié (8px au lieu de 12px)
+
+### RichHeader (App Header)
+- [x] Icône Actions rapides : Doit être un "+" (15ème fois demandé !)
+- [x] Dropdown Actions rapides : Tout doit être l'un sous l'autre (logo + titre "Nouveau")
+
+### Vérifications
+- [x] Compteur messages : Vérifier qu'il affiche le bon nombre (filtre isRead === 0)

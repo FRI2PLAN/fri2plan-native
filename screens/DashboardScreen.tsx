@@ -1,14 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState, useMemo } from 'react';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { LineChart } from 'react-native-chart-kit';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -21,7 +20,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const { user, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
-  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
 
   // Fetch active family
   const { data: families } = trpc.family.list.useQuery();
@@ -59,11 +57,16 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // Calculate statistics
   const pendingTasks = useMemo(() => {
-    return tasks.filter(t => 
-      t.status !== 'completed' && 
-      (!t.assignedTo || t.assignedTo === user?.id)
-    ).length;
-  }, [tasks, user?.id]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tasks.filter(t => {
+      if (t.status === 'completed') return false;
+      if (!t.dueDate) return false;
+      const dueDate = new Date(t.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate.getTime() === today.getTime();
+    }).length;
+  }, [tasks]);
 
   const todayEvents = useMemo(() => {
     const today = new Date().toDateString();
@@ -111,37 +114,34 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       .slice(0, 3);
   }, [familyMembers]);
 
-  // Calculate trend data (last 7 days)
-  const trendData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i);
-      const dateStr = startOfDay(date).toDateString();
-      
-      const tasksCount = tasks.filter(t => {
-        if (!t.dueDate) return false;
-        return new Date(t.dueDate).toDateString() === dateStr;
-      }).length;
-      
-      return tasksCount;
-    });
-    
-    return last7Days;
-  }, [tasks]);
-
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
   // Favorites (5 buttons with icon + text)
   const defaultFavorites = [
-    { id: '1', label: 'Calendrier', icon: 'calendar', pageIndex: 1 },
-    { id: '2', label: 'Notes', icon: 'document-text', pageIndex: 6 },
-    { id: '3', label: 'Récompenses', icon: 'gift', pageIndex: 8 },
-    { id: '4', label: 'Messages', icon: 'chatbubbles', pageIndex: 4 },
-    { id: '5', label: 'Tâches', icon: 'checkmark-circle', pageIndex: 2 },
+    { id: '1', label: 'Calendrier', icon: '📅', pageIndex: 1 },
+    { id: '2', label: 'Notes', icon: '📝', pageIndex: 6 },
+    { id: '3', label: 'Récompenses', icon: '🎁', pageIndex: 8 },
+    { id: '4', label: 'Messages', icon: '💬', pageIndex: 4 },
+    { id: '5', label: 'Tâches', icon: '✅', pageIndex: 2 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
     if (onNavigate) {
       onNavigate(pageIndex);
+    }
+  };
+
+  const handleEventPress = (event: any) => {
+    // Navigate to Calendar with the event's date
+    if (onNavigate) {
+      onNavigate(1); // Calendar is at index 1
+    }
+  };
+
+  const handleBirthdayPress = (birthday: any) => {
+    // Navigate to Calendar with the birthday's date
+    if (onNavigate) {
+      onNavigate(1); // Calendar is at index 1
     }
   };
 
@@ -173,16 +173,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
               onPress={() => handleFavoritePress(favorite.pageIndex)}
               activeOpacity={0.7}
             >
-              <Text style={styles.favoriteIcon}>{favorite.icon === 'calendar' ? '📅' : 
-                favorite.icon === 'document-text' ? '📝' :
-                favorite.icon === 'gift' ? '🎁' :
-                favorite.icon === 'chatbubbles' ? '💬' : '✅'}</Text>
+              <Text style={styles.favoriteIcon}>{favorite.icon}</Text>
               <Text style={styles.favoriteText}>{favorite.label}</Text>
             </TouchableOpacity>
           ))}
           <TouchableOpacity
             style={styles.favoriteButtonAdd}
-            onPress={() => setShowFavoritesModal(true)}
             activeOpacity={0.7}
           >
             <Ionicons name="add" size={20} color="#7c3aed" />
@@ -221,10 +217,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
                     <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
-                    <TouchableOpacity style={styles.filtersButton}>
-                      <Ionicons name="filter" size={16} color="#6b7280" />
-                      <Text style={styles.filtersText}>Filtres</Text>
-                    </TouchableOpacity>
                   </View>
 
                   {/* Day/Week Tabs */}
@@ -247,39 +239,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     </TouchableOpacity>
                   </View>
 
-                  {/* Trend Chart */}
-                  <View style={styles.chartContainer}>
-                    <Text style={styles.chartTitle}>Tendance (7 derniers jours)</Text>
-                    <LineChart
-                      data={{
-                        labels: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
-                        datasets: [{ data: trendData.length > 0 ? trendData : [0, 0, 0, 0, 0, 0, 0] }]
-                      }}
-                      width={Dimensions.get('window').width - 80}
-                      height={120}
-                      chartConfig={{
-                        backgroundColor: '#ffffff',
-                        backgroundGradientFrom: '#ffffff',
-                        backgroundGradientTo: '#ffffff',
-                        decimalPlaces: 0,
-                        color: (opacity = 1) => `rgba(124, 58, 237, ${opacity})`,
-                        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
-                        style: { borderRadius: 8 },
-                        propsForDots: {
-                          r: '4',
-                          strokeWidth: '2',
-                          stroke: '#7c3aed'
-                        }
-                      }}
-                      bezier
-                      style={styles.chart}
-                    />
-                  </View>
-
                   {/* Green Card: Tasks to do today */}
                   <TouchableOpacity 
                     style={styles.taskCard}
                     onPress={() => onNavigate && onNavigate(2)}
+                    activeOpacity={0.7}
                   >
                     <View style={styles.taskCardContent}>
                       <View style={styles.taskCardIcon}>
@@ -301,12 +265,20 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     </View>
                     {upcomingEvents.length > 0 ? (
                       upcomingEvents.map((event) => (
-                        <View key={event.id} style={styles.eventItem}>
-                          <Text style={styles.eventTitle}>{event.title}</Text>
-                          <Text style={styles.eventTime}>
-                            {format(new Date(event.startDate), 'dd MMM HH:mm', { locale: fr })}
-                          </Text>
-                        </View>
+                        <TouchableOpacity 
+                          key={event.id} 
+                          style={styles.eventItem}
+                          onPress={() => handleEventPress(event)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.eventContent}>
+                            <Text style={styles.eventTitle}>{event.title}</Text>
+                            <Text style={styles.eventTime}>
+                              {format(new Date(event.startDate), 'dd MMM HH:mm', { locale: fr })}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={16} color="#9ca3af" />
+                        </TouchableOpacity>
                       ))
                     ) : (
                       <Text style={styles.noEventsText}>Aucun événement pour cette date</Text>
@@ -317,6 +289,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   <TouchableOpacity 
                     style={styles.messageCard}
                     onPress={() => onNavigate && onNavigate(4)}
+                    activeOpacity={0.7}
                   >
                     <View style={styles.messageCardContent}>
                       <View style={styles.messageCardIcon}>
@@ -339,7 +312,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       <TouchableOpacity 
                         key={member.id} 
                         style={styles.birthdayItem}
-                        onPress={() => onNavigate && onNavigate(1)}
+                        onPress={() => handleBirthdayPress(member)}
                         activeOpacity={0.7}
                       >
                         <View style={styles.birthdayAvatar}>
@@ -374,13 +347,13 @@ const styles = StyleSheet.create({
   },
   favoritesContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   favoritesHeader: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   favoritesRow: {
     flexDirection: 'row',
@@ -489,20 +462,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1f2937',
   },
-  filtersButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 6,
-  },
-  filtersText: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
   tabsContainer: {
     flexDirection: 'row',
     gap: 8,
@@ -525,17 +484,6 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#ffffff',
-  },
-  chartContainer: {
-    marginBottom: 16,
-  },
-  chartTitle: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginBottom: 8,
-  },
-  chart: {
-    borderRadius: 8,
   },
   taskCard: {
     backgroundColor: '#10b981',
@@ -579,9 +527,15 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   eventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
+  },
+  eventContent: {
+    flex: 1,
   },
   eventTitle: {
     fontSize: 14,

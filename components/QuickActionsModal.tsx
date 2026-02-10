@@ -97,31 +97,30 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
                 </TouchableOpacity>
               </View>
 
-              {/* Actions Grid */}
+              {/* Actions List (vertical) */}
               <ScrollView style={styles.actionsContainer}>
-                <View style={styles.actionsGrid}>
-                  {quickActions.map((action) => (
-                    <TouchableOpacity
-                      key={action.id}
-                      style={styles.actionCard}
-                      onPress={() => handleActionPress(action.screen)}
+                {quickActions.map((action) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    style={styles.actionRow}
+                    onPress={() => handleActionPress(action.screen)}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.actionIconContainer,
+                        { backgroundColor: action.color },
+                      ]}
                     >
-                      <View
-                        style={[
-                          styles.actionIconContainer,
-                          { backgroundColor: action.color },
-                        ]}
-                      >
-                        <Ionicons
-                          name={action.icon}
-                          size={28}
-                          color="#fff"
-                        />
-                      </View>
-                      <Text style={styles.actionLabel}>{action.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                      <Ionicons
+                        name={action.icon}
+                        size={24}
+                        color="#fff"
+                      />
+                    </View>
+                    <Text style={styles.actionLabel}>{action.label}</Text>
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             </View>
           </TouchableOpacity>
@@ -164,30 +163,29 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   actionsContainer: {
-    padding: 20,
+    padding: 16,
   },
-  actionsGrid: {
+  actionRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  actionCard: {
-    width: '48%',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#f9fafb',
   },
   actionIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginRight: 16,
   },
   actionLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    flex: 1,
   },
 });

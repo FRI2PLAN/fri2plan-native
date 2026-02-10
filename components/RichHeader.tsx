@@ -63,7 +63,7 @@ export default function RichHeader({
             onPress={onQuickActionsPress}
             style={styles.iconButton}
           >
-            <Ionicons name="flash" size={22} color="#fff" />
+            <Ionicons name="add" size={26} color="#fff" />
           </TouchableOpacity>
 
           {/* Notifications with badge */}
