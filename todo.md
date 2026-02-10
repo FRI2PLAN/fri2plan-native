@@ -494,7 +494,18 @@
 - [ ] Tester et valider visuellement
 
 ## Amélioration flèches navigation (10 février 2026)
-- [ ] Modifier PageHeaderWithArrows : flèches sur même ligne que titre (petites, violet)
-- [ ] Réduire espacement page Courses (comme Tâches/Demandes)
-- [ ] Supprimer FloatingNavigationArrows (obsolète)
-- [ ] Nettoyer ArrowNavigator
+- [x] Modifier PageHeaderWithArrows : flèches sur même ligne que titre (petites, violet)
+- [x] Réduire espacement page Courses (comme Tâches/Demandes)
+- [x] Supprimer FloatingNavigationArrows (obsolète)
+- [x] Nettoyer ArrowNavigator
+
+
+## Débogage flèches navigation (10 février 2026)
+- [ ] Ajouter fond rouge temporaire aux flèches pour débogage
+- [ ] Identifier pourquoi les flèches ne s'affichent pas
+
+
+## Finalisation flèches navigation (10 février 2026)
+- [ ] Changer couleur flèches : rouge → violet (#7c3aed)
+- [ ] Réduire espacement Lists Tabs et Progress Bar sur ShoppingScreen
+- [ ] Vérifier que DashboardScreen n'affiche PAS de flèches

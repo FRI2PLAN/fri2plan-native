@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   listTab: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -240,14 +240,14 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   progressText: {
     fontSize: 14,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   searchContainer: {
-    padding: 16,
+    padding: 12,
     paddingTop: 8,
     backgroundColor: '#fff',
   },
