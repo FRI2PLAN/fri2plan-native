@@ -479,3 +479,10 @@
 - [x] Ajouter PageHeaderWithArrows à MembersScreen
 - [x] Ajouter PageHeaderWithArrows à ReferralScreen
 - [x] Tester affichage des flèches (commité)
+
+
+## Corrections 10 février 2026 - Flèches + Espacement
+- [x] Flèches de navigation non visibles sur les pages (corrigé - onPrevious/onNext ajoutés à toutes les pages)
+- [x] Espacement insuffisant entre barre de recherche et titre sur page Courses (corrigé - paddingTop: 24)
+- [x] Pages corrigées: Budget, Messages, Notes, Requests, Rewards, Shopping, Tasks
+- [x] Commit et push sur GitHub (commit e081662)
