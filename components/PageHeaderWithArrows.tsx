@@ -81,6 +81,8 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ff0000', // DEBUG: fond rouge vif
+    borderRadius: 18,
   },
   placeholder: {
     width: 24,
