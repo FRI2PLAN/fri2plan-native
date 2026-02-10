@@ -597,3 +597,28 @@
 - [x] Navigation Tâches : Code correct (onNavigate passé)
 - [x] Navigation Messages : Code correct (onNavigate passé)
 - [ ] REBUILD APK nécessaire pour voir les icônes et tester la navigation
+
+
+## ONBOARDING - Reproduction WebView
+
+### Phase 1 : Composants de base
+- [x] Créer OnboardingScreen.tsx (Modal fullscreen)
+- [x] Définir ONBOARDING_STEPS (9 étapes)
+
+### Phase 2 : UI et animations
+- [x] Layout Modal avec fond semi-transparent
+- [x] Barre de progression en haut
+- [x] Boutons Précédent/Suivant
+- [x] Indicateurs de progression (dots)
+- [ ] Animations de transition entre étapes (optionnel)
+
+### Phase 3 : Logique
+- [x] Navigation entre étapes (currentStep state)
+- [x] Sauvegarde AsyncStorage (hasSeenOnboarding)
+- [x] Intégration dans AuthContext
+- [x] Affichage automatique à la première connexion
+
+### Phase 4 : Actions
+- [x] Boutons d'action pour chaque étape
+- [ ] Navigation vers pages correspondantes (TODO: implémenter)
+- [x] Bouton "Terminer" sur dernière étape

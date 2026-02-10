@@ -5,8 +5,9 @@ import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
+import OnboardingScreen from './screens/OnboardingScreen';
 import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 
 // Create QueryClient
@@ -23,7 +24,8 @@ const queryClient = new QueryClient({
 const trpcClient = createTRPCClient();
 
 function AppContent() {
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout } = useAuth();
+  const [currentPage, setCurrentPage] = useState(0);
 
   if (isLoading) {
     return (
@@ -34,7 +36,19 @@ function AppContent() {
   }
 
   if (isAuthenticated) {
-    return <AppNavigator onLogout={logout} />;
+    return (
+      <>
+        <AppNavigator onLogout={logout} />
+        <OnboardingScreen
+          visible={!hasSeenOnboarding}
+          onComplete={completeOnboarding}
+          onNavigate={(pageIndex) => {
+            setCurrentPage(pageIndex);
+            // TODO: Implement navigation to specific page
+          }}
+        />
+      </>
+    );
   }
 
   return <LoginScreen />;

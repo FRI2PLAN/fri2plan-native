@@ -7,9 +7,11 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasSeenOnboarding: boolean;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +24,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
   // Load user data on mount
   useEffect(() => {
@@ -30,9 +33,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const loadUserData = async () => {
     try {
-      const [storedToken, storedUser] = await Promise.all([
+      const [storedToken, storedUser, storedOnboarding] = await Promise.all([
         AsyncStorage.getItem('authToken'),
         AsyncStorage.getItem('user'),
+        AsyncStorage.getItem('hasSeenOnboarding'),
       ]);
 
       if (storedToken && storedUser) {
@@ -40,6 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('[AuthContext] Loaded user from storage:', JSON.stringify(parsedUser, null, 2));
         setToken(storedToken);
         setUser(parsedUser);
+        setHasSeenOnboarding(storedOnboarding === 'true');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -67,14 +72,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      setHasSeenOnboarding(true);
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await Promise.all([
         AsyncStorage.removeItem('authToken'),
         AsyncStorage.removeItem('user'),
+        AsyncStorage.removeItem('hasSeenOnboarding'),
       ]);
       setToken(null);
       setUser(null);
+      setHasSeenOnboarding(false);
     } catch (error) {
       console.error('Error clearing user data:', error);
       throw error;
@@ -100,9 +117,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     token,
     isLoading,
     isAuthenticated: !!token && !!user,
+    hasSeenOnboarding,
     login,
     logout,
     updateUser,
+    completeOnboarding,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
