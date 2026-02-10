@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import FloatingNavigationArrows from './FloatingNavigationArrows';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -45,6 +46,12 @@ export default function ArrowNavigator({
       <View style={styles.pageContainer}>
         {pageWithArrows}
       </View>
+      
+      {/* Floating Navigation Arrows */}
+      <FloatingNavigationArrows
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+      />
     </View>
   );
 }

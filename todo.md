@@ -486,3 +486,9 @@
 - [x] Espacement insuffisant entre barre de recherche et titre sur page Courses (corrigé - paddingTop: 24)
 - [x] Pages corrigées: Budget, Messages, Notes, Requests, Rewards, Shopping, Tasks
 - [x] Commit et push sur GitHub (commit e081662)
+
+
+## Nouvelle approche navigation - Flèches flottantes (10 février 2026)
+- [ ] Créer composant FloatingNavigationArrows (flèches en bas de l'écran)
+- [ ] Intégrer dans ArrowNavigator
+- [ ] Tester et valider visuellement
