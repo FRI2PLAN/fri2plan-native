@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
-import FavoritesBar from '../components/FavoritesBar';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -12,9 +13,10 @@ interface DashboardScreenProps {
   onLogout: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
+  onNavigate?: (pageIndex: number) => void;
 }
 
-export default function DashboardScreen({ onLogout, onPrevious, onNext }: DashboardScreenProps) {
+export default function DashboardScreen({ onLogout, onPrevious, onNext, onNavigate }: DashboardScreenProps) {
   const { user, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -113,54 +115,67 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext }: Dashbo
       .slice(0, 3); // Max 3 birthdays
   }, [familyMembers]);
 
-  // Get today's events
+  // Get today's events (max 3 for display)
   const todayEventsList = useMemo(() => {
     const today = new Date().toDateString();
-    return events.filter(e => {
-      const eventDate = new Date(e.startDate).toDateString();
-      return eventDate === today;
-    });
+    return events
+      .filter(e => {
+        const eventDate = new Date(e.startDate).toDateString();
+        return eventDate === today;
+      })
+      .slice(0, 3); // Max 3 events
   }, [events]);
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Default favorites (user can customize later)
+  // Default favorites (5 icons, no text)
   const defaultFavorites = [
-    { id: '1', name: 'Calendrier', icon: '📅', color: '#dbeafe', pageIndex: 1 },
-    { id: '2', name: 'Tâches', icon: '✅', color: '#dcfce7', pageIndex: 2 },
-    { id: '3', name: 'Courses', icon: '🛒', color: '#fef3c7', pageIndex: 3 },
-    { id: '4', name: 'Messages', icon: '💬', color: '#e0e7ff', pageIndex: 4 },
+    { id: '1', icon: 'calendar', pageIndex: 1 },
+    { id: '2', icon: 'checkmark-circle', pageIndex: 2 },
+    { id: '3', icon: 'cart', pageIndex: 3 },
+    { id: '4', icon: 'chatbubbles', pageIndex: 4 },
+    { id: '5', icon: 'document-text', pageIndex: 6 }, // Notes
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
-    // TODO: Navigate to page using onPageChange from parent
-    console.log('Navigate to page:', pageIndex);
+    if (onNavigate) {
+      onNavigate(pageIndex);
+    }
+  };
+
+  const handleFavoriteLongPress = (favoriteId: string) => {
+    // TODO: Implement favorite management modal
+    console.log('Long press on favorite:', favoriteId);
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Title Row with Arrows */}
-      <View style={styles.titleRow}>
-        {onPrevious && (
-          <TouchableOpacity style={styles.arrow} onPress={onPrevious} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={28} color="#7c3aed" />
-          </TouchableOpacity>
-        )}
-        <Text style={styles.title}>Accueil</Text>
-        {onNext && (
-          <TouchableOpacity style={styles.arrow} onPress={onNext} activeOpacity={0.7}>
-            <Ionicons name="chevron-forward" size={28} color="#7c3aed" />
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      {/* Favorites Bar */}
-      <FavoritesBar 
-        favorites={defaultFavorites}
-        onFavoritePress={handleFavoritePress}
+      {/* Header with Arrows */}
+      <PageHeaderWithArrows 
+        title="Accueil"
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
+
+      {/* Favorites Bar - 5 icons without text */}
+      <View style={styles.favoritesContainer}>
+        <Text style={styles.favoritesTitle}>Favoris</Text>
+        <View style={styles.favoritesRow}>
+          {defaultFavorites.map((favorite) => (
+            <TouchableOpacity
+              key={favorite.id}
+              style={styles.favoriteIcon}
+              onPress={() => handleFavoritePress(favorite.pageIndex)}
+              onLongPress={() => handleFavoriteLongPress(favorite.id)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={favorite.icon as any} size={32} color="#7c3aed" />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
       
       {/* Content */}
       <ScrollView 
@@ -201,47 +216,66 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext }: Dashbo
                     <Text style={styles.widgetText}>
                       Vous avez {pendingRequests} demande{pendingRequests > 1 ? 's' : ''} en attente de validation
                     </Text>
-                    <TouchableOpacity style={styles.widgetButton}>
+                    <TouchableOpacity 
+                      style={styles.widgetButton}
+                      onPress={() => onNavigate && onNavigate(5)} // Page Demandes
+                    >
                       <Text style={styles.widgetButtonText}>Voir les demandes →</Text>
                     </TouchableOpacity>
                   </View>
                 )}
 
                 {/* Daily Summary Widget with clickable links */}
-                <View style={styles.widget}>
+                <View style={styles.summaryWidget}>
                   <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
                   <View style={styles.summaryGrid}>
-                    <TouchableOpacity style={styles.summaryItem}>
+                    <TouchableOpacity 
+                      style={styles.summaryItem}
+                      onPress={() => onNavigate && onNavigate(1)} // Page Calendrier
+                    >
                       <Text style={styles.summaryNumber}>{todayEvents}</Text>
                       <Text style={styles.summaryLabel}>Événements</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.summaryItem}>
+                    <TouchableOpacity 
+                      style={styles.summaryItem}
+                      onPress={() => onNavigate && onNavigate(2)} // Page Tâches
+                    >
                       <Text style={styles.summaryNumber}>{pendingTasks}</Text>
                       <Text style={styles.summaryLabel}>Tâches</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.summaryItem}>
+                    <TouchableOpacity 
+                      style={styles.summaryItem}
+                      onPress={() => onNavigate && onNavigate(4)} // Page Messages
+                    >
                       <Text style={styles.summaryNumber}>{unreadMessages}</Text>
                       <Text style={styles.summaryLabel}>Messages</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Today's Events */}
-                {todayEventsList.length > 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>📅 Événements du jour</Text>
-                    {todayEventsList.map((event) => (
-                      <View key={event.id} style={styles.eventItem}>
-                        <View style={styles.eventInfo}>
-                          <Text style={styles.eventTitle}>{event.title}</Text>
+                {/* Today's Events (max 3) */}
+                <View style={styles.widget}>
+                  <Text style={styles.widgetTitle}>📅 Événements du jour</Text>
+                  {todayEventsList.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {todayEventsList.map((event) => (
+                        <View key={event.id} style={styles.eventCard}>
+                          <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
                           <Text style={styles.eventTime}>
                             {format(new Date(event.startDate), 'HH:mm', { locale: fr })}
                           </Text>
                         </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <View style={styles.placeholderContainer}>
+                      <Text style={styles.placeholderEmoji}>☀️</Text>
+                      <Text style={styles.placeholderText}>
+                        Profitez d'un jour de repos bien mérité ! 😌
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
                 {/* Upcoming Birthdays Widget (max 3) */}
                 {upcomingBirthdays.length > 0 && (
@@ -278,30 +312,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f3f4f6',
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  favoritesContainer: {
+    backgroundColor: '#fff',
+    paddingVertical: 8,
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
-  arrow: {
-    padding: 8,
-    position: 'absolute',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  favoritesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#1f2937',
-    textAlign: 'center',
+    marginBottom: 8,
+  },
+  favoritesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  favoriteIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
-  },
-  titleContainer: {
-    padding: 16,
-    paddingBottom: 8,
   },
   noFamilyCard: {
     backgroundColor: '#fff',
@@ -360,6 +398,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  summaryWidget: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   widgetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -402,6 +453,7 @@ const styles = StyleSheet.create({
   summaryGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    paddingVertical: 8,
   },
   summaryItem: {
     alignItems: 'center',
@@ -414,28 +466,40 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6b7280',
   },
-  eventItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  eventInfo: {
-    flex: 1,
+  eventCard: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 12,
+    minWidth: 150,
+    maxWidth: 200,
   },
   eventTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   eventTime: {
-    fontSize: 14,
+    fontSize: 13,
+    color: '#7c3aed',
+    fontWeight: '500',
+  },
+  placeholderContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  placeholderEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  placeholderText: {
+    fontSize: 15,
     color: '#6b7280',
+    textAlign: 'center',
   },
   birthdayItem: {
     flexDirection: 'row',
@@ -445,18 +509,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   birthdayAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#7c3aed',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   birthdayAvatarText: {
-    color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#fff',
   },
   birthdayInfo: {
     flex: 1,

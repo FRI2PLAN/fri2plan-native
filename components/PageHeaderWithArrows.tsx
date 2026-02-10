@@ -29,7 +29,7 @@ export default function PageHeaderWithArrows({
           disabled={!onPrevious}
         >
           {onPrevious ? (
-            <Ionicons name="chevron-back" size={24} color="#ffffff" />
+            <Ionicons name="chevron-back" size={24} color="#7c3aed" />
           ) : (
             <View style={styles.placeholder} />
           )}
@@ -46,7 +46,7 @@ export default function PageHeaderWithArrows({
           disabled={!onNext}
         >
           {onNext ? (
-            <Ionicons name="chevron-forward" size={24} color="#ffffff" />
+            <Ionicons name="chevron-forward" size={24} color="#7c3aed" />
           ) : (
             <View style={styles.placeholder} />
           )}
@@ -81,8 +81,13 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#ffffff',
     borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   placeholder: {
     width: 24,

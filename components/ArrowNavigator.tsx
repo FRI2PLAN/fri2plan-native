@@ -37,6 +37,7 @@ export default function ArrowNavigator({
   const pageWithArrows = React.cloneElement(pages[currentIndex] as React.ReactElement, {
     onPrevious: handlePrevious,
     onNext: handleNext,
+    onNavigate: onPageChange,
   });
 
   return (

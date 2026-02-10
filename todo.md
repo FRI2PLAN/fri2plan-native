@@ -509,3 +509,35 @@
 - [ ] Changer couleur flèches : rouge → violet (#7c3aed)
 - [ ] Réduire espacement Lists Tabs et Progress Bar sur ShoppingScreen
 - [ ] Vérifier que DashboardScreen n'affiche PAS de flèches
+
+
+## REFONTE COMPLÈTE - Page par page (Nouvelle demande utilisateur)
+
+### Boutons de navigation (TOUTES les pages)
+- [x] Changer fond violet → blanc
+- [x] Changer flèches blanches → violettes
+- [x] Ajouter ombre pour relief
+
+### Page Accueil - Header et navigation
+- [x] Afficher le nom de l'utilisateur dans le header (déjà dans RichHeader)
+- [x] Remplacer "Actions rapides" par icône "+" (déjà dans RichHeader)
+- [x] Ajouter les flèches de navigation sur la page Accueil (actuellement absentes)
+- [x] Réduire l'espace entre "Accueil" et "Favoris" (similaire à l'espace safe zone → titre)
+
+### Page Accueil - Icônes raccourcis/Favoris
+- [x] Enlever les textes sous les icônes (Calendrier, Tâches, Courses, Messages)
+- [x] Augmenter à 5 raccourcis (au lieu de 4)
+- [x] Corriger les liens de navigation (actuellement ne fonctionnent pas)
+- [x] Implémenter appui long pour choisir/enlever des favoris (console.log pour l'instant)
+
+### Page Accueil - Carte Résumé du jour
+- [x] Ajouter padding de 8 pour aérer
+- [x] Rendre les compteurs cliquables avec redirection
+  - [x] Compteur événements → page Calendrier
+  - [x] Compteur tâches en cours → page Tâches
+  - [x] Compteur messages non lus → page Messages
+
+### Page Accueil - Nouvelles cartes
+- [x] Créer carte "Événements du jour" (scrollable, max 3)
+- [x] Placeholder si pas d'événements : "Profitez d'un jour de repos..." ou message drôle
+- [x] Créer carte "Prochains anniversaires" (3 prochains)
