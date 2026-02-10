@@ -489,6 +489,12 @@
 
 
 ## Nouvelle approche navigation - Flèches flottantes (10 février 2026)
-- [ ] Créer composant FloatingNavigationArrows (flèches en bas de l'écran)
-- [ ] Intégrer dans ArrowNavigator
+- [x] Créer composant FloatingNavigationArrows (flèches en bas de l'écran)
+- [x] Intégrer dans ArrowNavigator
 - [ ] Tester et valider visuellement
+
+## Amélioration flèches navigation (10 février 2026)
+- [ ] Modifier PageHeaderWithArrows : flèches sur même ligne que titre (petites, violet)
+- [ ] Réduire espacement page Courses (comme Tâches/Demandes)
+- [ ] Supprimer FloatingNavigationArrows (obsolète)
+- [ ] Nettoyer ArrowNavigator

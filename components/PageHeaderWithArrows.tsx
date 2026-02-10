@@ -19,7 +19,7 @@ export default function PageHeaderWithArrows({
 }: PageHeaderWithArrowsProps) {
   return (
     <View style={styles.container}>
-      {/* Title Row with Arrows - SIMPLE FLEXBOX */}
+      {/* Title Row with Arrows */}
       <View style={styles.titleRow}>
         {/* Left Arrow */}
         <TouchableOpacity
@@ -29,7 +29,7 @@ export default function PageHeaderWithArrows({
           disabled={!onPrevious}
         >
           {onPrevious ? (
-            <Ionicons name="chevron-back" size={32} color="#7c3aed" />
+            <Ionicons name="chevron-back" size={24} color="#7c3aed" />
           ) : (
             <View style={styles.placeholder} />
           )}
@@ -46,7 +46,7 @@ export default function PageHeaderWithArrows({
           disabled={!onNext}
         >
           {onNext ? (
-            <Ionicons name="chevron-forward" size={32} color="#7c3aed" />
+            <Ionicons name="chevron-forward" size={24} color="#7c3aed" />
           ) : (
             <View style={styles.placeholder} />
           )}
@@ -66,7 +66,8 @@ export default function PageHeaderWithArrows({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
     backgroundColor: '#ffffff',
   },
   titleRow: {
@@ -76,14 +77,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   arrowButton: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholder: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
   },
   title: {
     flex: 1,
