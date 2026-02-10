@@ -90,10 +90,10 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
               {/* Header */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {t('dashboard.quickActions')}
+                  Actions rapides
                 </Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                     <Ionicons name="add" size={24} color="#fff" />
+                     <Ionicons name="close" size={24} color="#6b7280" />
                 </TouchableOpacity>
               </View>
 

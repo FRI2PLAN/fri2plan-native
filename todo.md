@@ -586,3 +586,14 @@
 
 ### Vérifications
 - [x] Compteur messages : Vérifier qu'il affiche le bon nombre (filtre isRead === 0)
+
+
+## BUGS RESTANTS - Page Accueil (d'après captures d'écran)
+
+- [ ] Flèches navigation : Icônes Ionicons ne s'affichent pas (problème de build)
+- [x] Dropdown titre : "dashboard.quickActions" au lieu de "Actions rapides"
+- [x] Carte Anniversaires : Présente dans le code (s'affiche si anniversaires < 30 jours)
+- [x] Navigation Favoris : Code correct (onNavigate passé)
+- [x] Navigation Tâches : Code correct (onNavigate passé)
+- [x] Navigation Messages : Code correct (onNavigate passé)
+- [ ] REBUILD APK nécessaire pour voir les icônes et tester la navigation
