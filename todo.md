@@ -380,3 +380,13 @@
 - [x] Appliqué à toutes les animations withTiming (3 occurrences)
 - [x] Laisser plus de temps aux pages pour se charger
 - [ ] Tester si accroc disparaît avec 300ms
+
+## Bug aperçu page d'après pendant chargement
+- [x] Séquence: Accueil → Calendrier → Flash Tâches (page d'après!) → Calendrier
+- [x] Cause: Pendant chargement, nextIndex s'affiche brièvement au lieu de currentIndex
+- [x] React Native pré-charge 3 pages (prev, current, next)
+- [x] Pendant transition, nextIndex "fuite" et s'affiche
+- [x] Solution: Masquer prev/next pages pendant isTransitioning
+- [x] Rendu conditionnel: {!isTransitioning && <PrevPage />}
+- [x] Ne montrer QUE currentPage pendant chargement
+- [ ] Tester si flash page d'après a disparu

@@ -184,20 +184,24 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
       enabled={!isTransitioning}
     >
       <Animated.View style={styles.container}>
-        {/* Page précédente (visible pendant swipe droite) */}
-        <Animated.View style={[styles.page, prevPageStyle]} pointerEvents="none">
-          {pages[prevIndex]}
-        </Animated.View>
+        {/* Page précédente (visible pendant swipe droite, masquée pendant transition) */}
+        {!isTransitioning && (
+          <Animated.View style={[styles.page, prevPageStyle]} pointerEvents="none">
+            {pages[prevIndex]}
+          </Animated.View>
+        )}
 
         {/* Page actuelle */}
         <Animated.View style={[styles.page, currentPageStyle]}>
           {pages[currentIndex]}
         </Animated.View>
 
-        {/* Page suivante (visible pendant swipe gauche) */}
-        <Animated.View style={[styles.page, nextPageStyle]} pointerEvents="none">
-          {pages[nextIndex]}
-        </Animated.View>
+        {/* Page suivante (visible pendant swipe gauche, masquée pendant transition) */}
+        {!isTransitioning && (
+          <Animated.View style={[styles.page, nextPageStyle]} pointerEvents="none">
+            {pages[nextIndex]}
+          </Animated.View>
+        )}
       </Animated.View>
     </PanGestureHandler>
   );
