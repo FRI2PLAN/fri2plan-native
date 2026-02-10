@@ -372,3 +372,11 @@
 - [x] Page entrante: translateY 50px → 0 + fade in (descend et apparait)
 - [x] Exactement comme framer-motion WebView
 - [ ] Tester variante 2 (devrait masquer complètement l'accroc)
+
+## Augmentation durée animation pour temps de chargement
+- [x] Observation: 200ms trop rapide, pages n'ont pas temps de charger complètement
+- [x] Accroc en fin de transition = problème de chargement
+- [x] Augmenter durée: 200ms → 300ms (cohérent avec préférence UI universelle)
+- [x] Appliqué à toutes les animations withTiming (3 occurrences)
+- [x] Laisser plus de temps aux pages pour se charger
+- [ ] Tester si accroc disparaît avec 300ms

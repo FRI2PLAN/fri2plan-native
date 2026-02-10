@@ -53,13 +53,13 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
 
       // Vérifier que c'est un swipe horizontal
       if (Math.abs(swipeDistanceY) > Math.abs(swipeDistanceX)) {
-        translateX.value = withTiming(0, { duration: 200, easing: Easing.inOut(Easing.ease) });
+        translateX.value = withTiming(0, { duration: 300, easing: Easing.inOut(Easing.ease) });
         return;
       }
 
       // Vérifier la distance minimale (80px comme WebView)
       if (Math.abs(swipeDistanceX) < MIN_SWIPE_DISTANCE) {
-        translateX.value = withTiming(0, { duration: 200, easing: Easing.inOut(Easing.ease) });
+        translateX.value = withTiming(0, { duration: 300, easing: Easing.inOut(Easing.ease) });
         return;
       }
 
@@ -81,7 +81,7 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
         
         // Animation: page actuelle sort vers la droite
         translateX.value = withTiming(SCREEN_WIDTH, {
-          duration: 200,
+          duration: 300,
           easing: Easing.inOut(Easing.ease),
         }, () => {
           // Reset APRÈS l'animation
@@ -101,7 +101,7 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
         
         // Animation: page actuelle sort vers la gauche
         translateX.value = withTiming(-SCREEN_WIDTH, {
-          duration: 200,
+          duration: 300,
           easing: Easing.inOut(Easing.ease),
         }, () => {
           // Reset APRÈS l'animation
