@@ -336,7 +336,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   <View style={styles.widget}>
                     <Text style={styles.widgetTitle}>🎂 Prochains anniversaires</Text>
                     {upcomingBirthdays.map((member) => (
-                      <View key={member.id} style={styles.birthdayItem}>
+                      <TouchableOpacity 
+                        key={member.id} 
+                        style={styles.birthdayItem}
+                        onPress={() => onNavigate && onNavigate(1)}
+                        activeOpacity={0.7}
+                      >
                         <View style={styles.birthdayAvatar}>
                           <Text style={styles.birthdayAvatarText}>{member.name.charAt(0)}</Text>
                         </View>
@@ -349,7 +354,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                           </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 )}
