@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Share } from 'react-native';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
 interface ReferralScreenProps {
   onNavigate?: (screen: string) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
 interface Referral {
@@ -15,7 +18,7 @@ interface Referral {
   reward: number;
 }
 
-export default function ReferralScreen({ onNavigate }: ReferralScreenProps) {
+export default function ReferralScreen({ onNavigate , onPrevious, onNext}: ReferralScreenProps) {
   const referralCode = 'FRI2PLAN-ABCD1234';
   const referralLink = `https://fri2plan.app/invite/${referralCode}`;
 
@@ -94,6 +97,24 @@ export default function ReferralScreen({ onNavigate }: ReferralScreenProps) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Parrainer un ami</Text>
       </View>
+
+      <PageHeaderWithArrows 
+
+
+        title="Parrainage"
+
+
+        onPrevious={onPrevious}
+
+
+        onNext={onNext}
+
+
+      />
+
+
+      
+
 
       <ScrollView style={styles.content}>
         {/* Hero Card */}

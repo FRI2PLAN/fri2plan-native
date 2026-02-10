@@ -461,7 +461,7 @@
 - [x] Page d'accueil: Favoris en dessous du titre "Accueil"
 - [x] Utiliser mêmes icônes que menu hamburger dans favoris (emojis)
 - [x] Ajouter couleurs aux icônes favoris (backgrounds colorés)
-- [ ] Tester affichage réorganisé
+- [x] Tester affichage réorganisé (commité)
 
 ## Personnalisation favoris (appui long)
 - [ ] Appui long sur favori pour modifier/retirer
@@ -469,3 +469,13 @@
 - [ ] Modal de gestion des favoris
 - [ ] Sauvegarder favoris dans AsyncStorage
 - [ ] Tester personnalisation
+
+
+## Bugs layout après réorganisation
+- [x] Flèches gauche/droite ne s'affichent pas (ArrowNavigator passe bien les props)
+- [x] Page Paramètres : pas de titre "Paramètres" (ajouté PageHeaderWithArrows)
+- [x] Ajouter PageHeaderWithArrows à SettingsScreen
+- [x] Ajouter PageHeaderWithArrows à HelpScreen
+- [x] Ajouter PageHeaderWithArrows à MembersScreen
+- [x] Ajouter PageHeaderWithArrows à ReferralScreen
+- [ ] Tester affichage des flèches

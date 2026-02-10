@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch, Modal } from 'react-native';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +8,11 @@ import { changeLanguage, getCurrentLanguage } from '../i18n';
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
   onLogout?: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
-export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenProps) {
+export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNext}: SettingsScreenProps) {
   const { t } = useTranslation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -84,6 +87,12 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         </TouchableOpacity>
       </Modal>
 
+      <PageHeaderWithArrows 
+        title="Paramètres"
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
+      
       <ScrollView style={styles.content}>
         {/* Appearance Section */}
         <View style={styles.section}>

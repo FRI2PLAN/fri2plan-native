@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
 interface HelpScreenProps {
   onNavigate?: (screen: string) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
 interface FAQ {
@@ -13,7 +16,7 @@ interface FAQ {
   category: string;
 }
 
-export default function HelpScreen({ onNavigate }: HelpScreenProps) {
+export default function HelpScreen({ onNavigate , onPrevious, onNext}: HelpScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
 
@@ -98,6 +101,24 @@ export default function HelpScreen({ onNavigate }: HelpScreenProps) {
           onChangeText={setSearchQuery}
         />
       </View>
+
+      <PageHeaderWithArrows 
+
+
+        title="Aide"
+
+
+        onPrevious={onPrevious}
+
+
+        onNext={onNext}
+
+
+      />
+
+
+      
+
 
       <ScrollView style={styles.content}>
         {/* Quick Actions */}

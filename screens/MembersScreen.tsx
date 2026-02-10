@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
+import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
@@ -6,9 +7,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
-export default function MembersScreen({ onNavigate }: MembersScreenProps) {
+export default function MembersScreen({ onNavigate , onPrevious, onNext}: MembersScreenProps) {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -88,6 +91,18 @@ export default function MembersScreen({ onNavigate }: MembersScreenProps) {
       </View>
 
       {/* Members List */}
+      <PageHeaderWithArrows 
+
+        title="Membres"
+
+        onPrevious={onPrevious}
+
+        onNext={onNext}
+
+      />
+
+      
+
       <ScrollView 
         style={styles.content}
         refreshControl={
