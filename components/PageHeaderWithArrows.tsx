@@ -26,7 +26,7 @@ export default function PageHeaderWithArrows({
         {/* Left Arrow */}
         {showArrows && onPrevious && (
           <TouchableOpacity
-            style={styles.arrow}
+            style={styles.arrowLeft}
             onPress={onPrevious}
             activeOpacity={0.7}
           >
@@ -40,7 +40,7 @@ export default function PageHeaderWithArrows({
         {/* Right Arrow */}
         {showArrows && onNext && (
           <TouchableOpacity
-            style={styles.arrow}
+            style={styles.arrowRight}
             onPress={onNext}
             activeOpacity={0.7}
           >
@@ -71,9 +71,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  arrow: {
+  arrowLeft: {
     padding: 8,
     position: 'absolute',
+    left: 0,
+  },
+  arrowRight: {
+    padding: 8,
+    position: 'absolute',
+    right: 0,
   },
   title: {
     fontSize: 28,
