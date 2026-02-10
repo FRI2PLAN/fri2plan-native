@@ -622,3 +622,13 @@
 - [x] Boutons d'action pour chaque étape
 - [ ] Navigation vers pages correspondantes (TODO: implémenter)
 - [x] Bouton "Terminer" sur dernière étape
+
+
+## BUG URGENT - CalendarScreen
+
+- [x] Les événements ne s'affichent pas dans le calendrier
+- [x] Vérifier la requête tRPC events.list (OK)
+- [x] Vérifier le filtrage par date (OK)
+- [x] Vérifier l'affichage sur le calendrier (marqueurs) (OK)
+- [x] Corriger handleCreateEvent : startDate + durationMinutes + isPrivate (0/1)
+- [x] Corriger handleUpdateEvent : startDate + durationMinutes + isPrivate (0/1)

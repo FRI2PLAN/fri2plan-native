@@ -97,15 +97,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     try {
       const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
       const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
+      const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
 
       await createEvent.mutateAsync({
         title: formData.title,
         description: formData.description,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startDate: startDateTime,
+        durationMinutes,
         category: formData.category,
-        reminder: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate,
+        reminderMinutes: parseInt(formData.reminder),
+        isPrivate: formData.isPrivate ? 1 : 0,
       });
 
       setCreateModalOpen(false);
@@ -122,16 +123,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     try {
       const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
       const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
+      const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
 
       await updateEvent.mutateAsync({
         id: selectedEvent.id,
         title: formData.title,
         description: formData.description,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startDate: startDateTime,
+        durationMinutes,
         category: formData.category,
-        reminder: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate,
+        reminderMinutes: parseInt(formData.reminder),
+        isPrivate: formData.isPrivate ? 1 : 0,
       });
 
       setEditModalOpen(false);
