@@ -361,3 +361,12 @@
 - [x] Corriger timing: onPageChange appelé AVANT animation (pas après)
 - [x] Reset translateX APRÈS animation (dans callback)
 - [ ] Tester transition fluide sans flash
+
+## Amélioration fade out pour masquer flash (2 variantes)
+- [x] Observation: Flash plus marqué au début (Accueil, Calendrier) qu'à la fin (Demandes, Notes)
+- [x] Cause: Problème rendu/chargement premières pages
+- [x] Variante 1: Fade out horizontal prononcé (coefficient 1.5 au lieu de 1)
+- [x] Page sortante disparait plus vite (opacity 0 à 66% du swipe)
+- [ ] Variante 2: Fade out vertical (translateY + opacity) comme WebView
+- [ ] Tester variante 1 en priorité
+- [ ] Si insuffisant, passer à variante 2

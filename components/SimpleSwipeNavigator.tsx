@@ -113,9 +113,11 @@ export default function SimpleSwipeNavigator({ pages, currentIndex, onPageChange
     },
   });
 
-  // Style animé pour la page actuelle
+  // Style animé pour la page actuelle (fade out prononcé)
   const currentPageStyle = useAnimatedStyle(() => {
-    const opacity = 1 - Math.abs(translateX.value) / SCREEN_WIDTH;
+    // Fade out plus rapide (coefficient 1.5 au lieu de 1)
+    const progress = Math.abs(translateX.value) / SCREEN_WIDTH;
+    const opacity = 1 - (progress * 1.5);
     return {
       transform: [{ translateX: translateX.value }],
       opacity: Math.max(0, opacity),
