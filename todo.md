@@ -541,3 +541,25 @@
 - [x] Créer carte "Événements du jour" (scrollable, max 3)
 - [x] Placeholder si pas d'événements : "Profitez d'un jour de repos..." ou message drôle
 - [x] Créer carte "Prochains anniversaires" (3 prochains)
+
+
+## REFONTE Dashboard - Reproduction exacte WebView
+
+### Favoris
+- [x] Remplacer cercles par boutons rectangulaires avec icône + texte
+- [x] Garder max 5 favoris
+- [x] Ajouter icône étoile ⭐ à gauche
+- [x] Bouton "+" pour ajouter
+- [ ] Suppression avec X au survol (ou appui long sur mobile) - TODO: implémenter modal
+
+### Résumé du jour
+- [x] Ajouter onglets Jour/Semaine
+- [x] Ajouter bouton Filtres (dropdown) - UI prête, fonctionnalité à implémenter
+- [x] Ajouter graphique de tendance (7 derniers jours)
+- [x] Créer carte verte "Tâches à faire aujourd'hui" (compteur + flèche)
+- [x] Créer section "Événements à venir" (liste max 5)
+- [x] Créer carte bleue "Messages non lus" (compteur + flèche)
+- [x] Rendre les cartes cliquables avec navigation
+
+### Anniversaires
+- [x] Ajouter flèches → à droite de chaque personne

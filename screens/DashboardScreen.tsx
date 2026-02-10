@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState, useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { LineChart } from 'react-native-chart-kit';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -19,10 +20,12 @@ interface DashboardScreenProps {
 export default function DashboardScreen({ onLogout, onPrevious, onNext, onNavigate }: DashboardScreenProps) {
   const { user, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
 
   // Fetch active family
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[0]; // Assuming first family is active
+  const activeFamily = families?.[0];
 
   // Fetch family members
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -39,16 +42,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   );
   const messages = messagesData?.messages || [];
 
-  // Fetch requests (for admin)
-  const { data: requests = [], refetch: refetchRequests } = trpc.requests.list.useQuery(
-    { familyId: activeFamily?.id || 0 },
-    { enabled: !!activeFamily }
-  );
-
-  // Determine if user is family admin
-  const currentMember = familyMembers.find(m => m.id === user?.id);
-  const isFamilyAdmin = currentMember?.familyRole === 'admin';
-
   const handleLogout = async () => {
     await logout();
     onLogout();
@@ -60,7 +53,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       refetchTasks(),
       refetchEvents(),
       refetchMessages(),
-      refetchRequests(),
     ]);
     setRefreshing(false);
   };
@@ -78,16 +70,20 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     return events.filter(e => {
       const eventDate = new Date(e.startDate).toDateString();
       return eventDate === today;
-    }).length;
+    });
+  }, [events]);
+
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    return events
+      .filter(e => new Date(e.startDate) >= today)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 5);
   }, [events]);
 
   const unreadMessages = useMemo(() => {
     return messages.filter(m => 'isRead' in m && m.isRead === 0).length;
   }, [messages]);
-
-  const pendingRequests = useMemo(() => {
-    return requests.filter(r => r.status === 'pending').length;
-  }, [requests]);
 
   // Get upcoming birthdays (max 3)
   const upcomingBirthdays = useMemo(() => {
@@ -112,40 +108,41 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       })
       .filter(m => m.upcomingBirthday <= nextMonth)
       .sort((a, b) => a.daysUntil - b.daysUntil)
-      .slice(0, 3); // Max 3 birthdays
+      .slice(0, 3);
   }, [familyMembers]);
 
-  // Get today's events (max 3 for display)
-  const todayEventsList = useMemo(() => {
-    const today = new Date().toDateString();
-    return events
-      .filter(e => {
-        const eventDate = new Date(e.startDate).toDateString();
-        return eventDate === today;
-      })
-      .slice(0, 3); // Max 3 events
-  }, [events]);
+  // Calculate trend data (last 7 days)
+  const trendData = useMemo(() => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(new Date(), 6 - i);
+      const dateStr = startOfDay(date).toDateString();
+      
+      const tasksCount = tasks.filter(t => {
+        if (!t.dueDate) return false;
+        return new Date(t.dueDate).toDateString() === dateStr;
+      }).length;
+      
+      return tasksCount;
+    });
+    
+    return last7Days;
+  }, [tasks]);
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Default favorites (5 icons, no text)
+  // Favorites (5 buttons with icon + text)
   const defaultFavorites = [
-    { id: '1', icon: 'calendar', pageIndex: 1 },
-    { id: '2', icon: 'checkmark-circle', pageIndex: 2 },
-    { id: '3', icon: 'cart', pageIndex: 3 },
-    { id: '4', icon: 'chatbubbles', pageIndex: 4 },
-    { id: '5', icon: 'document-text', pageIndex: 6 }, // Notes
+    { id: '1', label: 'Calendrier', icon: 'calendar', pageIndex: 1 },
+    { id: '2', label: 'Notes', icon: 'document-text', pageIndex: 6 },
+    { id: '3', label: 'Récompenses', icon: 'gift', pageIndex: 8 },
+    { id: '4', label: 'Messages', icon: 'chatbubbles', pageIndex: 4 },
+    { id: '5', label: 'Tâches', icon: 'checkmark-circle', pageIndex: 2 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
     if (onNavigate) {
       onNavigate(pageIndex);
     }
-  };
-
-  const handleFavoriteLongPress = (favoriteId: string) => {
-    // TODO: Implement favorite management modal
-    console.log('Long press on favorite:', favoriteId);
   };
 
   return (
@@ -159,22 +156,38 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         onNext={onNext}
       />
 
-      {/* Favorites Bar - 5 icons without text */}
+      {/* Favorites Bar - Buttons with icon + text */}
       <View style={styles.favoritesContainer}>
-        <Text style={styles.favoritesTitle}>Favoris</Text>
-        <View style={styles.favoritesRow}>
+        <View style={styles.favoritesHeader}>
+          <Ionicons name="star" size={16} color="#eab308" />
+        </View>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.favoritesRow}
+        >
           {defaultFavorites.map((favorite) => (
             <TouchableOpacity
               key={favorite.id}
-              style={styles.favoriteIcon}
+              style={styles.favoriteButton}
               onPress={() => handleFavoritePress(favorite.pageIndex)}
-              onLongPress={() => handleFavoriteLongPress(favorite.id)}
               activeOpacity={0.7}
             >
-              <Ionicons name={favorite.icon as any} size={32} color="#7c3aed" />
+              <Text style={styles.favoriteIcon}>{favorite.icon === 'calendar' ? '📅' : 
+                favorite.icon === 'document-text' ? '📝' :
+                favorite.icon === 'gift' ? '🎁' :
+                favorite.icon === 'chatbubbles' ? '💬' : '✅'}</Text>
+              <Text style={styles.favoriteText}>{favorite.label}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+          <TouchableOpacity
+            style={styles.favoriteButtonAdd}
+            onPress={() => setShowFavoritesModal(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={20} color="#7c3aed" />
+          </TouchableOpacity>
+        </ScrollView>
       </View>
       
       {/* Content */}
@@ -204,80 +217,121 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
               </View>
             ) : (
               <>
-                {/* Pending Requests Widget (Admin only) */}
-                {isFamilyAdmin && pendingRequests > 0 && (
-                  <View style={styles.widget}>
-                    <View style={styles.widgetHeader}>
-                      <Text style={styles.widgetTitle}>📋 Demandes en attente</Text>
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{pendingRequests}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.widgetText}>
-                      Vous avez {pendingRequests} demande{pendingRequests > 1 ? 's' : ''} en attente de validation
-                    </Text>
-                    <TouchableOpacity 
-                      style={styles.widgetButton}
-                      onPress={() => onNavigate && onNavigate(5)} // Page Demandes
-                    >
-                      <Text style={styles.widgetButtonText}>Voir les demandes →</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {/* Daily Summary Widget with clickable links */}
+                {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
-                  <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
-                  <View style={styles.summaryGrid}>
-                    <TouchableOpacity 
-                      style={styles.summaryItem}
-                      onPress={() => onNavigate && onNavigate(1)} // Page Calendrier
-                    >
-                      <Text style={styles.summaryNumber}>{todayEvents}</Text>
-                      <Text style={styles.summaryLabel}>Événements</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.summaryItem}
-                      onPress={() => onNavigate && onNavigate(2)} // Page Tâches
-                    >
-                      <Text style={styles.summaryNumber}>{pendingTasks}</Text>
-                      <Text style={styles.summaryLabel}>Tâches</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.summaryItem}
-                      onPress={() => onNavigate && onNavigate(4)} // Page Messages
-                    >
-                      <Text style={styles.summaryNumber}>{unreadMessages}</Text>
-                      <Text style={styles.summaryLabel}>Messages</Text>
+                  <View style={styles.summaryHeader}>
+                    <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
+                    <TouchableOpacity style={styles.filtersButton}>
+                      <Ionicons name="filter" size={16} color="#6b7280" />
+                      <Text style={styles.filtersText}>Filtres</Text>
                     </TouchableOpacity>
                   </View>
-                </View>
 
-                {/* Today's Events (max 3) */}
-                <View style={styles.widget}>
-                  <Text style={styles.widgetTitle}>📅 Événements du jour</Text>
-                  {todayEventsList.length > 0 ? (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {todayEventsList.map((event) => (
-                        <View key={event.id} style={styles.eventCard}>
-                          <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+                  {/* Day/Week Tabs */}
+                  <View style={styles.tabsContainer}>
+                    <TouchableOpacity
+                      style={[styles.tab, viewMode === 'day' && styles.tabActive]}
+                      onPress={() => setViewMode('day')}
+                    >
+                      <Text style={[styles.tabText, viewMode === 'day' && styles.tabTextActive]}>
+                        Jour
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tab, viewMode === 'week' && styles.tabActive]}
+                      onPress={() => setViewMode('week')}
+                    >
+                      <Text style={[styles.tabText, viewMode === 'week' && styles.tabTextActive]}>
+                        Semaine
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Trend Chart */}
+                  <View style={styles.chartContainer}>
+                    <Text style={styles.chartTitle}>Tendance (7 derniers jours)</Text>
+                    <LineChart
+                      data={{
+                        labels: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+                        datasets: [{ data: trendData.length > 0 ? trendData : [0, 0, 0, 0, 0, 0, 0] }]
+                      }}
+                      width={Dimensions.get('window').width - 80}
+                      height={120}
+                      chartConfig={{
+                        backgroundColor: '#ffffff',
+                        backgroundGradientFrom: '#ffffff',
+                        backgroundGradientTo: '#ffffff',
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(124, 58, 237, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+                        style: { borderRadius: 8 },
+                        propsForDots: {
+                          r: '4',
+                          strokeWidth: '2',
+                          stroke: '#7c3aed'
+                        }
+                      }}
+                      bezier
+                      style={styles.chart}
+                    />
+                  </View>
+
+                  {/* Green Card: Tasks to do today */}
+                  <TouchableOpacity 
+                    style={styles.taskCard}
+                    onPress={() => onNavigate && onNavigate(2)}
+                  >
+                    <View style={styles.taskCardContent}>
+                      <View style={styles.taskCardIcon}>
+                        <Ionicons name="checkmark-circle" size={32} color="#ffffff" />
+                      </View>
+                      <View style={styles.taskCardInfo}>
+                        <Text style={styles.taskCardTitle}>Tâches à faire aujourd'hui</Text>
+                        <Text style={styles.taskCardCount}>{pendingTasks}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={24} color="#ffffff" />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Upcoming Events Section */}
+                  <View style={styles.eventsSection}>
+                    <View style={styles.eventsSectionHeader}>
+                      <Ionicons name="calendar" size={20} color="#6b7280" />
+                      <Text style={styles.eventsSectionTitle}>Événements à venir</Text>
+                    </View>
+                    {upcomingEvents.length > 0 ? (
+                      upcomingEvents.map((event) => (
+                        <View key={event.id} style={styles.eventItem}>
+                          <Text style={styles.eventTitle}>{event.title}</Text>
                           <Text style={styles.eventTime}>
-                            {format(new Date(event.startDate), 'HH:mm', { locale: fr })}
+                            {format(new Date(event.startDate), 'dd MMM HH:mm', { locale: fr })}
                           </Text>
                         </View>
-                      ))}
-                    </ScrollView>
-                  ) : (
-                    <View style={styles.placeholderContainer}>
-                      <Text style={styles.placeholderEmoji}>☀️</Text>
-                      <Text style={styles.placeholderText}>
-                        Profitez d'un jour de repos bien mérité ! 😌
-                      </Text>
+                      ))
+                    ) : (
+                      <Text style={styles.noEventsText}>Aucun événement pour cette date</Text>
+                    )}
+                  </View>
+
+                  {/* Blue Card: Unread Messages */}
+                  <TouchableOpacity 
+                    style={styles.messageCard}
+                    onPress={() => onNavigate && onNavigate(4)}
+                  >
+                    <View style={styles.messageCardContent}>
+                      <View style={styles.messageCardIcon}>
+                        <Ionicons name="chatbubbles" size={32} color="#ffffff" />
+                      </View>
+                      <View style={styles.messageCardInfo}>
+                        <Text style={styles.messageCardTitle}>Messages non lus</Text>
+                        <Text style={styles.messageCardCount}>{unreadMessages}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={24} color="#ffffff" />
                     </View>
-                  )}
+                  </TouchableOpacity>
                 </View>
 
-                {/* Upcoming Birthdays Widget (max 3) */}
+                {/* Upcoming Birthdays Widget */}
                 {upcomingBirthdays.length > 0 && (
                   <View style={styles.widget}>
                     <Text style={styles.widgetTitle}>🎂 Prochains anniversaires</Text>
@@ -294,6 +348,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                              `Dans ${member.daysUntil} jours`}
                           </Text>
                         </View>
+                        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
                       </View>
                     ))}
                   </View>
@@ -314,29 +369,48 @@ const styles = StyleSheet.create({
   },
   favoritesContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  favoritesTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
+  favoritesHeader: {
     marginBottom: 8,
   },
   favoritesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: 8,
     alignItems: 'center',
   },
-  favoriteIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
+  favoriteButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  favoriteIcon: {
+    fontSize: 18,
+  },
+  favoriteText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#1f2937',
+  },
+  favoriteButtonAdd: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderStyle: 'dashed',
   },
   content: {
     flex: 1,
@@ -386,6 +460,167 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
   },
+  summaryWidget: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  widgetTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  filtersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 6,
+  },
+  filtersText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: '#7c3aed',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  tabTextActive: {
+    color: '#ffffff',
+  },
+  chartContainer: {
+    marginBottom: 16,
+  },
+  chartTitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  chart: {
+    borderRadius: 8,
+  },
+  taskCard: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  taskCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  taskCardIcon: {
+    marginRight: 12,
+  },
+  taskCardInfo: {
+    flex: 1,
+  },
+  taskCardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  taskCardCount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  eventsSection: {
+    marginBottom: 16,
+  },
+  eventsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  eventsSectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  eventItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  eventTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  eventTime: {
+    fontSize: 13,
+    color: '#7c3aed',
+  },
+  noEventsText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  messageCard: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
+    padding: 16,
+  },
+  messageCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  messageCardIcon: {
+    marginRight: 12,
+  },
+  messageCardInfo: {
+    flex: 1,
+  },
+  messageCardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  messageCardCount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
   widget: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -397,109 +632,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  summaryWidget: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  widgetTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  widgetText: {
-    fontSize: 15,
-    color: '#6b7280',
-    marginBottom: 12,
-  },
-  widgetButton: {
-    backgroundColor: '#f3e8ff',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  widgetButtonText: {
-    color: '#7c3aed',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  badge: {
-    backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
-  },
-  summaryItem: {
-    alignItems: 'center',
-    padding: 12,
-  },
-  summaryNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#7c3aed',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    fontSize: 13,
-    color: '#6b7280',
-  },
-  eventCard: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 12,
-    minWidth: 150,
-    maxWidth: 200,
-  },
-  eventTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 6,
-  },
-  eventTime: {
-    fontSize: 13,
-    color: '#7c3aed',
-    fontWeight: '500',
-  },
-  placeholderContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  placeholderEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  placeholderText: {
-    fontSize: 15,
-    color: '#6b7280',
-    textAlign: 'center',
   },
   birthdayItem: {
     flexDirection: 'row',
