@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -81,12 +82,11 @@ export default function RequestsScreen({ onNavigate }: RequestsScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Demandes</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle demande</Text>
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Demandes"
+        buttonText="Nouvelle demande"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -71,12 +72,11 @@ export default function RewardsScreen({ onNavigate }: RewardsScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Récompenses</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle récompense</Text>
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Récompenses"
+        buttonText="Nouvelle récompense"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
 
       {/* User Points Card */}
       <View style={styles.pointsCard}>

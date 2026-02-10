@@ -399,3 +399,52 @@
 - [x] Déplacé onPageChange dans withTiming callback (2 occurrences)
 - [x] Ordre correct: Fade out → Fade in → onPageChange → Pas de double chargement
 - [ ] Tester si accroc a disparu
+
+## Abandon swipe + Nouvelle navigation avec flèches
+- [x] Enlever SimpleSwipeNavigator (swipe ne fonctionne pas correctement)
+- [x] Créer ArrowNavigator component
+- [x] Ajouter flèches gauche/droite pour navigation entre pages
+- [x] Flèches positionnées aux bords (gauche: 16px, droite: 16px)
+- [x] Flèches au milieu vertical (50%)
+- [x] Navigation circulaire (page 13 → page 1)
+- [x] Remplacer dans AppNavigator.tsx
+- [ ] Tester navigation avec flèches
+
+## Centrage titres et boutons
+- [x] Créer composant PageHeader réutilisable
+- [x] Centrer les titres de pages
+- [x] Mettre boutons "Nouveau" en dessous, centrés
+- [x] Appliquer à CalendarScreen
+- [x] Appliquer à TasksScreen
+- [x] Appliquer à ShoppingScreen
+- [x] Appliquer à MessagesScreen
+- [x] Appliquer à RequestsScreen
+- [x] Appliquer à NotesScreen
+- [x] Appliquer à BudgetScreen
+- [x] Appliquer à RewardsScreen
+- [ ] Tester affichage centré
+
+## Barre de favoris page d'accueil
+- [ ] Ajouter barre de favoris sur page d'accueil
+- [ ] User peut définir ses favoris pour navigation rapide
+- [ ] Comme dans WebView
+
+## Correction nom utilisateur
+- [ ] Actuellement affiche "Utilisateur" au lieu du vrai nom
+- [ ] Doit afficher "Ixari Alexandre" (nom de l'utilisateur)
+- [x] Ajouter logs de débogage dans AuthContext
+- [ ] Vérifier ce que l'API renvoie lors du login
+- [ ] Vérifier si user.name est bien stocké dans AsyncStorage
+- [ ] Corriger selon le problème identifié
+
+## Actions rapides (remplacer éclair par +)
+- [x] Remplacer icône éclair par icône + (add)
+- [x] Garder seulement 5 options (comme WebView):
+  - [x] Nouvel événement
+  - [x] Nouvelle tâche
+  - [x] Nouvelle note
+  - [x] Nouvelle dépense
+  - [x] Nouvelle requête
+- [x] Retirer les autres options (Messages, Courses, Récompenses)
+- [ ] Tester modal actions rapides
+- [ ] Supprimer les autres options

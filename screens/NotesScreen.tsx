@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
@@ -43,12 +44,11 @@ export default function NotesScreen({ onNavigate }: NotesScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notes</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle note</Text>
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Notes"
+        buttonText="Nouvelle note"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

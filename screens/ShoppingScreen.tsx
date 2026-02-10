@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 
@@ -57,12 +58,11 @@ export default function ShoppingScreen({ onNavigate }: ShoppingScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Courses</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle liste</Text>
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Courses"
+        buttonText="Nouvelle liste"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
 
       {/* Lists Tabs */}
       {listsLoading ? (

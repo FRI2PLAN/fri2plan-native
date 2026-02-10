@@ -28,62 +28,42 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
   const navigation = useNavigation();
   const { t } = useTranslation();
 
+  // Only 5 options like WebView
   const quickActions: QuickAction[] = [
     {
-      id: 'calendar',
+      id: 'event',
       icon: 'calendar',
-      label: t('navigation.calendar'),
+      label: 'Nouvel événement',
       screen: 'Calendar',
       color: '#3b82f6', // Bleu
     },
     {
-      id: 'tasks',
+      id: 'task',
       icon: 'checkmark-circle',
-      label: t('navigation.tasks'),
+      label: 'Nouvelle tâche',
       screen: 'Tasks',
       color: '#10b981', // Vert
     },
     {
-      id: 'shopping',
-      icon: 'cart',
-      label: t('navigation.shopping'),
-      screen: 'Shopping',
-      color: '#f59e0b', // Orange
-    },
-    {
-      id: 'messages',
-      icon: 'chatbubbles',
-      label: t('navigation.messages'),
-      screen: 'Messages',
-      color: '#8b5cf6', // Violet
-    },
-    {
-      id: 'requests',
-      icon: 'document-text',
-      label: t('navigation.requests'),
-      screen: 'Requests',
-      color: '#ec4899', // Rose
-    },
-    {
-      id: 'notes',
+      id: 'note',
       icon: 'document',
-      label: t('navigation.notes'),
+      label: 'Nouvelle note',
       screen: 'Notes',
       color: '#06b6d4', // Cyan
     },
     {
-      id: 'budget',
+      id: 'expense',
       icon: 'cash',
-      label: t('navigation.budget'),
+      label: 'Nouvelle dépense',
       screen: 'Budget',
-      color: '#14b8a6', // Teal
+      color: '#f59e0b', // Orange
     },
     {
-      id: 'rewards',
-      icon: 'gift',
-      label: t('navigation.rewards'),
-      screen: 'Rewards',
-      color: '#f43f5e', // Rouge
+      id: 'request',
+      icon: 'help-circle',
+      label: 'Nouvelle requête',
+      screen: 'Requests',
+      color: '#ec4899', // Rose
     },
   ];
 
@@ -113,7 +93,7 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
                   {t('dashboard.quickActions')}
                 </Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
+                     <Ionicons name="add" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
 

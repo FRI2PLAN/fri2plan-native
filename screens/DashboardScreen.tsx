@@ -2,6 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
+import FavoritesBar from '../components/FavoritesBar';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -120,9 +121,28 @@ export default function DashboardScreen({ onLogout }: DashboardScreenProps) {
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
+  // Default favorites (user can customize later)
+  const defaultFavorites = [
+    { id: '1', name: 'Calendrier', icon: 'calendar' as const, pageIndex: 1 },
+    { id: '2', name: 'Tâches', icon: 'checkmark-circle' as const, pageIndex: 2 },
+    { id: '3', name: 'Courses', icon: 'cart' as const, pageIndex: 3 },
+    { id: '4', name: 'Messages', icon: 'chatbubbles' as const, pageIndex: 4 },
+  ];
+
+  const handleFavoritePress = (pageIndex: number) => {
+    // TODO: Navigate to page using onPageChange from parent
+    console.log('Navigate to page:', pageIndex);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
+      
+      {/* Favorites Bar */}
+      <FavoritesBar 
+        favorites={defaultFavorites}
+        onFavoritePress={handleFavoritePress}
+      />
       
       {/* Content */}
       <ScrollView 

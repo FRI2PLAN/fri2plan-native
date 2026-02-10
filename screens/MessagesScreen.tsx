@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,11 +44,11 @@ export default function MessagesScreen({ onNavigate }: MessagesScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <View style={styles.headerBadge}>
-          <Text style={styles.headerBadgeText}>{messages?.length || 0}</Text>
-        </View>
+      <PageHeader
+        title="Messages"
+        buttonText="Nouveau message"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
       </View>
 
       {/* Messages List */}

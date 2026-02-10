@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import PageHeader from '../components/PageHeader';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { format } from 'date-fns';
@@ -66,12 +67,11 @@ export default function BudgetScreen({ onNavigate }: BudgetScreenProps) {
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Budget</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Nouvelle transaction</Text>
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title="Budget"
+        buttonText="Nouvelle dépense"
+        onButtonPress={() => {/* TODO: Open create modal */}}
+      />
 
       {/* View Toggle */}
       <View style={styles.viewToggle}>

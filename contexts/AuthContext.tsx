@@ -36,8 +36,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       ]);
 
       if (storedToken && storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('[AuthContext] Loaded user from storage:', JSON.stringify(parsedUser, null, 2));
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(parsedUser);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (userData: User, authToken: string) => {
     try {
+      console.log('[AuthContext] Login called with user data:', JSON.stringify(userData, null, 2));
       // Ensure we never pass undefined values to AsyncStorage
       if (!authToken || !userData) {
         throw new Error('Invalid login data');
