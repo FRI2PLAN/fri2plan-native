@@ -49,6 +49,8 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       <PageHeaderWithArrows title="Notes"
         buttonText="Nouvelle note"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* Search Bar */}

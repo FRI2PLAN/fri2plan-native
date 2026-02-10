@@ -72,6 +72,8 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       <PageHeaderWithArrows title="Budget"
         buttonText="Nouvelle dépense"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* View Toggle */}

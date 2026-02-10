@@ -63,6 +63,8 @@ export default function ShoppingScreen({ onNavigate, onPrevious, onNext }: Shopp
       <PageHeaderWithArrows title="Courses"
         buttonText="Nouvelle liste"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* Lists Tabs */}
@@ -269,6 +271,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: 16,
+    paddingTop: 24,
     backgroundColor: '#fff',
   },
   searchInput: {

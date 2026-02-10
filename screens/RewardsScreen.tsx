@@ -77,6 +77,8 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
       <PageHeaderWithArrows title="Récompenses"
         buttonText="Nouvelle récompense"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* User Points Card */}

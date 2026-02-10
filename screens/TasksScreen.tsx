@@ -80,6 +80,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       <PageHeaderWithArrows title="Tâches"
         buttonText="Nouvelle tâche"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* Search Bar */}

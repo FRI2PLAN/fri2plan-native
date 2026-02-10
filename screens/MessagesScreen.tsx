@@ -49,6 +49,8 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       <PageHeaderWithArrows title="Messages"
         buttonText="Nouveau message"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* Messages List */}

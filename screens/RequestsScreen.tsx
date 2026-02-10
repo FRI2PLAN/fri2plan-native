@@ -87,6 +87,8 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       <PageHeaderWithArrows title="Demandes"
         buttonText="Nouvelle demande"
         onButtonPress={() => {/* TODO: Open create modal */}}
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
 
       {/* Search Bar */}

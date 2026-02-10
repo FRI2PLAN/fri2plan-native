@@ -478,4 +478,4 @@
 - [x] Ajouter PageHeaderWithArrows à HelpScreen
 - [x] Ajouter PageHeaderWithArrows à MembersScreen
 - [x] Ajouter PageHeaderWithArrows à ReferralScreen
-- [ ] Tester affichage des flèches
+- [x] Tester affichage des flèches (commité)
