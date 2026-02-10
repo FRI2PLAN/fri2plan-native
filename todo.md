@@ -632,3 +632,34 @@
 - [x] Vérifier l'affichage sur le calendrier (marqueurs) (OK)
 - [x] Corriger handleCreateEvent : startDate + durationMinutes + isPrivate (0/1)
 - [x] Corriger handleUpdateEvent : startDate + durationMinutes + isPrivate (0/1)
+
+
+## AMÉLIORATION Formulaire Création Événements
+
+### Champs manquants par rapport à WebView
+- [ ] Sélecteur de date (DatePicker) au lieu de date fixe
+- [ ] Attribution : Sélection des participants (membres de la famille)
+- [ ] Dropdown pour le type d'événement (au lieu de boutons)
+- [ ] Récurrence (quotidien, hebdomadaire, mensuel, annuel)
+- [ ] Date de fin de récurrence
+- [ ] Approbation requise (oui/non)
+
+### Améliorations UI
+- [ ] Utiliser des Pickers natifs React Native
+- [ ] Améliorer le layout du formulaire
+- [ ] Ajouter validation des champs
+
+
+## BUG URGENT - Navigation
+
+### Erreurs de navigation
+- [x] Actions rapides : "Notes" n'existe pas → utiliser pageIndex au lieu de nom
+- [x] Actions rapides : "Calendar" n'existe pas → utiliser pageIndex au lieu de nom
+- [x] Favoris Dashboard : Navigation fonctionne (utilise déjà pageIndex)
+- [x] Confusion anglais/français dans les noms de pages → résolu
+
+### Diagnostic nécessaire
+- [x] Vérifier AppNavigator : système de carousel avec index 0-12
+- [x] Vérifier si navigation par nom ou par index : INDEX
+- [x] Harmoniser tous les appels de navigation : QuickActionsModal corrigé
+- [x] Passer onNavigate : AppNavigator → FixedHeaderLayout → QuickActionsModal

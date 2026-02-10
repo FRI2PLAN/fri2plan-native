@@ -14,18 +14,18 @@ import { useTranslation } from 'react-i18next';
 interface QuickActionsModalProps {
   visible: boolean;
   onClose: () => void;
+  onNavigate?: (pageIndex: number) => void;
 }
 
 interface QuickAction {
   id: string;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  screen: string;
+  pageIndex: number;
   color: string;
 }
 
-export default function QuickActionsModal({ visible, onClose }: QuickActionsModalProps) {
-  const navigation = useNavigation();
+export default function QuickActionsModal({ visible, onClose, onNavigate }: QuickActionsModalProps) {
   const { t } = useTranslation();
 
   // Only 5 options like WebView
@@ -34,42 +34,44 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
       id: 'event',
       icon: 'calendar',
       label: 'Nouvel événement',
-      screen: 'Calendar',
+      pageIndex: 1, // Calendar
       color: '#3b82f6', // Bleu
     },
     {
       id: 'task',
       icon: 'checkmark-circle',
       label: 'Nouvelle tâche',
-      screen: 'Tasks',
+      pageIndex: 2, // Tasks
       color: '#10b981', // Vert
     },
     {
       id: 'note',
       icon: 'document',
       label: 'Nouvelle note',
-      screen: 'Notes',
+      pageIndex: 6, // Notes
       color: '#06b6d4', // Cyan
     },
     {
       id: 'expense',
       icon: 'cash',
       label: 'Nouvelle dépense',
-      screen: 'Budget',
+      pageIndex: 7, // Budget
       color: '#f59e0b', // Orange
     },
     {
       id: 'request',
       icon: 'help-circle',
       label: 'Nouvelle requête',
-      screen: 'Requests',
+      pageIndex: 5, // Requests
       color: '#ec4899', // Rose
     },
   ];
 
-  const handleActionPress = (screen: string) => {
+  const handleActionPress = (pageIndex: number) => {
     onClose();
-    navigation.navigate(screen as never);
+    if (onNavigate) {
+      onNavigate(pageIndex);
+    }
   };
 
   return (
@@ -103,7 +105,7 @@ export default function QuickActionsModal({ visible, onClose }: QuickActionsModa
                   <TouchableOpacity
                     key={action.id}
                     style={styles.actionRow}
-                    onPress={() => handleActionPress(action.screen)}
+                    onPress={() => handleActionPress(action.pageIndex)}
                     activeOpacity={0.7}
                   >
                     <View

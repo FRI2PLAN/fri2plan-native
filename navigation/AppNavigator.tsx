@@ -71,7 +71,7 @@ function HomeScreen({
   });
 
   return (
-    <FixedHeaderLayout>
+    <FixedHeaderLayout onNavigate={onPageChange}>
       <ArrowNavigator
         pages={pageNodes}
         currentIndex={currentPage}

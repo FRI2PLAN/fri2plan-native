@@ -9,9 +9,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FixedHeaderLayoutProps {
   children: React.ReactNode;
+  onNavigate?: (pageIndex: number) => void;
 }
 
-export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) {
+export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderLayoutProps) {
   const navigation = useNavigation();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
@@ -85,6 +86,7 @@ export default function FixedHeaderLayout({ children }: FixedHeaderLayoutProps) 
       <QuickActionsModal
         visible={quickActionsVisible}
         onClose={() => setQuickActionsVisible(false)}
+        onNavigate={onNavigate}
       />
 
       {/* Notifications Modal */}
