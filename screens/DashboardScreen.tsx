@@ -7,6 +7,7 @@ import { trpc } from '../lib/trpc';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import FavoritesBar from '../components/FavoritesBar';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -115,18 +116,50 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Favorites (5 buttons with icon + text)
-  const defaultFavorites = [
-    { id: '1', label: 'Calendrier', icon: '📅', pageIndex: 1 },
-    { id: '2', label: 'Notes', icon: '📝', pageIndex: 6 },
-    { id: '3', label: 'Récompenses', icon: '🎁', pageIndex: 8 },
-    { id: '4', label: 'Messages', icon: '💬', pageIndex: 4 },
-    { id: '5', label: 'Tâches', icon: '✅', pageIndex: 2 },
+  // Favorites (5 buttons with icon only)
+  const [favorites, setFavorites] = useState([
+    { id: 'calendar', name: 'Calendrier', icon: '📅', pageIndex: 1 },
+    { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
+    { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
+  ]);
+
+  // All available pages for favorites selection
+  const allPages = [
+    { id: 'dashboard', name: 'Accueil', icon: '🏠', pageIndex: 0 },
+    { id: 'calendar', name: 'Calendrier', icon: '📅', pageIndex: 1 },
+    { id: 'tasks', name: 'Tâches', icon: '✅', pageIndex: 2 },
+    { id: 'shopping', name: 'Courses', icon: '🛒', pageIndex: 3 },
+    { id: 'messages', name: 'Messages', icon: '💬', pageIndex: 4 },
+    { id: 'requests', name: 'Demandes', icon: '🙏', pageIndex: 5 },
+    { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
+    { id: 'budget', name: 'Budget', icon: '💰', pageIndex: 7 },
+    { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
+    { id: 'circles', name: 'Cercles', icon: '👥', pageIndex: 9 },
+    { id: 'referral', name: 'Parrainer', icon: '🎯', pageIndex: 10 },
+    { id: 'settings', name: 'Paramètres', icon: '⚙️', pageIndex: 11 },
+    { id: 'help', name: 'Aide', icon: '❓', pageIndex: 12 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
     if (onNavigate) {
       onNavigate(pageIndex);
+    }
+  };
+
+  const handleFavoriteSelect = (favoriteId: string) => {
+    // Toggle favorite
+    const isAlreadyFavorite = favorites.some(f => f.id === favoriteId);
+    if (isAlreadyFavorite) {
+      // Remove from favorites
+      setFavorites(favorites.filter(f => f.id !== favoriteId));
+    } else {
+      // Add to favorites (max 5)
+      if (favorites.length < 5) {
+        const page = allPages.find(p => p.id === favoriteId);
+        if (page) {
+          setFavorites([...favorites, page]);
+        }
+      }
     }
   };
 
@@ -153,11 +186,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         <Text style={styles.pageTitle}>Accueil</Text>
       </View>
 
-      {/* Favorites Bar - Buttons with icon + text */}
-      <View style={styles.favoritesContainer}>
-        <View style={styles.favoritesHeader}>
-          <Ionicons name="star" size={16} color="#eab308" />
-        </View>
+      {/* Favorites Bar */}
+      <FavoritesBar
+        favorites={favorites}
+        onFavoritePress={handleFavoritePress}
+        onFavoriteSelect={handleFavoriteSelect}
+        allPages={allPages}
+      />
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}

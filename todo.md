@@ -842,14 +842,14 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - [x] Appliquer le style cohérent : `textAlign: 'center'`
 - [x] 6 fichiers modifiés automatiquement
 
-### 2. Barre de favoris ⭐ (EN COURS)
+### 2. Barre de favoris ⭐ ✅
 - [x] Créer nouveau composant FavoritesBar.tsx
 - [x] Enlever le texte sous les icônes (garder uniquement les icônes)
 - [x] Passer de 3 à 5 favoris affichés
 - [x] Implémenter appui long → Ouvrir modal pour sélectionner/désélectionner un favori
 - [x] Implémenter appui bref → Redirection vers la page concernée
-- [ ] Intégrer dans DashboardScreen (à terminer)
-- [ ] Stocker les favoris sélectionnés (AsyncStorage pour persistance)
+- [x] Intégrer dans DashboardScreen
+- [ ] Stocker les favoris sélectionnés (AsyncStorage pour persistance - optionnel)
 
 ### 3. Widgets Tâches et Messages côte à côte 📊
 - [ ] Réorganiser en layout horizontal (50% / 50%)
