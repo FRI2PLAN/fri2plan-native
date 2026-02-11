@@ -755,3 +755,46 @@
 - [ ] À TESTER: Vérifier si le scroll fonctionne maintenant
 - [ ] Explication: failOffsetY désactive le geste si mouvement vertical détecté (inverse de ce qu'on veut)
 - [ ] Si ça ne marche toujours pas: Désactiver complètement le swipe et garder uniquement le menu
+
+
+---
+
+## 🆘 SOLUTION DE SECOURS - FlatList Circular Pager
+
+### Contexte
+Si le scroll vertical ne fonctionne toujours pas après le commit `ac449f7` (suppression de failOffsetY), une solution de secours est prête.
+
+### Fichiers créés
+- ✅ `components/CircularPager.tsx` : Composant FlatList horizontal circulaire
+- ✅ `navigation/AppNavigator.flatlist.tsx` : AppNavigator avec FlatList au lieu de Carousel
+- ✅ `NAVIGATION_SWITCH.md` : Documentation pour basculer entre les deux solutions
+
+### Comment activer la solution de secours
+
+```bash
+cd /home/ubuntu/fri2plan-native-work/navigation
+mv AppNavigator.tsx AppNavigator.carousel.tsx
+mv AppNavigator.flatlist.tsx AppNavigator.tsx
+```
+
+Puis rebuild :
+```bash
+npm install
+eas build --profile development --platform android
+```
+
+### Avantages de la solution FlatList
+- ✅ Composant natif React Native (pas de conflit de gestes)
+- ✅ Scroll vertical fonctionne sans problème
+- ✅ Plus simple et plus performant
+- ✅ Swipe circulaire infini avec duplication des données
+
+### Inconvénients
+- ❌ Animations moins sophistiquées que Carousel
+- ❌ Pas d'effets parallax
+- ❌ Transitions plus basiques
+
+### Décision
+- [ ] Tester d'abord le build actuel (ac449f7)
+- [ ] Si le scroll ne fonctionne toujours pas → Activer la solution FlatList
+- [ ] Si le scroll fonctionne → Garder la solution Carousel
