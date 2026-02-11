@@ -76,13 +76,41 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     });
   }, [events]);
 
-  const upcomingEvents = useMemo(() => {
+  // Events filtered by view mode (day or week)
+  const filteredEvents = useMemo(() => {
     const today = new Date();
-    return events
-      .filter(e => new Date(e.startDate) >= today)
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-      .slice(0, 5);
-  }, [events]);
+    today.setHours(0, 0, 0, 0);
+
+    if (viewMode === 'day') {
+      // Show today's events only
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return events
+        .filter(e => {
+          const eventDate = new Date(e.startDate);
+          return eventDate >= today && eventDate < tomorrow;
+        })
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .slice(0, 3);
+    } else {
+      // Show this week's events (Monday to Sunday)
+      const dayOfWeek = today.getDay();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      monday.setHours(0, 0, 0, 0);
+      
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 7);
+      
+      return events
+        .filter(e => {
+          const eventDate = new Date(e.startDate);
+          return eventDate >= monday && eventDate < sunday;
+        })
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .slice(0, 3);
+    }
+  }, [events, viewMode]);
 
   const unreadMessages = useMemo(() => {
     return messages.filter(m => 'isRead' in m && m.isRead === 0).length;
@@ -247,23 +275,30 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     </TouchableOpacity>
                   </View>
 
-                  {/* Green Card: Tasks to do today */}
-                  <TouchableOpacity 
-                    style={styles.taskCard}
-                    onPress={() => onNavigate && onNavigate(2)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.taskCardContent}>
-                      <View style={styles.taskCardIcon}>
-                        <Ionicons name="checkmark-circle" size={32} color="#ffffff" />
-                      </View>
-                      <View style={styles.taskCardInfo}>
-                        <Text style={styles.taskCardTitle}>Tâches à faire aujourd'hui</Text>
-                        <Text style={styles.taskCardCount}>{pendingTasks}</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={24} color="#ffffff" />
-                    </View>
-                  </TouchableOpacity>
+                  {/* Widgets Tâches et Messages côte à côte */}
+                  <View style={styles.widgetsRow}>
+                    {/* Widget Tâches */}
+                    <TouchableOpacity 
+                      style={[styles.compactWidget, styles.taskWidget]}
+                      onPress={() => onNavigate && onNavigate(2)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="checkmark-circle" size={28} color="#10b981" />
+                      <Text style={styles.compactWidgetTitle}>Tâches</Text>
+                      <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
+                    </TouchableOpacity>
+
+                    {/* Widget Messages */}
+                    <TouchableOpacity 
+                      style={[styles.compactWidget, styles.messageWidget]}
+                      onPress={() => onNavigate && onNavigate(4)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="chatbubbles" size={28} color="#3b82f6" />
+                      <Text style={styles.compactWidgetTitle}>Messages</Text>
+                      <Text style={styles.compactWidgetCount}>{unreadMessages}</Text>
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Upcoming Events Section */}
                   <View style={styles.eventsSection}>
@@ -271,8 +306,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       <Ionicons name="calendar" size={20} color="#6b7280" />
                       <Text style={styles.eventsSectionTitle}>Événements à venir</Text>
                     </View>
-                    {upcomingEvents.length > 0 ? (
-                      upcomingEvents.map((event) => (
+                    {filteredEvents.length > 0 ? (
+                      filteredEvents.map((event) => (
                         <TouchableOpacity 
                           key={event.id} 
                           style={styles.eventItem}
@@ -293,23 +328,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     )}
                   </View>
 
-                  {/* Blue Card: Unread Messages */}
-                  <TouchableOpacity 
-                    style={styles.messageCard}
-                    onPress={() => onNavigate && onNavigate(4)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.messageCardContent}>
-                      <View style={styles.messageCardIcon}>
-                        <Ionicons name="chatbubbles" size={32} color="#ffffff" />
-                      </View>
-                      <View style={styles.messageCardInfo}>
-                        <Text style={styles.messageCardTitle}>Messages non lus</Text>
-                        <Text style={styles.messageCardCount}>{unreadMessages}</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={24} color="#ffffff" />
-                    </View>
-                  </TouchableOpacity>
+
                 </View>
 
                 {/* Upcoming Birthdays Widget */}
@@ -506,6 +525,45 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#ffffff',
+  },
+  widgetsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  compactWidget: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  taskWidget: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  messageWidget: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
+  },
+  compactWidgetTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  compactWidgetCount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginTop: 4,
   },
   taskCard: {
     backgroundColor: '#10b981',
