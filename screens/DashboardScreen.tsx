@@ -283,8 +283,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => onNavigate && onNavigate(2)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="checkmark-circle" size={28} color="#10b981" />
-                      <Text style={styles.compactWidgetTitle}>Tâches</Text>
+                      <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                      <Text style={styles.compactWidgetTitle}>Tâches du jour</Text>
                       <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
                     </TouchableOpacity>
 
@@ -294,8 +294,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => onNavigate && onNavigate(4)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="chatbubbles" size={28} color="#3b82f6" />
-                      <Text style={styles.compactWidgetTitle}>Messages</Text>
+                      <Ionicons name="chatbubbles" size={24} color="#3b82f6" />
+                      <Text style={styles.compactWidgetTitle}>Messages non lus</Text>
                       <Text style={styles.compactWidgetCount}>{unreadMessages}</Text>
                     </TouchableOpacity>
                   </View>
@@ -304,7 +304,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   <View style={styles.eventsSection}>
                     <View style={styles.eventsSectionHeader}>
                       <Ionicons name="calendar" size={20} color="#6b7280" />
-                      <Text style={styles.eventsSectionTitle}>Événements à venir</Text>
+                      <Text style={styles.eventsSectionTitle}>Événements</Text>
                     </View>
                     {filteredEvents.length > 0 ? (
                       filteredEvents.map((event) => (
@@ -332,10 +332,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 </View>
 
                 {/* Upcoming Birthdays Widget */}
-                {upcomingBirthdays.length > 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>🎂 Prochains anniversaires</Text>
-                    {upcomingBirthdays.map((member) => (
+                <View style={styles.widget}>
+                  <Text style={styles.widgetTitle}>🎂 Prochains anniversaires</Text>
+                  {upcomingBirthdays.length > 0 ? (
+                    upcomingBirthdays.map((member) => (
                       <TouchableOpacity 
                         key={member.id} 
                         style={styles.birthdayItem}
@@ -355,9 +355,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                    ))
+                  ) : (
+                    <Text style={styles.noEventsText}>Aucun anniversaire à venir ce mois-ci</Text>
+                  )}
+                </View>
               </>
             )}
           </>
@@ -535,7 +537,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -543,6 +545,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: 100,
   },
   taskWidget: {
     borderLeftWidth: 4,
@@ -553,17 +556,17 @@ const styles = StyleSheet.create({
     borderLeftColor: '#3b82f6',
   },
   compactWidgetTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6b7280',
-    marginTop: 8,
+    marginTop: 6,
     textAlign: 'center',
   },
   compactWidgetCount: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginTop: 4,
+    marginTop: 2,
   },
   taskCard: {
     backgroundColor: '#10b981',

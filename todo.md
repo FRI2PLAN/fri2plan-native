@@ -928,3 +928,29 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - [x] S'assurer que tous les widgets redirigent correctement vers les pages
 - [x] Tous les widgets ont leur navigation implémentée (onNavigate)
 - [ ] Tester la navigation depuis chaque widget sur appareil
+
+
+---
+
+## 🐛 BUGS NAVIGATION - 11 FÉV 2026 14:59
+
+### Bugs critiques de navigation
+- [ ] Menu hamburger : S'ouvre mais ne navigue pas quand on clique sur une page (le menu se ferme sans changer de page)
+- [ ] Favoris : Aucune navigation au clic (appui court ne fait rien)
+- [ ] Widget Tâches : Aucune navigation au clic
+- [ ] Widget Messages : Aucune navigation au clic
+- [ ] Widget Événements : Aucune navigation au clic sur un événement
+- [ ] Swipe gauche/droite fonctionne correctement ✅
+
+### Problème d'affichage
+- [ ] Widget Anniversaires : Invisible (ne s'affiche pas sur la page Accueil)
+
+### Améliorations texte/design
+- [ ] Changer "Événements à venir" en "Événements" (car mode semaine inclut passé)
+- [ ] Réduire la taille des widgets Tâches et Messages
+- [ ] Améliorer le texte des widgets Tâches et Messages
+
+### Diagnostic
+- Swipe fonctionne → CircularPager OK
+- Menu hamburger ne log plus rien → Fonction navigation pas appelée
+- Problème probable : Synchronisation Drawer ↔ CircularPager cassée

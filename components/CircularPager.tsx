@@ -42,6 +42,17 @@ export default function CircularPager({
     }, 100);
   }, []);
 
+  // Listen to external page changes (from menu, favorites, widgets, etc.)
+  useEffect(() => {
+    if (currentIndex !== initialIndex) {
+      flatListRef.current?.scrollToIndex({
+        index: initialIndex + 1, // +1 because of the duplicated last item
+        animated: true,
+      });
+      setCurrentIndex(initialIndex);
+    }
+  }, [initialIndex]);
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (!isScrolling.current) return;
 
