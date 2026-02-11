@@ -663,3 +663,44 @@
 - [x] Vérifier si navigation par nom ou par index : INDEX
 - [x] Harmoniser tous les appels de navigation : QuickActionsModal corrigé
 - [x] Passer onNavigate : AppNavigator → FixedHeaderLayout → QuickActionsModal
+
+
+## REFONTE NAVIGATION - Swipe Circulaire avec react-native-reanimated-carousel
+
+### Phase 1 : Nettoyage
+- [x] Supprimer ArrowNavigator.tsx
+- [x] Supprimer PageHeaderWithArrows.tsx  
+- [x] Nettoyer les imports dans AppNavigator
+- [ ] Supprimer props onPrevious/onNext des pages (si nécessaire)
+
+### Phase 2 : Installation
+- [x] Installer react-native-reanimated-carousel
+- [x] Vérifier react-native-reanimated (déjà installé)
+- [x] Vérifier react-native-gesture-handler (déjà installé)
+
+### Phase 3 : Implémentation
+- [x] Créer nouveau AppNavigator avec Carousel
+- [x] Configuration loop=true (swipe circulaire infini)
+- [x] Configuration avec bonnes pratiques :
+  - [x] useRef pour carouselRef
+  - [x] windowSize=3 (optimisation mémoire)
+  - [x] activeOffsetX=20 (pas d'interférence drawer)
+  - [x] mode="parallax" (transition fluide)
+  - [x] Animations fluides avec react-native-reanimated
+- [x] Intégrer FixedHeaderLayout (header fixe)
+- [x] Synchroniser avec CustomDrawerContent (carouselRef.scrollTo)
+
+### Phase 4 : Tests
+- [ ] Tester swipe gauche/droite
+- [ ] Tester swipe circulaire (page 13 → page 1)
+- [ ] Tester menu hamburger
+- [ ] Vérifier header fixe
+- [ ] Vérifier performance (60fps)
+
+### Bonnes pratiques appliquées
+- ✅ useRef pour éviter re-renders
+- ✅ FlatList au lieu de ScrollView
+- ✅ react-native-reanimated pour animations
+- ✅ memo pour mémoriser composants
+- ✅ Math.max/Math.min pour limites
+- ✅ Bibliothèque mature et testée
