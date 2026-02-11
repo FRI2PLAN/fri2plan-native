@@ -16,6 +16,7 @@ interface RichHeaderProps {
   onThemeToggle?: () => void;
   onLogout?: () => void;
   isDarkMode?: boolean;
+  onNavigateHome?: () => void;
 }
 
 export default function RichHeader({
@@ -24,6 +25,7 @@ export default function RichHeader({
   onThemeToggle,
   onLogout,
   isDarkMode = true,
+  onNavigateHome,
 }: RichHeaderProps) {
   const navigation = useNavigation();
 
@@ -40,8 +42,12 @@ export default function RichHeader({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {/* Left: Avatar + Name */}
-        <View style={styles.leftSection}>
+        {/* Left: Avatar + Name - Clickable to go Home */}
+        <TouchableOpacity 
+          style={styles.leftSection}
+          onPress={onNavigateHome}
+          activeOpacity={0.7}
+        >
           {user?.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
@@ -54,7 +60,7 @@ export default function RichHeader({
           <Text style={styles.userName} numberOfLines={1}>
             {user?.name || 'Utilisateur'}
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Right: Actions */}
         <View style={styles.rightSection}>

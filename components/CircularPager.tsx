@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { FlatList, View, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { FlatList, View, Dimensions, NativeScrollEvent, NativeSyntheticEvent, Animated } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -23,6 +23,7 @@ export default function CircularPager({
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const isScrolling = useRef(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // 0 = transparent, 1 = opaque
 
   // Duplicate data for circular effect: [last, ...data, first]
   // Example: [A, B, C] becomes [C, A, B, C, A]
@@ -45,11 +46,28 @@ export default function CircularPager({
   // Listen to external page changes (from menu, favorites, widgets, etc.)
   useEffect(() => {
     if (currentIndex !== initialIndex) {
-      flatListRef.current?.scrollToIndex({
-        index: initialIndex + 1, // +1 because of the duplicated last item
-        animated: true,
+      // Fade out (masquer le défilement)
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => {
+        // Scroll pendant que c'est masqué
+        flatListRef.current?.scrollToIndex({
+          index: initialIndex + 1,
+          animated: false, // Pas d'animation car masqué
+        });
+        setCurrentIndex(initialIndex);
+        
+        // Fade in (révéler la nouvelle page)
+        setTimeout(() => {
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }).start();
+        }, 50);
       });
-      setCurrentIndex(initialIndex);
     }
   }, [initialIndex]);
 
@@ -110,26 +128,42 @@ export default function CircularPager({
   };
 
   return (
-    <FlatList
-      ref={flatListRef}
-      data={circularData}
-      renderItem={renderItemWrapper}
-      keyExtractor={(item, index) => `circular-${index}`}
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      onScroll={handleScroll}
-      onScrollBeginDrag={handleScrollBeginDrag}
-      onScrollEndDrag={handleScrollEndDrag}
-      scrollEventThrottle={16}
-      getItemLayout={(data, index) => ({
-        length: SCREEN_WIDTH,
-        offset: SCREEN_WIDTH * index,
-        index,
-      })}
-      initialScrollIndex={initialIndex + 1} // +1 for duplicated last item
-      bounces={false}
-      decelerationRate="fast"
-    />
+    <View style={{ flex: 1 }}>
+      <FlatList
+        ref={flatListRef}
+        data={circularData}
+        renderItem={renderItemWrapper}
+        keyExtractor={(item, index) => `circular-${index}`}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onScrollEndDrag={handleScrollEndDrag}
+        scrollEventThrottle={16}
+        getItemLayout={(data, index) => ({
+          length: SCREEN_WIDTH,
+          offset: SCREEN_WIDTH * index,
+          index,
+        })}
+        initialScrollIndex={initialIndex + 1} // +1 for duplicated last item
+        bounces={false}
+        decelerationRate="fast"
+      />
+      
+      {/* Fade overlay to hide rapid scrolling */}
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#000',
+          opacity: fadeAnim,
+        }}
+      />
+    </View>
   );
 }

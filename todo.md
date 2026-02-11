@@ -957,3 +957,52 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - Swipe fonctionne → CircularPager OK
 - Menu hamburger ne log plus rien → Fonction navigation pas appelée
 - Problème probable : Synchronisation Drawer ↔ CircularPager cassée
+
+
+---
+
+## 🎨 AMÉLIORATIONS UX NAVIGATION - 11 FÉV 2026 15:30
+
+### Navigation icône utilisateur
+- [ ] Clic sur icône/nom utilisateur dans header → Navigation vers page Accueil
+
+### Transition fade pour masquer défilement
+- [ ] Ajouter fade out/in lors de la navigation (hamburger, favoris, widgets)
+- [ ] Masquer le défilement rapide des pages intermédiaires
+- [ ] Durée transition: 0.3s (cohérence UI)
+
+### Optimisation rechargement circulaire
+- [ ] Corriger le rechargement visible page 13→1 et 1→13
+- [ ] Optimiser le "saut" du système circulaire
+
+### Problèmes identifiés
+- ❌ Défilement rapide visible quand on clique (pas élégant)
+- ❌ Rechargement complet visible en boucle circulaire 13↔1
+- ❌ Icône utilisateur non cliquable
+
+
+---
+
+## 🚀 FONCTIONNALITÉS FUTURES - TÂCHES
+
+### Système de niveaux d'urgence (comme webview)
+- [ ] 3 niveaux de tâches : Urgent, Moyen, Normal
+- [ ] Couleur de carte selon niveau d'urgence
+  - Rouge : Urgent
+  - Orange/Jaune : Moyen
+  - Vert : Normal
+
+### Carte spéciale tâches urgentes déléguées
+- [ ] Carte rouge dédiée sur l'Accueil
+- [ ] Afficher uniquement les tâches urgentes déléguées à quelqu'un
+- [ ] Alerte visuelle forte (rouge vif)
+
+### Intégration Dashboard
+- [ ] Widget Tâches : Couleur dynamique selon urgence des tâches en cours
+- [ ] Compteur par niveau d'urgence (optionnel)
+- [ ] Filtre rapide par niveau d'urgence
+
+### Notes de conception
+- Inspiration : Système webview avec 3 niveaux
+- Priorité : Tâches urgentes déléguées (carte rouge)
+- Design : Cohérence avec le système de couleurs actuel

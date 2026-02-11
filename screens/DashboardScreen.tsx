@@ -252,7 +252,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
-                    <Text style={styles.widgetTitle}>📊 Résumé du jour</Text>
+                    <Text style={styles.widgetTitle}>📊 Résumé</Text>
                   </View>
 
                   {/* Day/Week Tabs */}
@@ -284,7 +284,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       activeOpacity={0.7}
                     >
                       <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-                      <Text style={styles.compactWidgetTitle}>Tâches du jour</Text>
+                      <Text style={styles.compactWidgetTitle}>Tâches à faire</Text>
                       <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
                     </TouchableOpacity>
 

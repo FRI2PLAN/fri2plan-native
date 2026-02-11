@@ -75,6 +75,7 @@ export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderL
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
         isDarkMode={isDarkMode}
+        onNavigateHome={() => onNavigate?.(0)}
       />
 
       {/* Swipable Content */}
