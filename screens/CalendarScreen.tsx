@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, RefreshControl, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, Modal, useColorScheme, FlatList } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 
@@ -41,6 +42,30 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+
+  // Load saved view mode
+  useEffect(() => {
+    loadViewMode();
+  }, []);
+
+  const loadViewMode = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('calendar_view_mode');
+      if (saved) setViewMode(saved as any);
+    } catch (error) {
+      console.error('Error loading view mode:', error);
+    }
+  };
+
+  const saveViewMode = async (mode: 'month' | 'week' | 'day' | 'agenda') => {
+    try {
+      await AsyncStorage.setItem('calendar_view_mode', mode);
+      setViewMode(mode);
+    } catch (error) {
+      console.error('Error saving view mode:', error);
+    }
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -201,12 +226,45 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <Text style={styles.pageTitle}>Calendrier</Text>
       </View>
 
+      {/* View Mode Toggle */}
+      <View style={styles.viewToggleContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity 
+            style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
+            onPress={() => saveViewMode('month')}
+          >
+            <Text style={[styles.viewToggleText, viewMode === 'month' && styles.viewToggleTextActive]}>📅 Mois</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
+            onPress={() => saveViewMode('week')}
+          >
+            <Text style={[styles.viewToggleText, viewMode === 'week' && styles.viewToggleTextActive]}>📆 Semaine</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
+            onPress={() => saveViewMode('day')}
+          >
+            <Text style={[styles.viewToggleText, viewMode === 'day' && styles.viewToggleTextActive]}>🗓️ Jour</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
+            onPress={() => saveViewMode('agenda')}
+          >
+            <Text style={[styles.viewToggleText, viewMode === 'agenda' && styles.viewToggleTextActive]}>📝 Agenda</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
       <ScrollView 
         style={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}
       >
-        {/* Month Navigation */}
-        <View style={styles.monthNav}>
+        {/* Month View */}
+        {viewMode === 'month' && (
+          <>
+            {/* Month Navigation */}
+            <View style={styles.monthNav}>
           <TouchableOpacity onPress={() => setCurrentDate(subMonths(currentDate, 1))} style={styles.navButton}>
             <Text style={styles.navButtonText}>←</Text>
           </TouchableOpacity>
@@ -292,6 +350,146 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </View>
           )}
         </View>
+          </>
+        )}
+
+        {/* Agenda View */}
+        {viewMode === 'agenda' && (
+          <View style={styles.agendaContainer}>
+            {events && events.length > 0 ? (
+              events
+                .filter(event => new Date(event.startTime) >= new Date())
+                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .map((event, index, arr) => {
+                  const eventDate = new Date(event.startTime);
+                  const prevEventDate = index > 0 ? new Date(arr[index - 1].startTime) : null;
+                  const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
+                  const category = getCategoryInfo(event.category);
+
+                  return (
+                    <View key={event.id}>
+                      {showDateHeader && (
+                        <View style={styles.agendaDateHeader}>
+                          <Text style={styles.agendaDateText}>
+                            {isToday(eventDate) ? 'Aujourd\'hui' : format(eventDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                          </Text>
+                        </View>
+                      )}
+                      <TouchableOpacity 
+                        style={styles.agendaEventCard}
+                        onPress={() => openEditModal(event)}
+                      >
+                        <View style={[styles.agendaEventColorBar, { backgroundColor: category.color }]} />
+                        <View style={styles.agendaEventContent}>
+                          <View style={styles.agendaEventHeader}>
+                            <Text style={styles.agendaEventIcon}>{category.icon}</Text>
+                            <Text style={styles.agendaEventTime}>
+                              {format(eventDate, 'HH:mm')}
+                            </Text>
+                            {event.isPrivate && <Text style={styles.agendaPrivateIcon}>🔒</Text>}
+                          </View>
+                          <Text style={styles.agendaEventTitle}>{event.title}</Text>
+                          {event.description && (
+                            <Text style={styles.agendaEventDescription}>{event.description}</Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+            ) : (
+              <View style={styles.agendaEmpty}>
+                <Text style={styles.agendaEmptyText}>Aucun événement à venir</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Week View - Coming soon */}
+        {viewMode === 'week' && (
+          <View style={styles.comingSoonContainer}>
+            <Text style={styles.comingSoonText}>📆 Vue Semaine</Text>
+            <Text style={styles.comingSoonSubtext}>Disponible prochainement</Text>
+          </View>
+        )}
+
+        {/* Day View */}
+        {viewMode === 'day' && (
+          <View style={styles.dayViewContainer}>
+            {/* Day Navigation */}
+            <View style={styles.dayNav}>
+              <TouchableOpacity onPress={() => setSelectedDate(subDays(selectedDate, 1))} style={styles.navButton}>
+                <Text style={styles.navButtonText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.dayNavTitle}>
+                {isToday(selectedDate) ? "Aujourd'hui" : format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 1))} style={styles.navButton}>
+                <Text style={styles.navButtonText}>→</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Timeline */}
+            <ScrollView style={styles.dayTimeline}>
+              {Array.from({ length: 24 }, (_, hour) => {
+                const hourEvents = (events || []).filter(event => {
+                  const eventDate = new Date(event.startTime);
+                  return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
+                });
+
+                return (
+                  <View key={hour} style={styles.dayTimeSlot}>
+                    <View style={styles.dayTimeLabel}>
+                      <Text style={styles.dayTimeLabelText}>{hour.toString().padStart(2, '0')}:00</Text>
+                    </View>
+                    <View style={styles.dayTimeContent}>
+                      <View style={styles.dayTimeHalfHourLine} />
+                      {hourEvents.map(event => {
+                        const category = getCategoryInfo(event.category);
+                        const startTime = new Date(event.startTime);
+                        const endTime = new Date(event.endTime);
+                        const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                        const heightPerMinute = 2;
+                        const eventHeight = Math.max(durationMinutes * heightPerMinute, 40);
+                        const topOffset = startTime.getMinutes() * heightPerMinute;
+
+                        return (
+                          <TouchableOpacity
+                            key={event.id}
+                            style={[
+                              styles.dayEventCard,
+                              { 
+                                backgroundColor: category.color + '20',
+                                borderLeftColor: category.color,
+                                height: eventHeight,
+                                top: topOffset,
+                              }
+                            ]}
+                            onPress={() => openEditModal(event)}
+                          >
+                            <Text style={styles.dayEventTime}>
+                              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                            </Text>
+                            <View style={styles.dayEventHeader}>
+                              <Text style={styles.dayEventIcon}>{category.icon}</Text>
+                              <Text style={styles.dayEventTitle} numberOfLines={1}>{event.title}</Text>
+                              {event.isPrivate && <Text style={styles.dayEventPrivate}>🔒</Text>}
+                            </View>
+                            {event.description && durationMinutes > 30 && (
+                              <Text style={styles.dayEventDescription} numberOfLines={2}>
+                                {event.description}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       {/* Create Event Modal */}
@@ -611,7 +809,211 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-  textAlign: 'center',
-    },
+    textAlign: 'center',
+  },
+
+  // View Toggle Styles
+  viewToggleContainer: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  viewToggleButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+  },
+  viewToggleButtonActive: {
+    backgroundColor: '#7c3aed',
+  },
+  viewToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  viewToggleTextActive: {
+    color: '#ffffff',
+  },
+
+  // Agenda View Styles
+  agendaContainer: {
+    padding: 16,
+  },
+  agendaDateHeader: {
+    paddingVertical: 12,
+    marginTop: 16,
+    marginBottom: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: '#7c3aed',
+  },
+  agendaDateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  agendaEventCard: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    overflow: 'hidden',
+  },
+  agendaEventColorBar: {
+    width: 4,
+  },
+  agendaEventContent: {
+    flex: 1,
+    padding: 12,
+  },
+  agendaEventHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  agendaEventIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  agendaEventTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#fbbf24' : '#7c3aed',
+    marginRight: 8,
+  },
+  agendaPrivateIcon: {
+    fontSize: 14,
+  },
+  agendaEventTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 4,
+  },
+  agendaEventDescription: {
+    fontSize: 14,
+    color: isDark ? '#d1d5db' : '#6b7280',
+  },
+  agendaEmpty: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  agendaEmptyText: {
+    fontSize: 16,
+    color: isDark ? '#9ca3af' : '#9ca3af',
+  },
+
+  // Day View Styles
+  dayViewContainer: {
+    flex: 1,
+  },
+  dayNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  dayNavTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  dayTimeline: {
+    flex: 1,
+  },
+  dayTimeSlot: {
+    flexDirection: 'row',
+    minHeight: 120,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  dayTimeLabel: {
+    width: 60,
+    paddingTop: 8,
+    paddingRight: 8,
+    alignItems: 'flex-end',
+  },
+  dayTimeLabelText: {
+    fontSize: 12,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    fontWeight: '600',
+  },
+  dayTimeContent: {
+    flex: 1,
+    position: 'relative',
+    paddingLeft: 8,
+  },
+  dayTimeHalfHourLine: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
+  },
+  dayEventCard: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    borderLeftWidth: 4,
+    borderRadius: 8,
+    padding: 8,
+    overflow: 'hidden',
+  },
+  dayEventTime: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: isDark ? '#fbbf24' : '#7c3aed',
+    marginBottom: 4,
+  },
+  dayEventHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  dayEventIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  dayEventTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  dayEventPrivate: {
+    fontSize: 12,
+  },
+  dayEventDescription: {
+    fontSize: 12,
+    color: isDark ? '#d1d5db' : '#6b7280',
+    marginTop: 2,
+  },
+
+  // Coming Soon Styles
+  comingSoonContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  comingSoonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 8,
+  },
+  comingSoonSubtext: {
+    fontSize: 16,
+    color: isDark ? '#9ca3af' : '#6b7280',
+  },
 });
 

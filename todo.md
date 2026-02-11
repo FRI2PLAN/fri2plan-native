@@ -1016,9 +1016,9 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 **Objectif :** Offrir 4 modes de visualisation
 
 #### A. Toggle vues (header)
-- [ ] Ajouter toggle 4 options : Mois / Semaine / Jour / Agenda
-- [ ] Design : Onglets horizontaux scrollables
-- [ ] Persistance : Sauvegarder la vue préférée
+- [x] Ajouter toggle 4 options : Mois / Semaine / Jour / Agenda
+- [x] Design : Onglets horizontaux scrollables
+- [x] Persistance : Sauvegarder la vue préférée (AsyncStorage)
 
 #### B. Vue Mois (déjà présente) ✅
 - [x] Grille calendrier classique
@@ -1032,19 +1032,20 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - [ ] Scroll vertical pour naviguer dans les heures
 - [ ] Swipe horizontal pour changer de semaine
 
-#### D. Vue Jour (à créer)
-- [ ] Une seule colonne
-- [ ] Timeline horaire détaillée (00h-23h, par tranches de 30min)
-- [ ] Événements empilés avec durée visuelle
-- [ ] Scroll vertical pour naviguer dans la journée
-- [ ] Swipe horizontal pour changer de jour
+#### D. Vue Jour (✅ créée)
+- [x] Une seule colonne
+- [x] Timeline horaire détaillée (00h-23h, par tranches de 30min)
+- [x] Événements empilés avec durée visuelle (hauteur dynamique)
+- [x] Scroll vertical pour naviguer dans la journée
+- [x] Navigation flèches pour changer de jour
+- [x] Affichage "Aujourd'hui" si jour actuel
 
-#### E. Vue Agenda (à créer)
-- [ ] Liste scrollable d'événements à venir
-- [ ] Groupement par jour (headers de date)
-- [ ] Format : Date + Heure (HH:mm) + Titre + Catégorie (icône + couleur)
-- [ ] Scroll infini (charger plus d'événements)
-- [ ] Clic sur événement → Modal détails/modification
+#### E. Vue Agenda (✅ créée)
+- [x] Liste scrollable d'événements à venir
+- [x] Groupement par jour (headers de date)
+- [x] Format : Date + Heure (HH:mm) + Titre + Catégorie (icône + couleur)
+- [x] Filtre événements futurs uniquement
+- [x] Clic sur événement → Modal détails/modification
 
 ---
 
@@ -1396,15 +1397,15 @@ components/
 ### Sprint 4 : Filtres avancés et Système Favori
 **Objectif :** Ajouter filtre "Mes tâches" et système favori
 
-- [ ] Ajouter 4ème filtre "Mes tâches" (tasks assignées à currentUser)
-- [ ] Récupérer currentUser via trpc.auth.me.useQuery()
-- [ ] Créer state favoriteTab (sauvegardé en AsyncStorage)
-- [ ] Implémenter long press sur onglets (500ms)
-- [ ] Ajouter animation progression long press (barre ou cercle)
-- [ ] Marquer onglet comme favori (étoile jaune)
-- [ ] Sauvegarder favori en AsyncStorage
-- [ ] Charger onglet favori au démarrage
-- [ ] Afficher tooltip explicatif première fois (5 secondes)
+- [x] Ajouter 4ème filtre "Mes tâches" (tasks assignées à currentUser)
+- [ ] Récupérer currentUser via trpc.auth.me.useQuery() - TODO
+- [x] Créer state favoriteFilter
+- [x] Implémenter long press sur onglets (500ms)
+- [ ] Ajouter animation progression long press (barre ou cercle) - TODO
+- [x] Marquer onglet comme favori (étoile ⭐)
+- [ ] Sauvegarder favori en AsyncStorage - TODO
+- [ ] Charger onglet favori au démarrage - TODO
+- [ ] Afficher tooltip explicatif première fois (5 secondes) - TODO
 - [ ] Tester système favori complet
 
 ### Sprint 5 : Récurrence et Date/Heure

@@ -20,7 +20,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const isDark = colorScheme === 'dark';
   const styles = getStyles(isDark);
 
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
+  const [longPressProgress, setLongPressProgress] = useState(0);
+  const [longPressTarget, setLongPressTarget] = useState<'all' | 'active' | 'completed' | 'my-tasks' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -214,6 +217,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const filteredTasks = (tasks || []).filter(task => {
     if (filter === 'active') return task.status !== 'completed';
     if (filter === 'completed') return task.status === 'completed';
+    if (filter === 'my-tasks') {
+      // TODO: Get current user ID from context
+      // For now, show tasks assigned to user ID 1
+      return task.assignedTo === 1;
+    }
     return true;
   }).filter(task => 
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -304,32 +312,62 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-          onPress={() => setFilter('all')}
-        >
-          <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-            Toutes ({tasks?.length || 0})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, filter === 'active' && styles.filterTabActive]}
-          onPress={() => setFilter('active')}
-        >
-          <Text style={[styles.filterText, filter === 'active' && styles.filterTextActive]}>
-            En cours ({tasks?.filter(t => t.status !== 'completed').length || 0})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, filter === 'completed' && styles.filterTabActive]}
-          onPress={() => setFilter('completed')}
-        >
-          <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>
-            Terminées ({tasks?.filter(t => t.status === 'completed').length || 0})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollContainer}>
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
+            onPress={() => setFilter('all')}
+            onLongPress={() => {
+              setFavoriteFilter('all');
+              Alert.alert('Favori', 'Vue "Toutes" définie comme favorite !');
+            }}
+            delayLongPress={500}
+          >
+            <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+              {favoriteFilter === 'all' && '⭐ '}Toutes ({tasks?.length || 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'active' && styles.filterTabActive]}
+            onPress={() => setFilter('active')}
+            onLongPress={() => {
+              setFavoriteFilter('active');
+              Alert.alert('Favori', 'Vue "En cours" définie comme favorite !');
+            }}
+            delayLongPress={500}
+          >
+            <Text style={[styles.filterText, filter === 'active' && styles.filterTextActive]}>
+              {favoriteFilter === 'active' && '⭐ '}En cours ({tasks?.filter(t => t.status !== 'completed').length || 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'completed' && styles.filterTabActive]}
+            onPress={() => setFilter('completed')}
+            onLongPress={() => {
+              setFavoriteFilter('completed');
+              Alert.alert('Favori', 'Vue "Terminées" définie comme favorite !');
+            }}
+            delayLongPress={500}
+          >
+            <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>
+              {favoriteFilter === 'completed' && '⭐ '}Terminées ({tasks?.filter(t => t.status === 'completed').length || 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'my-tasks' && styles.filterTabActive]}
+            onPress={() => setFilter('my-tasks')}
+            onLongPress={() => {
+              setFavoriteFilter('my-tasks');
+              Alert.alert('Favori', 'Vue "Mes tâches" définie comme favorite !');
+            }}
+            delayLongPress={500}
+          >
+            <Text style={[styles.filterText, filter === 'my-tasks' && styles.filterTextActive]}>
+              {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       {/* Tasks List */}
       <ScrollView 
@@ -937,16 +975,18 @@ function getStyles(isDark: boolean) {
       fontSize: 16,
       color: isDark ? '#f5f5dc' : '#1f2937',
     },
-    filterContainer: {
-      flexDirection: 'row',
-      padding: 16,
-      gap: 8,
+    filterScrollContainer: {
       backgroundColor: isDark ? '#1f2937' : '#fff',
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#374151' : '#e5e7eb',
     },
+    filterContainer: {
+      flexDirection: 'row',
+      padding: 16,
+      gap: 8,
+    },
     filterTab: {
-      flex: 1,
+      minWidth: 120,
       paddingVertical: 8,
       paddingHorizontal: 12,
       borderRadius: 8,
