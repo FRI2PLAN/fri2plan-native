@@ -193,30 +193,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         onFavoriteSelect={handleFavoriteSelect}
         allPages={allPages}
       />
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.favoritesRow}
-        >
-          {defaultFavorites.map((favorite) => (
-            <TouchableOpacity
-              key={favorite.id}
-              style={styles.favoriteButton}
-              onPress={() => handleFavoritePress(favorite.pageIndex)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.favoriteIcon}>{favorite.icon}</Text>
-              <Text style={styles.favoriteText}>{favorite.label}</Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.favoriteButtonAdd}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={20} color="#7c3aed" />
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
       
       {/* Content */}
       <ScrollView 
