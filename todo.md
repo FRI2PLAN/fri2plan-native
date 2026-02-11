@@ -1006,3 +1006,241 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - Inspiration : Système webview avec 3 niveaux
 - Priorité : Tâches urgentes déléguées (carte rouge)
 - Design : Cohérence avec le système de couleurs actuel
+
+
+---
+
+## 📅 PLAN COMPLET - AMÉLIORATION CALENDRIER
+
+### Phase 1 : Vues multiples (PRIORITÉ HAUTE) 🎯
+**Objectif :** Offrir 4 modes de visualisation
+
+#### A. Toggle vues (header)
+- [ ] Ajouter toggle 4 options : Mois / Semaine / Jour / Agenda
+- [ ] Design : Onglets horizontaux scrollables
+- [ ] Persistance : Sauvegarder la vue préférée
+
+#### B. Vue Mois (déjà présente) ✅
+- [x] Grille calendrier classique
+- [ ] Améliorer : Highlight jour actuel (cercle violet)
+- [ ] Améliorer : Indicateurs visuels événements (points colorés)
+
+#### C. Vue Semaine (à créer)
+- [ ] 7 colonnes (Lun-Dim)
+- [ ] Timeline horaire verticale (00h-23h)
+- [ ] Événements positionnés selon heure de début
+- [ ] Scroll vertical pour naviguer dans les heures
+- [ ] Swipe horizontal pour changer de semaine
+
+#### D. Vue Jour (à créer)
+- [ ] Une seule colonne
+- [ ] Timeline horaire détaillée (00h-23h, par tranches de 30min)
+- [ ] Événements empilés avec durée visuelle
+- [ ] Scroll vertical pour naviguer dans la journée
+- [ ] Swipe horizontal pour changer de jour
+
+#### E. Vue Agenda (à créer)
+- [ ] Liste scrollable d'événements à venir
+- [ ] Groupement par jour (headers de date)
+- [ ] Format : Date + Heure (HH:mm) + Titre + Catégorie (icône + couleur)
+- [ ] Scroll infini (charger plus d'événements)
+- [ ] Clic sur événement → Modal détails/modification
+
+---
+
+### Phase 2 : Améliorations visuelles (PRIORITÉ HAUTE) 🎨
+
+#### A. Highlight jour actuel
+- [ ] Vue Mois : Cercle violet autour de la date
+- [ ] Vue Semaine : Colonne avec fond légèrement coloré
+- [ ] Vue Jour : Indicateur "Aujourd'hui" en haut
+- [ ] Vue Agenda : Header "Aujourd'hui" en violet
+
+#### B. Indicateurs événements
+- [ ] Vue Mois : Points colorés sous les dates (max 3 visibles)
+- [ ] Couleur selon catégorie événement
+- [ ] Si plus de 3 événements : "+X" en gris
+
+#### C. Affichage heures précises
+- [ ] Toujours afficher minutes (HH:mm) pas seulement HH:00
+- [ ] Format 24h
+- [ ] Cohérence dans toutes les vues
+
+---
+
+### Phase 3 : Filtres et recherche (PRIORITÉ MOYENNE) 🔍
+
+#### A. Filtres par catégorie
+- [ ] Bouton "Filtres" dans header
+- [ ] Modal avec checkboxes pour chaque catégorie
+  - [ ] 🍽️ Repas
+  - [ ] 🎂 Anniversaire
+  - [ ] 💼 Travail
+  - [ ] ❤️ Personnel
+  - [ ] ⚽ Sport
+  - [ ] 📅 Autre
+- [ ] Appliquer filtres à toutes les vues
+- [ ] Persistance des filtres sélectionnés
+
+#### B. Filtre événements privés
+- [ ] Toggle "Afficher événements privés" (si user a accès)
+- [ ] Par défaut : Afficher tous les événements
+
+#### C. Recherche événements
+- [ ] Barre de recherche dans header
+- [ ] Recherche par titre/description
+- [ ] Résultats en vue Agenda
+
+---
+
+### Phase 4 : Anniversaires automatiques (PRIORITÉ MOYENNE) 🎂
+
+#### A. Synchronisation membres famille
+- [ ] Détecter membres avec date de naissance renseignée
+- [ ] Créer automatiquement événements anniversaire annuels
+- [ ] Catégorie : Anniversaire (🎂)
+- [ ] Titre : "Anniversaire de [Prénom]"
+- [ ] Rappel : 1 jour avant (par défaut)
+
+#### B. Gestion anniversaires
+- [ ] Événements anniversaire marqués comme "automatiques"
+- [ ] Modification possible (titre, rappel)
+- [ ] Suppression = masquer (pas supprimer définitivement)
+- [ ] Réapparaître chaque année
+
+#### C. Widget Dashboard
+- [ ] Afficher prochains anniversaires (déjà présent)
+- [ ] Clic → Navigation vers Calendrier sur le jour de l'anniversaire
+
+---
+
+### Phase 5 : Import calendrier externe (PRIORITÉ BASSE) 📥
+
+#### A. Import URL (ICS/iCal)
+- [ ] Paramètres → "Importer calendrier externe"
+- [ ] Input URL calendrier (Google Calendar, Outlook, etc.)
+- [ ] Validation format ICS
+- [ ] Import événements dans base de données
+
+#### B. Synchronisation
+- [ ] Option "Synchroniser automatiquement" (quotidien)
+- [ ] Marquer événements importés comme "externes"
+- [ ] Événements externes en lecture seule (pas modifiables)
+
+#### C. Gestion imports
+- [ ] Liste calendriers importés
+- [ ] Supprimer un calendrier importé
+- [ ] Rafraîchir manuellement
+
+---
+
+### Phase 6 : Améliorations UX (PRIORITÉ BASSE) ✨
+
+#### A. Création rapide événement
+- [ ] Appui long sur une date → Créer événement
+- [ ] Pré-remplir date/heure selon vue
+- [ ] Modal création simplifiée
+
+#### B. Drag & Drop (optionnel)
+- [ ] Vue Semaine/Jour : Déplacer événement par drag
+- [ ] Modifier heure de début en glissant
+- [ ] Confirmation avant sauvegarde
+
+#### C. Notifications intelligentes
+- [ ] Rappels configurables par défaut (Paramètres)
+- [ ] Appliquer rétroactivement aux événements existants
+- [ ] Résumé quotidien par email (optionnel)
+
+---
+
+### Phase 7 : Calendrier intime (FONCTIONNALITÉ FUTURE) 🔒
+
+**Note :** Réservé pour plus tard, activation depuis Paramètres
+
+#### A. Activation
+- [ ] Paramètres → "Calendrier intime"
+- [ ] Popup consentement (Accept/Refuse)
+- [ ] Si refuse → Désactiver automatiquement
+- [ ] Disponible uniquement si user est femme
+
+#### B. Fonctionnalités
+- [ ] Suivi cycles menstruels
+- [ ] Prédictions périodes futures
+- [ ] Historique modifiable/supprimable
+- [ ] Données 100% privées (pas partagées famille)
+
+#### C. Intégration
+- [ ] Apparaît comme page supplémentaire dans navigation
+- [ ] Icône dédiée dans menu hamburger
+- [ ] Notifications rappel début cycle
+
+---
+
+## 🎯 ORDRE D'IMPLÉMENTATION RECOMMANDÉ
+
+### Sprint 1 (Essentiel)
+1. Highlight jour actuel (vue Mois)
+2. Toggle vues (Mois/Semaine/Jour/Agenda)
+3. Vue Agenda (liste scrollable)
+
+### Sprint 2 (Important)
+4. Vue Semaine (timeline + 7 colonnes)
+5. Vue Jour (timeline détaillée)
+6. Indicateurs événements (points colorés)
+
+### Sprint 3 (Utile)
+7. Filtres par catégorie
+8. Anniversaires automatiques
+9. Affichage heures précises (HH:mm)
+
+### Sprint 4 (Bonus)
+10. Import calendrier externe
+11. Recherche événements
+12. Création rapide (appui long)
+
+### Sprint 5 (Futur)
+13. Calendrier intime (si demandé)
+
+---
+
+## 📝 NOTES TECHNIQUES
+
+### Librairies recommandées
+- `react-native-calendars` : Vues calendrier avancées
+- `date-fns` : Manipulation dates (déjà présent ✅)
+- `react-native-gesture-handler` : Drag & Drop (optionnel)
+
+### Structure fichiers
+```
+screens/
+  CalendarScreen.tsx (vue principale)
+  CalendarMonthView.tsx
+  CalendarWeekView.tsx
+  CalendarDayView.tsx
+  CalendarAgendaView.tsx
+components/
+  EventCard.tsx
+  EventModal.tsx
+  CategoryFilter.tsx
+```
+
+### Base de données
+- Table `events` (déjà présente ✅)
+- Ajouter champs :
+  - `isAutomatic` (boolean) - Pour anniversaires auto
+  - `isExternal` (boolean) - Pour imports externes
+  - `externalCalendarId` (string) - Lien calendrier source
+
+
+---
+
+## 🚀 SPRINT 1 - EN COURS
+
+### Corrections immédiates
+- [ ] Highlight jour actuel : Fond violet + texte BLANC (pas violet sur violet)
+- [ ] Dark mode : Fond sombre + cases grises + texte blanc/beige clair
+- [ ] Vérifier traductions FR/EN/DE complètes
+
+### Implémentation
+- [ ] Toggle vues (Mois/Semaine/Jour/Agenda)
+- [ ] Vue Agenda (liste scrollable)

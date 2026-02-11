@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, RefreshControl, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,9 @@ interface CalendarScreenProps {
 
 export default function CalendarScreen({ onNavigate, onPrevious, onNext }: CalendarScreenProps) {
   const { t, i18n } = useTranslation();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const styles = getStyles(isDark);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -243,8 +246,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 >
                   <Text style={[
                     styles.dayText,
+                    isTodayDate && !isSelected && styles.dayTextToday,
                     isSelected && styles.dayTextSelected,
-                    isTodayDate && styles.dayTextToday,
                   ]}>
                     {format(day, 'd')}
                   </Text>
@@ -529,70 +532,70 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#1f2937' },
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#000000' : '#f9fafb' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#ffffff' : '#e5e7eb' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
   addButton: { backgroundColor: '#7c3aed', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   addButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   content: { flex: 1 },
-  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
+  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
   navButton: { padding: 10 },
   navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
-  monthTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', textTransform: 'capitalize' },
-  calendar: { backgroundColor: '#fff', margin: 10, borderRadius: 12, padding: 10 },
+  monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
+  calendar: { backgroundColor: isDark ? '#1a1a1a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  dayHeaderText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
+  dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 5 },
   dayCellSelected: { backgroundColor: '#7c3aed' },
   dayCellToday: { borderWidth: 2, borderColor: '#7c3aed' },
-  dayText: { fontSize: 16, color: '#1f2937' },
+  dayText: { fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
   eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 2 },
-  eventsSection: { margin: 10, backgroundColor: '#fff', borderRadius: 12, padding: 20 },
-  eventsTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
-  eventCard: { flexDirection: 'row', backgroundColor: '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
+  eventsSection: { margin: 10, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 20 },
+  eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
+  eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
   eventColorBar: { width: 4 },
   eventCardContent: { flex: 1, padding: 16 },
   eventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   eventIcon: { fontSize: 18, marginRight: 8 },
   eventTime: { fontSize: 16, fontWeight: 'bold', color: '#7c3aed', flex: 1 },
   privateIcon: { fontSize: 14 },
-  eventTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 4 },
-  eventDescription: { fontSize: 14, color: '#6b7280' },
+  eventTitle: { fontSize: 16, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 4 },
+  eventDescription: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
   noEvents: { padding: 40, alignItems: 'center' },
-  noEventsText: { fontSize: 16, color: '#9ca3af' },
+  noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937', marginBottom: 16 },
+  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
   modalForm: { maxHeight: 400 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginTop: 12, marginBottom: 6 },
-  input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, color: '#1f2937' },
+  label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
+  input: { backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   textArea: { height: 80, textAlignVertical: 'top' },
   categoryScroll: { marginVertical: 8 },
-  categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', marginRight: 8, backgroundColor: '#fff' },
+  categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
   categoryIcon: { fontSize: 18, marginRight: 6 },
-  categoryLabel: { fontSize: 14, color: '#6b7280' },
+  categoryLabel: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
   categoryLabelSelected: { color: '#fff', fontWeight: '600' },
   reminderScroll: { marginVertical: 8 },
-  reminderButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', marginRight: 8, backgroundColor: '#fff' },
+  reminderButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
   reminderButtonSelected: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  reminderButtonText: { fontSize: 14, color: '#6b7280' },
+  reminderButtonText: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
   reminderButtonTextSelected: { color: '#fff', fontWeight: '600' },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
-  checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
   checkmark: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  checkboxLabel: { fontSize: 16, color: '#374151' },
+  checkboxLabel: { fontSize: 16, color: isDark ? '#ffffff' : '#374151' },
   modalButtons: { flexDirection: 'row', marginTop: 20, gap: 8 },
   modalButton: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
-  modalButtonCancel: { backgroundColor: '#f3f4f6' },
+  modalButtonCancel: { backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6' },
   modalButtonSave: { backgroundColor: '#7c3aed' },
   modalButtonDelete: { backgroundColor: '#ef4444' },
-  modalButtonTextCancel: { color: '#6b7280', fontSize: 16, fontWeight: '600' },
+  modalButtonTextCancel: { color: isDark ? '#ffffff' : '#6b7280', fontSize: 16, fontWeight: '600' },
   modalButtonTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
@@ -607,7 +610,8 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#ffffff' : '#1f2937',
   textAlign: 'center',
     },
 });
+
