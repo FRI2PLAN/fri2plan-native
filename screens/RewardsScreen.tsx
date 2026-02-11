@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -74,12 +73,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows title="Récompenses"
-        buttonText="Nouvelle récompense"
-        onButtonPress={() => {/* TODO: Open create modal */}}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* User Points Card */}
       <View style={styles.pointsCard}>

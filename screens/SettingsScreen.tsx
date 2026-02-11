@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch, Modal } from 'react-native';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -87,11 +86,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
         </TouchableOpacity>
       </Modal>
 
-      <PageHeaderWithArrows 
-        title="Paramètres"
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+            {/* Header removed - using RichHeader in home.tsx instead */}
       
       <ScrollView style={styles.content}>
         {/* Appearance Section */}

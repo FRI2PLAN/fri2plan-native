@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
@@ -46,12 +45,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows title="Notes"
-        buttonText="Nouvelle note"
-        onButtonPress={() => {/* TODO: Open create modal */}}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

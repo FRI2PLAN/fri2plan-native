@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { format } from 'date-fns';
@@ -77,12 +76,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows title="Tâches"
-        buttonText="Nouvelle tâche"
-        onButtonPress={() => {/* TODO: Open create modal */}}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -84,12 +83,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows title="Demandes"
-        buttonText="Nouvelle demande"
-        onButtonPress={() => {/* TODO: Open create modal */}}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

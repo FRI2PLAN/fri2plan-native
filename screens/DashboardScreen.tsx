@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -150,11 +149,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       <StatusBar style="dark" />
       
       {/* Header with Arrows */}
-      <PageHeaderWithArrows 
-        title="Accueil"
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+            {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* Favorites Bar - Buttons with icon + text */}
       <View style={styles.favoritesContainer}>

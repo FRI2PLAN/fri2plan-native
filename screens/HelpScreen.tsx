@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput } from 'react-native';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
@@ -102,19 +101,7 @@ export default function HelpScreen({ onNavigate , onPrevious, onNext}: HelpScree
         />
       </View>
 
-      <PageHeaderWithArrows 
-
-
-        title="Aide"
-
-
-        onPrevious={onPrevious}
-
-
-        onNext={onNext}
-
-
-      />
+            {/* Header removed - using RichHeader in home.tsx instead */}
 
 
       

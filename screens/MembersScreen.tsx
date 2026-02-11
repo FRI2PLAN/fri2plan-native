@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
@@ -91,15 +90,7 @@ export default function MembersScreen({ onNavigate , onPrevious, onNext}: Member
       </View>
 
       {/* Members List */}
-      <PageHeaderWithArrows 
-
-        title="Membres"
-
-        onPrevious={onPrevious}
-
-        onNext={onNext}
-
-      />
+            {/* Header removed - using RichHeader in home.tsx instead */}
 
       
 

@@ -691,7 +691,8 @@
 - [x] Synchroniser avec CustomDrawerContent (carouselRef.scrollTo)
 
 ### Phase 4 : Tests
-- [ ] Tester swipe gauche/droite
+- [x] Code pushé sur GitHub (commit 95b6e99)
+- [ ] Tester swipe gauche/droite (nécessite rebuild APK)
 - [ ] Tester swipe circulaire (page 13 → page 1)
 - [ ] Tester menu hamburger
 - [ ] Vérifier header fixe

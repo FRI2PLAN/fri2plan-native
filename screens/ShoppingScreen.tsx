@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
 
@@ -60,12 +59,7 @@ export default function ShoppingScreen({ onNavigate, onPrevious, onNext }: Shopp
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows title="Courses"
-        buttonText="Nouvelle liste"
-        onButtonPress={() => {/* TODO: Open create modal */}}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       {/* Lists Tabs */}
       {listsLoading ? (

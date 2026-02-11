@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Share } from 'react-native';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
@@ -98,19 +97,7 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
         <Text style={styles.headerTitle}>Parrainer un ami</Text>
       </View>
 
-      <PageHeaderWithArrows 
-
-
-        title="Parrainage"
-
-
-        onPrevious={onPrevious}
-
-
-        onNext={onNext}
-
-
-      />
+            {/* Header removed - using RichHeader in home.tsx instead */}
 
 
       

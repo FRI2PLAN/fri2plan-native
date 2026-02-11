@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Mod
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import PageHeaderWithArrows from '../components/PageHeaderWithArrows';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
@@ -194,13 +193,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       <StatusBar style="dark" />
       
       {/* Header */}
-      <PageHeaderWithArrows
-        title={t('calendar.title')}
-        buttonText={t('calendar.addEvent')}
-        onButtonPress={() => setCreateModalOpen(true)}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      {/* Header removed - using RichHeader in home.tsx instead */}
 
       <ScrollView 
         style={styles.content}
