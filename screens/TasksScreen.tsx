@@ -1045,7 +1045,7 @@ function getStyles(isDark: boolean) {
       flex: 1,
       backgroundColor: isDark ? '#000000' : '#f9fafb',
     },
-    pageTitleCon    pageTitleContainer: {
+    pageTitleContainer: {
       backgroundColor: isDark ? '#2a2a2a' : '#fff',
       paddingTop: 16,
       paddingBottom: 12,
