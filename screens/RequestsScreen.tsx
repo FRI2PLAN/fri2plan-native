@@ -83,7 +83,10 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       <StatusBar style="dark" />
       
       {/* Header */}
-      {/* Header removed - using RichHeader in home.tsx instead */}
+      {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Demandes</Text>
+      </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -364,5 +367,19 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     color: '#9ca3af',
+  },
+
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
 });

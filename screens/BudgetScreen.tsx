@@ -68,7 +68,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       <StatusBar style="dark" />
       
       {/* Header */}
-      {/* Header removed - using RichHeader in home.tsx instead */}
+      {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Budget</Text>
+      </View>
 
       {/* View Toggle */}
       <View style={styles.viewToggle}>
@@ -384,5 +387,19 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textAlign: 'center',
     paddingVertical: 20,
+  },
+
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
 });

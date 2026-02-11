@@ -90,7 +90,10 @@ export default function MembersScreen({ onNavigate , onPrevious, onNext}: Member
       </View>
 
       {/* Members List */}
-            {/* Header removed - using RichHeader in home.tsx instead */}
+            {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Cercles</Text>
+      </View>
 
       
 
@@ -308,5 +311,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9ca3af',
     textAlign: 'center',
+  },
+
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
 });

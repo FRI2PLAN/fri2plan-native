@@ -97,7 +97,10 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
         <Text style={styles.headerTitle}>Parrainer un ami</Text>
       </View>
 
-            {/* Header removed - using RichHeader in home.tsx instead */}
+            {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Parrainer un ami</Text>
+      </View>
 
 
       
@@ -535,5 +538,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#10b981',
+  },
+
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
 });

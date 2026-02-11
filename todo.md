@@ -705,3 +705,27 @@
 - ✅ memo pour mémoriser composants
 - ✅ Math.max/Math.min pour limites
 - ✅ Bibliothèque mature et testée
+
+
+---
+
+## 🚨 BUGS CRITIQUES - 11 FÉVRIER 2026 (APK commit af9511a)
+
+### Bug 1: Titres de pages manquants
+- [ ] Les titres de toutes les pages ont disparu (cachés ou supprimés)
+- [ ] Cause: Suppression de PageHeaderWithArrows sans remplacement
+- [ ] Solution: Ajouter un titre Text simple dans chaque page (sous RichHeader)
+- [ ] Affecter: Toutes les pages sauf Dashboard
+
+### Bug 2: Conflit de gestes Scroll vs Swipe Navigation
+- [ ] Quand on swipe vers le bas (scroll vertical), la page swipe horizontalement (navigation)
+- [ ] Le ScrollView interfère avec le Carousel (react-native-reanimated-carousel)
+- [ ] La page affiche "recharger" au lieu de scroller normalement
+- [ ] Solution: Désactiver le swipe horizontal du Carousel pendant le scroll vertical
+- [ ] Solution: Utiliser simultaneousHandlers ou waitFor dans GestureHandler
+- [ ] Affecter: Toutes les pages avec ScrollView (Tâches, Messages, Calendrier, etc.)
+
+### Bug 3: Layout et SafeArea
+- [ ] Les contenus commencent trop haut (cachés derrière le RichHeader)
+- [ ] Revoir la structure SafeAreaView dans chaque page
+- [ ] S'assurer que le contenu commence APRÈS le RichHeader (padding-top ou margin-top)

@@ -58,8 +58,10 @@ export default function ShoppingScreen({ onNavigate, onPrevious, onNext }: Shopp
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
-      {/* Header removed - using RichHeader in home.tsx instead */}
+      {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Courses</Text>
+      </View>
 
       {/* Lists Tabs */}
       {listsLoading ? (
@@ -203,6 +205,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
   addButtonText: {
     color: '#fff',
