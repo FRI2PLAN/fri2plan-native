@@ -148,8 +148,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header with Arrows */}
-            {/* Header removed - using RichHeader in home.tsx instead */}
+      {/* Page Title */}
+      <View style={styles.pageTitleContainer}>
+        <Text style={styles.pageTitle}>Accueil</Text>
+      </View>
 
       {/* Favorites Bar - Buttons with icon + text */}
       <View style={styles.favoritesContainer}>
@@ -340,10 +342,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f3f4f6',
   },
+  pageTitleContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
   favoritesContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 8,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },

@@ -732,3 +732,21 @@
 - [ ] Revoir la structure SafeAreaView dans chaque page
 - [ ] S'assurer que le contenu commence APRÈS le RichHeader (padding-top ou margin-top)
 - [ ] Note: Les titres ajoutés devraient résoudre partiellement ce problème
+
+
+## 🚨 NOUVEAUX BUGS - 11 FÉVRIER 2026 (APK commit 485f3a7)
+
+### Bug 4: Page d'accueil sans titre
+- [ ] DashboardScreen n'a pas de titre "Accueil" comme les autres pages
+- [ ] Solution: Ajouter le titre "Accueil" en haut de DashboardScreen
+
+### Bug 5: Barre de favoris supprimée
+- [ ] La barre de favoris (FavoritesBar) a été supprimée du Dashboard
+- [ ] Solution: Réactiver FavoritesBar dans DashboardScreen
+
+### Bug 6: Scroll vertical ne fonctionne toujours pas
+- [ ] Malgré activeOffsetX=50 et failOffsetY=30, le scroll reste bloqué
+- [ ] Le refresh ne fonctionne pas non plus
+- [ ] Cause probable: Le Carousel bloque tous les gestes verticaux
+- [ ] Solution: Utiliser simultaneousHandlers pour permettre scroll + swipe en même temps
+- [ ] Solution alternative: Désactiver complètement le swipe pendant le scroll
