@@ -84,8 +84,7 @@ function HomeScreen({
         onSnapToItem={(index) => onPageChange(index)}
         defaultIndex={currentPage}
         panGestureHandlerProps={{
-          activeOffsetX: [-100, 100],
-          failOffsetY: [-10, 10],
+          activeOffsetX: [-80, 80],
         }}
         windowSize={3}
         mode="parallax"
