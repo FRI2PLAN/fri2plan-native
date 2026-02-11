@@ -711,21 +711,24 @@
 
 ## 🚨 BUGS CRITIQUES - 11 FÉVRIER 2026 (APK commit af9511a)
 
-### Bug 1: Titres de pages manquants
-- [ ] Les titres de toutes les pages ont disparu (cachés ou supprimés)
-- [ ] Cause: Suppression de PageHeaderWithArrows sans remplacement
-- [ ] Solution: Ajouter un titre Text simple dans chaque page (sous RichHeader)
-- [ ] Affecter: Toutes les pages sauf Dashboard
+### Bug 1: Titres de pages manquants ✅ CORRIGÉ
+- [x] Les titres de toutes les pages ont disparu (cachés ou supprimés)
+- [x] Cause: Suppression de PageHeaderWithArrows sans remplacement
+- [x] Solution: Ajouter un titre Text simple dans chaque page (sous RichHeader)
+- [x] Affecter: Toutes les pages sauf Dashboard
+- [x] Commit: 485f3a7 - Titres ajoutés dans 11 pages
 
-### Bug 2: Conflit de gestes Scroll vs Swipe Navigation
-- [ ] Quand on swipe vers le bas (scroll vertical), la page swipe horizontalement (navigation)
-- [ ] Le ScrollView interfère avec le Carousel (react-native-reanimated-carousel)
-- [ ] La page affiche "recharger" au lieu de scroller normalement
-- [ ] Solution: Désactiver le swipe horizontal du Carousel pendant le scroll vertical
-- [ ] Solution: Utiliser simultaneousHandlers ou waitFor dans GestureHandler
-- [ ] Affecter: Toutes les pages avec ScrollView (Tâches, Messages, Calendrier, etc.)
+### Bug 2: Conflit de gestes Scroll vs Swipe Navigation ✅ CORRIGÉ
+- [x] Quand on swipe vers le bas (scroll vertical), la page swipe horizontalement (navigation)
+- [x] Le ScrollView interfère avec le Carousel (react-native-reanimated-carousel)
+- [x] La page affiche "recharger" au lieu de scroller normalement
+- [x] Solution: Augmenter activeOffsetX à 50px (au lieu de 20px)
+- [x] Solution: Ajouter failOffsetY à 30px pour donner priorité au scroll vertical
+- [x] Affecter: Toutes les pages avec ScrollView (Tâches, Messages, Calendrier, etc.)
+- [x] Commit: 485f3a7 - Gestes corrigés dans AppNavigator.tsx
 
-### Bug 3: Layout et SafeArea
+### Bug 3: Layout et SafeArea ⚠️ À TESTER
 - [ ] Les contenus commencent trop haut (cachés derrière le RichHeader)
 - [ ] Revoir la structure SafeAreaView dans chaque page
 - [ ] S'assurer que le contenu commence APRÈS le RichHeader (padding-top ou margin-top)
+- [ ] Note: Les titres ajoutés devraient résoudre partiellement ce problème
