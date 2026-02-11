@@ -903,26 +903,28 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - [x] La navigation est déjà implémentée dans handleFavoritePress
 - [x] onNavigate est bien passé depuis AppNavigator (ligne 64)
 
-### D. Widgets Tâches et Messages
-- [ ] Mettre les 2 widgets côte à côte (layout horizontal 50/50)
-- [ ] Widget Tâches: Titre "Tâches" centré + compteur + clic → navigation
-- [ ] Widget Messages: Titre "Messages" centré + compteur + clic → navigation
-- [ ] Enlever le texte superflu ("à faire aujourd'hui")
+### D. Widgets Tâches et Messages ✅
+- [x] Mettre les 2 widgets côte à côte (layout horizontal 50/50)
+- [x] Widget Tâches: Titre "Tâches" centré + compteur + clic → navigation
+- [x] Widget Messages: Titre "Messages" centré + compteur + clic → navigation
+- [x] Enlever le texte superflu ("à faire aujourd'hui")
 
-### E. Widget Événements
-- [ ] Ajouter filtre Jour/Semaine fonctionnel
-- [ ] Mode Jour: Afficher événements du jour uniquement
-- [ ] Mode Semaine: Afficher événements de la semaine (lundi-dimanche)
-- [ ] Limiter à 3 événements visibles + scroll si plus
-- [ ] Clic sur un événement → Navigation vers Calendrier sur le jour concerné
+### E. Widget Événements ✅
+- [x] Ajouter filtre Jour/Semaine fonctionnel
+- [x] Mode Jour: Afficher événements du jour uniquement
+- [x] Mode Semaine: Afficher événements de la semaine (lundi-dimanche)
+- [x] Limiter à 3 événements visibles + scroll si plus
+- [x] Clic sur un événement → Navigation vers Calendrier sur le jour concerné
 
-### F. Widget Anniversaires (nouveau)
-- [ ] Créer le widget Anniversaires
-- [ ] Afficher les 3 prochains anniversaires
-- [ ] Format: Nom + Date + Âge (si disponible)
-- [ ] Clic sur un anniversaire → Navigation vers Calendrier sur le jour concerné
-- [ ] Icône: 🎂
+### F. Widget Anniversaires (nouveau) ✅
+- [x] Créer le widget Anniversaires
+- [x] Afficher les 3 prochains anniversaires
+- [x] Format: Nom + Date + Âge (si disponible)
+- [x] Clic sur un anniversaire → Navigation vers Calendrier sur le jour concerné
+- [x] Icône: 🎂
+- [x] Widget déjà parfaitement implémenté dans DashboardScreen
 
-### G. Navigation générale
-- [ ] S'assurer que tous les widgets redirigent correctement vers les pages
-- [ ] Tester la navigation depuis chaque widget
+### G. Navigation générale ✅
+- [x] S'assurer que tous les widgets redirigent correctement vers les pages
+- [x] Tous les widgets ont leur navigation implémentée (onNavigate)
+- [ ] Tester la navigation depuis chaque widget sur appareil
