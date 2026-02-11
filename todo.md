@@ -1244,3 +1244,60 @@ components/
 ### Implémentation
 - [ ] Toggle vues (Mois/Semaine/Jour/Agenda)
 - [ ] Vue Agenda (liste scrollable)
+
+
+---
+
+## 🚀 SPRINT 2 - VUES MULTIPLES (Spécifications validées)
+
+### 1. Toggle vues (4 onglets symétriques)
+- [ ] Créer composant TabBar avec 4 onglets : Mois | Semaine | Jour | Agenda
+- [ ] Positionner en haut du calendrier
+- [ ] Style cohérent avec onglets Jour/Semaine du Dashboard
+- [ ] État actif visible (fond violet)
+
+### 2. Vue Semaine (Verticale scrollable)
+- [ ] Affichage vertical : 7 jours empilés
+- [ ] Chaque jour = une section
+- [ ] Événements multiples par jour affichés en liste
+- [ ] Scroll vertical pour naviguer dans la semaine
+- [ ] Header : "Semaine du [date début] au [date fin]"
+
+### 3. Vue Jour (Timeline demi-heure)
+- [ ] Timeline verticale : 00:00 → 23:59
+- [ ] Créneaux de 30 minutes (48 créneaux/jour)
+- [ ] Événements positionnés selon heure de début
+- [ ] Hauteur événement = durée
+- [ ] Scroll vertical pour voir toute la journée
+- [ ] Header : "[Jour] [Date complète]"
+
+### 4. Vue Agenda (Liste groupée par jour)
+- [ ] Liste scrollable d'événements
+- [ ] Groupement par jour : **Lundi 11 Février 2026**
+- [ ] Sous chaque jour : liste des événements
+- [ ] Format événement : Heure | Titre | Catégorie (icône colorée)
+- [ ] Afficher les 30 prochains jours avec événements
+- [ ] Message si aucun événement : "Aucun événement à venir"
+
+### 5. Logique de navigation
+- [ ] Clic sur onglet → Change de vue
+- [ ] Conserver la date sélectionnée entre les vues
+- [ ] Vue Mois : clic sur jour → passe en Vue Jour sur ce jour
+- [ ] Vue Semaine : clic sur jour → passe en Vue Jour sur ce jour
+- [ ] Vue Agenda : clic sur événement → ouvre modal détails
+
+### 6. Responsive & Performance
+- [ ] Optimiser le rendu (VirtualizedList pour Agenda)
+- [ ] Transitions fluides entre vues
+- [ ] Dark mode pour toutes les vues
+- [ ] Traductions FR/EN/DE pour tous les textes
+
+---
+
+**Ordre d'implémentation Sprint 2 :**
+1. Toggle 4 onglets (structure de base)
+2. Vue Agenda (la plus simple)
+3. Vue Semaine (verticale)
+4. Vue Jour (timeline demi-heure)
+5. Logique navigation entre vues
+6. Optimisations finales
