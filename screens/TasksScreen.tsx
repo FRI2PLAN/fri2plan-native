@@ -1076,7 +1076,6 @@ function getStyles(isDark: boolean) {
       color: '#fff',
       fontSize: 18,
       fontWeight: 'bold',
-    },nter',
     },
     newTaskButtonContainer: {
       padding: 16,
