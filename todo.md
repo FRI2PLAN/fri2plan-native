@@ -745,11 +745,13 @@
 - [x] La barre de favoris (FavoritesBar) est présente dans DashboardScreen
 - [x] Fausse alerte - la barre de favoris n'a jamais été supprimée
 
-### Bug 6: Scroll vertical ne fonctionne toujours pas ⚠️ TENTATIVE DE CORRECTION
+### Bug 6: Scroll vertical ne fonctionne toujours pas ⚠️ TENTATIVE 2
 - [x] Malgré activeOffsetX=50 et failOffsetY=30, le scroll reste bloqué
 - [x] Le refresh ne fonctionne pas non plus
-- [x] Cause probable: Le Carousel bloque tous les gestes verticaux
-- [x] Tentative 1: activeOffsetX=100 + failOffsetY=10 (priorité scroll vertical)
-- [x] Commit: 4a8bfa1 - Seuils ajustés
+- [x] Cause identifiée: failOffsetY BLOQUE le scroll vertical au lieu de le permettre!
+- [x] Tentative 1: activeOffsetX=100 + failOffsetY=10 → Échec
+- [x] Tentative 2: Supprimer failOffsetY complètement + activeOffsetX=80
+- [x] Commit: ac449f7 - failOffsetY supprimé
 - [ ] À TESTER: Vérifier si le scroll fonctionne maintenant
-- [ ] Si ça ne marche pas: Essayer simultaneousHandlers ou désactiver le Carousel pendant scroll
+- [ ] Explication: failOffsetY désactive le geste si mouvement vertical détecté (inverse de ce qu'on veut)
+- [ ] Si ça ne marche toujours pas: Désactiver complètement le swipe et garder uniquement le menu
