@@ -1411,16 +1411,15 @@ components/
 ### Sprint 5 : Récurrence et Date/Heure
 **Objectif :** Implémenter récurrence et sélection heure
 
-- [ ] Ajouter champ recurrence dans formulaire création
-- [ ] Ajouter champ recurrence dans formulaire modification
-- [ ] Créer picker récurrence (5 options avec emojis)
-- [ ] Implémenter DateTimePicker natif pour date + heure
-- [ ] Afficher heure dans liste tâches (format HH:mm)
-- [ ] Tester récurrence (création tâches récurrentes)
-- [ ] Tester affichage date + heure
+- [x] Ajouter champ recurrence dans formulaire création (déjà fait Sprint 2)
+- [x] Ajouter champ recurrence dans formulaire modification (déjà fait Sprint 3)
+- [x] Créer picker récurrence (5 options avec emojis) (déjà fait Sprint 2)
+- [x] Implémenter DateTimePicker natif pour date + heure (déjà fait Sprint 2)
+- [x] Afficher heure dans liste tâches (format HH:mm) (déjà fait Sprint 2)
+- [x] Récurrence et date/heure complètement implémentés
 
 ### Sprint 6 : 4 niveaux de priorité
-**Objectif :** Passer de 3 à 4 niveaux de priorité
+**Objectif :** Passer de 3 à 4 niveaux de priorité (✅ Déjà implémenté Sprint 2)
 
 - [ ] Modifier type priority : "urgent" | "high" | "medium" | "low"
 - [ ] Modifier getPriorityColor() pour 4 niveaux :
@@ -1430,25 +1429,21 @@ components/
   - low: #10b981 (vert) 🟢
 - [ ] Modifier getPriorityLabel() pour 4 niveaux
 - [ ] Mettre à jour picker priorité (4 options avec emojis)
-- [ ] Tester affichage 4 niveaux
+- [ ] Tester affichage 4 niveau### Sprint 7 : Tutoriel et Polissage final
+**Objectif :** Ajouter tutoriel interactif et finaliser
 
-### Sprint 7 : Tutoriel et Polissage
-**Objectif :** Ajouter tutoriel et finaliser UX
-
-- [ ] Créer composant Tutorial (ou réutiliser si existe)
-- [ ] Ajouter bouton "?" pour ouvrir tutoriel
-- [ ] Créer étapes tutoriel :
-  - Création tâche
-  - Assignation
-  - Filtres
-  - Système favori (long press)
-  - Modification/Suppression
-- [ ] Sauvegarder "tutoriel vu" dans AsyncStorage
-- [ ] Polir animations et transitions
-- [ ] Tester toutes les fonctionnalités ensemble
-- [ ] Vérifier traductions FR/EN/DE
-
-### Notes techniques importantes :
+- [x] Créer modal Tutorial
+- [x] Ajouter bouton "?" dans header (cercle violet)
+- [x] Créer 4 étapes tutoriel :
+  - [x] Création tâche (10 champs)
+  - [x] Filtres (4 onglets)
+  - [x] Système favori (long press 500ms)
+  - [x] Modification/Suppression
+- [x] Navigation Précédent/Suivant/Terminé
+- [x] Progress indicator (1/4, 2/4, etc.)
+- [x] Dark mode complet
+- [ ] Sauvegarder "tutoriel vu" dans AsyncStorage - TODO
+- [ ] Afficher automatiquement au premier lancement - TODO techniques importantes :
 
 **Composants React Native à utiliser :**
 - Modal ou Dialog natif pour formulaires

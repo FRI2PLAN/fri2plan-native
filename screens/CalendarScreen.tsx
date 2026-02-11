@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 
@@ -405,11 +405,97 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         )}
 
-        {/* Week View - Coming soon */}
+        {/* Week View */}
         {viewMode === 'week' && (
-          <View style={styles.comingSoonContainer}>
-            <Text style={styles.comingSoonText}>📆 Vue Semaine</Text>
-            <Text style={styles.comingSoonSubtext}>Disponible prochainement</Text>
+          <View style={styles.weekViewContainer}>
+            {/* Week Navigation */}
+            <View style={styles.weekNav}>
+              <TouchableOpacity onPress={() => setCurrentDate(subWeeks(currentDate, 1))} style={styles.navButton}>
+                <Text style={styles.navButtonText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.weekNavTitle}>
+                Semaine du {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}
+              </Text>
+              <TouchableOpacity onPress={() => setCurrentDate(addWeeks(currentDate, 1))} style={styles.navButton}>
+                <Text style={styles.navButtonText}>→</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Week Header (Days) */}
+            <View style={styles.weekHeader}>
+              <View style={styles.weekTimeColumn} />
+              {eachDayOfInterval({
+                start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+                end: endOfWeek(currentDate, { weekStartsOn: 1 })
+              }).map(day => (
+                <View key={day.toString()} style={styles.weekDayHeader}>
+                  <Text style={[styles.weekDayName, isToday(day) && styles.weekDayNameToday]}>
+                    {format(day, 'EEE', { locale: getLocale() })}
+                  </Text>
+                  <Text style={[styles.weekDayNumber, isToday(day) && styles.weekDayNumberToday]}>
+                    {format(day, 'd')}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Week Timeline */}
+            <ScrollView style={styles.weekTimeline}>
+              {Array.from({ length: 24 }, (_, hour) => (
+                <View key={hour} style={styles.weekTimeRow}>
+                  <View style={styles.weekTimeLabel}>
+                    <Text style={styles.weekTimeLabelText}>{hour.toString().padStart(2, '0')}:00</Text>
+                  </View>
+                  {eachDayOfInterval({
+                    start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+                    end: endOfWeek(currentDate, { weekStartsOn: 1 })
+                  }).map(day => {
+                    const dayEvents = (events || []).filter(event => {
+                      const eventDate = new Date(event.startTime);
+                      return isSameDay(eventDate, day) && eventDate.getHours() === hour;
+                    });
+
+                    return (
+                      <View key={day.toString()} style={styles.weekDayColumn}>
+                        {dayEvents.map(event => {
+                          const category = getCategoryInfo(event.category);
+                          const startTime = new Date(event.startTime);
+                          const endTime = new Date(event.endTime);
+                          const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                          const heightPerMinute = 1.5;
+                          const eventHeight = Math.max(durationMinutes * heightPerMinute, 30);
+                          const topOffset = startTime.getMinutes() * heightPerMinute;
+
+                          return (
+                            <TouchableOpacity
+                              key={event.id}
+                              style={[
+                                styles.weekEventCard,
+                                {
+                                  backgroundColor: category.color + '20',
+                                  borderLeftColor: category.color,
+                                  height: eventHeight,
+                                  top: topOffset,
+                                }
+                              ]}
+                              onPress={() => openEditModal(event)}
+                            >
+                              <Text style={styles.weekEventIcon}>{category.icon}</Text>
+                              <Text style={styles.weekEventTitle} numberOfLines={1}>
+                                {event.title}
+                              </Text>
+                              <Text style={styles.weekEventTime}>
+                                {format(startTime, 'HH:mm')}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -906,6 +992,105 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   agendaEmptyText: {
     fontSize: 16,
     color: isDark ? '#9ca3af' : '#9ca3af',
+  },
+
+  // Week View Styles
+  weekViewContainer: {
+    flex: 1,
+  },
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  weekNavTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  weekHeader: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderBottomWidth: 2,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  weekTimeColumn: {
+    width: 60,
+  },
+  weekDayHeader: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  weekDayName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: isDark ? '#9ca3af' : '#6b7280',
+    textTransform: 'uppercase',
+  },
+  weekDayNameToday: {
+    color: '#7c3aed',
+  },
+  weekDayNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginTop: 4,
+  },
+  weekDayNumberToday: {
+    color: '#7c3aed',
+  },
+  weekTimeline: {
+    flex: 1,
+  },
+  weekTimeRow: {
+    flexDirection: 'row',
+    minHeight: 90,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  weekTimeLabel: {
+    width: 60,
+    paddingTop: 8,
+    paddingRight: 8,
+    alignItems: 'flex-end',
+  },
+  weekTimeLabelText: {
+    fontSize: 11,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    fontWeight: '600',
+  },
+  weekDayColumn: {
+    flex: 1,
+    position: 'relative',
+    borderRightWidth: 1,
+    borderRightColor: isDark ? '#2a2a2a' : '#f3f4f6',
+  },
+  weekEventCard: {
+    position: 'absolute',
+    left: 2,
+    right: 2,
+    borderLeftWidth: 3,
+    borderRadius: 4,
+    padding: 4,
+    overflow: 'hidden',
+  },
+  weekEventIcon: {
+    fontSize: 12,
+  },
+  weekEventTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  weekEventTime: {
+    fontSize: 9,
+    color: isDark ? '#fbbf24' : '#7c3aed',
+    marginTop: 2,
   },
 
   // Day View Styles

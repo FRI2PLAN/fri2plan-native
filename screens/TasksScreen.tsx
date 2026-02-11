@@ -24,6 +24,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
   const [longPressProgress, setLongPressProgress] = useState(0);
   const [longPressTarget, setLongPressTarget] = useState<'all' | 'active' | 'completed' | 'my-tasks' | null>(null);
+  const [tutorialVisible, setTutorialVisible] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -288,6 +290,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Tâches</Text>
+        <TouchableOpacity 
+          style={styles.tutorialButton}
+          onPress={() => {
+            setTutorialVisible(true);
+            setTutorialStep(0);
+          }}
+        >
+          <Text style={styles.tutorialButtonText}>?</Text>
+        </TouchableOpacity>
       </View>
 
       {/* New Task Button */}
@@ -923,6 +934,106 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </View>
         </View>
       </Modal>
+
+      {/* Tutorial Modal */}
+      <Modal visible={tutorialVisible} animationType="slide" transparent>
+        <View style={styles.tutorialOverlay}>
+          <View style={styles.tutorialContainer}>
+            <Text style={styles.tutorialTitle}>🎓 Guide des Tâches</Text>
+            
+            {tutorialStep === 0 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>1. Créer une tâche</Text>
+                <Text style={styles.tutorialText}>
+                  Appuyez sur le bouton violet "+ Nouvelle tâche" pour créer une tâche.
+                  {"\n\n"}
+                  Vous pouvez définir :
+                  {"\n"}• Titre et description
+                  {"\n"}• Assigner à un membre
+                  {"\n"}• Date et heure d'échéance
+                  {"\n"}• Récurrence (quotidienne, hebdomadaire, etc.)
+                  {"\n"}• Points de récompense
+                  {"\n"}• Priorité (4 niveaux)
+                  {"\n"}• Privé ou public
+                </Text>
+              </View>
+            )}
+
+            {tutorialStep === 1 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>2. Filtrer les tâches</Text>
+                <Text style={styles.tutorialText}>
+                  Utilisez les onglets pour filtrer vos tâches :
+                  {"\n\n"}
+                  • Toutes : Affiche toutes les tâches
+                  {"\n"}• En cours : Tâches non terminées
+                  {"\n"}• Terminées : Tâches complétées
+                  {"\n"}• Mes tâches : Tâches assignées à vous
+                </Text>
+              </View>
+            )}
+
+            {tutorialStep === 2 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>3. Système Favori ⭐</Text>
+                <Text style={styles.tutorialText}>
+                  Maintenez appuyé (500ms) sur un onglet pour le définir comme favori !
+                  {"\n\n"}
+                  L'onglet favori affichera une étoile ⭐ et sera votre vue par défaut au démarrage.
+                  {"\n\n"}
+                  Astuce : Utilisez "Mes tâches" comme favori pour voir rapidement vos tâches personnelles !
+                </Text>
+              </View>
+            )}
+
+            {tutorialStep === 3 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>4. Modifier et Supprimer</Text>
+                <Text style={styles.tutorialText}>
+                  Appuyez sur une tâche pour voir ses détails.
+                  {"\n\n"}
+                  Dans le dialog de détails :
+                  {"\n"}• Bouton "Modifier" : Modifier la tâche
+                  {"\n"}• Bouton "Supprimer" : Supprimer la tâche (avec confirmation)
+                  {"\n\n"}
+                  Vous pouvez aussi marquer une tâche comme terminée en cochant la case.
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.tutorialFooter}>
+              <Text style={styles.tutorialProgress}>
+                {tutorialStep + 1} / 4
+              </Text>
+              <View style={styles.tutorialButtons}>
+                {tutorialStep > 0 && (
+                  <TouchableOpacity 
+                    style={styles.tutorialButtonSecondary}
+                    onPress={() => setTutorialStep(tutorialStep - 1)}
+                  >
+                    <Text style={styles.tutorialButtonSecondaryText}>Précédent</Text>
+                  </TouchableOpacity>
+                )}
+                {tutorialStep < 3 ? (
+                  <TouchableOpacity 
+                    style={styles.tutorialButtonPrimary}
+                    onPress={() => setTutorialStep(tutorialStep + 1)}
+                  >
+                    <Text style={styles.tutorialButtonPrimaryText}>Suivant</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.tutorialButtonPrimary}
+                    onPress={() => setTutorialVisible(false)}
+                  >
+                    <Text style={styles.tutorialButtonPrimaryText}>Terminé</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -934,19 +1045,38 @@ function getStyles(isDark: boolean) {
       flex: 1,
       backgroundColor: isDark ? '#000000' : '#f9fafb',
     },
-    pageTitleContainer: {
+    pageTitleCon    pageTitleContainer: {
       backgroundColor: isDark ? '#1f2937' : '#fff',
-      paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 12,
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
     },
     pageTitle: {
       fontSize: 24,
       fontWeight: 'bold',
       color: isDark ? '#f5f5dc' : '#1f2937',
       textAlign: 'center',
+    },
+    tutorialButton: {
+      position: 'absolute',
+      right: 16,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#7c3aed',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tutorialButtonText: {
+      color: '#fff',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },nter',
     },
     newTaskButtonContainer: {
       padding: 16,
@@ -1281,6 +1411,83 @@ function getStyles(isDark: boolean) {
       fontSize: 16,
       fontWeight: '600',
       color: isDark ? '#f5f5dc' : '#1f2937',
+    },
+
+    // Tutorial Styles
+    tutorialOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    tutorialContainer: {
+      backgroundColor: isDark ? '#1f2937' : '#fff',
+      borderRadius: 16,
+      padding: 24,
+      width: '100%',
+      maxWidth: 400,
+    },
+    tutorialTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: isDark ? '#ffffff' : '#1f2937',
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    tutorialContent: {
+      marginBottom: 24,
+    },
+    tutorialStepTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#7c3aed',
+      marginBottom: 12,
+    },
+    tutorialText: {
+      fontSize: 15,
+      lineHeight: 22,
+      color: isDark ? '#d1d5db' : '#4b5563',
+    },
+    tutorialFooter: {
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#374151' : '#e5e7eb',
+      paddingTop: 16,
+    },
+    tutorialProgress: {
+      fontSize: 14,
+      color: isDark ? '#9ca3af' : '#6b7280',
+      textAlign: 'center',
+      marginBottom: 12,
+    },
+    tutorialButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    tutorialButtonPrimary: {
+      flex: 1,
+      backgroundColor: '#7c3aed',
+      padding: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    tutorialButtonPrimaryText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    tutorialButtonSecondary: {
+      flex: 1,
+      backgroundColor: isDark ? '#374151' : '#f3f4f6',
+      padding: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    tutorialButtonSecondaryText: {
+      color: isDark ? '#f5f5dc' : '#1f2937',
+      fontSize: 16,
+      fontWeight: '600',
     },
   });
 }
