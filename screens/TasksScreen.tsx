@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, useColorScheme, Modal, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Modal, Switch, Alert } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc';
@@ -16,8 +17,7 @@ type Priority = 'urgent' | 'high' | 'medium' | 'low';
 type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark } = useTheme();
   const styles = getStyles(isDark);
 
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
@@ -1046,7 +1046,7 @@ function getStyles(isDark: boolean) {
       backgroundColor: isDark ? '#000000' : '#f9fafb',
     },
     pageTitleCon    pageTitleContainer: {
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       paddingTop: 16,
       paddingBottom: 12,
       borderBottomWidth: 1,
@@ -1059,7 +1059,7 @@ function getStyles(isDark: boolean) {
     pageTitle: {
       fontSize: 24,
       fontWeight: 'bold',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       textAlign: 'center',
     },
     tutorialButton: {
@@ -1080,7 +1080,7 @@ function getStyles(isDark: boolean) {
     },
     newTaskButtonContainer: {
       padding: 16,
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       alignItems: 'center',
     },
     newTaskButton: {
@@ -1096,17 +1096,17 @@ function getStyles(isDark: boolean) {
     },
     searchContainer: {
       padding: 16,
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
     },
     searchInput: {
       backgroundColor: isDark ? '#374151' : '#f3f4f6',
       borderRadius: 8,
       padding: 12,
       fontSize: 16,
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
     filterScrollContainer: {
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#374151' : '#e5e7eb',
     },
@@ -1150,7 +1150,7 @@ function getStyles(isDark: boolean) {
     },
     taskCard: {
       flexDirection: 'row',
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       borderRadius: 12,
       padding: 16,
       marginBottom: 12,
@@ -1190,7 +1190,7 @@ function getStyles(isDark: boolean) {
     taskTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       marginBottom: 4,
     },
     taskTitleCompleted: {
@@ -1225,7 +1225,7 @@ function getStyles(isDark: boolean) {
       borderRadius: 4,
     },
     statusText: {
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       fontSize: 12,
       fontWeight: '600',
     },
@@ -1263,7 +1263,7 @@ function getStyles(isDark: boolean) {
       justifyContent: 'flex-end',
     },
     modalContent: {
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       maxHeight: '90%',
@@ -1279,7 +1279,7 @@ function getStyles(isDark: boolean) {
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
     modalClose: {
       fontSize: 24,
@@ -1294,12 +1294,12 @@ function getStyles(isDark: boolean) {
     label: {
       fontSize: 14,
       fontWeight: '600',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       marginBottom: 8,
     },
     detailText: {
       fontSize: 16,
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       marginBottom: 4,
     },
     input: {
@@ -1307,7 +1307,7 @@ function getStyles(isDark: boolean) {
       borderRadius: 8,
       padding: 12,
       fontSize: 16,
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       borderWidth: 1,
       borderColor: isDark ? '#4b5563' : '#e5e7eb',
     },
@@ -1327,7 +1327,7 @@ function getStyles(isDark: boolean) {
     },
     pickerButtonText: {
       fontSize: 16,
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
     pickerArrow: {
       fontSize: 12,
@@ -1356,7 +1356,7 @@ function getStyles(isDark: boolean) {
     cancelButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
     createButton: {
       flex: 1,
@@ -1378,7 +1378,7 @@ function getStyles(isDark: boolean) {
       justifyContent: 'flex-end',
     },
     pickerModalContent: {
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       maxHeight: '60%',
@@ -1387,7 +1387,7 @@ function getStyles(isDark: boolean) {
     pickerModalTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       marginBottom: 16,
       textAlign: 'center',
     },
@@ -1398,7 +1398,7 @@ function getStyles(isDark: boolean) {
     },
     pickerOptionText: {
       fontSize: 16,
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
     pickerCloseButton: {
       marginTop: 16,
@@ -1410,7 +1410,7 @@ function getStyles(isDark: boolean) {
     pickerCloseButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
     },
 
     // Tutorial Styles
@@ -1422,7 +1422,7 @@ function getStyles(isDark: boolean) {
       padding: 20,
     },
     tutorialContainer: {
-      backgroundColor: isDark ? '#1f2937' : '#fff',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
       borderRadius: 16,
       padding: 24,
       width: '100%',
@@ -1431,7 +1431,7 @@ function getStyles(isDark: boolean) {
     tutorialTitle: {
       fontSize: 24,
       fontWeight: 'bold',
-      color: isDark ? '#ffffff' : '#1f2937',
+      color: isDark ? '#ffffff' : '#2a2a2a',
       textAlign: 'center',
       marginBottom: 20,
     },
@@ -1485,7 +1485,7 @@ function getStyles(isDark: boolean) {
       alignItems: 'center',
     },
     tutorialButtonSecondaryText: {
-      color: isDark ? '#f5f5dc' : '#1f2937',
+      color: isDark ? '#f5f5dc' : '#2a2a2a',
       fontSize: 16,
       fontWeight: '600',
     },

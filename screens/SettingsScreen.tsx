@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 
@@ -16,7 +17,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, setDarkMode: setGlobalDarkMode } = useTheme();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
 
@@ -102,8 +103,8 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
               <Text style={styles.settingLabel}>{t('settings.darkMode')}</Text>
             </View>
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
+              value={isDark}
+              onValueChange={setGlobalDarkMode}
               trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
               thumbColor="#fff"
             />

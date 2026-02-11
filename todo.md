@@ -1493,3 +1493,54 @@ components/
 - Texte blanc (#ffffff)
 - Couleurs conservées (violet pour jour actuel)
 
+
+
+## 🌙 CORRECTION DARK MODE URGENT - TOUTES LES PAGES
+
+**Problème :** Dark mode pas assez contrasté, cartes et texte peu visibles
+
+**Nouvelle palette dark mode (stricte) :**
+- [ ] Fond écran : #000000 (noir pur)
+- [ ] Cartes/Containers principaux : #2a2a2a (gris clair visible)
+- [ ] Cartes secondaires/Headers : #1f2937 (gris moyen)
+- [ ] Bordures : #374151 (gris bordure)
+- [ ] Texte principal : #ffffff (blanc pur)
+- [ ] Texte secondaire : #d1d5db (gris très clair)
+- [ ] Inputs fond : #374151 (gris foncé)
+- [ ] Inputs texte : #ffffff (blanc)
+- [ ] Accents violet : #7c3aed (conservé)
+
+**Pages à corriger :**
+- [ ] CalendarScreen.tsx
+- [ ] TasksScreen.tsx
+- [ ] HomeScreen.tsx
+- [ ] ProfileScreen.tsx
+- [ ] FamilyScreen.tsx
+- [ ] Toutes les autres pages
+
+**Règle stricte :** 
+- Fond noir #000000
+- Cartes grises #2a2a2a
+- Texte blanc #ffffff
+- Contraste élevé partout
+
+
+## 🎨 CONTEXT GLOBAL DARK MODE
+
+**Objectif :** Créer un Context global pour gérer le dark mode dans toute l'app
+
+- [ ] Créer contexts/ThemeContext.tsx
+- [ ] State darkMode (boolean)
+- [ ] AsyncStorage persistance (clé: 'dark_mode_enabled')
+- [ ] Hook useTheme() pour accès facile
+- [ ] Wrapper App.tsx avec ThemeProvider
+- [ ] Modifier tous les écrans :
+  - [ ] CalendarScreen.tsx
+  - [ ] TasksScreen.tsx
+  - [ ] HomeScreen.tsx
+  - [ ] SettingsScreen.tsx
+  - [ ] ProfileScreen.tsx
+  - [ ] FamilyScreen.tsx
+  - [ ] Tous les autres écrans
+- [ ] Connecter toggle SettingsScreen au Context
+- [ ] Tester changement dark mode en temps réel
