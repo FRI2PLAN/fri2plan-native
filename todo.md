@@ -934,21 +934,24 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 
 ## 🐛 BUGS NAVIGATION - 11 FÉV 2026 14:59
 
-### Bugs critiques de navigation
-- [ ] Menu hamburger : S'ouvre mais ne navigue pas quand on clique sur une page (le menu se ferme sans changer de page)
-- [ ] Favoris : Aucune navigation au clic (appui court ne fait rien)
-- [ ] Widget Tâches : Aucune navigation au clic
-- [ ] Widget Messages : Aucune navigation au clic
-- [ ] Widget Événements : Aucune navigation au clic sur un événement
-- [ ] Swipe gauche/droite fonctionne correctement ✅
+### Bugs critiques de navigation ✅
+- [x] Menu hamburger : S'ouvre mais ne navigue pas quand on clique sur une page (le menu se ferme sans changer de page)
+- [x] Favoris : Aucune navigation au clic (appui court ne fait rien)
+- [x] Widget Tâches : Aucune navigation au clic
+- [x] Widget Messages : Aucune navigation au clic
+- [x] Widget Événements : Aucune navigation au clic sur un événement
+- [x] Swipe gauche/droite fonctionne correctement ✅
+- [x] Solution : useEffect dans CircularPager pour écouter initialIndex
 
-### Problème d'affichage
-- [ ] Widget Anniversaires : Invisible (ne s'affiche pas sur la page Accueil)
+### Problème d'affichage ✅
+- [x] Widget Anniversaires : Invisible (ne s'affiche pas sur la page Accueil)
+- [x] Solution : Toujours afficher le widget, même si vide avec message
 
-### Améliorations texte/design
-- [ ] Changer "Événements à venir" en "Événements" (car mode semaine inclut passé)
-- [ ] Réduire la taille des widgets Tâches et Messages
-- [ ] Améliorer le texte des widgets Tâches et Messages
+### Améliorations texte/design ✅
+- [x] Changer "Événements à venir" en "Événements" (car mode semaine inclut passé)
+- [x] Réduire la taille des widgets Tâches et Messages (padding 12, minHeight 100)
+- [x] Améliorer le texte des widgets Tâches et Messages ('Tâches du jour', 'Messages non lus')
+- [x] Réduire taille icônes (24px), police titre (12px), compteur (28px)
 
 ### Diagnostic
 - Swipe fonctionne → CircularPager OK
