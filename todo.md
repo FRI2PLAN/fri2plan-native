@@ -798,3 +798,36 @@ eas build --profile development --platform android
 - [ ] Tester d'abord le build actuel (ac449f7)
 - [ ] Si le scroll ne fonctionne toujours pas → Activer la solution FlatList
 - [ ] Si le scroll fonctionne → Garder la solution Carousel
+
+
+---
+
+## ✅ SOLUTION FLATLIST ACTIVÉE - 11 FÉVRIER 2026
+
+### Décision
+La solution de secours FlatList a été activée (Commit `2cfa230`) car le scroll vertical ne fonctionnait toujours pas avec react-native-reanimated-carousel.
+
+### Changements effectués
+- ✅ `AppNavigator.tsx` utilise maintenant `CircularPager` (FlatList)
+- ✅ Ancienne version Carousel sauvegardée dans `AppNavigator.carousel.tsx`
+- ✅ Swipe horizontal circulaire infini avec duplication des données
+- ✅ Composant natif React Native (pas de conflit de gestes)
+
+### Avantages
+- ✅ Scroll vertical devrait fonctionner sans problème
+- ✅ Swipe horizontal fonctionne avec `pagingEnabled={true}`
+- ✅ Plus simple et plus performant
+- ✅ Pas de dépendance externe complexe
+
+### À tester après rebuild
+- [ ] Le scroll vertical fonctionne correctement
+- [ ] Le swipe horizontal fonctionne (navigation entre pages)
+- [ ] Le swipe circulaire infini fonctionne (dernière page → première page)
+- [ ] Le menu hamburger fonctionne toujours
+- [ ] Les transitions sont fluides
+
+### Prochaines étapes
+1. Rebuild l'APK : `eas build --profile development --platform android`
+2. Tester le scroll et le swipe
+3. Si ça fonctionne → Garder la solution FlatList
+4. Si ça ne fonctionne pas → Investiguer plus en profondeur
