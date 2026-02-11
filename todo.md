@@ -878,3 +878,51 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 - Navigation : Utiliser le système de navigation existant (setCurrentPage)
 - Widgets : Garder le design cohérent (couleurs, bordures, padding)
 - Performance : Optimiser le rendu des listes (FlatList si nécessaire)
+
+
+---
+
+## 🐛 BUGS ET AMÉLIORATIONS - 11 FÉV 2026 (RETOUR UTILISATEUR)
+
+### A. Titre "Accueil" pas centré ✅
+- [x] Le titre "Accueil" est aligné à gauche au lieu d'être centré
+- [x] Vérifier pourquoi le script de centrage n'a pas fonctionné pour DashboardScreen
+- [x] Appliquer `textAlign: 'center'` au style pageTitle
+
+### B. Modal favoris à améliorer ✅
+- [x] Transformer la modal plein écran en menu déroulant (dropdown)
+- [x] Structure souhaitée:
+  * Header fixe: "Ajouter un Favoris"
+  * Zone scrollable: Liste de toutes les pages avec icônes
+  * Footer fixe: Bouton "Annuler"
+- [x] Réduire la hauteur de la modal (60% au lieu de 80%)
+
+### C. Navigation manquante dans FavoritesBar ✅
+- [x] Implémenter la navigation quand on clique sur un favori
+- [x] Utiliser onNavigate(pageIndex) pour changer de page
+- [x] La navigation est déjà implémentée dans handleFavoritePress
+- [x] onNavigate est bien passé depuis AppNavigator (ligne 64)
+
+### D. Widgets Tâches et Messages
+- [ ] Mettre les 2 widgets côte à côte (layout horizontal 50/50)
+- [ ] Widget Tâches: Titre "Tâches" centré + compteur + clic → navigation
+- [ ] Widget Messages: Titre "Messages" centré + compteur + clic → navigation
+- [ ] Enlever le texte superflu ("à faire aujourd'hui")
+
+### E. Widget Événements
+- [ ] Ajouter filtre Jour/Semaine fonctionnel
+- [ ] Mode Jour: Afficher événements du jour uniquement
+- [ ] Mode Semaine: Afficher événements de la semaine (lundi-dimanche)
+- [ ] Limiter à 3 événements visibles + scroll si plus
+- [ ] Clic sur un événement → Navigation vers Calendrier sur le jour concerné
+
+### F. Widget Anniversaires (nouveau)
+- [ ] Créer le widget Anniversaires
+- [ ] Afficher les 3 prochains anniversaires
+- [ ] Format: Nom + Date + Âge (si disponible)
+- [ ] Clic sur un anniversaire → Navigation vers Calendrier sur le jour concerné
+- [ ] Icône: 🎂
+
+### G. Navigation générale
+- [ ] S'assurer que tous les widgets redirigent correctement vers les pages
+- [ ] Tester la navigation depuis chaque widget

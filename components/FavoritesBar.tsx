@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Favorite {
@@ -94,23 +94,16 @@ export default function FavoritesBar({
           onPress={() => setShowModal(false)}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {slots[selectedSlot!] ? 'Modifier le favori' : 'Ajouter un favori'}
-            </Text>
+            {/* Header fixe */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Ajouter un Favoris</Text>
+            </View>
 
-            {/* Si un favori existe, option pour le retirer */}
-            {slots[selectedSlot!] && (
-              <TouchableOpacity
-                style={[styles.modalOption, styles.removeOption]}
-                onPress={() => handleRemoveFavorite(selectedSlot!)}
-              >
-                <Ionicons name="close-circle" size={24} color="#ef4444" />
-                <Text style={styles.removeText}>Retirer ce favori</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Liste des pages disponibles */}
-            <View style={styles.pagesContainer}>
+            {/* Zone scrollable */}
+            <ScrollView 
+              style={styles.pagesScrollContainer}
+              showsVerticalScrollIndicator={true}
+            >
               {allPages.map((page) => {
                 const isSelected = favorites.some(f => f.id === page.id);
                 return (
@@ -128,14 +121,17 @@ export default function FavoritesBar({
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowModal(false)}
-            >
-              <Text style={styles.cancelText}>Annuler</Text>
-            </TouchableOpacity>
+            {/* Footer fixe */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={styles.cancelText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Pressable>
       </Modal>
@@ -187,15 +183,21 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 24,
     width: '85%',
-    maxHeight: '80%',
+    maxHeight: '60%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#fff',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 20,
     textAlign: 'center',
   },
   modalOption: {
@@ -214,8 +216,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
-  pagesContainer: {
-    maxHeight: 300,
+  pagesScrollContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   pageOption: {
     flexDirection: 'row',
@@ -238,8 +242,14 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     flex: 1,
   },
+  modalFooter: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: '#fff',
+  },
   cancelButton: {
-    marginTop: 16,
     padding: 16,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
