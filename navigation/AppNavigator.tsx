@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import Carousel from 'react-native-reanimated-carousel';
+import CircularPager from '../components/CircularPager';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -28,7 +28,6 @@ interface AppNavigatorProps {
 
 interface HomeScreenProps {
   onLogout: () => void;
-  carouselRef: React.RefObject<any>;
   currentPage: number;
   onPageChange: (page: number) => void;
 }
@@ -52,13 +51,11 @@ const PAGES = [
 
 function HomeScreen({
   onLogout,
-  carouselRef,
   currentPage,
   onPageChange,
 }: HomeScreenProps) {
-  // Render function for Carousel
-  const renderItem = ({ index }: { index: number }) => {
-    const page = PAGES[index];
+  // Render function for CircularPager
+  const renderItem = (page: any, index: number) => {
     const PageComponent = page.component;
     
     return (
@@ -74,41 +71,21 @@ function HomeScreen({
 
   return (
     <FixedHeaderLayout onNavigate={onPageChange}>
-      <Carousel
-        ref={carouselRef}
-        loop
-        width={SCREEN_WIDTH}
-        height={SCREEN_HEIGHT}
+      <CircularPager
         data={PAGES}
         renderItem={renderItem}
-        onSnapToItem={(index) => onPageChange(index)}
-        defaultIndex={currentPage}
-        panGestureHandlerProps={{
-          activeOffsetX: [-80, 80],
-        }}
-        windowSize={3}
-        mode="parallax"
-        modeConfig={{
-          parallaxScrollingScale: 1,
-          parallaxScrollingOffset: 0,
-        }}
+        initialIndex={currentPage}
+        onPageChange={onPageChange}
       />
     </FixedHeaderLayout>
   );
 }
 
 export default function AppNavigator({ onLogout }: AppNavigatorProps) {
-  const carouselRef = useRef<any>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePageSelect = (pageIndex: number) => {
     console.log('handlePageSelect called with:', pageIndex);
-    
-    // Utiliser scrollTo pour naviguer vers la page
-    if (carouselRef.current) {
-      carouselRef.current.scrollTo({ index: pageIndex, animated: true });
-    }
-    
     setCurrentPage(pageIndex);
   };
 
@@ -137,7 +114,6 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           {() => (
             <HomeScreen
               onLogout={onLogout}
-              carouselRef={carouselRef}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
             />
