@@ -381,5 +381,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-  },
+  textAlign: 'center',
+    },
 });

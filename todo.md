@@ -831,3 +831,50 @@ La solution de secours FlatList a été activée (Commit `2cfa230`) car le scrol
 2. Tester le scroll et le swipe
 3. Si ça fonctionne → Garder la solution FlatList
 4. Si ça ne fonctionne pas → Investiguer plus en profondeur
+
+
+---
+
+## 🎨 REFONTE COMPLÈTE PAGE ACCUEIL - 11 FÉVRIER 2026
+
+### 1. Titres de pages ✅
+- [x] Centrer les titres de toutes les pages (actuellement alignés à gauche)
+- [x] Appliquer le style cohérent : `textAlign: 'center'`
+- [x] 6 fichiers modifiés automatiquement
+
+### 2. Barre de favoris ⭐ (EN COURS)
+- [x] Créer nouveau composant FavoritesBar.tsx
+- [x] Enlever le texte sous les icônes (garder uniquement les icônes)
+- [x] Passer de 3 à 5 favoris affichés
+- [x] Implémenter appui long → Ouvrir modal pour sélectionner/désélectionner un favori
+- [x] Implémenter appui bref → Redirection vers la page concernée
+- [ ] Intégrer dans DashboardScreen (à terminer)
+- [ ] Stocker les favoris sélectionnés (AsyncStorage pour persistance)
+
+### 3. Widgets Tâches et Messages côte à côte 📊
+- [ ] Réorganiser en layout horizontal (50% / 50%)
+- [ ] Enlever le texte superflu ("à faire aujourd'hui", etc.)
+- [ ] Garder uniquement : Titre ("Tâches" ou "Messages") + Compteur
+- [ ] Centrer et justifier le contenu
+- [ ] Implémenter navigation au clic → Redirection vers page Tâches/Messages
+
+### 4. Widget Événements amélioré 📅
+- [ ] Ajouter toggle Jour/Semaine
+- [ ] Mode Jour : Afficher événements du jour uniquement
+- [ ] Mode Semaine : Afficher événements de la semaine (lundi-dimanche)
+- [ ] Limiter à 3 événements visibles
+- [ ] Si plus de 3 → Ajouter scroll dans le widget
+- [ ] Implémenter navigation au clic → Redirection vers Calendrier sur le jour de l'événement
+
+### 5. Nouveau widget Anniversaires 🎂
+- [ ] Créer composant BirthdaysWidget
+- [ ] Afficher les 3 prochains anniversaires
+- [ ] Design cohérent avec les autres widgets
+- [ ] Implémenter navigation au clic → Redirection vers Calendrier sur le jour de l'anniversaire
+- [ ] Gérer le cas où il n'y a pas d'anniversaires à venir
+
+### Notes techniques
+- Utiliser react-native-gesture-handler pour appui long
+- Navigation : Utiliser le système de navigation existant (setCurrentPage)
+- Widgets : Garder le design cohérent (couleurs, bordures, padding)
+- Performance : Optimiser le rendu des listes (FlatList si nécessaire)
