@@ -600,12 +600,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
   pageTitleContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
   pageTitle: {
     fontSize: 24,

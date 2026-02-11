@@ -1301,3 +1301,199 @@ components/
 4. Vue Jour (timeline demi-heure)
 5. Logique navigation entre vues
 6. Optimisations finales
+
+
+## 📋 AMÉLIORATION PAGE TÂCHES - Plan complet
+
+### Analyse comparative React Native vs PWA
+
+**✅ Fonctionnalités présentes dans React Native :**
+- Liste des tâches avec scroll
+- 3 filtres : Toutes / En cours / Terminées
+- Recherche par titre
+- Pull-to-refresh
+- 3 niveaux de priorité : Urgent (rouge) / Moyen (orange) / Faible (vert)
+- 3 statuts : À faire / En cours / Terminée
+- Date d'échéance
+- Points (récompenses)
+- Checkbox pour marquer comme terminée
+- Description
+
+**❌ Fonctionnalités manquantes (présentes dans PWA) :**
+- Système "Favori" (filtre par favoris + long press pour marquer onglet favori)
+- 4ème filtre : "Mes tâches" (assignées à moi)
+- Délégation (assigner à un membre)
+- Création de tâches (formulaire complet)
+- Modification de tâches (dialog avec tous les champs)
+- Suppression de tâches (bouton avec confirmation)
+- Récurrence (none/daily/weekly/monthly/yearly)
+- 4 niveaux de priorité (au lieu de 3) : 🔴 Urgent / 🟠 Haute / 🟡 Moyenne / 🟢 Faible
+- Privé/Public (checkbox visibilité)
+- Dark mode (ThemedBackground + styles dynamiques)
+- Titre centré (PageTitleWithNavigation)
+- Bouton "Nouvelle tâche" pour créer
+- Dialog détails tâche (avec changement statut direct)
+- Tutoriel interactif (bouton "?")
+- Date + Heure d'échéance (pas juste date)
+- Sauvegarde onglet favori en DB (tasksSelectedList)
+
+### Sprint 1 : Fondations et Dark Mode ✅
+**Objectif :** Préparer la base et ajouter le dark mode
+
+- [x] Ajouter dark mode avec useColorScheme()
+- [x] Créer fonction getStyles(isDark: boolean) pour styles dynamiques
+- [x] Adapter tous les styles existants (backgroundColor, textColor, borderColor)
+- [ ] Tester light mode et dark mode
+- [x] Centrer le titre "Tâches" (textAlign: 'center')
+
+### Sprint 2 : Création de tâches (formulaire complet)
+**Objectif :** Implémenter le formulaire de création avec tous les champs
+
+- [x] Créer state pour dialog création (createDialogOpen)
+- [x] Créer formData state avec tous les champs :
+  - title (string, requis)
+  - description (string, optionnel)
+  - assignedTo (number | undefined, dropdown membres)
+  - dueDate (Date | undefined)
+  - dueTime (string, format HH:MM)
+  - recurrence (none/daily/weekly/monthly/yearly)
+  - points (number, défaut 10)
+  - priority (urgent/high/medium/low au lieu de high/medium/low)
+  - isPrivate (boolean)
+- [x] Créer bouton "Nouvelle tâche" (violet, avec icône Plus)
+- [x] Créer Modal/Dialog avec formulaire complet
+- [x] Implémenter picker pour "Assigner à" (récupérer membres via tRPC)
+- [x] Implémenter DateTimePicker pour date + heure
+- [x] Implémenter picker pour récurrence (5 options)
+- [x] Implémenter picker pour priorité (4 niveaux avec emojis)
+- [x] Ajouter checkbox "Privé" (Switch)
+- [x] Connecter à trpc.tasks.create.useMutation
+- [x] Gérer validation (titre requis)
+- [x] Afficher Alert succès/erreur
+- [ ] Tester création complète
+
+### Sprint 3 : Modification et Suppression
+**Objectif :** Permettre édition et suppression des tâches
+
+- [x] Créer state selectedTask pour stocker tâche sélectionnée
+- [x] Créer state detailDialogOpen pour dialog détails
+- [x] Rendre les tâches cliquables (onPress → ouvrir détails)
+- [x] Créer Dialog détails avec :
+  - Titre et description
+  - Statut
+  - Date d'échéance
+  - Points
+  - Bouton "Modifier"
+  - Bouton "Supprimer" (rouge)
+- [x] Créer state editFormData pour formulaire modification
+- [x] Créer state isEditing pour dialog modification
+- [x] Créer Dialog modification (formulaire simplifié, pré-rempli)
+- [x] Connecter à trpc.tasks.update.useMutation
+- [x] Connecter à trpc.tasks.delete.useMutation
+- [x] Ajouter confirmation avant suppression (Alert)
+- [ ] Tester modification et suppression
+
+### Sprint 4 : Filtres avancés et Système Favori
+**Objectif :** Ajouter filtre "Mes tâches" et système favori
+
+- [ ] Ajouter 4ème filtre "Mes tâches" (tasks assignées à currentUser)
+- [ ] Récupérer currentUser via trpc.auth.me.useQuery()
+- [ ] Créer state favoriteTab (sauvegardé en AsyncStorage)
+- [ ] Implémenter long press sur onglets (500ms)
+- [ ] Ajouter animation progression long press (barre ou cercle)
+- [ ] Marquer onglet comme favori (étoile jaune)
+- [ ] Sauvegarder favori en AsyncStorage
+- [ ] Charger onglet favori au démarrage
+- [ ] Afficher tooltip explicatif première fois (5 secondes)
+- [ ] Tester système favori complet
+
+### Sprint 5 : Récurrence et Date/Heure
+**Objectif :** Implémenter récurrence et sélection heure
+
+- [ ] Ajouter champ recurrence dans formulaire création
+- [ ] Ajouter champ recurrence dans formulaire modification
+- [ ] Créer picker récurrence (5 options avec emojis)
+- [ ] Implémenter DateTimePicker natif pour date + heure
+- [ ] Afficher heure dans liste tâches (format HH:mm)
+- [ ] Tester récurrence (création tâches récurrentes)
+- [ ] Tester affichage date + heure
+
+### Sprint 6 : 4 niveaux de priorité
+**Objectif :** Passer de 3 à 4 niveaux de priorité
+
+- [ ] Modifier type priority : "urgent" | "high" | "medium" | "low"
+- [ ] Modifier getPriorityColor() pour 4 niveaux :
+  - urgent: #dc2626 (rouge foncé) 🔴
+  - high: #f59e0b (orange) 🟠
+  - medium: #fbbf24 (jaune) 🟡
+  - low: #10b981 (vert) 🟢
+- [ ] Modifier getPriorityLabel() pour 4 niveaux
+- [ ] Mettre à jour picker priorité (4 options avec emojis)
+- [ ] Tester affichage 4 niveaux
+
+### Sprint 7 : Tutoriel et Polissage
+**Objectif :** Ajouter tutoriel et finaliser UX
+
+- [ ] Créer composant Tutorial (ou réutiliser si existe)
+- [ ] Ajouter bouton "?" pour ouvrir tutoriel
+- [ ] Créer étapes tutoriel :
+  - Création tâche
+  - Assignation
+  - Filtres
+  - Système favori (long press)
+  - Modification/Suppression
+- [ ] Sauvegarder "tutoriel vu" dans AsyncStorage
+- [ ] Polir animations et transitions
+- [ ] Tester toutes les fonctionnalités ensemble
+- [ ] Vérifier traductions FR/EN/DE
+
+### Notes techniques importantes :
+
+**Composants React Native à utiliser :**
+- Modal ou Dialog natif pour formulaires
+- Picker ou Select pour dropdowns
+- DateTimePicker (@react-native-community/datetimepicker)
+- Switch pour checkbox Privé
+- TouchableOpacity pour boutons et long press
+- ActivityIndicator pour loading
+- RefreshControl pour pull-to-refresh
+
+**Mutations tRPC à utiliser :**
+- trpc.tasks.create.useMutation()
+- trpc.tasks.update.useMutation()
+- trpc.tasks.delete.useMutation()
+- trpc.tasks.complete.useMutation()
+- trpc.family.members.useQuery() (pour dropdown assignation)
+- trpc.auth.me.useQuery() (pour "Mes tâches")
+
+**Stockage local :**
+- AsyncStorage pour favoriteTab
+- AsyncStorage pour "tutoriel vu"
+
+**Ordre de priorité recommandé :**
+1. Sprint 1 (Dark mode) - Base visuelle
+2. Sprint 2 (Création) - Fonctionnalité critique
+3. Sprint 3 (Modification/Suppression) - Fonctionnalité critique
+4. Sprint 6 (4 niveaux priorité) - Amélioration rapide
+5. Sprint 4 (Filtres + Favori) - UX avancée
+6. Sprint 5 (Récurrence) - Feature avancée
+7. Sprint 7 (Tutoriel) - Polissage final
+
+
+## 🌙 CORRECTION DARK MODE CALENDRIER - Sprint 1 Tâches
+
+**Problème :** Le Calendrier restait en mode clair même avec dark mode activé
+
+**Cause :** pageTitleContainer avait backgroundColor fixé en '#fff' (ligne 603)
+
+**Solution appliquée :**
+- [x] Corriger pageTitleContainer backgroundColor : `isDark ? '#1f2937' : '#fff'`
+- [x] Corriger borderBottomColor : `isDark ? '#374151' : '#e5e7eb'`
+
+**Résultat attendu :**
+- Fond noir (#000000) en dark mode
+- Header gris foncé (#1f2937)
+- Cases grises (#1a1a1a)
+- Texte blanc (#ffffff)
+- Couleurs conservées (violet pour jour actuel)
+
