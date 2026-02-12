@@ -8,6 +8,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
 
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
@@ -268,28 +269,28 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('month')}
           >
-            <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
+            <Ionicons name="calendar" size={20} color={viewMode === 'month' ? '#ffffff' : '#6b7280'} />
             <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>Mois</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
-            <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
+            <Ionicons name="calendar-number" size={20} color={viewMode === 'week' ? '#ffffff' : '#6b7280'} />
             <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>Semaine</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
-            <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
+            <Ionicons name="today" size={20} color={viewMode === 'day' ? '#ffffff' : '#6b7280'} />
             <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>Jour</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('agenda')}
           >
-            <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
+            <Ionicons name="list" size={20} color={viewMode === 'agenda' ? '#ffffff' : '#6b7280'} />
             <Text style={[styles.viewToggleNumber, viewMode === 'agenda' && styles.viewToggleNumberActive]}>Agenda</Text>
           </TouchableOpacity>
         </View>
@@ -749,7 +750,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={styles.datePickerText}>
                   {format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
                 </Text>
-                <Text style={styles.datePickerIcon}>📅</Text>
+                <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -770,7 +771,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     onPress={() => setShowStartTimePicker(true)}
                   >
                     <Text style={styles.datePickerText}>{formData.startTime}</Text>
-                    <Text style={styles.datePickerIcon}>🕐</Text>
+                    <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
 
                   <Text style={styles.label}>{t('calendar.endTime')}</Text>
@@ -779,7 +780,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     onPress={() => setShowEndTimePicker(true)}
                   >
                     <Text style={styles.datePickerText}>{formData.endTime}</Text>
-                    <Text style={styles.datePickerIcon}>🕐</Text>
+                    <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
                 </>
               )}
@@ -860,13 +861,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   resetForm();
                 }}
               >
-                <Text style={styles.modalButtonIcon}>🚫</Text>
+                <Ionicons name="close-circle-outline" size={28} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleCreateEvent}
               >
-                <Text style={styles.modalButtonIcon}>💾</Text>
+                <Ionicons name="save-outline" size={28} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -1006,7 +1007,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={styles.datePickerText}>
                   {format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
                 </Text>
-                <Text style={styles.datePickerIcon}>📅</Text>
+                <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1027,7 +1028,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     onPress={() => setShowStartTimePicker(true)}
                   >
                     <Text style={styles.datePickerText}>{formData.startTime}</Text>
-                    <Text style={styles.datePickerIcon}>🕐</Text>
+                    <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
 
                   <Text style={styles.label}>{t('calendar.endTime')}</Text>
@@ -1036,7 +1037,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     onPress={() => setShowEndTimePicker(true)}
                   >
                     <Text style={styles.datePickerText}>{formData.endTime}</Text>
-                    <Text style={styles.datePickerIcon}>🕐</Text>
+                    <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
                 </>
               )}
@@ -1114,7 +1115,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 style={[styles.modalButton, styles.modalButtonDelete]}
                 onPress={handleDeleteEvent}
               >
-                <Text style={styles.modalButtonIcon}>🗑️</Text>
+                <Ionicons name="trash-outline" size={28} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
@@ -1124,13 +1125,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   resetForm();
                 }}
               >
-                <Text style={styles.modalButtonIcon}>🚫</Text>
+                <Ionicons name="close-circle-outline" size={28} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleUpdateEvent}
               >
-                <Text style={styles.modalButtonIcon}>💾</Text>
+                <Ionicons name="save-outline" size={28} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
