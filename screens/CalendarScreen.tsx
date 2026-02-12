@@ -42,6 +42,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   // Load saved view mode
@@ -233,25 +234,28 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('month')}
           >
-            <Text style={[styles.viewToggleText, viewMode === 'month' && styles.viewToggleTextActive]}>📅 Mois</Text>
+            <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
-            <Text style={[styles.viewToggleText, viewMode === 'week' && styles.viewToggleTextActive]}>📆 Semaine</Text>
+            <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
-            <Text style={[styles.viewToggleText, viewMode === 'day' && styles.viewToggleTextActive]}>🗓️ Jour</Text>
+            <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('agenda')}
           >
-            <Text style={[styles.viewToggleText, viewMode === 'agenda' && styles.viewToggleTextActive]}>📝 Agenda</Text>
+            <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -300,7 +304,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     isSelected && styles.dayCellSelected,
                     isTodayDate && styles.dayCellToday,
                   ]}
-                  onPress={() => setSelectedDate(day)}
+                  onPress={() => {
+                    setSelectedDate(day);
+                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
+                    if (dayEvents.length === 0) {
+                      // Jour vide : Ouvrir modal création
+                      setFormData(prev => ({
+                        ...prev,
+                        startTime: '09:00',
+                        endTime: '10:00',
+                      }));
+                      setCreateModalOpen(true);
+                    } else {
+                      // Jour avec événements : Ouvrir dropdown
+                      setDropdownModalOpen(true);
+                    }
+                  }}
                 >
                   <Text style={[
                     styles.dayText,
@@ -812,6 +831,72 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+
+      {/* Dropdown Modal */}
+      <Modal visible={dropdownModalOpen} animationType="slide" transparent>
+        <View style={styles.dropdownOverlay}>
+          <View style={styles.dropdownContent}>
+            <Text style={styles.dropdownTitle}>
+              {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.dropdownAddButton}
+              onPress={() => {
+                setDropdownModalOpen(false);
+                setFormData(prev => ({
+                  ...prev,
+                  startTime: '09:00',
+                  endTime: '10:00',
+                }));
+                setCreateModalOpen(true);
+              }}
+            >
+              <Text style={styles.dropdownAddButtonText}>+ Ajouter un événement</Text>
+            </TouchableOpacity>
+
+            <ScrollView style={styles.dropdownEventsList}>
+              {selectedDateEvents.map(event => {
+                const category = getCategoryInfo(event.category);
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={styles.dropdownEventCard}
+                    onPress={() => {
+                      setDropdownModalOpen(false);
+                      openEditModal(event);
+                    }}
+                  >
+                    <View style={[styles.dropdownEventColorBar, { backgroundColor: category.color }]} />
+                    <View style={styles.dropdownEventContent}>
+                      <View style={styles.dropdownEventHeader}>
+                        <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
+                        <Text style={styles.dropdownEventTime}>
+                          {format(new Date(event.startTime), 'HH:mm')} - {format(new Date(event.endTime), 'HH:mm')}
+                        </Text>
+                        {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
+                      </View>
+                      <Text style={styles.dropdownEventTitle}>{event.title}</Text>
+                      {event.description && (
+                        <Text style={styles.dropdownEventDescription} numberOfLines={1}>
+                          {event.description}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.dropdownCloseButton}
+              onPress={() => setDropdownModalOpen(false)}
+            >
+              <Text style={styles.dropdownCloseButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1199,6 +1284,115 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   comingSoonSubtext: {
     fontSize: 16,
     color: isDark ? '#9ca3af' : '#6b7280',
+  },
+
+  // Dropdown Modal Styles
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContent: {
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxHeight: '70%',
+  },
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 16,
+    textTransform: 'capitalize',
+  },
+  dropdownAddButton: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dropdownAddButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dropdownEventsList: {
+    maxHeight: 300,
+  },
+  dropdownEventCard: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? '#2a2a2a' : '#f9fafb',
+    borderRadius: 8,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  dropdownEventColorBar: {
+    width: 4,
+  },
+  dropdownEventContent: {
+    flex: 1,
+    padding: 12,
+  },
+  dropdownEventHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  dropdownEventIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  dropdownEventTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7c3aed',
+    flex: 1,
+  },
+  dropdownPrivateIcon: {
+    fontSize: 14,
+  },
+  dropdownEventTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 2,
+  },
+  dropdownEventDescription: {
+    fontSize: 14,
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  dropdownCloseButton: {
+    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  dropdownCloseButtonText: {
+    color: isDark ? '#ffffff' : '#374151',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Toggle Icon/Number Styles
+  viewToggleIcon: {
+    fontSize: 20,
+    color: isDark ? '#9ca3af' : '#6b7280',
+  },
+  viewToggleIconActive: {
+    color: '#fff',
+  },
+  viewToggleNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#9ca3af' : '#6b7280',
+    marginTop: 2,
+  },
+  viewToggleNumberActive: {
+    color: '#fff',
   },
 });
 
