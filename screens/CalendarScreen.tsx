@@ -45,6 +45,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   // Load saved view mode
@@ -81,6 +83,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     reminderUnit: 'minutes',
     isPrivate: false,
     recurrence: 'none',
+    allDay: false,
   });
 
   // Get locale
@@ -106,6 +109,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+  // Get the day of week for the first day (0=Sunday, 1=Monday, ...)
+  const firstDayOfWeek = monthStart.getDay();
+  // Convert to Monday-based (0=Monday, 6=Sunday)
+  const startDayIndex = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  // Create empty cells for days before the 1st
+  const emptyDays = Array(startDayIndex).fill(null);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -139,6 +149,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
+        recurrence: formData.recurrence,
       });
 
       setCreateModalOpen(false);
@@ -166,6 +177,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
+        recurrence: formData.recurrence,
       });
 
       setEditModalOpen(false);
@@ -296,6 +308,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
 
           <View style={styles.daysGrid}>
+            {/* Empty cells for days before the 1st */}
+            {emptyDays.map((_, index) => (
+              <View key={`empty-${index}`} style={styles.dayCell} />
+            ))}
+            
+            {/* Actual days of the month */}
             {daysInMonth.map((day, index) => {
               const hasEvents = getEventsForDate(day).length > 0;
               const isSelected = isSameDay(day, selectedDate);
@@ -660,21 +678,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={styles.datePickerIcon}>📅</Text>
               </TouchableOpacity>
 
-              <Text style={styles.label}>{t('calendar.startTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.startTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, startTime: text }))}
-                placeholder="09:00"
-              />
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setFormData(prev => ({ ...prev, allDay: !prev.allDay }))}
+              >
+                <View style={[styles.checkbox, formData.allDay && styles.checkboxChecked]}>
+                  {formData.allDay && <Text style={styles.checkboxIcon}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Toute la journée</Text>
+              </TouchableOpacity>
 
-              <Text style={styles.label}>{t('calendar.endTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.endTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, endTime: text }))}
-                placeholder="10:00"
-              />
+              {!formData.allDay && (
+                <>
+                  <Text style={styles.label}>{t('calendar.startTime')}</Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowStartTimePicker(true)}
+                  >
+                    <Text style={styles.datePickerText}>{formData.startTime}</Text>
+                    <Text style={styles.datePickerIcon}>🕐</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.label}>{t('calendar.endTime')}</Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowEndTimePicker(true)}
+                  >
+                    <Text style={styles.datePickerText}>{formData.endTime}</Text>
+                    <Text style={styles.datePickerIcon}>🕐</Text>
+                  </TouchableOpacity>
+                </>
+              )}
 
               <Text style={styles.label}>Rappel</Text>
               <View style={styles.reminderRow}>
@@ -775,6 +809,40 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             setShowDatePicker(false);
             if (date) {
               setSelectedDate(date);
+            }
+          }}
+        />
+      )}
+
+      {/* Start Time Picker */}
+      {showStartTimePicker && (
+        <DateTimePicker
+          value={new Date(`2000-01-01T${formData.startTime}:00`)}
+          mode="time"
+          display="default"
+          onChange={(event, time) => {
+            setShowStartTimePicker(false);
+            if (time) {
+              const hours = time.getHours().toString().padStart(2, '0');
+              const minutes = time.getMinutes().toString().padStart(2, '0');
+              setFormData(prev => ({ ...prev, startTime: `${hours}:${minutes}` }));
+            }
+          }}
+        />
+      )}
+
+      {/* End Time Picker */}
+      {showEndTimePicker && (
+        <DateTimePicker
+          value={new Date(`2000-01-01T${formData.endTime}:00`)}
+          mode="time"
+          display="default"
+          onChange={(event, time) => {
+            setShowEndTimePicker(false);
+            if (time) {
+              const hours = time.getHours().toString().padStart(2, '0');
+              const minutes = time.getMinutes().toString().padStart(2, '0');
+              setFormData(prev => ({ ...prev, endTime: `${hours}:${minutes}` }));
             }
           }}
         />
@@ -1025,7 +1093,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#2a2a2a' : '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
   navButton: { padding: 10 },
   navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
-  monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
+  monthTitle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
   calendar: { backgroundColor: isDark ? '#2a2a2a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
@@ -1076,6 +1144,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
   checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  checkboxIcon: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   checkmark: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   checkboxLabel: { fontSize: 16, color: isDark ? '#ffffff' : '#374151' },
   modalButtons: { flexDirection: 'row', marginTop: 20, gap: 8 },
