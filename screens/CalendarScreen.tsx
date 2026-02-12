@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
@@ -43,6 +44,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   // Load saved view mode
@@ -78,6 +80,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     reminder: '15',
     reminderUnit: 'minutes',
     isPrivate: false,
+    recurrence: 'none',
   });
 
   // Get locale
@@ -230,35 +233,36 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
       {/* View Mode Toggle */}
       <View style={styles.viewToggleContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.viewToggleRow}>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('month')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>Mois</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>Semaine</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>Jour</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('agenda')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'agenda' && styles.viewToggleNumberActive]}>Agenda</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </View>
 
       <ScrollView 
@@ -645,6 +649,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 ))}
               </View>
 
+              <Text style={styles.label}>Date</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.datePickerText}>
+                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                </Text>
+                <Text style={styles.datePickerIcon}>📅</Text>
+              </TouchableOpacity>
+
               <Text style={styles.label}>{t('calendar.startTime')}</Text>
               <TextInput
                 style={styles.input}
@@ -691,6 +706,33 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </View>
               </View>
 
+              <Text style={styles.label}>Récurrence</Text>
+              <View style={styles.recurrenceContainer}>
+                {[
+                  { value: 'none', label: 'Aucune' },
+                  { value: 'daily', label: 'Journalier' },
+                  { value: 'weekly', label: 'Hebdo' },
+                  { value: 'monthly', label: 'Mensuel' },
+                  { value: 'yearly', label: 'Annuel' },
+                ].map((rec) => (
+                  <TouchableOpacity
+                    key={rec.value}
+                    style={[
+                      styles.recurrenceButton,
+                      formData.recurrence === rec.value && styles.recurrenceButtonActive,
+                    ]}
+                    onPress={() => setFormData(prev => ({ ...prev, recurrence: rec.value }))}
+                  >
+                    <Text style={[
+                      styles.recurrenceText,
+                      formData.recurrence === rec.value && styles.recurrenceTextActive,
+                    ]}>
+                      {rec.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <TouchableOpacity
                 style={styles.checkboxRow}
                 onPress={() => setFormData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
@@ -722,6 +764,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+
+      {/* DateTimePicker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+            if (date) {
+              setSelectedDate(date);
+            }
+          }}
+        />
+      )}
 
       {/* Edit Event Modal */}
       <Modal visible={editModalOpen} animationType="slide" transparent>
@@ -768,6 +825,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 ))}
               </View>
 
+              <Text style={styles.label}>Date</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.datePickerText}>
+                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                </Text>
+                <Text style={styles.datePickerIcon}>📅</Text>
+              </TouchableOpacity>
+
               <Text style={styles.label}>{t('calendar.startTime')}</Text>
               <TextInput
                 style={styles.input}
@@ -810,6 +878,33 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </TouchableOpacity>
                   ))}
                 </View>
+              </View>
+
+              <Text style={styles.label}>Récurrence</Text>
+              <View style={styles.recurrenceContainer}>
+                {[
+                  { value: 'none', label: 'Aucune' },
+                  { value: 'daily', label: 'Journalier' },
+                  { value: 'weekly', label: 'Hebdo' },
+                  { value: 'monthly', label: 'Mensuel' },
+                  { value: 'yearly', label: 'Annuel' },
+                ].map((rec) => (
+                  <TouchableOpacity
+                    key={rec.value}
+                    style={[
+                      styles.recurrenceButton,
+                      formData.recurrence === rec.value && styles.recurrenceButtonActive,
+                    ]}
+                    onPress={() => setFormData(prev => ({ ...prev, recurrence: rec.value }))}
+                  >
+                    <Text style={[
+                      styles.recurrenceText,
+                      formData.recurrence === rec.value && styles.recurrenceTextActive,
+                    ]}>
+                      {rec.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
               <TouchableOpacity
@@ -957,12 +1052,15 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   noEvents: { padding: 40, alignItems: 'center' },
   noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
+  modalContent: { backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 24, width: '95%', maxHeight: '90%' },
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
-  modalForm: { maxHeight: 400 },
+  modalForm: { maxHeight: 600 },
   label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
   input: { backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   textArea: { height: 80, textAlignVertical: 'top' },
+  datePickerButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, marginBottom: 8 },
+  datePickerText: { fontSize: 16, color: isDark ? '#ffffff' : '#1f2937', flex: 1 },
+  datePickerIcon: { fontSize: 20 },
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: 8, gap: 8 },
   categoryGridButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', backgroundColor: isDark ? '#2a2a2a' : '#fff', width: '48%' },
   categoryIcon: { fontSize: 18, marginRight: 6 },
@@ -1012,11 +1110,15 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
+  viewToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   viewToggleButton: {
-    paddingHorizontal: 16,
+    flex: 1,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     alignItems: 'center',
   },
@@ -1408,12 +1510,40 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: '#fff',
   },
   viewToggleNumber: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '600',
     color: isDark ? '#9ca3af' : '#6b7280',
     marginTop: 2,
   },
   viewToggleNumberActive: {
+    color: '#fff',
+  },
+
+  // Recurrence Styles
+  recurrenceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  recurrenceButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
+  },
+  recurrenceButtonActive: {
+    backgroundColor: '#7c3aed',
+    borderColor: '#7c3aed',
+  },
+  recurrenceText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: isDark ? '#d1d5db' : '#374151',
+  },
+  recurrenceTextActive: {
     color: '#fff',
   },
 });
