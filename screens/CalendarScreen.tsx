@@ -126,7 +126,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = new Date(event.startDate);
       return isSameDay(eventDate, date);
     });
   };
@@ -216,8 +216,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
-    const startTime = new Date(event.startTime);
-    const endTime = new Date(event.endTime);
+    const startTime = new Date(event.startDate);
+    const endTime = new Date(startTime.getTime() + (event.durationMinutes || 60) * 60000);
     
     setFormData({
       title: event.title,
@@ -329,7 +329,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   ]}
                   onPress={() => {
                     setSelectedDate(day);
-                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
+                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startDate), day));
                     if (dayEvents.length === 0) {
                       // Jour vide : Ouvrir modal création
                       setFormData(prev => ({
@@ -374,7 +374,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     <View style={styles.eventHeader}>
                       <Text style={styles.eventIcon}>{category.icon}</Text>
                       <Text style={styles.eventTime}>
-                        {format(new Date(event.startTime), 'HH:mm')}
+                        {format(new Date(event.startDate), 'HH:mm')}
                       </Text>
                       {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
                     </View>
@@ -400,11 +400,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           <View style={styles.agendaContainer}>
             {events && events.length > 0 ? (
               events
-                .filter(event => new Date(event.startTime) >= new Date())
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .filter(event => new Date(event.startDate) >= new Date())
+                .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
                 .map((event, index, arr) => {
-                  const eventDate = new Date(event.startTime);
-                  const prevEventDate = index > 0 ? new Date(arr[index - 1].startTime) : null;
+                  const eventDate = new Date(event.startDate);
+                  const prevEventDate = index > 0 ? new Date(arr[index - 1].startDate) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
                   const category = getCategoryInfo(event.category);
 
@@ -493,7 +493,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })
                   }).map(day => {
                     const dayEvents = (events || []).filter(event => {
-                      const eventDate = new Date(event.startTime);
+                      const eventDate = new Date(event.startDate);
                       return isSameDay(eventDate, day) && eventDate.getHours() === hour;
                     });
 
@@ -501,9 +501,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View key={day.toString()} style={styles.weekDayColumn}>
                         {dayEvents.map(event => {
                           const category = getCategoryInfo(event.category);
-                          const startTime = new Date(event.startTime);
-                          const endTime = new Date(event.endTime);
-                          const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                          const startTime = new Date(event.startDate);
+                          const endTime = new Date(startTime.getTime() + (event.durationMinutes || 60) * 60000);
+                          const durationMinutes = event.durationMinutes || 60;
                           const heightPerMinute = 1.5;
                           const eventHeight = Math.max(durationMinutes * heightPerMinute, 30);
                           const topOffset = startTime.getMinutes() * heightPerMinute;
@@ -561,7 +561,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <ScrollView style={styles.dayTimeline}>
               {Array.from({ length: 24 }, (_, hour) => {
                 const hourEvents = (events || []).filter(event => {
-                  const eventDate = new Date(event.startTime);
+                  const eventDate = new Date(event.startDate);
                   return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
                 });
 
@@ -574,9 +574,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View style={styles.dayTimeHalfHourLine} />
                       {hourEvents.map(event => {
                         const category = getCategoryInfo(event.category);
-                        const startTime = new Date(event.startTime);
-                        const endTime = new Date(event.endTime);
-                        const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+                        const startTime = new Date(event.startDate);
+                        const endTime = new Date(startTime.getTime() + (event.durationMinutes || 60) * 60000);
+                        const durationMinutes = event.durationMinutes || 60;
                         const heightPerMinute = 2;
                         const eventHeight = Math.max(durationMinutes * heightPerMinute, 40);
                         const topOffset = startTime.getMinutes() * heightPerMinute;
@@ -1054,7 +1054,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
                         <Text style={styles.dropdownEventTime}>
-                          {format(new Date(event.startTime), 'HH:mm')} - {format(new Date(event.endTime), 'HH:mm')}
+                          {format(new Date(event.startDate), 'HH:mm')} - {format(new Date(new Date(event.startDate).getTime() + (event.durationMinutes || 60) * 60000), 'HH:mm')}
                         </Text>
                         {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
                       </View>
@@ -1105,7 +1105,19 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayText: { fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
-  eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 2 },
+  eventDot: { 
+    width: 8, 
+    height: 8, 
+    borderRadius: 4, 
+    backgroundColor: '#7c3aed', 
+    position: 'absolute', 
+    bottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
   eventsSection: { margin: 10, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 20 },
   eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
   eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
