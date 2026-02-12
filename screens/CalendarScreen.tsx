@@ -901,19 +901,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={styles.datePickerIcon}>📅</Text>
               </TouchableOpacity>
 
-              <Text style={styles.label}>{t('calendar.startTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.startTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, startTime: text }))}
-              />
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setFormData(prev => ({ ...prev, allDay: !prev.allDay }))}
+              >
+                <View style={[styles.checkbox, formData.allDay && styles.checkboxChecked]}>
+                  {formData.allDay && <Text style={styles.checkboxMark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Toute la journée</Text>
+              </TouchableOpacity>
 
-              <Text style={styles.label}>{t('calendar.endTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.endTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, endTime: text }))}
-              />
+              {!formData.allDay && (
+                <>
+                  <Text style={styles.label}>{t('calendar.startTime')}</Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowStartTimePicker(true)}
+                  >
+                    <Text style={styles.datePickerText}>{formData.startTime}</Text>
+                    <Text style={styles.datePickerIcon}>🕐</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.label}>{t('calendar.endTime')}</Text>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setShowEndTimePicker(true)}
+                  >
+                    <Text style={styles.datePickerText}>{formData.endTime}</Text>
+                    <Text style={styles.datePickerIcon}>🕐</Text>
+                  </TouchableOpacity>
+                </>
+              )}
 
               <Text style={styles.label}>Rappel</Text>
               <View style={styles.reminderRow}>
