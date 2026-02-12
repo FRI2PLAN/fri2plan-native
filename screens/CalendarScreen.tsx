@@ -308,12 +308,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
 
           <View style={styles.daysGrid}>
-            {/* Empty cells for days before the 1st */}
             {emptyDays.map((_, index) => (
               <View key={`empty-${index}`} style={styles.dayCell} />
             ))}
-            
-            {/* Actual days of the month */}
             {daysInMonth.map((day, index) => {
               const hasEvents = getEventsForDate(day).length > 0;
               const isSelected = isSameDay(day, selectedDate);
