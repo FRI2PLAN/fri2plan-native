@@ -1,6 +1,13 @@
+<<<<<<< HEAD
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
+import { StatusBar } from 'expo-status-bar';
+import * as DocumentPicker from 'expo-document-picker';
+=======
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, Modal, FlatList } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -41,12 +48,28 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [refreshing, setRefreshing] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+<<<<<<< HEAD
+  const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+
+  // Load saved view mode and filters
+  useEffect(() => {
+    loadViewMode();
+    loadFilters();
+=======
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   // Load saved view mode
   useEffect(() => {
     loadViewMode();
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   }, []);
 
   const loadViewMode = async () => {
@@ -67,6 +90,142 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
+<<<<<<< HEAD
+  const loadFilters = async () => {
+    try {
+      const categories = await AsyncStorage.getItem('calendar_filter_categories');
+      const members = await AsyncStorage.getItem('calendar_filter_members');
+      if (categories) setSelectedCategories(JSON.parse(categories));
+      if (members) setSelectedMembers(JSON.parse(members));
+    } catch (error) {
+      console.error('Error loading filters:', error);
+    }
+  };
+
+  const saveFilters = async () => {
+    try {
+      await AsyncStorage.setItem('calendar_filter_categories', JSON.stringify(selectedCategories));
+      await AsyncStorage.setItem('calendar_filter_members', JSON.stringify(selectedMembers));
+    } catch (error) {
+      console.error('Error saving filters:', error);
+    }
+  };
+
+  const applyFilters = () => {
+    saveFilters();
+    setFilterModalOpen(false);
+  };
+
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setSelectedMembers([]);
+  };
+
+  const handleImportICS = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'text/calendar',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      setIsImporting(true);
+      const file = result.assets[0];
+      
+      // Lire le contenu du fichier
+      const response = await fetch(file.uri);
+      const icsContent = await response.text();
+      
+      // Parser basique ICS (sans librairie externe)
+      const events = parseICS(icsContent);
+      
+      // Créer les événements en base de données
+      let successCount = 0;
+      for (const event of events) {
+        try {
+          await createEvent.mutateAsync(event);
+          successCount++;
+        } catch (error) {
+          console.error('Error creating event:', error);
+        }
+      }
+      
+      setIsImporting(false);
+      setImportModalOpen(false);
+      refetch();
+      
+      Alert.alert(
+        'Import réussi',
+        `${successCount} événement(s) importé(s) avec succès.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      setIsImporting(false);
+      console.error('Error importing ICS:', error);
+      Alert.alert(
+        'Erreur',
+        'Impossible d\'importer le fichier. Vérifiez qu\'il s\'agit d\'un fichier .ics valide.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const parseICS = (icsContent: string) => {
+    const events: any[] = [];
+    const lines = icsContent.split('\n');
+    let currentEvent: any = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (line === 'BEGIN:VEVENT') {
+        currentEvent = {
+          title: '',
+          description: '',
+          startDate: new Date(),
+          durationMinutes: 60,
+          category: 'other',
+          reminderMinutes: 15,
+          isPrivate: 0,
+        };
+      } else if (line === 'END:VEVENT' && currentEvent) {
+        events.push(currentEvent);
+        currentEvent = null;
+      } else if (currentEvent) {
+        if (line.startsWith('SUMMARY:')) {
+          currentEvent.title = line.substring(8);
+        } else if (line.startsWith('DESCRIPTION:')) {
+          currentEvent.description = line.substring(12);
+        } else if (line.startsWith('DTSTART')) {
+          const dateStr = line.split(':')[1];
+          currentEvent.startDate = parseICSDate(dateStr);
+        } else if (line.startsWith('DTEND')) {
+          const dateStr = line.split(':')[1];
+          const endDate = parseICSDate(dateStr);
+          currentEvent.durationMinutes = Math.round(
+            (endDate.getTime() - currentEvent.startDate.getTime()) / (1000 * 60)
+          );
+        }
+      }
+    }
+    
+    return events;
+  };
+
+  const parseICSDate = (dateStr: string): Date => {
+    // Format: 20240212T090000Z ou 20240212T090000
+    const year = parseInt(dateStr.substring(0, 4));
+    const month = parseInt(dateStr.substring(4, 6)) - 1;
+    const day = parseInt(dateStr.substring(6, 8));
+    const hour = parseInt(dateStr.substring(9, 11));
+    const minute = parseInt(dateStr.substring(11, 13));
+    
+    return new Date(year, month, day, hour, minute);
+  };
+
+=======
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -92,8 +251,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return cat.label;
   };
 
+<<<<<<< HEAD
+  // Fetch events and family members
+  const { data: events, isLoading, refetch } = trpc.events.list.useQuery();
+  const { data: familyMembers } = trpc.family.members.useQuery();
+=======
   // Fetch events
   const { data: events, isLoading, refetch } = trpc.events.list.useQuery();
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
@@ -110,10 +275,51 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
+<<<<<<< HEAD
+    
+    let filteredEvents = events;
+    
+    // Filtrer selon le mode de vue
+    if (viewMode === 'agenda') {
+      // Agenda : tous les événements à venir
+      filteredEvents = filteredEvents.filter(event => new Date(event.startTime) >= new Date());
+    } else if (viewMode === 'week') {
+      // Semaine : événements de la semaine actuelle
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+      filteredEvents = filteredEvents.filter(event => {
+        const eventDate = new Date(event.startTime);
+        return eventDate >= weekStart && eventDate <= weekEnd;
+      });
+    } else {
+      // Mois et Jour : événements du jour sélectionné
+      filteredEvents = filteredEvents.filter(event => {
+        const eventDate = new Date(event.startTime);
+        return isSameDay(eventDate, date);
+      });
+    }
+    
+    // Appliquer les filtres par catégorie
+    if (selectedCategories.length > 0) {
+      filteredEvents = filteredEvents.filter(event => 
+        selectedCategories.includes(event.category)
+      );
+    }
+    
+    // Appliquer les filtres par membre
+    if (selectedMembers.length > 0) {
+      filteredEvents = filteredEvents.filter(event => 
+        selectedMembers.includes(event.userId)
+      );
+    }
+    
+    return filteredEvents;
+=======
     return events.filter(event => {
       const eventDate = new Date(event.startTime);
       return isSameDay(eventDate, date);
     });
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   };
 
   const getCategoryInfo = (categoryValue: string) => {
@@ -224,6 +430,30 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Calendrier</Text>
+<<<<<<< HEAD
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.importButton}
+            onPress={() => setImportModalOpen(true)}
+          >
+            <Text style={styles.importButtonText}>📅 Import</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.filterButton}
+            onPress={() => setFilterModalOpen(true)}
+          >
+            <Text style={styles.filterButtonText}>📊 Filtres</Text>
+            {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>
+                  {selectedCategories.length + selectedMembers.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+=======
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
       </View>
 
       {/* View Mode Toggle */}
@@ -233,25 +463,44 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('month')}
           >
+<<<<<<< HEAD
+            <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
+=======
             <Text style={[styles.viewToggleText, viewMode === 'month' && styles.viewToggleTextActive]}>📅 Mois</Text>
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
+<<<<<<< HEAD
+            <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
+=======
             <Text style={[styles.viewToggleText, viewMode === 'week' && styles.viewToggleTextActive]}>📆 Semaine</Text>
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
+<<<<<<< HEAD
+            <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
+=======
             <Text style={[styles.viewToggleText, viewMode === 'day' && styles.viewToggleTextActive]}>🗓️ Jour</Text>
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('agenda')}
           >
+<<<<<<< HEAD
+            <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
+=======
             <Text style={[styles.viewToggleText, viewMode === 'agenda' && styles.viewToggleTextActive]}>📝 Agenda</Text>
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -294,13 +543,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
               return (
                 <TouchableOpacity
+<<<<<<< HEAD
+                  key={day.toString()}
+=======
                   key={index}
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
                   style={[
                     styles.dayCell,
                     isSelected && styles.dayCellSelected,
                     isTodayDate && styles.dayCellToday,
                   ]}
+<<<<<<< HEAD
+                  onPress={() => {
+                    setSelectedDate(day);
+                    // Vérifier si le jour a des événements
+                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
+                    if (dayEvents.length === 0) {
+                      // Jour vide : Ouvrir modal création avec date pré-remplie
+                      setFormData(prev => ({
+                        ...prev,
+                        startTime: '09:00',
+                        endTime: '10:00',
+                      }));
+                      setCreateModalOpen(true);
+                    } else {
+                      // Jour avec événements : Ouvrir dropdown
+                      setDropdownModalOpen(true);
+                    }
+                  }}
+=======
                   onPress={() => setSelectedDate(day)}
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
                 >
                   <Text style={[
                     styles.dayText,
@@ -319,7 +592,15 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {/* Events for selected date */}
         <View style={styles.eventsSection}>
           <Text style={styles.eventsTitle}>
+<<<<<<< HEAD
+            {viewMode === 'agenda' 
+              ? t('calendar.upcomingEvents') || 'Événements à venir'
+              : viewMode === 'week'
+              ? `Semaine du ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}`
+              : format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+=======
             {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </Text>
           
           {selectedDateEvents.length > 0 ? (
@@ -812,12 +1093,308 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+<<<<<<< HEAD
+
+      {/* Dropdown Modal - Day Events */}
+      <Modal visible={dropdownModalOpen} animationType="fade" transparent>
+        <TouchableOpacity 
+          style={styles.dropdownOverlay} 
+          activeOpacity={1}
+          onPress={() => setDropdownModalOpen(false)}
+        >
+          <View style={styles.dropdownContent} onStartShouldSetResponder={() => true}>
+            <Text style={styles.dropdownTitle}>
+              {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+            </Text>
+            
+            {/* Add Event Button */}
+            <TouchableOpacity
+              style={styles.dropdownAddButton}
+              onPress={() => {
+                setDropdownModalOpen(false);
+                setFormData(prev => ({
+                  ...prev,
+                  startTime: '09:00',
+                  endTime: '10:00',
+                }));
+                setCreateModalOpen(true);
+              }}
+            >
+              <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent')}</Text>
+            </TouchableOpacity>
+
+            {/* Events List */}
+            <ScrollView style={styles.dropdownEventsList}>
+              {(events || []).filter(e => isSameDay(new Date(e.startTime), selectedDate)).map(event => {
+                const category = getCategoryInfo(event.category);
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={styles.dropdownEventCard}
+                    onPress={() => {
+                      setDropdownModalOpen(false);
+                      openEditModal(event);
+                    }}
+                  >
+                    <View style={[styles.dropdownEventColorBar, { backgroundColor: category.color }]} />
+                    <View style={styles.dropdownEventContent}>
+                      <View style={styles.dropdownEventHeader}>
+                        <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
+                        <Text style={styles.dropdownEventTime}>
+                          {format(new Date(event.startTime), 'HH:mm')}
+                        </Text>
+                        {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
+                      </View>
+                      <Text style={styles.dropdownEventTitle}>{event.title}</Text>
+                      {event.description && (
+                        <Text style={styles.dropdownEventDescription} numberOfLines={1}>
+                          {event.description}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.dropdownCloseButton}
+              onPress={() => setDropdownModalOpen(false)}
+            >
+              <Text style={styles.dropdownCloseButtonText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal visible={filterModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Filtres</Text>
+            
+            <ScrollView style={styles.modalForm}>
+              {/* Category Filters */}
+              <Text style={styles.filterSectionTitle}>Par catégorie</Text>
+              <View style={styles.filterCheckboxContainer}>
+                {EVENT_CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.value}
+                    style={styles.filterCheckboxRow}
+                    onPress={() => {
+                      if (selectedCategories.includes(cat.value)) {
+                        setSelectedCategories(selectedCategories.filter(c => c !== cat.value));
+                      } else {
+                        setSelectedCategories([...selectedCategories, cat.value]);
+                      }
+                    }}
+                  >
+                    <View style={[
+                      styles.checkbox,
+                      selectedCategories.includes(cat.value) && styles.checkboxChecked
+                    ]}>
+                      {selectedCategories.includes(cat.value) && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.filterCheckboxIcon}>{cat.icon}</Text>
+                    <Text style={styles.filterCheckboxLabel}>{getCategoryLabel(cat)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Member Filters */}
+              {familyMembers && familyMembers.length > 0 && (
+                <>
+                  <Text style={styles.filterSectionTitle}>Par membre</Text>
+                  <View style={styles.filterCheckboxContainer}>
+                    {familyMembers.map((member: any) => (
+                      <TouchableOpacity
+                        key={member.id}
+                        style={styles.filterCheckboxRow}
+                        onPress={() => {
+                          if (selectedMembers.includes(member.id)) {
+                            setSelectedMembers(selectedMembers.filter(m => m !== member.id));
+                          } else {
+                            setSelectedMembers([...selectedMembers, member.id]);
+                          }
+                        }}
+                      >
+                        <View style={[
+                          styles.checkbox,
+                          selectedMembers.includes(member.id) && styles.checkboxChecked
+                        ]}>
+                          {selectedMembers.includes(member.id) && <Text style={styles.checkmark}>✓</Text>}
+                        </View>
+                        <Text style={styles.filterCheckboxLabel}>{member.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+            </ScrollView>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={resetFilters}
+              >
+                <Text style={styles.modalButtonTextCancel}>Réinitialiser</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setFilterModalOpen(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={applyFilters}
+              >
+                <Text style={styles.modalButtonTextSave}>Appliquer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Import ICS Modal */}
+      <Modal visible={importModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Importer un calendrier</Text>
+            
+            <View style={styles.importInfo}>
+              <Text style={styles.importInfoText}>
+                Sélectionnez un fichier .ics (iCalendar) pour importer vos événements.
+              </Text>
+              <Text style={styles.importInfoNote}>
+                ⚠️ Les événements récurrents ne sont pas supportés.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.importSelectButton}
+              onPress={handleImportICS}
+              disabled={isImporting}
+            >
+              <Text style={styles.importSelectButtonText}>
+                {isImporting ? '🔄 Import en cours...' : '📂 Sélectionner un fichier .ics'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonCancel, { marginTop: 20 }]}
+              onPress={() => setImportModalOpen(false)}
+              disabled={isImporting}
+            >
+              <Text style={styles.modalButtonTextCancel}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+=======
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
     </SafeAreaView>
   );
 }
 
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: isDark ? '#000000' : '#f9fafb' },
+<<<<<<< HEAD
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#ffffff' : '#e5e7eb' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
+  addButton: { backgroundColor: '#7c3aed', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  addButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  pageTitleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#7c3aed',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  filterBadge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  importButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10b981',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  importButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  importInfo: {
+    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
+    padding: 16,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
+  importInfoText: {
+    fontSize: 14,
+    color: isDark ? '#d1d5db' : '#6b7280',
+    marginBottom: 8,
+  },
+  importInfoNote: {
+    fontSize: 13,
+    color: '#f59e0b',
+    fontStyle: 'italic',
+  },
+  importSelectButton: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  importSelectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  content: { flex: 1 },
+  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
+  navButton: { padding: 10 },
+  navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
+  monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
+  calendar: { backgroundColor: isDark ? '#1a1a1a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
+=======
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#ffffff' : '#e5e7eb' },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
   addButton: { backgroundColor: '#7c3aed', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
@@ -828,6 +1405,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
   monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
   calendar: { backgroundColor: isDark ? '#2a2a2a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
   dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
@@ -839,7 +1417,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
   eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 2 },
+<<<<<<< HEAD
+  eventsSection: { margin: 10, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 20 },
+=======
   eventsSection: { margin: 10, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 20 },
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
   eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
   eventColorBar: { width: 4 },
@@ -853,7 +1435,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   noEvents: { padding: 40, alignItems: 'center' },
   noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
+<<<<<<< HEAD
+  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
+=======
   modalContent: { backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
   modalForm: { maxHeight: 400 },
   label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
@@ -912,16 +1498,40 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
+<<<<<<< HEAD
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
+=======
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   },
   viewToggleButtonActive: {
     backgroundColor: '#7c3aed',
   },
+<<<<<<< HEAD
+  viewToggleIcon: {
+    fontSize: 20,
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  viewToggleIconActive: {
+    color: '#ffffff',
+  },
+  viewToggleNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: isDark ? '#f5f5dc' : '#6b7280',
+    marginTop: -4,
+  },
+  viewToggleNumberActive: {
+=======
   viewToggleText: {
     fontSize: 14,
     fontWeight: '600',
     color: isDark ? '#f5f5dc' : '#6b7280',
   },
   viewToggleTextActive: {
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
     color: '#ffffff',
   },
 
@@ -1200,5 +1810,125 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     color: isDark ? '#9ca3af' : '#6b7280',
   },
+<<<<<<< HEAD
+
+  // Dropdown Modal Styles
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContent: {
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxHeight: '70%',
+  },
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 16,
+    textTransform: 'capitalize',
+  },
+  dropdownAddButton: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dropdownAddButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dropdownEventsList: {
+    maxHeight: 300,
+  },
+  dropdownEventCard: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? '#2a2a2a' : '#f9fafb',
+    borderRadius: 8,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  dropdownEventColorBar: {
+    width: 4,
+  },
+  dropdownEventContent: {
+    flex: 1,
+    padding: 12,
+  },
+  dropdownEventHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  dropdownEventIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  dropdownEventTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7c3aed',
+    flex: 1,
+  },
+  dropdownPrivateIcon: {
+    fontSize: 14,
+  },
+  dropdownEventTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginBottom: 2,
+  },
+  dropdownEventDescription: {
+    fontSize: 14,
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  dropdownCloseButton: {
+    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  dropdownCloseButtonText: {
+    color: isDark ? '#ffffff' : '#374151',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Filter Modal Styles
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  filterCheckboxContainer: {
+    gap: 8,
+  },
+  filterCheckboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  filterCheckboxIcon: {
+    fontSize: 18,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  filterCheckboxLabel: {
+    fontSize: 16,
+    color: isDark ? '#ffffff' : '#374151',
+  },
+=======
+>>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
 });
 
