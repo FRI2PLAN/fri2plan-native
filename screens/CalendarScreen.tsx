@@ -245,8 +245,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       endTime: format(endTime, 'HH:mm'),
       category: event.category || 'other',
       reminder: event.reminder?.toString() || '15',
+      reminderUnit: 'minutes',
       isPrivate: event.isPrivate || false,
+      recurrence: event.recurrence || 'none',
+      allDay: event.allDay || false,
     });
+    
+    if (event.participantUserIds) {
+      setSelectedParticipants(event.participantUserIds);
+    } else {
+      setSelectedParticipants([]);
+    }
+    
     setEditModalOpen(true);
   };
 
