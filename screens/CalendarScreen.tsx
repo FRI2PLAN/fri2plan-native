@@ -48,6 +48,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+  const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   // Load saved view mode
   useEffect(() => {
@@ -105,6 +107,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
+  
+  // Fetch family data
+  const { data: families } = trpc.family.list.useQuery();
+  const familyId = families && families.length > 0 ? families[0].id : null;
+  const { data: familyMembers } = trpc.family.members.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId }
+  );
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -127,7 +137,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!events) return [];
     return events.filter(event => {
       const eventDate = new Date(event.startDate);
-      return isSameDay(eventDate, date);
+      const matchesDate = isSameDay(eventDate, date);
+      const matchesCategory = !categoryFilter || event.category === categoryFilter;
+      return matchesDate && matchesCategory;
     });
   };
 
@@ -150,6 +162,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
         recurrence: formData.recurrence,
+        participantUserIds: selectedParticipants.length > 0 ? selectedParticipants : undefined,
       });
 
       setCreateModalOpen(false);
@@ -178,6 +191,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
         recurrence: formData.recurrence,
+        participantUserIds: selectedParticipants.length > 0 ? selectedParticipants : undefined,
       });
 
       setEditModalOpen(false);
@@ -210,8 +224,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       endTime: '10:00',
       category: 'other',
       reminder: '15',
+      reminderUnit: 'minutes',
       isPrivate: false,
+      recurrence: 'none',
+      allDay: false,
     });
+    setSelectedParticipants([]);
   };
 
   const openEditModal = (event: any) => {
@@ -275,6 +293,34 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <Text style={[styles.viewToggleNumber, viewMode === 'agenda' && styles.viewToggleNumberActive]}>Agenda</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Category Filters */}
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity
+            style={[styles.filterButton, !categoryFilter && styles.filterButtonActive]}
+            onPress={() => setCategoryFilter(null)}
+          >
+            <Text style={[styles.filterButtonText, !categoryFilter && styles.filterButtonTextActive]}>Tout</Text>
+          </TouchableOpacity>
+          {EVENT_CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat.value}
+              style={[
+                styles.filterButton,
+                categoryFilter === cat.value && styles.filterButtonActive,
+                categoryFilter === cat.value && { backgroundColor: cat.color }
+              ]}
+              onPress={() => setCategoryFilter(categoryFilter === cat.value ? null : cat.value)}
+            >
+              <Text style={styles.filterIcon}>{cat.icon}</Text>
+              <Text style={[styles.filterButtonText, categoryFilter === cat.value && styles.filterButtonTextActive]}>
+                {getCategoryLabel(cat)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       <ScrollView 
@@ -664,6 +710,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 ))}
               </View>
 
+              {familyMembers && familyMembers.length > 0 && (
+                <>
+                  <Text style={styles.label}>Participants</Text>
+                  <View style={styles.participantsContainer}>
+                    {familyMembers.map((member: any) => (
+                      <TouchableOpacity
+                        key={member.userId}
+                        style={styles.participantCheckbox}
+                        onPress={() => {
+                          setSelectedParticipants(prev => 
+                            prev.includes(member.userId)
+                              ? prev.filter(id => id !== member.userId)
+                              : [...prev, member.userId]
+                          );
+                        }}
+                      >
+                        <View style={[
+                          styles.checkbox,
+                          selectedParticipants.includes(member.userId) && styles.checkboxChecked
+                        ]}>
+                          {selectedParticipants.includes(member.userId) && (
+                            <Text style={styles.checkboxMark}>✓</Text>
+                          )}
+                        </View>
+                        <Text style={styles.participantName}>{member.userName || 'Membre'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
               <Text style={styles.label}>Date</Text>
               <TouchableOpacity
                 style={styles.datePickerButton}
@@ -889,6 +966,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   </TouchableOpacity>
                 ))}
               </View>
+
+              {familyMembers && familyMembers.length > 0 && (
+                <>
+                  <Text style={styles.label}>Participants</Text>
+                  <View style={styles.participantsContainer}>
+                    {familyMembers.map((member: any) => (
+                      <TouchableOpacity
+                        key={member.userId}
+                        style={styles.participantCheckbox}
+                        onPress={() => {
+                          setSelectedParticipants(prev => 
+                            prev.includes(member.userId)
+                              ? prev.filter(id => id !== member.userId)
+                              : [...prev, member.userId]
+                          );
+                        }}
+                      >
+                        <View style={[
+                          styles.checkbox,
+                          selectedParticipants.includes(member.userId) && styles.checkboxChecked
+                        ]}>
+                          {selectedParticipants.includes(member.userId) && (
+                            <Text style={styles.checkboxMark}>✓</Text>
+                          )}
+                        </View>
+                        <Text style={styles.participantName}>{member.userName || 'Membre'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
 
               <Text style={styles.label}>Date</Text>
               <TouchableOpacity
@@ -1178,6 +1286,28 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalButtonTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtonIcon: { fontSize: 28 },
+  
+  participantsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  participantCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  participantName: {
+    fontSize: 14,
+    color: isDark ? '#ffffff' : '#1f2937',
+    marginLeft: 8,
+  },
 
   pageTitleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
@@ -1223,6 +1353,39 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: isDark ? '#f5f5dc' : '#6b7280',
   },
   viewToggleTextActive: {
+    color: '#ffffff',
+  },
+
+  // Filter Styles
+  filterContainer: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    marginRight: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: '#7c3aed',
+  },
+  filterIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  filterButtonTextActive: {
     color: '#ffffff',
   },
 
