@@ -169,7 +169,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
 
       await updateEvent.mutateAsync({
-        id: selectedEvent.id,
+        eventId: selectedEvent.id,
         title: formData.title,
         description: formData.description,
         startDate: startDateTime,
@@ -193,7 +193,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!selectedEvent) return;
 
     try {
-      await deleteEvent.mutateAsync({ id: selectedEvent.id });
+      await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
       setEditModalOpen(false);
       setSelectedEvent(null);
       refetch();
@@ -348,7 +348,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   ]}>
                     {format(day, 'd')}
                   </Text>
-                  {hasEvents && <View style={styles.eventDot} />}
+                  {hasEvents && <View style={styles.eventUnderline} />}
                 </TouchableOpacity>
               );
             })}
@@ -783,13 +783,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   resetForm();
                 }}
               >
-                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
+                <Text style={styles.modalButtonIcon}>🚫</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleCreateEvent}
               >
-                <Text style={styles.modalButtonTextSave}>{t('common.save')}</Text>
+                <Text style={styles.modalButtonIcon}>💾</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -988,7 +988,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 style={[styles.modalButton, styles.modalButtonDelete]}
                 onPress={handleDeleteEvent}
               >
-                <Text style={styles.modalButtonTextDelete}>{t('common.delete')}</Text>
+                <Text style={styles.modalButtonIcon}>🗑️</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
@@ -998,13 +998,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   resetForm();
                 }}
               >
-                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
+                <Text style={styles.modalButtonIcon}>🚫</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleUpdateEvent}
               >
-                <Text style={styles.modalButtonTextSave}>{t('common.save')}</Text>
+                <Text style={styles.modalButtonIcon}>💾</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1096,24 +1096,19 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
   dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 5 },
+  dayCell: { width: '14.28%', aspectRatio: 1.2, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 5 },
   dayCellSelected: { backgroundColor: '#7c3aed' },
   dayCellToday: { borderWidth: 2, borderColor: '#7c3aed' },
   dayText: { fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
-  eventDot: { 
-    width: 8, 
-    height: 8, 
-    borderRadius: 4, 
+  eventUnderline: { 
+    width: 24, 
+    height: 3, 
+    borderRadius: 1.5, 
     backgroundColor: '#7c3aed', 
     position: 'absolute', 
-    bottom: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    bottom: 6,
   },
   eventsSection: { margin: 10, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 20 },
   eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
@@ -1164,6 +1159,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalButtonTextCancel: { color: isDark ? '#ffffff' : '#6b7280', fontSize: 16, fontWeight: '600' },
   modalButtonTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  modalButtonIcon: { fontSize: 28 },
 
   pageTitleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
