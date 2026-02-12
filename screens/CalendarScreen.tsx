@@ -235,21 +235,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             onPress={() => saveViewMode('month')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
@@ -604,7 +601,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <Text style={styles.modalTitle}>{t('calendar.addEvent')}</Text>
             
             <ScrollView style={styles.modalForm}>
-              <Text style={styles.label}>{t('common.title')}</Text>
+              <Text style={styles.label}>Titre</Text>
               <TextInput
                 style={styles.input}
                 value={formData.title}
@@ -622,7 +619,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 numberOfLines={3}
               />
 
-              <Text style={styles.label}>{t('calendar.category')}</Text>
+              <Text style={styles.label}>Catégorie</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
@@ -660,7 +657,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 placeholder="10:00"
               />
 
-              <Text style={styles.label}>{t('calendar.reminder')}</Text>
+              <Text style={styles.label}>Rappel</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
                 {REMINDER_OPTIONS.map((option) => (
                   <TouchableOpacity
@@ -688,7 +685,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
                   {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private')}</Text>
+                <Text style={styles.checkboxLabel}>🔒 Événement privé</Text>
               </TouchableOpacity>
             </ScrollView>
 
@@ -720,7 +717,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <Text style={styles.modalTitle}>{t('common.edit')}</Text>
             
             <ScrollView style={styles.modalForm}>
-              <Text style={styles.label}>{t('common.title')}</Text>
+              <Text style={styles.label}>Titre</Text>
               <TextInput
                 style={styles.input}
                 value={formData.title}
@@ -736,7 +733,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 numberOfLines={3}
               />
 
-              <Text style={styles.label}>{t('calendar.category')}</Text>
+              <Text style={styles.label}>Catégorie</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
@@ -772,7 +769,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 onChangeText={(text) => setFormData(prev => ({ ...prev, endTime: text }))}
               />
 
-              <Text style={styles.label}>{t('calendar.reminder')}</Text>
+              <Text style={styles.label}>Rappel</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
                 {REMINDER_OPTIONS.map((option) => (
                   <TouchableOpacity
@@ -800,7 +797,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
                   {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private')}</Text>
+                <Text style={styles.checkboxLabel}>🔒 Événement privé</Text>
               </TouchableOpacity>
             </ScrollView>
 
