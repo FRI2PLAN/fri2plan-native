@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-=======
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, Modal, FlatList } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';
-import { StatusBar } from 'expo-status-bar';
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +42,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [refreshing, setRefreshing] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-<<<<<<< HEAD
   const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -62,14 +55,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   useEffect(() => {
     loadViewMode();
     loadFilters();
-=======
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
-
-  // Load saved view mode
-  useEffect(() => {
-    loadViewMode();
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   }, []);
 
   const loadViewMode = async () => {
@@ -90,7 +75,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
-<<<<<<< HEAD
   const loadFilters = async () => {
     try {
       const categories = await AsyncStorage.getItem('calendar_filter_categories');
@@ -224,41 +208,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return new Date(year, month, day, hour, minute);
   };
 
-=======
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
-  // Form state
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    startTime: '09:00',
-    endTime: '10:00',
-    category: 'other',
-    reminder: '15',
-    isPrivate: false,
-  });
-
-  // Get locale
-  const getLocale = () => {
-    if (i18n.language === 'fr') return fr;
-    if (i18n.language === 'de') return de;
-    return enUS;
-  };
-
-  // Get category label
-  const getCategoryLabel = (cat: any) => {
-    if (i18n.language === 'de') return cat.labelDe;
-    if (i18n.language === 'en') return cat.labelEn;
-    return cat.label;
-  };
-
-<<<<<<< HEAD
-  // Fetch events and family members
-  const { data: events, isLoading, refetch } = trpc.events.list.useQuery();
-  const { data: familyMembers } = trpc.family.members.useQuery();
-=======
-  // Fetch events
-  const { data: events, isLoading, refetch } = trpc.events.list.useQuery();
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
@@ -275,7 +224,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
-<<<<<<< HEAD
     
     let filteredEvents = events;
     
@@ -314,12 +262,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
     
     return filteredEvents;
-=======
-    return events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return isSameDay(eventDate, date);
-    });
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   };
 
   const getCategoryInfo = (categoryValue: string) => {
@@ -430,7 +372,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Calendrier</Text>
-<<<<<<< HEAD
         <View style={styles.headerButtons}>
           <TouchableOpacity 
             style={styles.importButton}
@@ -452,55 +393,26 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             )}
           </TouchableOpacity>
         </View>
-=======
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
-      </View>
-
-      {/* View Mode Toggle */}
-      <View style={styles.viewToggleContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity 
-            style={[styles.viewToggleButton, viewMode === 'month' && styles.viewToggleButtonActive]}
-            onPress={() => saveViewMode('month')}
-          >
-<<<<<<< HEAD
-            <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
-=======
-            <Text style={[styles.viewToggleText, viewMode === 'month' && styles.viewToggleTextActive]}>📅 Mois</Text>
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
-<<<<<<< HEAD
             <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
             <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
-=======
-            <Text style={[styles.viewToggleText, viewMode === 'week' && styles.viewToggleTextActive]}>📆 Semaine</Text>
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
-<<<<<<< HEAD
             <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
             <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
-=======
-            <Text style={[styles.viewToggleText, viewMode === 'day' && styles.viewToggleTextActive]}>🗓️ Jour</Text>
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('agenda')}
           >
-<<<<<<< HEAD
             <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
-=======
-            <Text style={[styles.viewToggleText, viewMode === 'agenda' && styles.viewToggleTextActive]}>📝 Agenda</Text>
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -543,17 +455,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
               return (
                 <TouchableOpacity
-<<<<<<< HEAD
                   key={day.toString()}
-=======
-                  key={index}
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
                   style={[
                     styles.dayCell,
                     isSelected && styles.dayCellSelected,
                     isTodayDate && styles.dayCellToday,
                   ]}
-<<<<<<< HEAD
                   onPress={() => {
                     setSelectedDate(day);
                     // Vérifier si le jour a des événements
@@ -571,9 +478,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       setDropdownModalOpen(true);
                     }
                   }}
-=======
-                  onPress={() => setSelectedDate(day)}
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
                 >
                   <Text style={[
                     styles.dayText,
@@ -592,15 +496,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {/* Events for selected date */}
         <View style={styles.eventsSection}>
           <Text style={styles.eventsTitle}>
-<<<<<<< HEAD
             {viewMode === 'agenda' 
               ? t('calendar.upcomingEvents') || 'Événements à venir'
               : viewMode === 'week'
               ? `Semaine du ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}`
               : format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
-=======
-            {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
           </Text>
           
           {selectedDateEvents.length > 0 ? (
@@ -1093,7 +993,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
-<<<<<<< HEAD
 
       {/* Dropdown Modal - Day Events */}
       <Modal visible={dropdownModalOpen} animationType="fade" transparent>
@@ -1292,120 +1191,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
-=======
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
-    </SafeAreaView>
-  );
-}
-
-const getStyles = (isDark: boolean) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: isDark ? '#000000' : '#f9fafb' },
-<<<<<<< HEAD
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#ffffff' : '#e5e7eb' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
-  addButton: { backgroundColor: '#7c3aed', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  addButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  pageTitleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: isDark ? '#1a1a1a' : '#fff',
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#7c3aed',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  filterButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  filterBadge: {
-    backgroundColor: '#ef4444',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 6,
-  },
-  filterBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10b981',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  importButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  importInfo: {
-    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
-    padding: 16,
-    borderRadius: 8,
-    marginVertical: 16,
-  },
-  importInfoText: {
-    fontSize: 14,
-    color: isDark ? '#d1d5db' : '#6b7280',
-    marginBottom: 8,
-  },
-  importInfoNote: {
-    fontSize: 13,
-    color: '#f59e0b',
-    fontStyle: 'italic',
-  },
-  importSelectButton: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  importSelectButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  content: { flex: 1 },
-  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#1a1a1a' : '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
-  navButton: { padding: 10 },
-  navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
-  monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
-  calendar: { backgroundColor: isDark ? '#1a1a1a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
-=======
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#ffffff' : '#e5e7eb' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
-  addButton: { backgroundColor: '#7c3aed', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  addButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  content: { flex: 1 },
-  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: isDark ? '#2a2a2a' : '#fff', marginTop: 10, marginHorizontal: 10, borderRadius: 12 },
-  navButton: { padding: 10 },
-  navButtonText: { fontSize: 24, color: '#7c3aed', fontWeight: 'bold' },
-  monthTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize' },
-  calendar: { backgroundColor: isDark ? '#2a2a2a' : '#fff', margin: 10, borderRadius: 12, padding: 10 },
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
   dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
@@ -1417,11 +1202,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
   eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 2 },
-<<<<<<< HEAD
   eventsSection: { margin: 10, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 20 },
-=======
-  eventsSection: { margin: 10, backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 20 },
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
   eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
   eventColorBar: { width: 4 },
@@ -1435,11 +1216,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   noEvents: { padding: 40, alignItems: 'center' },
   noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-<<<<<<< HEAD
   modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
-=======
-  modalContent: { backgroundColor: isDark ? '#2a2a2a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
   modalForm: { maxHeight: 400 },
   label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
@@ -1498,40 +1275,10 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
-<<<<<<< HEAD
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 60,
-=======
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
-  },
-  viewToggleButtonActive: {
-    backgroundColor: '#7c3aed',
-  },
-<<<<<<< HEAD
-  viewToggleIcon: {
-    fontSize: 20,
-    color: isDark ? '#f5f5dc' : '#6b7280',
-  },
-  viewToggleIconActive: {
-    color: '#ffffff',
-  },
-  viewToggleNumber: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: isDark ? '#f5f5dc' : '#6b7280',
-    marginTop: -4,
-  },
-  viewToggleNumberActive: {
-=======
-  viewToggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#f5f5dc' : '#6b7280',
-  },
-  viewToggleTextActive: {
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
     color: '#ffffff',
   },
 
@@ -1810,7 +1557,6 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     color: isDark ? '#9ca3af' : '#6b7280',
   },
-<<<<<<< HEAD
 
   // Dropdown Modal Styles
   dropdownOverlay: {
@@ -1928,7 +1674,5 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     color: isDark ? '#ffffff' : '#374151',
   },
-=======
->>>>>>> 51d9a142b87538a5b43c88c4b91c1d4348b14b78
 });
 
