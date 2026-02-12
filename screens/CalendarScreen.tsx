@@ -76,6 +76,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     endTime: '10:00',
     category: 'other',
     reminder: '15',
+    reminderUnit: 'minutes',
     isPrivate: false,
   });
 
@@ -620,12 +621,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               />
 
               <Text style={styles.label}>Catégorie</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+              <View style={styles.categoryGrid}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.value}
                     style={[
-                      styles.categoryButton,
+                      styles.categoryGridButton,
                       formData.category === cat.value && { backgroundColor: cat.color },
                     ]}
                     onPress={() => setFormData(prev => ({ ...prev, category: cat.value }))}
@@ -639,7 +640,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.label}>{t('calendar.startTime')}</Text>
               <TextInput
@@ -658,25 +659,34 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               />
 
               <Text style={styles.label}>Rappel</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.reminderButton,
-                      formData.reminder === option.value && styles.reminderButtonSelected,
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, reminder: option.value }))}
-                  >
-                    <Text style={[
-                      styles.reminderButtonText,
-                      formData.reminder === option.value && styles.reminderButtonTextSelected,
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={styles.reminderRow}>
+                <TextInput
+                  style={[styles.input, styles.reminderInput]}
+                  value={formData.reminder}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, reminder: text }))}
+                  keyboardType="numeric"
+                  placeholder="15"
+                />
+                <View style={styles.reminderUnitContainer}>
+                  {['minutes', 'heures', 'jours'].map((unit) => (
+                    <TouchableOpacity
+                      key={unit}
+                      style={[
+                        styles.reminderUnitButton,
+                        formData.reminderUnit === unit && styles.reminderUnitButtonActive,
+                      ]}
+                      onPress={() => setFormData(prev => ({ ...prev, reminderUnit: unit }))}
+                    >
+                      <Text style={[
+                        styles.reminderUnitText,
+                        formData.reminderUnit === unit && styles.reminderUnitTextActive,
+                      ]}>
+                        {unit}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
               <TouchableOpacity
                 style={styles.checkboxRow}
@@ -734,12 +744,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               />
 
               <Text style={styles.label}>Catégorie</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+              <View style={styles.categoryGrid}>
                 {EVENT_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.value}
                     style={[
-                      styles.categoryButton,
+                      styles.categoryGridButton,
                       formData.category === cat.value && { backgroundColor: cat.color },
                     ]}
                     onPress={() => setFormData(prev => ({ ...prev, category: cat.value }))}
@@ -753,7 +763,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
 
               <Text style={styles.label}>{t('calendar.startTime')}</Text>
               <TextInput
@@ -770,25 +780,34 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               />
 
               <Text style={styles.label}>Rappel</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.reminderButton,
-                      formData.reminder === option.value && styles.reminderButtonSelected,
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, reminder: option.value }))}
-                  >
-                    <Text style={[
-                      styles.reminderButtonText,
-                      formData.reminder === option.value && styles.reminderButtonTextSelected,
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={styles.reminderRow}>
+                <TextInput
+                  style={[styles.input, styles.reminderInput]}
+                  value={formData.reminder}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, reminder: text }))}
+                  keyboardType="numeric"
+                  placeholder="15"
+                />
+                <View style={styles.reminderUnitContainer}>
+                  {['minutes', 'heures', 'jours'].map((unit) => (
+                    <TouchableOpacity
+                      key={unit}
+                      style={[
+                        styles.reminderUnitButton,
+                        formData.reminderUnit === unit && styles.reminderUnitButtonActive,
+                      ]}
+                      onPress={() => setFormData(prev => ({ ...prev, reminderUnit: unit }))}
+                    >
+                      <Text style={[
+                        styles.reminderUnitText,
+                        formData.reminderUnit === unit && styles.reminderUnitTextActive,
+                      ]}>
+                        {unit}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
               <TouchableOpacity
                 style={styles.checkboxRow}
@@ -941,16 +960,18 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
   input: { backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
   textArea: { height: 80, textAlignVertical: 'top' },
-  categoryScroll: { marginVertical: 8 },
-  categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: 8, gap: 8 },
+  categoryGridButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', backgroundColor: isDark ? '#2a2a2a' : '#fff', width: '48%' },
   categoryIcon: { fontSize: 18, marginRight: 6 },
-  categoryLabel: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
+  categoryLabel: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280', flex: 1 },
   categoryLabelSelected: { color: '#fff', fontWeight: '600' },
-  reminderScroll: { marginVertical: 8 },
-  reminderButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
-  reminderButtonSelected: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  reminderButtonText: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
-  reminderButtonTextSelected: { color: '#fff', fontWeight: '600' },
+  reminderRow: { flexDirection: 'row', gap: 8, marginVertical: 8 },
+  reminderInput: { flex: 1 },
+  reminderUnitContainer: { flex: 2, flexDirection: 'row', gap: 4 },
+  reminderUnitButton: { flex: 1, paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', backgroundColor: isDark ? '#2a2a2a' : '#fff', alignItems: 'center' },
+  reminderUnitButtonActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  reminderUnitText: { fontSize: 12, color: isDark ? '#f5f5dc' : '#6b7280' },
+  reminderUnitTextActive: { color: '#fff', fontWeight: '600' },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
   checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
