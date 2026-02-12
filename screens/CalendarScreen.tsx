@@ -236,18 +236,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             onPress={() => saveViewMode('month')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'month' && styles.viewToggleIconActive]}>📅</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'month' && styles.viewToggleNumberActive]}>30</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('day')}
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
+            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
@@ -1015,6 +1018,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    alignItems: 'center',
   },
   viewToggleButtonActive: {
     backgroundColor: '#7c3aed',
