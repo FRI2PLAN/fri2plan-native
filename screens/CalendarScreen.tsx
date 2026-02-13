@@ -51,6 +51,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   // Load saved view mode
   useEffect(() => {
@@ -306,32 +307,28 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         </View>
       </View>
 
-      {/* Category Filters */}
-      <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity
-            style={[styles.filterButton, !categoryFilter && styles.filterButtonActive]}
-            onPress={() => setCategoryFilter(null)}
-          >
-            <Text style={[styles.filterButtonText, !categoryFilter && styles.filterButtonTextActive]}>Tout</Text>
-          </TouchableOpacity>
-          {EVENT_CATEGORIES.map((cat) => (
+      {/* Category Filter Button */}
+      <View style={styles.filterButtonContainer}>
+        <TouchableOpacity
+          style={styles.openFilterButton}
+          onPress={() => setFilterModalOpen(true)}
+        >
+          <Ionicons name="filter" size={20} color="#7c3aed" />
+          <Text style={styles.openFilterButtonText}>
+            {categoryFilter ? getCategoryLabel(EVENT_CATEGORIES.find(c => c.value === categoryFilter)!) : 'Filtres'}
+          </Text>
+          {categoryFilter && (
             <TouchableOpacity
-              key={cat.value}
-              style={[
-                styles.filterButton,
-                categoryFilter === cat.value && styles.filterButtonActive,
-                categoryFilter === cat.value && { backgroundColor: cat.color }
-              ]}
-              onPress={() => setCategoryFilter(categoryFilter === cat.value ? null : cat.value)}
+              style={styles.clearFilterButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                setCategoryFilter(null);
+              }}
             >
-              <Text style={styles.filterIcon}>{cat.icon}</Text>
-              <Text style={[styles.filterButtonText, categoryFilter === cat.value && styles.filterButtonTextActive]}>
-                {getCategoryLabel(cat)}
-              </Text>
+              <Ionicons name="close-circle" size={18} color="#7c3aed" />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -455,6 +452,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             {events && events.length > 0 ? (
               events
                 .filter(event => new Date(event.startDate) >= new Date())
+                .filter(event => !categoryFilter || event.category === categoryFilter)
                 .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
                 .map((event, index, arr) => {
                   const eventDate = new Date(event.startDate);
@@ -1213,6 +1211,64 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFilterModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterModalContent}>
+            <View style={styles.filterModalHeader}>
+              <Text style={styles.filterModalTitle}>Filtres par catégorie</Text>
+              <TouchableOpacity onPress={() => setFilterModalOpen(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterModalList}>
+              <TouchableOpacity
+                style={[styles.filterModalButton, !categoryFilter && styles.filterModalButtonActive]}
+                onPress={() => {
+                  setCategoryFilter(null);
+                  setFilterModalOpen(false);
+                }}
+              >
+                <Text style={styles.filterModalIcon}>📋</Text>
+                <Text style={[styles.filterModalButtonText, !categoryFilter && styles.filterModalButtonTextActive]}>
+                  Tout afficher
+                </Text>
+                {!categoryFilter && <Ionicons name="checkmark" size={24} color="#7c3aed" />}
+              </TouchableOpacity>
+
+              {EVENT_CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[
+                    styles.filterModalButton,
+                    categoryFilter === cat.value && styles.filterModalButtonActive
+                  ]}
+                  onPress={() => {
+                    setCategoryFilter(cat.value);
+                    setFilterModalOpen(false);
+                  }}
+                >
+                  <Text style={styles.filterModalIcon}>{cat.icon}</Text>
+                  <Text style={[
+                    styles.filterModalButtonText,
+                    categoryFilter === cat.value && styles.filterModalButtonTextActive
+                  ]}>
+                    {getCategoryLabel(cat)}
+                  </Text>
+                  {categoryFilter === cat.value && <Ionicons name="checkmark" size={24} color={cat.color} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1367,37 +1423,85 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: '#ffffff',
   },
 
-  // Filter Styles
-  filterContainer: {
+  // Filter Button Styles
+  filterButtonContainer: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
-  filterButton: {
+  openFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    marginRight: 8,
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
   },
-  filterButtonActive: {
-    backgroundColor: '#7c3aed',
-  },
-  filterIcon: {
+  openFilterButtonText: {
     fontSize: 16,
-    marginRight: 6,
-  },
-  filterButtonText: {
-    fontSize: 14,
     fontWeight: '600',
-    color: isDark ? '#f5f5dc' : '#6b7280',
+    color: isDark ? '#f5f5dc' : '#374151',
+    marginLeft: 8,
+    flex: 1,
   },
-  filterButtonTextActive: {
-    color: '#ffffff',
+  clearFilterButton: {
+    marginLeft: 8,
+  },
+
+  // Filter Modal Styles
+  filterModalContent: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 16,
+    padding: 20,
+    width: '85%',
+    maxHeight: '70%',
+  },
+  filterModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  filterModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  filterModalList: {
+    maxHeight: 400,
+  },
+  filterModalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: isDark ? '#374151' : '#f9fafb',
+  },
+  filterModalButtonActive: {
+    backgroundColor: isDark ? '#4b5563' : '#ede9fe',
+  },
+  filterModalIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  filterModalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: isDark ? '#f5f5dc' : '#374151',
+    flex: 1,
+  },
+  filterModalButtonTextActive: {
+    fontWeight: '600',
+    color: '#7c3aed',
   },
 
   // Agenda View Styles
