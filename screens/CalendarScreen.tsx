@@ -345,9 +345,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Récupérer le token d'authentification
       const token = await AsyncStorage.getItem('authToken');
       
-      // Appeler l'API backend directement
+      // Appeler l'API backend directement avec le bon format tRPC
+      const input = { "0": { json: { familyId } } };
       const response = await fetch(
-        `https://app.fri2plan.ch/api/trpc/events.exportIcal?input=${encodeURIComponent(JSON.stringify({ familyId }))}`,
+        `https://app.fri2plan.ch/api/trpc/events.exportIcal?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`,
         {
           method: 'GET',
           headers: {
@@ -359,11 +360,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export ICS error response:', errorText);
         throw new Error('Erreur lors de la récupération du calendrier');
       }
 
       const data = await response.json();
-      const icalContent = data.result?.data?.icalContent;
+      const icalContent = data[0]?.result?.data?.icalContent;
       
       if (!icalContent) {
         Alert.alert('Erreur', 'Aucun événement à exporter');
