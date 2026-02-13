@@ -764,9 +764,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })
                   }).map(day => {
-                    const dayEvents = (events || []).filter(event => {
+                    // Utiliser getEventsForDate pour supporter les événements multi-jours
+                    const allDayEvents = getEventsForDate(day);
+                    const dayEvents = allDayEvents.filter(event => {
                       const eventDate = new Date(event.startDate);
-                      return isSameDay(eventDate, day) && eventDate.getHours() === hour;
+                      // Afficher l'événement si son heure de début est dans cette tranche horaire
+                      return eventDate.getHours() === hour;
                     });
 
                     return (
@@ -832,9 +835,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             {/* Timeline */}
             <ScrollView style={styles.dayTimeline}>
               {Array.from({ length: 24 }, (_, hour) => {
-                const hourEvents = (events || []).filter(event => {
+                // Utiliser getEventsForDate pour supporter les événements multi-jours
+                const allDayEvents = getEventsForDate(selectedDate);
+                const hourEvents = allDayEvents.filter(event => {
                   const eventDate = new Date(event.startDate);
-                  return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
+                  // Afficher l'événement si son heure de début est dans cette tranche horaire
+                  return eventDate.getHours() === hour;
                 });
 
                 return (
