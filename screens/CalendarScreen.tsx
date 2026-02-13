@@ -10,6 +10,8 @@ import { trpc } from '../lib/trpc';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 
 const EVENT_CATEGORIES = [
@@ -333,6 +335,68 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
+  const handleExportIcs = async () => {
+    if (!familyId) {
+      Alert.alert('Erreur', 'Aucune famille active');
+      return;
+    }
+
+    try {
+      // Récupérer le token d'authentification
+      const token = await AsyncStorage.getItem('authToken');
+      
+      // Appeler l'API backend directement
+      const response = await fetch(
+        `https://app.fri2plan.ch/api/trpc/events.exportIcal?input=${encodeURIComponent(JSON.stringify({ familyId }))}`,
+        {
+          method: 'GET',
+          headers: {
+            'authorization': token ? `Bearer ${token}` : '',
+            'content-type': 'application/json',
+          },
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération du calendrier');
+      }
+
+      const data = await response.json();
+      const icalContent = data.result?.data?.icalContent;
+      
+      if (!icalContent) {
+        Alert.alert('Erreur', 'Aucun événement à exporter');
+        return;
+      }
+      
+      // Créer un nom de fichier avec la date actuelle
+      const fileName = `calendrier_familial_${format(new Date(), 'yyyy-MM-dd')}.ics`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      // Écrire le fichier ICS
+      await FileSystem.writeAsStringAsync(fileUri, icalContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Partager le fichier
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/calendar',
+          dialogTitle: 'Exporter le calendrier familial',
+          UTI: 'public.calendar-event',
+        });
+        Alert.alert('Succès', 'Calendrier exporté avec succès');
+      } else {
+        Alert.alert('Succès', `Calendrier exporté vers ${fileUri}`);
+      }
+    } catch (error) {
+      console.error('Error exporting ICS:', error);
+      Alert.alert('Erreur', 'Impossible d\'exporter le calendrier');
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -466,6 +530,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           onPress={() => setSubscribeUrlModalOpen(true)}
         >
           <Ionicons name="link-outline" size={24} color="#7c3aed" />
+        </TouchableOpacity>
+
+        {/* Export ICS */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleExportIcs}
+        >
+          <Ionicons name="cloud-upload-outline" size={24} color="#7c3aed" />
         </TouchableOpacity>
       </View>
 
