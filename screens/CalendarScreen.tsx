@@ -627,7 +627,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           
           {selectedDateEvents.length > 0 ? (
             selectedDateEvents.map(event => {
-              const category = getCategoryInfo(event.category);
+              const category = getCategoryInfo(event.category || 'other');
               return (
                 <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
                   <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
@@ -679,7 +679,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   const eventDate = new Date(event.startDate);
                   const prevEventDate = index > 0 ? new Date(arr[index - 1].startDate) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
-                  const category = getCategoryInfo(event.category);
+                  const category = getCategoryInfo(event.category || 'other');
 
                   return (
                     <View key={event.id}>
@@ -769,7 +769,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     return (
                       <View key={day.toString()} style={styles.weekDayColumn}>
                         {dayEvents.map(event => {
-                          const category = getCategoryInfo(event.category);
+                          const category = getCategoryInfo(event.category || 'other');
                           const startTime = new Date(event.startDate);
                           const endTime = new Date(startTime.getTime() + (event.durationMinutes || 60) * 60000);
                           const durationMinutes = event.durationMinutes || 60;
@@ -842,7 +842,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     <View style={styles.dayTimeContent}>
                       <View style={styles.dayTimeHalfHourLine} />
                       {hourEvents.map(event => {
-                        const category = getCategoryInfo(event.category);
+                        const category = getCategoryInfo(event.category || 'other');
                         const startTime = new Date(event.startDate);
                         const endTime = new Date(startTime.getTime() + (event.durationMinutes || 60) * 60000);
                         const durationMinutes = event.durationMinutes || 60;
@@ -1426,7 +1426,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
             <ScrollView style={styles.dropdownEventsList}>
               {selectedDateEvents.map(event => {
-                const category = getCategoryInfo(event.category);
+                const category = getCategoryInfo(event.category || 'other');
                 return (
                   <TouchableOpacity
                     key={event.id}
