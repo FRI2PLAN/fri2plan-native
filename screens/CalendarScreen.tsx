@@ -52,6 +52,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchStartDate, setSearchStartDate] = useState<Date | null>(null);
+  const [searchEndDate, setSearchEndDate] = useState<Date | null>(null);
+  const [showSearchStartDatePicker, setShowSearchStartDatePicker] = useState(false);
+  const [showSearchEndDatePicker, setShowSearchEndDatePicker] = useState(false);
 
   // Load saved view mode
   useEffect(() => {
@@ -141,7 +147,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const eventDate = new Date(event.startDate);
       const matchesDate = isSameDay(eventDate, date);
       const matchesCategory = !categoryFilter || event.category === categoryFilter;
-      return matchesDate && matchesCategory;
+      
+      // Search filter
+      const matchesSearch = !searchQuery || 
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesStartDate = !searchStartDate || eventDate >= searchStartDate;
+      const matchesEndDate = !searchEndDate || eventDate <= searchEndDate;
+      
+      return matchesDate && matchesCategory && matchesSearch && matchesStartDate && matchesEndDate;
     });
   };
 
@@ -307,27 +322,44 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         </View>
       </View>
 
-      {/* Category Filter Button */}
-      <View style={styles.filterButtonContainer}>
+      {/* Action Buttons Row */}
+      <View style={styles.actionButtonsContainer}>
+        {/* Filtres */}
         <TouchableOpacity
-          style={styles.openFilterButton}
+          style={styles.actionButton}
           onPress={() => setFilterModalOpen(true)}
         >
           <Ionicons name="filter" size={20} color="#7c3aed" />
-          <Text style={styles.openFilterButtonText}>
-            {categoryFilter ? getCategoryLabel(EVENT_CATEGORIES.find(c => c.value === categoryFilter)!) : 'Filtres'}
-          </Text>
-          {categoryFilter && (
-            <TouchableOpacity
-              style={styles.clearFilterButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                setCategoryFilter(null);
-              }}
-            >
-              <Ionicons name="close-circle" size={18} color="#7c3aed" />
-            </TouchableOpacity>
-          )}
+          <Text style={styles.actionButtonText}>Filtres</Text>
+          {categoryFilter && <View style={styles.actionButtonBadge} />}
+        </TouchableOpacity>
+
+        {/* Recherche */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setSearchModalOpen(true)}
+        >
+          <Ionicons name="search" size={20} color="#7c3aed" />
+          <Text style={styles.actionButtonText}>Recherche</Text>
+          {(searchQuery || searchStartDate || searchEndDate) && <View style={styles.actionButtonBadge} />}
+        </TouchableOpacity>
+
+        {/* Import ICS */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => alert('À implémenter : Import ICS')}
+        >
+          <Ionicons name="cloud-download-outline" size={20} color="#6b7280" />
+          <Text style={[styles.actionButtonText, styles.actionButtonTextDisabled]}>Import</Text>
+        </TouchableOpacity>
+
+        {/* Abonnement URL */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => alert('À implémenter : Abonnement URL')}
+        >
+          <Ionicons name="link-outline" size={20} color="#6b7280" />
+          <Text style={[styles.actionButtonText, styles.actionButtonTextDisabled]}>Abonner</Text>
         </TouchableOpacity>
       </View>
 
@@ -1269,6 +1301,114 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+
+      {/* Search Modal */}
+      <Modal
+        visible={searchModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSearchModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.searchModalContent}>
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.searchModalTitle}>Rechercher un événement</Text>
+              <TouchableOpacity onPress={() => setSearchModalOpen(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.searchModalSubtitle}>Filtrez les événements par titre, description ou plage de dates</Text>
+
+            {/* Search Input */}
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color="#6b7280" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Rechercher..."
+                placeholderTextColor="#9ca3af"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            {/* Date Range */}
+            <View style={styles.searchDateRow}>
+              <View style={styles.searchDateColumn}>
+                <Text style={styles.searchDateLabel}>Date de début</Text>
+                <TouchableOpacity
+                  style={styles.searchDateButton}
+                  onPress={() => setShowSearchStartDatePicker(true)}
+                >
+                  <Ionicons name="calendar-outline" size={18} color="#7c3aed" />
+                  <Text style={styles.searchDateButtonText}>
+                    {searchStartDate ? format(searchStartDate, 'dd/MM/yyyy') : 'Du...'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.searchDateColumn}>
+                <Text style={styles.searchDateLabel}>Date de fin</Text>
+                <TouchableOpacity
+                  style={styles.searchDateButton}
+                  onPress={() => setShowSearchEndDatePicker(true)}
+                >
+                  <Ionicons name="calendar-outline" size={18} color="#7c3aed" />
+                  <Text style={styles.searchDateButtonText}>
+                    {searchEndDate ? format(searchEndDate, 'dd/MM/yyyy') : 'Au...'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.searchModalButtons}>
+              <TouchableOpacity
+                style={styles.searchResetButton}
+                onPress={() => {
+                  setSearchQuery('');
+                  setSearchStartDate(null);
+                  setSearchEndDate(null);
+                }}
+              >
+                <Text style={styles.searchResetButtonText}>Réinitialiser</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.searchApplyButton}
+                onPress={() => setSearchModalOpen(false)}
+              >
+                <Text style={styles.searchApplyButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Pickers for Search */}
+      {showSearchStartDatePicker && (
+        <DateTimePicker
+          value={searchStartDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setShowSearchStartDatePicker(false);
+            if (date) setSearchStartDate(date);
+          }}
+        />
+      )}
+
+      {showSearchEndDatePicker && (
+        <DateTimePicker
+          value={searchEndDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setShowSearchEndDatePicker(false);
+            if (date) setSearchEndDate(date);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -1423,33 +1563,45 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: '#ffffff',
   },
 
-  // Filter Button Styles
-  filterButtonContainer: {
+  // Action Buttons Styles
+  actionButtonsContainer: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  openFilterButton: {
     flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#e5e7eb',
+    position: 'relative',
   },
-  openFilterButtonText: {
-    fontSize: 16,
+  actionButtonText: {
+    fontSize: 12,
     fontWeight: '600',
     color: isDark ? '#f5f5dc' : '#374151',
-    marginLeft: 8,
-    flex: 1,
+    marginTop: 4,
   },
-  clearFilterButton: {
-    marginLeft: 8,
+  actionButtonTextDisabled: {
+    color: '#9ca3af',
+  },
+  actionButtonBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7c3aed',
   },
 
   // Filter Modal Styles
@@ -1502,6 +1654,108 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   filterModalButtonTextActive: {
     fontWeight: '600',
     color: '#7c3aed',
+  },
+
+  // Search Modal Styles
+  searchModalContent: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  searchModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  searchModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  searchModalSubtitle: {
+    fontSize: 14,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    marginBottom: 20,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#374151' : '#f9fafb',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
+  searchDateRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  searchDateColumn: {
+    flex: 1,
+  },
+  searchDateLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#f5f5dc' : '#374151',
+    marginBottom: 8,
+  },
+  searchDateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#374151' : '#f9fafb',
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
+    gap: 8,
+  },
+  searchDateButtonText: {
+    fontSize: 14,
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  searchModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  searchResetButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    alignItems: 'center',
+  },
+  searchResetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#f5f5dc' : '#6b7280',
+  },
+  searchApplyButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: '#7c3aed',
+    alignItems: 'center',
+  },
+  searchApplyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 
   // Agenda View Styles
