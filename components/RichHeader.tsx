@@ -58,7 +58,7 @@ export default function RichHeader({
             </View>
           )}
           <Text style={styles.userName} numberOfLines={1}>
-            {user?.name || 'Utilisateur'}
+            {user?.name ? user.name.split(' ')[0] : 'Utilisateur'}
           </Text>
         </TouchableOpacity>
 
