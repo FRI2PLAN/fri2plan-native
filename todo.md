@@ -1546,13 +1546,13 @@ components/
 - [ ] Tester changement dark mode en temps réel
 
 ## Import ICS - Corrections
-- [ ] Corriger l'import des événements multi-jours (Olympic day manquant)
-- [ ] Corriger le bouton "Annuler" qui n'annule pas l'import en cours
-- [ ] Agrandir la fenêtre de prévisualisation pour mieux intégrer les boutons
+- [x] Corriger l'import des événements multi-jours (Olympic day manquant)
+- [x] Corriger le bouton "Annuler" qui n'annule pas l'import en cours
+- [x] Agrandir la fenêtre de prévisualisation pour mieux intégrer les boutons
 
 ## Affichage événements
-- [ ] Corriger les erreurs "Text strings must be rendered within <Text> component"
+- [ ] Corriger les erreurs "Text strings must be rendered within <Text> component" (nécessite stacktrace pour identifier l'origine)
 
 ## Fonctionnalité duplication
-- [ ] Ajouter bouton "Dupliquer" dans modal création d'événement (entre Annuler et Enregistrer)
-- [ ] Ajouter bouton "Dupliquer" dans modal modification d'événement (entre Annuler et Enregistrer)
+- [x] Ajouter bouton "Dupliquer" dans modal création d'événement (entre Annuler et Enregistrer)
+- [x] Ajouter bouton "Dupliquer" dans modal modification d'événement (entre Annuler et Enregistrer)

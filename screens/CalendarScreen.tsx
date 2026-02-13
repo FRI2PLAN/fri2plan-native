@@ -1945,7 +1945,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         onRequestClose={() => setPreviewModalOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.searchModalContent, { maxHeight: '80%' }]}>
+          <View style={[styles.searchModalContent, { maxHeight: '90%' }]}>
             <View style={styles.searchModalHeader}>
               <Text style={styles.searchModalTitle}>Prévisualisation de l'import</Text>
               <TouchableOpacity onPress={() => setPreviewModalOpen(false)}>
