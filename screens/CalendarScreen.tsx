@@ -593,7 +593,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   ]}
                   onPress={() => {
                     setSelectedDate(day);
-                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startDate), day));
+                    const dayEvents = getEventsForDate(day);
                     if (dayEvents.length === 0) {
                       // Jour vide : Ouvrir modal création
                       setFormData(prev => ({
