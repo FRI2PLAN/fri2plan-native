@@ -9,6 +9,8 @@ import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import { Alert } from 'react-native';
 
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
@@ -60,6 +62,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [showSearchStartDatePicker, setShowSearchStartDatePicker] = useState(false);
   const [showSearchEndDatePicker, setShowSearchEndDatePicker] = useState(false);
   const [tutorialModalOpen, setTutorialModalOpen] = useState(false);
+  const [importIcsModalOpen, setImportIcsModalOpen] = useState(false);
+  const [subscribeUrlModalOpen, setSubscribeUrlModalOpen] = useState(false);
+  const [calendarUrl, setCalendarUrl] = useState('');
 
   // Load saved view mode
   useEffect(() => {
@@ -118,6 +123,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
+  const importIcal = trpc.events.importIcal.useMutation();
   
   // Fetch family data
   const { data: families } = trpc.family.list.useQuery();
@@ -241,6 +247,55 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
+  const handleImportIcs = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'text/calendar',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      // Lire le fichier ICS
+      const response = await fetch(result.assets[0].uri);
+      const icsContent = await response.text();
+
+      // Parser et importer via tRPC
+      await importIcal.mutateAsync({ icsContent });
+      
+      Alert.alert('Succès', 'Calendrier importé avec succès');
+      setImportIcsModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error('Error importing ICS:', error);
+      Alert.alert('Erreur', 'Impossible d\'importer le fichier ICS');
+    }
+  };
+
+  const handleSubscribeUrl = async () => {
+    if (!calendarUrl.trim()) {
+      Alert.alert('Erreur', 'Veuillez entrer une URL valide');
+      return;
+    }
+
+    try {
+      // Télécharger le calendrier depuis l'URL
+      const response = await fetch(calendarUrl);
+      const icsContent = await response.text();
+
+      // Importer via tRPC
+      await importIcal.mutateAsync({ icsContent });
+      
+      Alert.alert('Succès', 'Calendrier importé avec succès');
+      setSubscribeUrlModalOpen(false);
+      setCalendarUrl('');
+      refetch();
+    } catch (error) {
+      console.error('Error subscribing to calendar:', error);
+      Alert.alert('Erreur', 'Impossible de s\'abonner au calendrier');
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -361,17 +416,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {/* Import ICS */}
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => alert('À implémenter : Import ICS')}
+          onPress={handleImportIcs}
         >
-          <Ionicons name="cloud-download-outline" size={24} color="#6b7280" />
+          <Ionicons name="cloud-download-outline" size={24} color="#7c3aed" />
         </TouchableOpacity>
 
         {/* Abonnement URL */}
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => alert('À implémenter : Abonnement URL')}
+          onPress={() => setSubscribeUrlModalOpen(true)}
         >
-          <Ionicons name="link-outline" size={24} color="#6b7280" />
+          <Ionicons name="link-outline" size={24} color="#7c3aed" />
         </TouchableOpacity>
       </View>
 
@@ -1561,6 +1616,66 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             >
               <Text style={styles.tutorialCloseButtonText}>Fermer</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Abonnement URL */}
+      <Modal
+        visible={subscribeUrlModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSubscribeUrlModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.searchModalContent}>
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.searchModalTitle}>S'abonner à un calendrier</Text>
+              <TouchableOpacity onPress={() => setSubscribeUrlModalOpen(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ padding: 20 }}>
+              <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 12 }}>
+                Entrez l'URL de votre calendrier (Google Calendar, Outlook, etc.)
+              </Text>
+              
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  padding: 12,
+                  fontSize: 14,
+                  marginBottom: 20,
+                }}
+                placeholder="https://calendar.google.com/..."
+                placeholderTextColor="#9ca3af"
+                value={calendarUrl}
+                onChangeText={setCalendarUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => {
+                    setSubscribeUrlModalOpen(false);
+                    setCalendarUrl('');
+                  }}
+                >
+                  <Text style={styles.modalButtonTextCancel}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSave]}
+                  onPress={handleSubscribeUrl}
+                >
+                  <Text style={styles.modalButtonTextSave}>S'abonner</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
