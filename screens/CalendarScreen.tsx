@@ -256,16 +256,25 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
       if (result.canceled) return;
 
-      // Lire le fichier ICS
-      const response = await fetch(result.assets[0].uri);
-      const icsContent = await response.text();
-
-      // Parser et importer via tRPC
       if (!familyId) {
         Alert.alert('Erreur', 'Aucune famille active');
         return;
       }
-      await importIcal.mutateAsync({ familyId, icsContent });
+
+      // Lire le fichier ICS
+      const response = await fetch(result.assets[0].uri);
+      const icsContent = await response.text();
+
+      if (!icsContent || icsContent.trim().length === 0) {
+        Alert.alert('Erreur', 'Le fichier ICS est vide');
+        return;
+      }
+
+      console.log('ICS Content length:', icsContent.length);
+      console.log('Family ID:', familyId);
+
+      // Parser et importer via tRPC
+      await importIcal.mutateAsync({ familyId, icsContent: icsContent.trim() });
       
       Alert.alert('Succès', 'Calendrier importé avec succès');
       setImportIcsModalOpen(false);
@@ -282,17 +291,26 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       return;
     }
 
+    if (!familyId) {
+      Alert.alert('Erreur', 'Aucune famille active');
+      return;
+    }
+
     try {
       // Télécharger le calendrier depuis l'URL
       const response = await fetch(calendarUrl);
       const icsContent = await response.text();
 
-      // Importer via tRPC
-      if (!familyId) {
-        Alert.alert('Erreur', 'Aucune famille active');
+      if (!icsContent || icsContent.trim().length === 0) {
+        Alert.alert('Erreur', 'Le calendrier est vide ou l\'URL est invalide');
         return;
       }
-      await importIcal.mutateAsync({ familyId, icsContent });
+
+      console.log('ICS Content length:', icsContent.length);
+      console.log('Family ID:', familyId);
+
+      // Importer via tRPC
+      await importIcal.mutateAsync({ familyId, icsContent: icsContent.trim() });
       
       Alert.alert('Succès', 'Calendrier importé avec succès');
       setSubscribeUrlModalOpen(false);
