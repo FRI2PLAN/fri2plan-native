@@ -154,11 +154,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!events) return [];
     return events.filter(event => {
       const eventStartDate = new Date(event.startDate);
-      const eventEndDate = event.endDate ? new Date(event.endDate) : eventStartDate;
+      const eventEndDate = event.endDate ? new Date(event.endDate) : new Date(event.startDate);
+      
+      // Créer des copies pour la comparaison sans modifier les originales
+      const startOfDay = new Date(eventStartDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(eventEndDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const checkDate = new Date(date);
+      checkDate.setHours(12, 0, 0, 0); // Midi pour éviter les problèmes de timezone
       
       // Check if the date is within the event's date range (for multi-day events)
-      const isWithinRange = date >= new Date(eventStartDate.setHours(0, 0, 0, 0)) && 
-                            date <= new Date(eventEndDate.setHours(23, 59, 59, 999));
+      const isWithinRange = checkDate >= startOfDay && checkDate <= endOfDay;
       
       const matchesCategory = !categoryFilter || event.category === categoryFilter;
       
