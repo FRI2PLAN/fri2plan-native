@@ -67,6 +67,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [importIcsModalOpen, setImportIcsModalOpen] = useState(false);
   const [subscribeUrlModalOpen, setSubscribeUrlModalOpen] = useState(false);
   const [calendarUrl, setCalendarUrl] = useState('');
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [parsedEvents, setParsedEvents] = useState<any[]>([]);
+  const [selectedEventIds, setSelectedEventIds] = useState<number[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0, duplicates: 0 });
 
   // Load saved view mode
   useEffect(() => {
@@ -260,6 +265,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
+  // Parser une date ICS
+  const parseICSDate = (dateStr: string): Date => {
+    // Format: 20250313T193000 ou 20250313T193000Z
+    const cleaned = dateStr.replace(/[TZ]/g, '');
+    const year = parseInt(cleaned.substring(0, 4));
+    const month = parseInt(cleaned.substring(4, 6)) - 1;
+    const day = parseInt(cleaned.substring(6, 8));
+    const hour = parseInt(cleaned.substring(8, 10) || '0');
+    const minute = parseInt(cleaned.substring(10, 12) || '0');
+    return new Date(year, month, day, hour, minute);
+  };
+
   const handleImportIcs = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -283,18 +300,141 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         return;
       }
 
-      console.log('ICS Content length:', icsContent.length);
-      console.log('Family ID:', familyId);
+      // Parser le fichier ICS (même logique que le web)
+      const lines = icsContent.split(/\r?\n/);
+      const events: any[] = [];
+      let currentEvent: any = null;
 
-      // Parser et importer via tRPC
-      await importIcal.mutateAsync({ familyId, icalContent: icsContent.trim() });
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line === 'BEGIN:VEVENT') {
+          currentEvent = {};
+        } else if (line === 'END:VEVENT' && currentEvent) {
+          events.push(currentEvent);
+          currentEvent = null;
+        } else if (currentEvent) {
+          const [key, ...valueParts] = line.split(':');
+          const value = valueParts.join(':');
+          
+          if (key.startsWith('DTSTART')) {
+            currentEvent.startDate = parseICSDate(value);
+          } else if (key.startsWith('DTEND')) {
+            currentEvent.endDate = parseICSDate(value);
+          } else if (key === 'SUMMARY') {
+            currentEvent.title = value;
+          } else if (key === 'DESCRIPTION') {
+            currentEvent.description = value.replace(/\\n/g, '\n');
+          }
+        }
+      }
+
+      if (events.length === 0) {
+        Alert.alert('Erreur', 'Aucun événement trouvé dans le fichier');
+        return;
+      }
+
+      // Ajouter un ID temporaire à chaque événement
+      const eventsWithIds = events.map((event, index) => ({ ...event, tempId: index }));
       
-      Alert.alert('Succès', 'Calendrier importé avec succès');
-      setImportIcsModalOpen(false);
-      refetch();
+      // Ouvrir la prévisualisation
+      setParsedEvents(eventsWithIds);
+      setSelectedEventIds(eventsWithIds.map(e => e.tempId)); // Tout sélectionner par défaut
+      setPreviewModalOpen(true);
+      
+      Alert.alert('Succès', `${events.length} événement(s) trouvé(s)`);
     } catch (error) {
       console.error('Error importing ICS:', error);
-      Alert.alert('Erreur', 'Impossible d\'importer le fichier ICS');
+      Alert.alert('Erreur', 'Impossible de lire le fichier ICS');
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (selectedEventIds.length === 0) {
+      Alert.alert('Erreur', 'Veuillez sélectionner au moins un événement');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress({ current: 0, total: selectedEventIds.length, duplicates: 0 });
+    
+    const eventsToImport = parsedEvents.filter(e => selectedEventIds.includes(e.tempId));
+    let importedCount = 0;
+    let errorCount = 0;
+    let duplicateCount = 0;
+
+    // Récupérer les événements existants pour détecter les doublons
+    const existingEvents = events || [];
+
+    try {
+      for (let i = 0; i < eventsToImport.length; i++) {
+        const event = eventsToImport[i];
+        
+        try {
+          if (!event.title || !event.startDate) {
+            errorCount++;
+            continue;
+          }
+
+          // Détection des doublons : même titre ET même date de début (à 1 minute près)
+          const isDuplicate = existingEvents.some((existing: any) => {
+            const existingStart = new Date(existing.startDate);
+            const eventStart = new Date(event.startDate);
+            const timeDiff = Math.abs(existingStart.getTime() - eventStart.getTime());
+            return existing.title === event.title && timeDiff < 60000; // 1 minute
+          });
+
+          if (isDuplicate) {
+            duplicateCount++;
+            setImportProgress({ current: i + 1, total: eventsToImport.length, duplicates: duplicateCount });
+            continue;
+          }
+
+          const durationMinutes = event.endDate 
+            ? Math.floor((event.endDate.getTime() - event.startDate.getTime()) / 60000)
+            : 60;
+
+          await createEvent.mutateAsync({
+            title: event.title,
+            description: event.description || undefined,
+            startDate: event.startDate,
+            durationMinutes,
+            category: 'other',
+            recurrence: undefined,
+            reminderValue: undefined,
+            reminderUnit: undefined,
+            reminderMinutes: undefined,
+            isPrivate: 0,
+          });
+          
+          importedCount++;
+          setImportProgress({ current: i + 1, total: eventsToImport.length, duplicates: duplicateCount });
+        } catch (error) {
+          console.error('Erreur import événement:', error);
+          errorCount++;
+        }
+      }
+
+      // Rafraîchir les données
+      refetch();
+      
+      // Message final
+      const messages = [];
+      if (importedCount > 0) messages.push(`${importedCount} importé(s)`);
+      if (duplicateCount > 0) messages.push(`${duplicateCount} doublon(s) ignoré(s)`);
+      if (errorCount > 0) messages.push(`${errorCount} erreur(s)`);
+      
+      Alert.alert('Import terminé', messages.join(', '));
+      
+      setPreviewModalOpen(false);
+      setParsedEvents([]);
+      setSelectedEventIds([]);
+    } catch (error) {
+      console.error('Erreur import ICS:', error);
+      Alert.alert('Erreur', 'Erreur lors de l\'import des événements');
+    } finally {
+      setIsImporting(false);
+      setImportProgress({ current: 0, total: 0, duplicates: 0 });
     }
   };
 
@@ -1748,6 +1888,148 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       </Modal>
 
       {/* Modal Abonnement URL */}
+      {/* Modal Prévisualisation Import ICS */}
+      <Modal
+        visible={previewModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.searchModalContent, { maxHeight: '80%' }]}>
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.searchModalTitle}>Prévisualisation de l'import</Text>
+              <TouchableOpacity onPress={() => setPreviewModalOpen(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ padding: 20 }}>
+              <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 12 }}>
+                {parsedEvents.length} événement(s) trouvé(s). Sélectionnez ceux à importer.
+              </Text>
+              
+              {/* Bouton tout sélectionner/désélectionner */}
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: 8,
+                  marginBottom: 12,
+                }}
+                onPress={() => {
+                  if (selectedEventIds.length === parsedEvents.length) {
+                    setSelectedEventIds([]);
+                  } else {
+                    setSelectedEventIds(parsedEvents.map(e => e.tempId));
+                  }
+                }}
+              >
+                <Ionicons 
+                  name={selectedEventIds.length === parsedEvents.length ? "checkbox" : "square-outline"} 
+                  size={24} 
+                  color="#7c3aed" 
+                />
+                <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: '600' }}>
+                  {selectedEventIds.length} / {parsedEvents.length} sélectionné(s)
+                </Text>
+              </TouchableOpacity>
+
+              {/* Liste des événements */}
+              <ScrollView style={{ maxHeight: 400 }}>
+                {parsedEvents.map((event) => (
+                  <TouchableOpacity
+                    key={event.tempId}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: 12,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#e5e7eb',
+                    }}
+                    onPress={() => {
+                      if (selectedEventIds.includes(event.tempId)) {
+                        setSelectedEventIds(selectedEventIds.filter(id => id !== event.tempId));
+                      } else {
+                        setSelectedEventIds([...selectedEventIds, event.tempId]);
+                      }
+                    }}
+                  >
+                    <Ionicons 
+                      name={selectedEventIds.includes(event.tempId) ? "checkbox" : "square-outline"} 
+                      size={24} 
+                      color="#7c3aed" 
+                    />
+                    <View style={{ marginLeft: 12, flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>
+                        {event.title || 'Sans titre'}
+                      </Text>
+                      {event.startDate && (
+                        <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                          {format(new Date(event.startDate), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                        </Text>
+                      )}
+                      {event.description && (
+                        <Text style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }} numberOfLines={1}>
+                          {event.description}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Barre de progression pendant l'import */}
+              {isImporting && (
+                <View style={{ marginTop: 16, padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>
+                    Importation en cours...
+                  </Text>
+                  <View style={{ width: '100%', height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                    <View 
+                      style={{ 
+                        height: '100%', 
+                        backgroundColor: '#7c3aed', 
+                        width: `${(importProgress.current / importProgress.total) * 100}%` 
+                      }} 
+                    />
+                  </View>
+                  <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                    {importProgress.current} / {importProgress.total} événements
+                    {importProgress.duplicates > 0 && ` (${importProgress.duplicates} doublon(s) ignoré(s))`}
+                  </Text>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel, { flex: 1 }]}
+                  onPress={() => {
+                    setPreviewModalOpen(false);
+                    setParsedEvents([]);
+                    setSelectedEventIds([]);
+                  }}
+                  disabled={isImporting}
+                >
+                  <Text style={styles.modalButtonTextCancel}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSave, { flex: 1 }]}
+                  onPress={handleConfirmImport}
+                  disabled={selectedEventIds.length === 0 || isImporting}
+                >
+                  <Text style={styles.modalButtonTextSave}>
+                    {isImporting ? 'Importation...' : `Importer (${selectedEventIds.length})`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal
         visible={subscribeUrlModalOpen}
         transparent={true}
