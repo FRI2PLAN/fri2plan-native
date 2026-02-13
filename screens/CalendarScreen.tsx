@@ -72,6 +72,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [selectedEventIds, setSelectedEventIds] = useState<number[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0, duplicates: 0 });
+  const importCancelledRef = useRef(false);
 
   // Load saved view mode
   useEffect(() => {
@@ -311,6 +312,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         if (line === 'BEGIN:VEVENT') {
           currentEvent = {};
         } else if (line === 'END:VEVENT' && currentEvent) {
+          // Calculer la durée si endDate est présent
+          if (currentEvent.startDate && currentEvent.endDate) {
+            const start = new Date(currentEvent.startDate);
+            const end = new Date(currentEvent.endDate);
+            currentEvent.durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+          }
           events.push(currentEvent);
           currentEvent = null;
         } else if (currentEvent) {
@@ -319,12 +326,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           
           if (key.startsWith('DTSTART')) {
             currentEvent.startDate = parseICSDate(value);
+            // Détecter si c'est un événement sur toute la journée
+            if (key.includes('VALUE=DATE')) {
+              currentEvent.isAllDay = true;
+            }
           } else if (key.startsWith('DTEND')) {
             currentEvent.endDate = parseICSDate(value);
           } else if (key === 'SUMMARY') {
             currentEvent.title = value;
           } else if (key === 'DESCRIPTION') {
             currentEvent.description = value.replace(/\\n/g, '\n');
+          } else if (key === 'LOCATION') {
+            currentEvent.location = value;
+          } else if (key === 'RRULE') {
+            currentEvent.recurrence = value;
+          } else if (key === 'CATEGORIES') {
+            currentEvent.category = value.toLowerCase();
           }
         }
       }
@@ -356,6 +373,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
 
     setIsImporting(true);
+    importCancelledRef.current = false;
     setImportProgress({ current: 0, total: selectedEventIds.length, duplicates: 0 });
     
     const eventsToImport = parsedEvents.filter(e => selectedEventIds.includes(e.tempId));
@@ -368,6 +386,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
     try {
       for (let i = 0; i < eventsToImport.length; i++) {
+        // Vérifier si l'import a été annulé
+        if (importCancelledRef.current) {
+          Alert.alert('Import annulé', `${importedCount} événement(s) importé(s) avant annulation`);
+          break;
+        }
+        
         const event = eventsToImport[i];
         
         try {
@@ -418,13 +442,15 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Rafraîchir les données
       refetch();
       
-      // Message final
-      const messages = [];
-      if (importedCount > 0) messages.push(`${importedCount} importé(s)`);
-      if (duplicateCount > 0) messages.push(`${duplicateCount} doublon(s) ignoré(s)`);
-      if (errorCount > 0) messages.push(`${errorCount} erreur(s)`);
-      
-      Alert.alert('Import terminé', messages.join(', '));
+      // Message final (seulement si pas annulé)
+      if (!importCancelledRef.current) {
+        const messages = [];
+        if (importedCount > 0) messages.push(`${importedCount} importé(s)`);
+        if (duplicateCount > 0) messages.push(`${duplicateCount} doublon(s) ignoré(s)`);
+        if (errorCount > 0) messages.push(`${errorCount} erreur(s)`);
+        
+        Alert.alert('Import terminé', messages.join(', '));
+      }
       
       setPreviewModalOpen(false);
       setParsedEvents([]);
@@ -1257,6 +1283,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Ionicons name="close-circle-outline" size={28} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDuplicate]}
+                onPress={() => {
+                  // Le bouton Dupliquer dans le modal de création ne fait rien
+                  // (on ne peut pas dupliquer un événement qui n'existe pas encore)
+                  Alert.alert('Info', 'Créez d\'abord l\'\u00e9vénement pour pouvoir le dupliquer');
+                }}
+              >
+                <Ionicons name="copy-outline" size={28} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleCreateEvent}
               >
@@ -1538,6 +1574,19 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 }}
               >
                 <Ionicons name="close-circle-outline" size={28} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDuplicate]}
+                onPress={() => {
+                  // Dupliquer l'événement : fermer le modal de modification et ouvrir le modal de création
+                  // avec les données de l'événement actuel
+                  setEditModalOpen(false);
+                  setSelectedEvent(null);
+                  // Les données du formulaire sont déjà remplies, il suffit d'ouvrir le modal de création
+                  setCreateModalOpen(true);
+                }}
+              >
+                <Ionicons name="copy-outline" size={28} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSave]}
@@ -2007,11 +2056,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonCancel, { flex: 1 }]}
                   onPress={() => {
-                    setPreviewModalOpen(false);
-                    setParsedEvents([]);
-                    setSelectedEventIds([]);
+                    if (isImporting) {
+                      // Annuler l'import en cours
+                      importCancelledRef.current = true;
+                    } else {
+                      // Fermer le modal sans importer
+                      setPreviewModalOpen(false);
+                      setParsedEvents([]);
+                      setSelectedEventIds([]);
+                    }
                   }}
-                  disabled={isImporting}
                 >
                   <Text style={styles.modalButtonTextCancel}>Annuler</Text>
                 </TouchableOpacity>
@@ -2168,6 +2222,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalButtonCancel: { backgroundColor: '#6b7280' },
   modalButtonSave: { backgroundColor: '#7c3aed' },
   modalButtonDelete: { backgroundColor: '#ef4444' },
+  modalButtonDuplicate: { backgroundColor: '#3b82f6' },
   modalButtonTextCancel: { color: '#f5f5dc', fontSize: 16, fontWeight: '600' },
   modalButtonTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
