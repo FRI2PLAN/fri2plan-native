@@ -48,6 +48,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [searchEndDate, setSearchEndDate] = useState<Date | null>(null);
   const [showSearchStartDatePicker, setShowSearchStartDatePicker] = useState(false);
   const [showSearchEndDatePicker, setShowSearchEndDatePicker] = useState(false);
+  const [tutorialModalOpen, setTutorialModalOpen] = useState(false);
 
   // Load saved view mode
   useEffect(() => {
@@ -88,6 +90,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     description: '',
     startTime: '09:00',
     endTime: '10:00',
+    endDate: null as Date | null,
     category: 'other',
     reminder: '15',
     reminderUnit: 'minutes',
@@ -144,8 +147,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
     return events.filter(event => {
-      const eventDate = new Date(event.startDate);
-      const matchesDate = isSameDay(eventDate, date);
+      const eventStartDate = new Date(event.startDate);
+      const eventEndDate = event.endDate ? new Date(event.endDate) : eventStartDate;
+      
+      // Check if the date is within the event's date range (for multi-day events)
+      const isWithinRange = date >= new Date(eventStartDate.setHours(0, 0, 0, 0)) && 
+                            date <= new Date(eventEndDate.setHours(23, 59, 59, 999));
+      
       const matchesCategory = !categoryFilter || event.category === categoryFilter;
       
       // Search filter
@@ -153,10 +161,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      const matchesStartDate = !searchStartDate || eventDate >= searchStartDate;
-      const matchesEndDate = !searchEndDate || eventDate <= searchEndDate;
+      const matchesStartDate = !searchStartDate || eventStartDate >= searchStartDate;
+      const matchesEndDate = !searchEndDate || eventStartDate <= searchEndDate;
       
-      return matchesDate && matchesCategory && matchesSearch && matchesStartDate && matchesEndDate;
+      return isWithinRange && matchesCategory && matchesSearch && matchesStartDate && matchesEndDate;
     });
   };
 
@@ -239,6 +247,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       description: '',
       startTime: '09:00',
       endTime: '10:00',
+      endDate: null,
       category: 'other',
       reminder: '15',
       reminderUnit: 'minutes',
@@ -259,6 +268,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       description: event.description || '',
       startTime: format(startTime, 'HH:mm'),
       endTime: format(endTime, 'HH:mm'),
+      endDate: event.endDate ? new Date(event.endDate) : null,
       category: event.category || 'other',
       reminder: event.reminder?.toString() || '15',
       reminderUnit: 'minutes',
@@ -286,6 +296,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Calendrier</Text>
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => setTutorialModalOpen(true)}
+        >
+          <Ionicons name="help-circle-outline" size={24} color="#7c3aed" />
+        </TouchableOpacity>
       </View>
 
       {/* View Mode Toggle */}
@@ -329,8 +345,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           style={styles.actionButton}
           onPress={() => setFilterModalOpen(true)}
         >
-          <Ionicons name="filter" size={20} color="#7c3aed" />
-          <Text style={styles.actionButtonText}>Filtres</Text>
+          <Ionicons name="filter" size={24} color="#7c3aed" />
           {categoryFilter && <View style={styles.actionButtonBadge} />}
         </TouchableOpacity>
 
@@ -339,8 +354,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           style={styles.actionButton}
           onPress={() => setSearchModalOpen(true)}
         >
-          <Ionicons name="search" size={20} color="#7c3aed" />
-          <Text style={styles.actionButtonText}>Recherche</Text>
+          <Ionicons name="search" size={24} color="#7c3aed" />
           {(searchQuery || searchStartDate || searchEndDate) && <View style={styles.actionButtonBadge} />}
         </TouchableOpacity>
 
@@ -349,8 +363,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           style={styles.actionButton}
           onPress={() => alert('À implémenter : Import ICS')}
         >
-          <Ionicons name="cloud-download-outline" size={20} color="#6b7280" />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextDisabled]}>Import</Text>
+          <Ionicons name="cloud-download-outline" size={24} color="#6b7280" />
         </TouchableOpacity>
 
         {/* Abonnement URL */}
@@ -358,8 +371,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           style={styles.actionButton}
           onPress={() => alert('À implémenter : Abonnement URL')}
         >
-          <Ionicons name="link-outline" size={20} color="#6b7280" />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextDisabled]}>Abonner</Text>
+          <Ionicons name="link-outline" size={24} color="#6b7280" />
         </TouchableOpacity>
       </View>
 
@@ -782,7 +794,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </>
               )}
 
-              <Text style={styles.label}>Date</Text>
+              <Text style={styles.label}>Date de début</Text>
               <TouchableOpacity
                 style={styles.datePickerButton}
                 onPress={() => setShowDatePicker(true)}
@@ -792,6 +804,25 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
               </TouchableOpacity>
+
+              <Text style={styles.label}>Date de fin (optionnel)</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowEndDatePicker(true)}
+              >
+                <Text style={styles.datePickerText}>
+                  {formData.endDate ? format(formData.endDate, 'EEEE d MMMM yyyy', { locale: getLocale() }) : 'Aucune (événement d\'un jour)'}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
+              </TouchableOpacity>
+              {formData.endDate && (
+                <TouchableOpacity
+                  style={styles.clearEndDateButton}
+                  onPress={() => setFormData(prev => ({ ...prev, endDate: null }))}
+                >
+                  <Text style={styles.clearEndDateText}>Effacer la date de fin</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.checkboxRow}
@@ -810,7 +841,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     style={styles.datePickerButton}
                     onPress={() => setShowStartTimePicker(true)}
                   >
-                    <Text style={styles.datePickerText}>{formData.startTime}</Text>
+                    <Text style={styles.datePickerText}>{formData.startTime || '09:00'}</Text>
                     <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
 
@@ -819,7 +850,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     style={styles.datePickerButton}
                     onPress={() => setShowEndTimePicker(true)}
                   >
-                    <Text style={styles.datePickerText}>{formData.endTime}</Text>
+                    <Text style={styles.datePickerText}>{formData.endTime || '10:00'}</Text>
                     <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
                 </>
@@ -887,7 +918,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 onPress={() => setFormData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
               >
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
-                  {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
+                  {formData.isPrivate && <Text style={styles.checkboxMark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxLabel}>🔒 Événement privé</Text>
               </TouchableOpacity>
@@ -1039,7 +1070,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </>
               )}
 
-              <Text style={styles.label}>Date</Text>
+              <Text style={styles.label}>Date de début</Text>
               <TouchableOpacity
                 style={styles.datePickerButton}
                 onPress={() => setShowDatePicker(true)}
@@ -1049,6 +1080,25 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
               </TouchableOpacity>
+
+              <Text style={styles.label}>Date de fin (optionnel)</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowEndDatePicker(true)}
+              >
+                <Text style={styles.datePickerText}>
+                  {formData.endDate ? format(formData.endDate, 'EEEE d MMMM yyyy', { locale: getLocale() }) : 'Aucune (événement d\'un jour)'}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#7c3aed" />
+              </TouchableOpacity>
+              {formData.endDate && (
+                <TouchableOpacity
+                  style={styles.clearEndDateButton}
+                  onPress={() => setFormData(prev => ({ ...prev, endDate: null }))}
+                >
+                  <Text style={styles.clearEndDateText}>Effacer la date de fin</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.checkboxContainer}
@@ -1067,7 +1117,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     style={styles.datePickerButton}
                     onPress={() => setShowStartTimePicker(true)}
                   >
-                    <Text style={styles.datePickerText}>{formData.startTime}</Text>
+                    <Text style={styles.datePickerText}>{formData.startTime || '09:00'}</Text>
                     <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
 
@@ -1076,7 +1126,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     style={styles.datePickerButton}
                     onPress={() => setShowEndTimePicker(true)}
                   >
-                    <Text style={styles.datePickerText}>{formData.endTime}</Text>
+                    <Text style={styles.datePickerText}>{formData.endTime || '10:00'}</Text>
                     <Ionicons name="time-outline" size={20} color="#7c3aed" />
                   </TouchableOpacity>
                 </>
@@ -1144,7 +1194,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 onPress={() => setFormData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
               >
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
-                  {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
+                  {formData.isPrivate && <Text style={styles.checkboxMark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxLabel}>🔒 Événement privé</Text>
               </TouchableOpacity>
@@ -1409,6 +1459,111 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           }}
         />
       )}
+
+      {showEndDatePicker && (
+        <DateTimePicker
+          value={formData.endDate || selectedDate}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setShowEndDatePicker(false);
+            if (date) setFormData(prev => ({ ...prev, endDate: date }));
+          }}
+        />
+      )}
+
+      {/* Tutorial Modal */}
+      <Modal
+        visible={tutorialModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTutorialModalOpen(false)}
+      >
+        <View style={styles.tutorialOverlay}>
+          <View style={styles.tutorialModal}>
+            <View style={styles.tutorialHeader}>
+              <Text style={styles.tutorialTitle}>Guide du Calendrier</Text>
+              <TouchableOpacity onPress={() => setTutorialModalOpen(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.tutorialContent}>
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>📅 Vues du calendrier</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Mois</Text> : Vue mensuelle avec tous les événements</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Semaine</Text> : Vue hebdomadaire détaillée</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Jour</Text> : Vue journalière avec timeline</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Agenda</Text> : Liste chronologique des événements à venir</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>➕ Créer un événement</Text>
+                <Text style={styles.tutorialText}>• Cliquez sur un jour vide pour créer un événement</Text>
+                <Text style={styles.tutorialText}>• Remplissez le titre, description, heure, catégorie</Text>
+                <Text style={styles.tutorialText}>• Invitez des participants de votre famille</Text>
+                <Text style={styles.tutorialText}>• Configurez un rappel et la récurrence</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>✏️ Modifier un événement</Text>
+                <Text style={styles.tutorialText}>• Cliquez sur un événement existant</Text>
+                <Text style={styles.tutorialText}>• Modifiez les informations souhaitées</Text>
+                <Text style={styles.tutorialText}>• Utilisez l'icône 💾 pour enregistrer</Text>
+                <Text style={styles.tutorialText}>• Utilisez l'icône 🗑️ pour supprimer</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔍 Filtres et recherche</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Filtres</Text> : Filtrez par catégorie (Repas, Anniversaire, etc.)</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Recherche</Text> : Recherchez par titre, description ou plage de dates</Text>
+                <Text style={styles.tutorialText}>• Combinez filtres et recherche pour affiner les résultats</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🎨 Catégories</Text>
+                <Text style={styles.tutorialText}>• 🍽️ Repas • 🎂 Anniversaire • 💼 Travail</Text>
+                <Text style={styles.tutorialText}>• ❤️ Personnel • ⚽ Sport • 📅 Autre</Text>
+                <Text style={styles.tutorialText}>Chaque catégorie a une couleur pour faciliter la visualisation</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔔 Rappels</Text>
+                <Text style={styles.tutorialText}>• Configurez un rappel en minutes, heures ou jours</Text>
+                <Text style={styles.tutorialText}>• Recevez une notification avant l'événement</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔁 Récurrence</Text>
+                <Text style={styles.tutorialText}>• Aucune : Événement unique</Text>
+                <Text style={styles.tutorialText}>• Journalier : Tous les jours</Text>
+                <Text style={styles.tutorialText}>• Hebdomadaire : Toutes les semaines</Text>
+                <Text style={styles.tutorialText}>• Mensuel : Tous les mois</Text>
+                <Text style={styles.tutorialText}>• Annuel : Tous les ans</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>👥 Participants</Text>
+                <Text style={styles.tutorialText}>• Invitez des membres de votre famille aux événements</Text>
+                <Text style={styles.tutorialText}>• Cochez les participants lors de la création/édition</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔒 Événements privés</Text>
+                <Text style={styles.tutorialText}>• Marquez un événement comme privé</Text>
+                <Text style={styles.tutorialText}>• Seul vous pourrez le voir</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.tutorialCloseButton}
+              onPress={() => setTutorialModalOpen(false)}
+            >
+              <Text style={styles.tutorialCloseButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -2169,6 +2324,87 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   recurrenceTextActive: {
     color: '#fff',
+  },
+
+  // Help Button
+  helpButton: {
+    marginLeft: 8,
+  },
+
+  // Tutorial Modal Styles
+  tutorialOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  tutorialModal: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '80%',
+  },
+  tutorialHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  tutorialTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: isDark ? '#fff' : '#1f2937',
+  },
+  tutorialContent: {
+    padding: 20,
+  },
+  tutorialSection: {
+    marginBottom: 20,
+  },
+  tutorialSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isDark ? '#fff' : '#1f2937',
+    marginBottom: 8,
+  },
+  tutorialText: {
+    fontSize: 14,
+    color: isDark ? '#d1d5db' : '#4b5563',
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  tutorialBold: {
+    fontWeight: 'bold',
+    color: isDark ? '#fff' : '#1f2937',
+  },
+  tutorialCloseButton: {
+    backgroundColor: '#7c3aed',
+    padding: 16,
+    margin: 20,
+    marginTop: 0,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  tutorialCloseButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Clear End Date Button
+  clearEndDateButton: {
+    marginTop: 8,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  clearEndDateText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
