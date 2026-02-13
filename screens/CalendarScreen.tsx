@@ -587,12 +587,23 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {/* Agenda View */}
         {viewMode === 'agenda' && (
           <View style={styles.agendaContainer}>
-            {events && events.length > 0 ? (
-              events
-                .filter(event => new Date(event.startDate) >= new Date())
-                .filter(event => !categoryFilter || event.category === categoryFilter)
-                .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-                .map((event, index, arr) => {
+            {(() => {
+              const filteredEvents = events
+                ? events
+                    .filter(event => new Date(event.startDate) >= new Date())
+                    .filter(event => !categoryFilter || event.category === categoryFilter)
+                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                : [];
+
+              if (filteredEvents.length === 0) {
+                return (
+                  <View style={styles.agendaEmpty}>
+                    <Text style={styles.agendaEmptyText}>Aucun événement à venir</Text>
+                  </View>
+                );
+              }
+
+              return filteredEvents.map((event, index, arr) => {
                   const eventDate = new Date(event.startDate);
                   const prevEventDate = index > 0 ? new Date(arr[index - 1].startDate) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
@@ -628,12 +639,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       </TouchableOpacity>
                     </View>
                   );
-                })
-            ) : (
-              <View style={styles.agendaEmpty}>
-                <Text style={styles.agendaEmptyText}>Aucun événement à venir</Text>
-              </View>
-            )}
+                });
+            })()}
           </View>
         )}
 
