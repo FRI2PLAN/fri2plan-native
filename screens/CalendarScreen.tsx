@@ -358,13 +358,15 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       {/* Header */}
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Calendrier</Text>
-        <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => setTutorialModalOpen(true)}
-        >
-          <Ionicons name="help-circle-outline" size={24} color="#7c3aed" />
-        </TouchableOpacity>
+        <View style={styles.pageTitleRow}>
+          <Text style={styles.pageTitle}>Calendrier</Text>
+          <TouchableOpacity
+            style={styles.helpButton}
+            onPress={() => setTutorialModalOpen(true)}
+          >
+            <Ionicons name="help-circle-outline" size={24} color="#7c3aed" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* View Mode Toggle */}
@@ -1802,11 +1804,19 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
+  pageTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-    textAlign: 'center',
+  },
+  helpButton: {
+    padding: 4,
   },
 
   // View Toggle Styles
