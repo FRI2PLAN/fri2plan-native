@@ -261,7 +261,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const icsContent = await response.text();
 
       // Parser et importer via tRPC
-      await importIcal.mutateAsync({ icsContent });
+      if (!familyId) {
+        Alert.alert('Erreur', 'Aucune famille active');
+        return;
+      }
+      await importIcal.mutateAsync({ familyId, icsContent });
       
       Alert.alert('Succès', 'Calendrier importé avec succès');
       setImportIcsModalOpen(false);
@@ -284,7 +288,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const icsContent = await response.text();
 
       // Importer via tRPC
-      await importIcal.mutateAsync({ icsContent });
+      if (!familyId) {
+        Alert.alert('Erreur', 'Aucune famille active');
+        return;
+      }
+      await importIcal.mutateAsync({ familyId, icsContent });
       
       Alert.alert('Succès', 'Calendrier importé avec succès');
       setSubscribeUrlModalOpen(false);
