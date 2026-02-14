@@ -1966,7 +1966,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               </TouchableOpacity>
             </View>
 
-            <View style={{ padding: 20 }}>
+            {/* Contenu scrollable */}
+            <ScrollView style={{ flex: 1, padding: 20 }}>
               <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 12 }}>
                 {parsedEvents.length} événement(s) trouvé(s). Sélectionnez ceux à importer.
               </Text>
@@ -2000,7 +2001,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               </TouchableOpacity>
 
               {/* Liste des événements */}
-              <ScrollView style={{ maxHeight: 400 }}>
+              <View style={{ marginBottom: 20 }}>
                 {parsedEvents.map((event) => (
                   <TouchableOpacity
                     key={event.tempId}
@@ -2041,31 +2042,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </View>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
+            </ScrollView>
 
-              {/* Barre de progression pendant l'import */}
-              {isImporting && (
-                <View style={{ marginTop: 16, padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>
-                    Importation en cours...
-                  </Text>
-                  <View style={{ width: '100%', height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
-                    <View 
-                      style={{ 
-                        height: '100%', 
-                        backgroundColor: '#7c3aed', 
-                        width: `${(importProgress.current / importProgress.total) * 100}%` 
-                      }} 
-                    />
-                  </View>
-                  <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                    {importProgress.current} / {importProgress.total} événements
-                    {importProgress.duplicates > 0 && ` (${importProgress.duplicates} doublon(s) ignoré(s))`}
-                  </Text>
-                </View>
-              )}
-
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+            {/* Boutons fixes en bas */}
+            <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#ffffff' }}>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonCancel, { flex: 1 }]}
                   onPress={() => {
@@ -2093,6 +2075,41 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Barre de progression en overlay (position absolute) */}
+            {isImporting && (
+              <View style={{ 
+                position: 'absolute', 
+                bottom: 100, 
+                left: 20, 
+                right: 20, 
+                padding: 16, 
+                backgroundColor: 'rgba(255, 255, 255, 0.98)', 
+                borderRadius: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+              }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#1f2937' }}>
+                  Importation en cours...
+                </Text>
+                <View style={{ width: '100%', height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                  <View 
+                    style={{ 
+                      height: '100%', 
+                      backgroundColor: '#7c3aed', 
+                      width: `${(importProgress.current / importProgress.total) * 100}%` 
+                    }} 
+                  />
+                </View>
+                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+                  {importProgress.current} / {importProgress.total} événements
+                  {importProgress.duplicates > 0 && ` (${importProgress.duplicates} doublon(s) ignoré(s))`}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>

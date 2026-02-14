@@ -1568,3 +1568,8 @@ components/
 ### Correction parser ICS multi-jours
 - [x] Corriger parser ICS : gérer DTSTART;VALUE=DATE et DTEND;VALUE=DATE pour événements multi-jours
 - [x] Événement "Olympic Games Italy" (06-23 fév) doit s'afficher sur tous les jours
+
+### Bug modal import ICS
+- [x] Corriger affichage modal import : boutons sortent du cadre pendant l'importation
+- [x] Barre de progression pousse les boutons "Annuler" et "Importation..." hors écran
+- [x] Solution : Barre de progression en position absolute (overlay) au-dessus de la liste
