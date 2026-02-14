@@ -1622,3 +1622,34 @@ components/
 
 - [x] Réorganiser filtres Tâches en grille 2x2 ou 2x3 (au lieu de scrollable horizontal)
 - [x] Boutons ajustés au texte, distribués symétriquement 50/50 par ligne
+
+
+---
+
+## 📢 NOTIFICATIONS
+- [ ] Notification tâche accomplie (envoyée aux membres de la famille)
+- [ ] Notification nouveau commentaire (envoyée au créateur et participants)
+- [ ] Mutation pour envoyer les notifications
+- [ ] Affichage des notifications dans l'app
+
+---
+
+## 🏠 PAGE ACCUEIL - COMPTEUR DÉTAILLÉ
+- [x] Afficher le nombre de tâches par priorité dans le bouton Tâches
+- [x] Layout: Total en haut, détail par priorité en dessous
+- [x] Format: 🔴 3  🟠 1  🟡 0  🟢 3
+- [x] Calcul useMemo tasksByPriority (total, urgent, high, medium, low)
+- [x] Affichage dans le widget avec flexDirection: row, gap: 8
+
+---
+
+## ❓ SYSTÈME DE TUTORIEL
+- [ ] Créer composant TutorialModal réutilisable
+- [ ] Icône ? à côté du titre de chaque page (style identique calendrier)
+- [ ] Contenu tutoriel pour chaque page:
+  * Calendrier: vues, filtres, import ICS, récurrence
+  * Tâches: appui long favoris, toggle étoile, commentaires, filtres
+  * Courses: (à définir)
+  * Dépenses: (à définir)
+  * Requêtes: (à définir)
+- [ ] Design: Modal avec fond semi-transparent, contenu scrollable

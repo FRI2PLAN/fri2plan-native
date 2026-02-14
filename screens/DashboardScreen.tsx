@@ -68,6 +68,18 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     }).length;
   }, [tasks]);
 
+  // Calculate tasks by priority (all non-completed tasks)
+  const tasksByPriority = useMemo(() => {
+    const nonCompletedTasks = tasks.filter(t => t.status !== 'completed');
+    return {
+      total: nonCompletedTasks.length,
+      urgent: nonCompletedTasks.filter(t => t.priority === 'urgent').length,
+      high: nonCompletedTasks.filter(t => t.priority === 'high').length,
+      medium: nonCompletedTasks.filter(t => t.priority === 'medium').length,
+      low: nonCompletedTasks.filter(t => t.priority === 'low').length,
+    };
+  }, [tasks]);
+
   const todayEvents = useMemo(() => {
     const today = new Date().toDateString();
     return events.filter(e => {
@@ -284,8 +296,21 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       activeOpacity={0.7}
                     >
                       <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-                      <Text style={styles.compactWidgetTitle}>Tâches à faire</Text>
-                      <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
+                      <Text style={styles.compactWidgetTitle}>Tâches ({tasksByPriority.total})</Text>
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                        <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                          🔴 {tasksByPriority.urgent}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                          🟠 {tasksByPriority.high}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                          🟡 {tasksByPriority.medium}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                          🟢 {tasksByPriority.low}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
 
                     {/* Widget Messages */}
