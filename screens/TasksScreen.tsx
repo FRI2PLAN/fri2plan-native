@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Modal, Switch, Alert } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { trpc } from '../lib/trpc';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -28,6 +28,52 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [tutorialStep, setTutorialStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [showFavoriteTooltip, setShowFavoriteTooltip] = useState(false);
+  const isInitialLoad = useRef(true);
+  const hasInitialized = useRef(false);
+
+  // Charger le filtre favori depuis la DB
+  useEffect(() => {
+    if (settingsLoading || hasInitialized.current) return;
+    
+    if (userSettings?.tasksSelectedList) {
+      const savedFilter = userSettings.tasksSelectedList as 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks';
+      setFavoriteFilter(savedFilter);
+      setFilter(savedFilter);
+    }
+    hasInitialized.current = true;
+    isInitialLoad.current = false;
+  }, [settingsLoading, userSettings?.tasksSelectedList]);
+
+  // Sauvegarder le filtre favori lors du changement (sauf au chargement initial)
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      return;
+    }
+    
+    if (favoriteFilter) {
+      updateSettings.mutate({ tasksSelectedList: favoriteFilter }, {
+        onSuccess: () => {
+          setTimeout(() => {
+            utils.settings.get.invalidate();
+          }, 100);
+        },
+      });
+    }
+  }, [favoriteFilter]);
+
+  // Afficher le tooltip à la première visite
+  useEffect(() => {
+    // TODO: Implémenter AsyncStorage pour vérifier si déjà vu
+    // Pour l'instant, afficher une seule fois par session
+    const timer = setTimeout(() => {
+      setShowFavoriteTooltip(true);
+      setTimeout(() => {
+        setShowFavoriteTooltip(false);
+      }, 5000);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Create task modal state
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -66,6 +112,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   // Fetch tasks from API
   const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery();
+
+  // Fetch current user
+  const { data: currentUser } = trpc.auth.me.useQuery();
+
+  // Fetch user settings
+  const { data: userSettings, isLoading: settingsLoading } = trpc.settings.get.useQuery();
+  const updateSettings = trpc.settings.update.useMutation();
+  const utils = trpc.useUtils();
 
   // Fetch family members for assignment
   const { data: members } = trpc.family.members.useQuery(
@@ -216,14 +270,57 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     setEditModalVisible(true);
   };
 
+  // Système d'appui long pour marquer un filtre comme favori
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressStartTimeRef = useRef<number>(0);
+
+  const handleLongPressStart = (tab: 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks') => {
+    setLongPressTarget(tab);
+    setLongPressProgress(0);
+    longPressStartTimeRef.current = Date.now();
+    
+    // Animation de progression
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - longPressStartTimeRef.current;
+      const progress = Math.min((elapsed / 500) * 100, 100);
+      setLongPressProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+      }
+    }, 16); // ~60fps
+    
+    longPressTimerRef.current = setTimeout(() => {
+      clearInterval(progressInterval);
+      // Après 500ms, marquer comme favori
+      if (favoriteFilter === tab) {
+        // Réinitialiser si déjà favori
+        setFavoriteFilter('all');
+        Alert.alert('Favori retiré', "L'onglet 'Toutes' sera affiché par défaut");
+      } else {
+        setFavoriteFilter(tab);
+        Alert.alert('Favori défini', 'Onglet défini comme favori');
+      }
+      setLongPressTarget(null);
+      setLongPressProgress(0);
+    }, 500) as any; // 500ms d'appui long
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setLongPressTarget(null);
+    setLongPressProgress(0);
+  };
+
   const filteredTasks = (tasks || []).filter(task => {
     if (filter === 'todo') return task.status === 'todo';
     if (filter === 'inProgress') return task.status === 'inProgress';
     if (filter === 'completed') return task.status === 'completed';
     if (filter === 'my-tasks') {
-      // TODO: Get current user ID from context
-      // For now, show tasks assigned to user ID 1
-      return task.assignedTo === 1;
+      return task.assignedTo === currentUser?.id;
     }
     return true;
   }).filter(task => 
@@ -324,16 +421,49 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       </View>
 
       {/* Filter Tabs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollContainer}>
-        <View style={styles.filterContainer}>
+      <View style={{ position: 'relative' }}>
+        {showFavoriteTooltip && (
+          <View style={{
+            position: 'absolute',
+            top: -60,
+            left: 20,
+            right: 20,
+            backgroundColor: '#7c3aed',
+            padding: 12,
+            borderRadius: 12,
+            zIndex: 1000,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+          }}>
+            <Text style={{ color: '#ffffff', fontSize: 12, textAlign: 'center', fontWeight: '500' }}>
+              Maintenez appuyé sur un onglet pour le définir comme favori par défaut !
+            </Text>
+            <View style={{
+              position: 'absolute',
+              bottom: -8,
+              left: '50%',
+              marginLeft: -8,
+              width: 0,
+              height: 0,
+              borderLeftWidth: 8,
+              borderRightWidth: 8,
+              borderTopWidth: 8,
+              borderLeftColor: 'transparent',
+              borderRightColor: 'transparent',
+              borderTopColor: '#7c3aed',
+            }} />
+          </View>
+        )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollContainer}>
+          <View style={styles.filterContainer}>
           <TouchableOpacity
             style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
+            onPressIn={() => handleLongPressStart('all')}
+            onPressOut={handleLongPressEnd}
             onPress={() => setFilter('all')}
-            onLongPress={() => {
-              setFavoriteFilter('all');
-              Alert.alert('Favori', 'Vue "Toutes" définie comme favorite !');
-            }}
-            delayLongPress={500}
           >
             <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
               {favoriteFilter === 'all' && '⭐ '}Toutes ({tasks?.length || 0})
@@ -341,12 +471,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterTab, filter === 'todo' && styles.filterTabActive]}
+            onPressIn={() => handleLongPressStart('todo')}
+            onPressOut={handleLongPressEnd}
             onPress={() => setFilter('todo')}
-            onLongPress={() => {
-              setFavoriteFilter('todo');
-              Alert.alert('Favori', 'Vue "À faire" définie comme favorite !');
-            }}
-            delayLongPress={500}
           >
             <Text style={[styles.filterText, filter === 'todo' && styles.filterTextActive]}>
               {favoriteFilter === 'todo' && '⭐ '}À faire ({tasks?.filter(t => t.status === 'todo').length || 0})
@@ -354,12 +481,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterTab, filter === 'inProgress' && styles.filterTabActive]}
+            onPressIn={() => handleLongPressStart('inProgress')}
+            onPressOut={handleLongPressEnd}
             onPress={() => setFilter('inProgress')}
-            onLongPress={() => {
-              setFavoriteFilter('inProgress');
-              Alert.alert('Favori', 'Vue "En cours" définie comme favorite !');
-            }}
-            delayLongPress={500}
           >
             <Text style={[styles.filterText, filter === 'inProgress' && styles.filterTextActive]}>
               {favoriteFilter === 'inProgress' && '⭐ '}En cours ({tasks?.filter(t => t.status === 'inProgress').length || 0})
@@ -367,12 +491,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterTab, filter === 'completed' && styles.filterTabActive]}
+            onPressIn={() => handleLongPressStart('completed')}
+            onPressOut={handleLongPressEnd}
             onPress={() => setFilter('completed')}
-            onLongPress={() => {
-              setFavoriteFilter('completed');
-              Alert.alert('Favori', 'Vue "Terminées" définie comme favorite !');
-            }}
-            delayLongPress={500}
           >
             <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>
               {favoriteFilter === 'completed' && '⭐ '}Terminées ({tasks?.filter(t => t.status === 'completed').length || 0})
@@ -380,19 +501,17 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterTab, filter === 'my-tasks' && styles.filterTabActive]}
+            onPressIn={() => handleLongPressStart('my-tasks')}
+            onPressOut={handleLongPressEnd}
             onPress={() => setFilter('my-tasks')}
-            onLongPress={() => {
-              setFavoriteFilter('my-tasks');
-              Alert.alert('Favori', 'Vue "Mes tâches" définie comme favorite !');
-            }}
-            delayLongPress={500}
           >
             <Text style={[styles.filterText, filter === 'my-tasks' && styles.filterTextActive]}>
-              {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches
+              {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches ({tasks?.filter(t => t.assignedTo === currentUser?.id).length || 0})
             </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </View>
 
       {/* Tasks List */}
       <ScrollView 

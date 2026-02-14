@@ -1586,11 +1586,11 @@ components/
 - [x] Afficher l'icône de priorité sur chaque carte de tâche
 
 ### Phase 2 : Fonctionnalités importantes (PRIORITÉ MOYENNE)
-- [ ] Système de favoris : appui long sur un filtre pour le marquer ⭐
-- [ ] Sauvegarde du filtre favori en DB via settings.tasksSelectedList
-- [ ] Animation de progression pendant l'appui long
-- [ ] Tooltip d'aide au premier lancement
-- [ ] Filtre "Mes tâches" fonctionnel avec compteur correct
+- [x] Système de favoris : appui long sur un filtre pour le marquer ⭐
+- [x] Sauvegarde du filtre favori en DB via settings.tasksSelectedList
+- [x] Animation de progression pendant l'appui long
+- [x] Tooltip d'aide au premier lancement
+- [x] Filtre "Mes tâches" fonctionnel avec compteur correct
 
 ### Phase 3 : Fonctionnalités moyennes (OPTIONNEL)
 - [ ] Drag & Drop pour réorganiser les tâches
