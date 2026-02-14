@@ -20,10 +20,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
 
-  const [filter, setFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks'>('todo');
-  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks'>('todo');
+  const [filter, setFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites'>('todo');
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites'>('todo');
   const [longPressProgress, setLongPressProgress] = useState(0);
-  const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | null>(null);
+  const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites' | null>(null);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -172,6 +172,16 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     },
   });
 
+  // Mutation to toggle favorite
+  const toggleFavoriteMutation = trpc.tasks.toggleFavorite.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
+      Alert.alert('Erreur', error.message || 'Impossible de modifier le favori');
+    },
+  });
+
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
@@ -274,7 +284,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressStartTimeRef = useRef<number>(0);
 
-  const handleLongPressStart = (tab: 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks') => {
+  const handleLongPressStart = (tab: 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites') => {
     setLongPressTarget(tab);
     setLongPressProgress(0);
     longPressStartTimeRef.current = Date.now();
@@ -321,6 +331,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (filter === 'completed') return task.status === 'completed';
     if (filter === 'my-tasks') {
       return task.assignedTo === currentUser?.id;
+    }
+    if (filter === 'favorites') {
+      return task.isFavorite === 1;
     }
     return true;
   }).filter(task => 
@@ -457,10 +470,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             }} />
           </View>
         )}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollContainer}>
-          <View style={styles.filterContainer}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
+            style={[styles.filterTab, filter === 'all' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
             onPressIn={() => handleLongPressStart('all')}
             onPressOut={handleLongPressEnd}
             onPress={() => setFilter('all')}
@@ -470,7 +483,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'todo' && styles.filterTabActive]}
+            style={[styles.filterTab, filter === 'todo' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
             onPressIn={() => handleLongPressStart('todo')}
             onPressOut={handleLongPressEnd}
             onPress={() => setFilter('todo')}
@@ -480,7 +493,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'inProgress' && styles.filterTabActive]}
+            style={[styles.filterTab, filter === 'inProgress' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
             onPressIn={() => handleLongPressStart('inProgress')}
             onPressOut={handleLongPressEnd}
             onPress={() => setFilter('inProgress')}
@@ -490,7 +503,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'completed' && styles.filterTabActive]}
+            style={[styles.filterTab, filter === 'completed' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
             onPressIn={() => handleLongPressStart('completed')}
             onPressOut={handleLongPressEnd}
             onPress={() => setFilter('completed')}
@@ -500,7 +513,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'my-tasks' && styles.filterTabActive]}
+            style={[styles.filterTab, filter === 'my-tasks' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
             onPressIn={() => handleLongPressStart('my-tasks')}
             onPressOut={handleLongPressEnd}
             onPress={() => setFilter('my-tasks')}
@@ -509,8 +522,18 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches ({tasks?.filter(t => t.assignedTo === currentUser?.id).length || 0})
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'favorites' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
+            onPressIn={() => handleLongPressStart('favorites')}
+            onPressOut={handleLongPressEnd}
+            onPress={() => setFilter('favorites')}
+          >
+            <Text style={[styles.filterText, filter === 'favorites' && styles.filterTextActive]}>
+              {favoriteFilter === 'favorites' && '⭐ '}Favoris ({tasks?.filter(t => t.isFavorite === 1).length || 0})
+            </Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+        </View>
       </View>
 
       {/* Tasks List */}
@@ -546,12 +569,26 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               </TouchableOpacity>
 
               <View style={styles.taskContent}>
-                <Text style={[
-                  styles.taskTitle,
-                  task.status === 'completed' && styles.taskTitleCompleted
-                ]}>
-                  {getPriorityEmoji(task.priority as Priority)} {task.title}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={[
+                    styles.taskTitle,
+                    task.status === 'completed' && styles.taskTitleCompleted,
+                    { flex: 1 }
+                  ]}>
+                    {getPriorityEmoji(task.priority as Priority)} {task.title}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      toggleFavoriteMutation.mutate({ taskId: task.id });
+                    }}
+                    style={{ padding: 8 }}
+                  >
+                    <Text style={{ fontSize: 20 }}>
+                      {task.isFavorite === 1 ? '⭐' : '☆'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 
                 {task.description && (
                   <Text style={styles.taskDescription}>{task.description}</Text>

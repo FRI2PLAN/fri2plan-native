@@ -1610,6 +1610,11 @@ components/
 ---
 
 ## 📋 PHASE 3 TÂCHES (SANS DRAG & DROP)
-- [ ] Toggle favori sur les tâches individuelles (icône ⭐ sur chaque carte)
-- [ ] Mutation toggleFavorite pour marquer/démarquer une tâche
+- [x] Toggle favori sur les tâches individuelles (icône ⭐ sur chaque carte)
+- [x] Mutation toggleFavorite pour marquer/démarquer une tâche
+- [x] Filtre "Favoris" pour afficher uniquement les tâches favorites
+- [x] Réorganisation filtres en grille 2x2 ou 2x3 (50/50 par ligne)
 - [ ] Système de commentaires sur les tâches
+
+- [x] Réorganiser filtres Tâches en grille 2x2 ou 2x3 (au lieu de scrollable horizontal)
+- [x] Boutons ajustés au texte, distribués symétriquement 50/50 par ligne
