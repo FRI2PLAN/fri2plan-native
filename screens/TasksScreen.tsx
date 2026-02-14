@@ -182,6 +182,31 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     },
   });
 
+  // Comments state and mutations
+  const [commentText, setCommentText] = useState('');
+  const { data: comments, refetch: refetchComments } = trpc.tasks.getComments.useQuery(
+    { taskId: selectedTask?.id || 0 },
+    { enabled: !!selectedTask?.id }
+  );
+  
+  const addCommentMutation = trpc.tasks.addComment.useMutation({
+    onSuccess: () => {
+      setCommentText('');
+      refetchComments();
+    },
+    onError: (error) => {
+      Alert.alert('Erreur', error.message || 'Impossible d\'ajouter le commentaire');
+    },
+  });
+
+  const handleAddComment = () => {
+    if (!selectedTask || !commentText.trim()) return;
+    addCommentMutation.mutate({
+      taskId: selectedTask.id,
+      content: commentText.trim(),
+    });
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
@@ -261,6 +286,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const handleTaskClick = (task: any) => {
     setSelectedTask(task);
+    setCommentText(''); // Réinitialiser le champ commentaire
     setDetailModalVisible(true);
   };
 
@@ -979,6 +1005,68 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                     <Text style={styles.detailText}>🔒 Privé</Text>
                   </View>
                 )}
+
+                {/* Comments Section */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>💬 Commentaires ({comments?.length || 0})</Text>
+                  
+                  {/* Comments List */}
+                  {comments && comments.length > 0 && (
+                    <View style={{ marginTop: 12, marginBottom: 16 }}>
+                      {comments.map((comment: any) => (
+                        <View key={comment.id} style={{
+                          backgroundColor: isDark ? '#374151' : '#f3f4f6',
+                          padding: 12,
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <Text style={{ color: '#7c3aed', fontWeight: '600', fontSize: 13 }}>
+                              {comment.userName || 'Utilisateur'}
+                            </Text>
+                            <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}>
+                              {format(new Date(comment.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                            </Text>
+                          </View>
+                          <Text style={{ color: isDark ? '#e5e7eb' : '#1f2937', fontSize: 14 }}>
+                            {comment.content}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Add Comment Input */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        { flex: 1, paddingVertical: 10 }
+                      ]}
+                      placeholder="Ajouter un commentaire..."
+                      placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
+                      value={commentText}
+                      onChangeText={setCommentText}
+                      multiline
+                    />
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: '#7c3aed',
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={handleAddComment}
+                      disabled={!commentText.trim() || addCommentMutation.isPending}
+                    >
+                      <Text style={{ color: '#ffffff', fontWeight: '600' }}>
+                        {addCommentMutation.isPending ? '⏳' : '➤'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </ScrollView>
             )}
 

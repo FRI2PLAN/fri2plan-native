@@ -1614,7 +1614,11 @@ components/
 - [x] Mutation toggleFavorite pour marquer/démarquer une tâche
 - [x] Filtre "Favoris" pour afficher uniquement les tâches favorites
 - [x] Réorganisation filtres en grille 2x2 ou 2x3 (50/50 par ligne)
-- [ ] Système de commentaires sur les tâches
+- [x] Système de commentaires sur les tâches
+- [x] Query getComments pour charger les commentaires d'une tâche
+- [x] Mutation addComment pour ajouter un commentaire
+- [x] UI: Liste des commentaires avec auteur + date
+- [x] UI: Input pour ajouter un nouveau commentaire
 
 - [x] Réorganiser filtres Tâches en grille 2x2 ou 2x3 (au lieu de scrollable horizontal)
 - [x] Boutons ajustés au texte, distribués symétriquement 50/50 par ligne
