@@ -431,6 +431,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             title: event.title,
             description: event.description || undefined,
             startDate: event.startDate,
+            endDate: event.endDate || undefined,
             durationMinutes,
             category: 'other',
             recurrence: undefined,

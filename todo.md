@@ -1596,3 +1596,20 @@ components/
 - [ ] Drag & Drop pour réorganiser les tâches
 - [ ] Toggle favori sur les tâches individuelles (icône ⭐)
 - [ ] Système de commentaires sur les tâches
+
+
+---
+
+## 🐛 BUG CALENDRIER - PARSER ICS MULTI-JOURS
+- [x] Événement "Olympic Games" (6-23 fév) ne s'affiche que sur 1 jour
+- [x] Vérifier la logique de création des occurrences multi-jours
+- [x] Bug trouvé : endDate n'était pas envoyé à la mutation createEvent lors de l'import ICS
+- [x] Correction : Ajout de endDate dans la mutation (ligne 434)
+- [ ] Tester avec le fichier basic.ics après correction
+
+---
+
+## 📋 PHASE 3 TÂCHES (SANS DRAG & DROP)
+- [ ] Toggle favori sur les tâches individuelles (icône ⭐ sur chaque carte)
+- [ ] Mutation toggleFavorite pour marquer/démarquer une tâche
+- [ ] Système de commentaires sur les tâches
