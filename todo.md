@@ -1573,3 +1573,26 @@ components/
 - [x] Corriger affichage modal import : boutons sortent du cadre pendant l'importation
 - [x] Barre de progression pousse les boutons "Annuler" et "Importation..." hors écran
 - [x] Solution : Barre de progression en position absolute (overlay) au-dessus de la liste
+
+
+---
+
+## 📋 AMÉLIORATION PAGE TÂCHES - 14 FÉV 2026
+
+### Phase 1 : Fonctionnalités critiques (PRIORITÉ HAUTE)
+- [x] Affichage visuel des priorités (🔴 Urgent, 🟠 Haute, 🟡 Moyenne, 🟢 Faible)
+- [x] Système de statuts complet (todo/inProgress/completed au lieu de active/completed)
+- [x] Filtres corrects avec compteurs (À faire, En cours, Terminées, Mes tâches)
+- [x] Afficher l'icône de priorité sur chaque carte de tâche
+
+### Phase 2 : Fonctionnalités importantes (PRIORITÉ MOYENNE)
+- [ ] Système de favoris : appui long sur un filtre pour le marquer ⭐
+- [ ] Sauvegarde du filtre favori en DB via settings.tasksSelectedList
+- [ ] Animation de progression pendant l'appui long
+- [ ] Tooltip d'aide au premier lancement
+- [ ] Filtre "Mes tâches" fonctionnel avec compteur correct
+
+### Phase 3 : Fonctionnalités moyennes (OPTIONNEL)
+- [ ] Drag & Drop pour réorganiser les tâches
+- [ ] Toggle favori sur les tâches individuelles (icône ⭐)
+- [ ] Système de commentaires sur les tâches

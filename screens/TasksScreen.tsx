@@ -20,10 +20,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
 
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
-  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
+  const [filter, setFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks'>('todo');
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks'>('todo');
   const [longPressProgress, setLongPressProgress] = useState(0);
-  const [longPressTarget, setLongPressTarget] = useState<'all' | 'active' | 'completed' | 'my-tasks' | null>(null);
+  const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | null>(null);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -217,7 +217,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   const filteredTasks = (tasks || []).filter(task => {
-    if (filter === 'active') return task.status !== 'completed';
+    if (filter === 'todo') return task.status === 'todo';
+    if (filter === 'inProgress') return task.status === 'inProgress';
     if (filter === 'completed') return task.status === 'completed';
     if (filter === 'my-tasks') {
       // TODO: Get current user ID from context
@@ -270,8 +271,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return 'À faire';
-      case 'in_progress': return 'En cours';
+      case 'todo': return 'À faire';
+      case 'inProgress': return 'En cours';
       case 'completed': return 'Terminée';
       default: return status;
     }
@@ -339,16 +340,29 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterTab, filter === 'active' && styles.filterTabActive]}
-            onPress={() => setFilter('active')}
+            style={[styles.filterTab, filter === 'todo' && styles.filterTabActive]}
+            onPress={() => setFilter('todo')}
             onLongPress={() => {
-              setFavoriteFilter('active');
+              setFavoriteFilter('todo');
+              Alert.alert('Favori', 'Vue "À faire" définie comme favorite !');
+            }}
+            delayLongPress={500}
+          >
+            <Text style={[styles.filterText, filter === 'todo' && styles.filterTextActive]}>
+              {favoriteFilter === 'todo' && '⭐ '}À faire ({tasks?.filter(t => t.status === 'todo').length || 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, filter === 'inProgress' && styles.filterTabActive]}
+            onPress={() => setFilter('inProgress')}
+            onLongPress={() => {
+              setFavoriteFilter('inProgress');
               Alert.alert('Favori', 'Vue "En cours" définie comme favorite !');
             }}
             delayLongPress={500}
           >
-            <Text style={[styles.filterText, filter === 'active' && styles.filterTextActive]}>
-              {favoriteFilter === 'active' && '⭐ '}En cours ({tasks?.filter(t => t.status !== 'completed').length || 0})
+            <Text style={[styles.filterText, filter === 'inProgress' && styles.filterTextActive]}>
+              {favoriteFilter === 'inProgress' && '⭐ '}En cours ({tasks?.filter(t => t.status === 'inProgress').length || 0})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -417,7 +431,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   styles.taskTitle,
                   task.status === 'completed' && styles.taskTitleCompleted
                 ]}>
-                  {task.title}
+                  {getPriorityEmoji(task.priority as Priority)} {task.title}
                 </Text>
                 
                 {task.description && (
