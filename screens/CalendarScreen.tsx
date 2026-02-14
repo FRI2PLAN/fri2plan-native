@@ -267,12 +267,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   // Parser une date ICS
-  const parseICSDate = (dateStr: string): Date => {
-    // Format: 20250313T193000 ou 20250313T193000Z
+  const parseICSDate = (dateStr: string, isAllDay: boolean = false): Date => {
+    // Format: 20250313T193000 ou 20250313T193000Z ou 20250313 (VALUE=DATE)
     const cleaned = dateStr.replace(/[TZ]/g, '');
     const year = parseInt(cleaned.substring(0, 4));
     const month = parseInt(cleaned.substring(4, 6)) - 1;
     const day = parseInt(cleaned.substring(6, 8));
+    
+    // Pour les événements VALUE=DATE (multi-jours), utiliser minuit
+    if (isAllDay || cleaned.length === 8) {
+      return new Date(year, month, day, 0, 0, 0);
+    }
+    
     const hour = parseInt(cleaned.substring(8, 10) || '0');
     const minute = parseInt(cleaned.substring(10, 12) || '0');
     return new Date(year, month, day, hour, minute);
@@ -325,13 +331,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           const value = valueParts.join(':');
           
           if (key.startsWith('DTSTART')) {
-            currentEvent.startDate = parseICSDate(value);
             // Détecter si c'est un événement sur toute la journée
-            if (key.includes('VALUE=DATE')) {
+            const isAllDay = key.includes('VALUE=DATE');
+            currentEvent.startDate = parseICSDate(value, isAllDay);
+            if (isAllDay) {
               currentEvent.isAllDay = true;
             }
           } else if (key.startsWith('DTEND')) {
-            currentEvent.endDate = parseICSDate(value);
+            // Utiliser isAllDay si déjà détecté dans DTSTART
+            const isAllDay = currentEvent.isAllDay || key.includes('VALUE=DATE');
+            currentEvent.endDate = parseICSDate(value, isAllDay);
           } else if (key === 'SUMMARY') {
             currentEvent.title = value;
           } else if (key === 'DESCRIPTION') {
@@ -807,6 +816,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         {format(new Date(event.startDate), 'HH:mm')}
                       </Text>
                       {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
+                      {event.recurrence && <Text style={styles.privateIcon}>🔁</Text>}
                     </View>
                     <Text style={styles.eventTitle}>{event.title}</Text>
                     {event.description && (
@@ -871,6 +881,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                               {format(eventDate, 'HH:mm')}
                             </Text>
                             {event.isPrivate && <Text style={styles.agendaPrivateIcon}>🔒</Text>}
+                            {event.recurrence && <Text style={styles.agendaPrivateIcon}>🔁</Text>}
                           </View>
                           <Text style={styles.agendaEventTitle}>{event.title}</Text>
                           {event.description && (
@@ -965,7 +976,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             >
                               <Text style={styles.weekEventIcon}>{category.icon}</Text>
                               <Text style={styles.weekEventTitle} numberOfLines={1}>
-                                {event.title}
+                                {event.recurrence && '🔁 '}{event.title}
                               </Text>
                               <Text style={styles.weekEventTime}>
                                 {format(startTime, 'HH:mm')}
@@ -1046,6 +1057,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                               <Text style={styles.dayEventIcon}>{category.icon}</Text>
                               <Text style={styles.dayEventTitle} numberOfLines={1}>{event.title}</Text>
                               {event.isPrivate && <Text style={styles.dayEventPrivate}>🔒</Text>}
+                              {event.recurrence && <Text style={styles.dayEventPrivate}>🔁</Text>}
                             </View>
                             {event.description && durationMinutes > 30 && (
                               <Text style={styles.dayEventDescription} numberOfLines={2}>
@@ -1642,6 +1654,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                           {format(new Date(event.startDate), 'HH:mm')} - {format(new Date(new Date(event.startDate).getTime() + (event.durationMinutes || 60) * 60000), 'HH:mm')}
                         </Text>
                         {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
+                        {event.recurrence && <Text style={styles.dropdownPrivateIcon}>🔁</Text>}
                       </View>
                       <Text style={styles.dropdownEventTitle}>{event.title}</Text>
                       {event.description && (
@@ -2013,7 +2026,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     />
                     <View style={{ marginLeft: 12, flex: 1 }}>
                       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>
-                        {event.title || 'Sans titre'}
+                        {event.recurrence && '🔁 '}{event.title || 'Sans titre'}
                       </Text>
                       {event.startDate && (
                         <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>

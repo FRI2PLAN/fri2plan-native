@@ -1556,3 +1556,15 @@ components/
 ## Fonctionnalité duplication
 - [x] Ajouter bouton "Dupliquer" dans modal création d'événement (entre Annuler et Enregistrer)
 - [x] Ajouter bouton "Dupliquer" dans modal modification d'événement (entre Annuler et Enregistrer)
+
+
+---
+
+## 🔁 AMÉLIORATIONS CALENDRIER - 14 FÉV 2026
+
+### Symbole récurrence
+- [x] Ajouter symbole 🔁 pour les événements récurrents dans l'affichage du calendrier
+
+### Correction parser ICS multi-jours
+- [x] Corriger parser ICS : gérer DTSTART;VALUE=DATE et DTEND;VALUE=DATE pour événements multi-jours
+- [x] Événement "Olympic Games Italy" (06-23 fév) doit s'afficher sur tous les jours
