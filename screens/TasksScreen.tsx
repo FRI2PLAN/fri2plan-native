@@ -1224,9 +1224,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   Utilisez les onglets pour filtrer vos tâches :
                   {"\n\n"}
                   • Toutes : Affiche toutes les tâches
-                  {"\n"}• En cours : Tâches non terminées
+                  {"\n"}• À faire : Tâches pas encore commencées
+                  {"\n"}• En cours : Tâches en cours de réalisation
                   {"\n"}• Terminées : Tâches complétées
                   {"\n"}• Mes tâches : Tâches assignées à vous
+                  {"\n"}• Favoris ⭐ : Tâches marquées comme favorites
                 </Text>
               </View>
             )}
@@ -1246,7 +1248,35 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
             {tutorialStep === 3 && (
               <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>4. Modifier et Supprimer</Text>
+                <Text style={styles.tutorialStepTitle}>4. Tâches favorites ⭐</Text>
+                <Text style={styles.tutorialText}>
+                  Marquez vos tâches importantes comme favorites !
+                  {"\n\n"}
+                  Appuyez sur l'étoile ☆ à droite du titre pour la transformer en ⭐.
+                  {"\n\n"}
+                  Les tâches favorites apparaissent dans l'onglet "Favoris" pour un accès rapide.
+                </Text>
+              </View>
+            )}
+
+            {tutorialStep === 4 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>5. Commentaires 💬</Text>
+                <Text style={styles.tutorialText}>
+                  Collaborez avec votre famille via les commentaires !
+                  {"\n\n"}
+                  Appuyez sur une tâche pour voir ses détails, puis scrollez jusqu'en bas pour :
+                  {"\n"}• Voir les commentaires existants
+                  {"\n"}• Ajouter un nouveau commentaire
+                  {"\n\n"}
+                  Chaque commentaire affiche l'auteur et la date.
+                </Text>
+              </View>
+            )}
+
+            {tutorialStep === 5 && (
+              <View style={styles.tutorialContent}>
+                <Text style={styles.tutorialStepTitle}>6. Modifier et Supprimer</Text>
                 <Text style={styles.tutorialText}>
                   Appuyez sur une tâche pour voir ses détails.
                   {"\n\n"}
@@ -1261,7 +1291,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
             <View style={styles.tutorialFooter}>
               <Text style={styles.tutorialProgress}>
-                {tutorialStep + 1} / 4
+                {tutorialStep + 1} / 6
               </Text>
               <View style={styles.tutorialButtons}>
                 {tutorialStep > 0 && (
@@ -1272,7 +1302,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                     <Text style={styles.tutorialButtonSecondaryText}>Précédent</Text>
                   </TouchableOpacity>
                 )}
-                {tutorialStep < 3 ? (
+                {tutorialStep < 5 ? (
                   <TouchableOpacity 
                     style={styles.tutorialButtonPrimary}
                     onPress={() => setTutorialStep(tutorialStep + 1)}

@@ -1644,12 +1644,16 @@ components/
 ---
 
 ## ❓ SYSTÈME DE TUTORIEL
-- [ ] Créer composant TutorialModal réutilisable
-- [ ] Icône ? à côté du titre de chaque page (style identique calendrier)
-- [ ] Contenu tutoriel pour chaque page:
-  * Calendrier: vues, filtres, import ICS, récurrence
-  * Tâches: appui long favoris, toggle étoile, commentaires, filtres
+- [x] Créer composant TutorialModal réutilisable
+- [x] Icône ? à côté du titre de chaque page (style identique calendrier)
+- [x] Contenu tutoriel pour chaque page:
+  * Calendrier: vues, filtres, import ICS, récurrence (✅ déjà implémenté)
+  * Tâches: appui long favoris, toggle étoile, commentaires, filtres (✅ mis à jour)
   * Courses: (à définir)
   * Dépenses: (à définir)
   * Requêtes: (à définir)
-- [ ] Design: Modal avec fond semi-transparent, contenu scrollable
+- [x] Design: Modal avec fond semi-transparent, contenu scrollable
+- [x] Tutoriel Tâches mis à jour (6 étapes au lieu de 4):
+  * Étape 4: Tâches favorites ⭐
+  * Étape 5: Commentaires 💬
+  * Étape 2: Ajout filtre "Favoris" dans la liste
