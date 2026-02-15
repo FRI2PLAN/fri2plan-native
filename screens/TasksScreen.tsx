@@ -569,6 +569,48 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               key={task.id} 
               style={styles.taskCard}
               onPress={() => handleTaskClick(task)}
+              onLongPress={() => {
+                Alert.alert(
+                  task.title,
+                  'Choisissez une action',
+                  [
+                    {
+                      text: '✅ Valider',
+                      onPress: () => toggleTask(task.id),
+                    },
+                    {
+                      text: '✏️ Modifier',
+                      onPress: () => {
+                        setSelectedTask(task);
+                        setIsEditing(true);
+                        setEditModalOpen(true);
+                      },
+                    },
+                    {
+                      text: '🗑️ Supprimer',
+                      onPress: () => {
+                        Alert.alert(
+                          'Confirmer la suppression',
+                          `Êtes-vous sûr de vouloir supprimer la tâche "${task.title}" ?`,
+                          [
+                            { text: 'Annuler', style: 'cancel' },
+                            {
+                              text: 'Supprimer',
+                              style: 'destructive',
+                              onPress: () => deleteMutation.mutate({ taskId: task.id }),
+                            },
+                          ]
+                        );
+                      },
+                      style: 'destructive',
+                    },
+                    {
+                      text: 'Annuler',
+                      style: 'cancel',
+                    },
+                  ]
+                );
+              }}
               activeOpacity={0.7}
             >
               <TouchableOpacity 
@@ -1049,18 +1091,20 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               </ScrollView>
             )}
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { justifyContent: 'center', gap: 24 }]}>
               <TouchableOpacity 
-                style={[styles.cancelButton, { flex: 0.4 }]}
                 onPress={handleDeleteTask}
+                style={{ alignItems: 'center' }}
               >
-                <Text style={[styles.cancelButtonText, { color: '#ef4444' }]}>Supprimer</Text>
+                <Ionicons name="trash-outline" size={28} color="#ef4444" />
+                <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>Supprimer</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.createButton}
                 onPress={handleEditClick}
+                style={{ alignItems: 'center' }}
               >
-                <Text style={styles.createButtonText}>Modifier</Text>
+                <Ionicons name="pencil-outline" size={28} color="#7c3aed" />
+                <Text style={{ color: '#7c3aed', fontSize: 12, marginTop: 4 }}>Modifier</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1108,6 +1152,50 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   multiline
                   numberOfLines={3}
                 />
+              </View>
+
+              {/* Assign To */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Assigner à</Text>
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => setShowAssignPicker(true)}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {getMemberName(editFormData.assignedTo)}
+                  </Text>
+                  <Text style={styles.pickerArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Due Date */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Date d'échéance</Text>
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {editFormData.dueDate 
+                      ? format(editFormData.dueDate, 'dd/MM/yyyy HH:mm', { locale: fr })
+                      : 'Choisir une date'}
+                  </Text>
+                  <Text style={styles.pickerArrow}>📅</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Recurrence */}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Récurrence</Text>
+                <TouchableOpacity 
+                  style={styles.pickerButton}
+                  onPress={() => setShowRecurrencePicker(true)}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {getRecurrenceLabel(editFormData.recurrence)}
+                  </Text>
+                  <Text style={styles.pickerArrow}>▼</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Points */}

@@ -1679,15 +1679,17 @@ components/
 - [ ] Contenu: format présentation (comme Calendrier), pas tutoriel step-by-step
 
 ### Interaction longue presse
-- [ ] Appui long sur une tâche: choix Supprimer, Modifier, Valider (terminer la tâche)
-- [ ] Clic court sur une tâche: détail de la tâche
+- [x] Appui long sur une tâche: choix Supprimer, Modifier, Valider (terminer la tâche)
+- [x] Clic court sur une tâche: détail de la tâche (inchangé)
 
 ### Modal de détails
-- [ ] Remplacer boutons "Supprimer" et "Modifier" par icônes Poubelle 🗑️ et Stylo ✏️
+- [x] Remplacer boutons "Supprimer" et "Modifier" par icônes Poubelle 🗑️ et Stylo ✏️
+- [x] Icônes Ionicons: trash-outline et pencil-outline
 
 ### Modal de modification
-- [ ] Clic sur "Modifier": ouvrir le même modal que création
-- [ ] Champs: titre, description, assigner, date échéance, récurrence, points, priorité
+- [x] Clic sur "Modifier": ouvrir le même modal que création
+- [x] Champs: titre, description, assigner, date échéance, récurrence, points, priorité
+- [x] Format identique à la modal de création
 
 ### Bug commentaires
 - [ ] Corriger erreur "no procedure found on path" lors de l'ajout d'un commentaire
