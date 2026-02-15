@@ -1692,4 +1692,6 @@ components/
 - [x] Format identique à la modal de création
 
 ### Bug commentaires
-- [ ] Corriger erreur "no procedure found on path" lors de l'ajout d'un commentaire
+- [x] Corriger erreur "no procedure found on path" lors de l'ajout d'un commentaire
+- [x] Cause: Mismatch entre routes frontend (tasks.getComments/addComment) et backend (taskComments.list/create)
+- [x] Solution: Utiliser trpc.taskComments.list et trpc.taskComments.create

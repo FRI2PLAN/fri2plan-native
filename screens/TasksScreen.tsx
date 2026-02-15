@@ -184,12 +184,12 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   // Comments state and mutations
   const [commentText, setCommentText] = useState('');
-  const { data: comments, refetch: refetchComments } = trpc.tasks.getComments.useQuery(
+  const { data: comments, refetch: refetchComments } = trpc.taskComments.list.useQuery(
     { taskId: selectedTask?.id || 0 },
     { enabled: !!selectedTask?.id }
   );
   
-  const addCommentMutation = trpc.tasks.addComment.useMutation({
+  const addCommentMutation = trpc.taskComments.create.useMutation({
     onSuccess: () => {
       setCommentText('');
       refetchComments();
