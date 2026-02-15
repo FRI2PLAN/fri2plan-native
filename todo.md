@@ -1698,3 +1698,11 @@ components/
 - [x] Corriger erreur "no procedure found on path" lors de l'ajout d'un commentaire
 - [x] Cause: Mismatch entre routes frontend (tasks.getComments/addComment) et backend (taskComments.list/create)
 - [x] Solution: Utiliser trpc.taskComments.list et trpc.taskComments.create
+
+
+---
+
+## 🐛 BUG URGENT - IMPORT IONICONS MANQUANT
+- [x] Ajouter l'import de Ionicons depuis @expo/vector-icons dans TasksScreen.tsx
+- [x] Erreur: "Property 'Ionicons' doesn't exist" dans le tutoriel
+- [x] Import ajouté: import { Ionicons } from '@expo/vector-icons';
