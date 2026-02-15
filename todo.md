@@ -1675,8 +1675,11 @@ components/
 - [ ] Espace entre page header (titre) et "Nouvelle tâche" = espace entre "Nouvelle tâche" et champ de recherche
 
 ### Icône tutoriel
-- [ ] Point d'interrogation identique au Calendrier (help-circle-outline)
-- [ ] Contenu: format présentation (comme Calendrier), pas tutoriel step-by-step
+- [x] Point d'interrogation identique au Calendrier (help-circle-outline)
+- [x] Contenu: format présentation (comme Calendrier), pas tutoriel step-by-step
+- [x] Remplacement tutoriel step-by-step par format présentation avec sections scrollables
+- [x] 8 sections: Créer, Filtrer, Favori, Priorités, Modifier, Commentaires, Récurrence, Privé
+- [x] Styles identiques au Calendrier (tutorialModal, tutorialHeader, tutorialSection, etc.)
 
 ### Interaction longue presse
 - [x] Appui long sur une tâche: choix Supprimer, Modifier, Valider (terminer la tâche)

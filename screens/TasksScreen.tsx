@@ -25,7 +25,6 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [longPressProgress, setLongPressProgress] = useState(0);
   const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites' | null>(null);
   const [tutorialVisible, setTutorialVisible] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showFavoriteTooltip, setShowFavoriteTooltip] = useState(false);
@@ -1261,118 +1260,86 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       </Modal>
 
       {/* Tutorial Modal */}
-      <Modal visible={tutorialVisible} animationType="slide" transparent>
+      <Modal visible={tutorialVisible} animationType="fade" transparent onRequestClose={() => setTutorialVisible(false)}>
         <View style={styles.tutorialOverlay}>
-          <View style={styles.tutorialContainer}>
-            <Text style={styles.tutorialTitle}>🎓 Guide des Tâches</Text>
-            
-            {tutorialStep === 0 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>1. Créer une tâche</Text>
-                <Text style={styles.tutorialText}>
-                  Appuyez sur le bouton violet "+ Nouvelle tâche" pour créer une tâche.
-                  {"\n\n"}
-                  Vous pouvez définir :
-                  {"\n"}• Titre et description
-                  {"\n"}• Assigner à un membre
-                  {"\n"}• Date et heure d'échéance
-                  {"\n"}• Récurrence (quotidienne, hebdomadaire, etc.)
-                  {"\n"}• Points de récompense
-                  {"\n"}• Priorité (4 niveaux)
-                  {"\n"}• Privé ou public
-                </Text>
-              </View>
-            )}
-
-            {tutorialStep === 1 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>2. Filtrer les tâches</Text>
-                <Text style={styles.tutorialText}>
-                  Utilisez les onglets pour filtrer vos tâches :
-                  {"\n\n"}
-                  • Toutes : Affiche toutes les tâches
-                  {"\n"}• À faire : Tâches pas encore commencées
-                  {"\n"}• En cours : Tâches en cours de réalisation
-                  {"\n"}• Terminées : Tâches complétées
-                  {"\n"}• Mes tâches : Tâches assignées à vous
-
-                </Text>
-              </View>
-            )}
-
-            {tutorialStep === 2 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>3. Système Favori ⭐</Text>
-                <Text style={styles.tutorialText}>
-                  Maintenez appuyé (500ms) sur un onglet pour le définir comme favori !
-                  {"\n\n"}
-                  L'onglet favori affichera une étoile ⭐ et sera votre vue par défaut au démarrage.
-                  {"\n\n"}
-                  Astuce : Utilisez "Mes tâches" comme favori pour voir rapidement vos tâches personnelles !
-                </Text>
-              </View>
-            )}
-
-            {tutorialStep === 3 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>4. Commentaires 💬</Text>
-                <Text style={styles.tutorialText}>
-                  Collaborez avec votre famille via les commentaires !
-                  {"\n\n"}
-                  Appuyez sur une tâche pour voir ses détails, puis scrollez jusqu'en bas pour :
-                  {"\n"}• Voir les commentaires existants
-                  {"\n"}• Ajouter un nouveau commentaire
-                  {"\n\n"}
-                  Chaque commentaire affiche l'auteur et la date.
-                </Text>
-              </View>
-            )}
-
-            {tutorialStep === 4 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>5. Modifier et Supprimer</Text>
-                <Text style={styles.tutorialText}>
-                  Appuyez sur une tâche pour voir ses détails.
-                  {"\n\n"}
-                  Dans le dialog de détails :
-                  {"\n"}• Bouton "Modifier" : Modifier la tâche
-                  {"\n"}• Bouton "Supprimer" : Supprimer la tâche (avec confirmation)
-                  {"\n\n"}
-                  Vous pouvez aussi marquer une tâche comme terminée en cochant la case.
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.tutorialFooter}>
-              <Text style={styles.tutorialProgress}>
-                {tutorialStep + 1} / 5
-              </Text>
-              <View style={styles.tutorialButtons}>
-                {tutorialStep > 0 && (
-                  <TouchableOpacity 
-                    style={styles.tutorialButtonSecondary}
-                    onPress={() => setTutorialStep(tutorialStep - 1)}
-                  >
-                    <Text style={styles.tutorialButtonSecondaryText}>Précédent</Text>
-                  </TouchableOpacity>
-                )}
-                {tutorialStep < 4 ? (
-                  <TouchableOpacity 
-                    style={styles.tutorialButtonPrimary}
-                    onPress={() => setTutorialStep(tutorialStep + 1)}
-                  >
-                    <Text style={styles.tutorialButtonPrimaryText}>Suivant</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity 
-                    style={styles.tutorialButtonPrimary}
-                    onPress={() => setTutorialVisible(false)}
-                  >
-                    <Text style={styles.tutorialButtonPrimaryText}>Terminé</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+          <View style={styles.tutorialModal}>
+            <View style={styles.tutorialHeader}>
+              <Text style={styles.tutorialTitle}>🎓 Guide des Tâches</Text>
+              <TouchableOpacity onPress={() => setTutorialVisible(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
             </View>
+
+            <ScrollView style={styles.tutorialContent}>
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>➕ Créer une tâche</Text>
+                <Text style={styles.tutorialText}>• Appuyez sur <Text style={styles.tutorialBold}>+ Nouvelle tâche</Text> pour créer une tâche</Text>
+                <Text style={styles.tutorialText}>• Définissez le titre, description, priorité, échéance</Text>
+                <Text style={styles.tutorialText}>• Assignez à un membre de la famille</Text>
+                <Text style={styles.tutorialText}>• Configurez la récurrence et les points de récompense</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🏷️ Filtrer les tâches</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Toutes</Text> : Affiche toutes les tâches</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>À faire</Text> : Tâches pas encore commencées</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>En cours</Text> : Tâches en cours de réalisation</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Terminées</Text> : Tâches complétées</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Mes tâches</Text> : Tâches assignées à vous</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>⭐ Système Favori</Text>
+                <Text style={styles.tutorialText}>• Maintenez appuyé (500ms) sur un onglet pour le définir comme favori</Text>
+                <Text style={styles.tutorialText}>• L'onglet favori affichera une étoile ⭐</Text>
+                <Text style={styles.tutorialText}>• Sera votre vue par défaut au démarrage</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🎨 Priorités</Text>
+                <Text style={styles.tutorialText}>• 🔴 <Text style={styles.tutorialBold}>Urgent</Text> : Tâches critiques</Text>
+                <Text style={styles.tutorialText}>• 🟠 <Text style={styles.tutorialBold}>Haute</Text> : Tâches importantes</Text>
+                <Text style={styles.tutorialText}>• 🟡 <Text style={styles.tutorialBold}>Moyenne</Text> : Tâches normales</Text>
+                <Text style={styles.tutorialText}>• 🟢 <Text style={styles.tutorialBold}>Faible</Text> : Tâches secondaires</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>✏️ Modifier une tâche</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Appui court</Text> : Voir les détails de la tâche</Text>
+                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Appui long</Text> : Menu avec Valider, Modifier, Supprimer</Text>
+                <Text style={styles.tutorialText}>• Icônes 🗑️ (Poubelle) et ✏️ (Stylo) dans les détails</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>💬 Commentaires</Text>
+                <Text style={styles.tutorialText}>• Collaborez avec votre famille via les commentaires</Text>
+                <Text style={styles.tutorialText}>• Appuyez sur une tâche pour voir ses détails</Text>
+                <Text style={styles.tutorialText}>• Scrollez jusqu'en bas pour voir et ajouter des commentaires</Text>
+                <Text style={styles.tutorialText}>• Chaque commentaire affiche l'auteur et la date</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔁 Récurrence</Text>
+                <Text style={styles.tutorialText}>• Aucune : Tâche unique</Text>
+                <Text style={styles.tutorialText}>• Journalière : Tous les jours</Text>
+                <Text style={styles.tutorialText}>• Hebdomadaire : Toutes les semaines</Text>
+                <Text style={styles.tutorialText}>• Mensuelle : Tous les mois</Text>
+                <Text style={styles.tutorialText}>• Annuelle : Tous les ans</Text>
+              </View>
+
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>🔒 Tâches privées</Text>
+                <Text style={styles.tutorialText}>• Marquez une tâche comme privée</Text>
+                <Text style={styles.tutorialText}>• Seul vous pourrez la voir</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.tutorialCloseButton}
+              onPress={() => setTutorialVisible(false)}
+            >
+              <Text style={styles.tutorialCloseButtonText}>Fermer</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1757,76 +1724,62 @@ function getStyles(isDark: boolean) {
     // Tutorial Styles
     tutorialOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
     },
-    tutorialContainer: {
-      backgroundColor: isDark ? '#2a2a2a' : '#fff',
+    tutorialModal: {
+      backgroundColor: isDark ? '#1f2937' : '#fff',
       borderRadius: 16,
-      padding: 24,
       width: '100%',
-      maxWidth: 400,
+      maxWidth: 500,
+      maxHeight: '80%',
     },
-    tutorialTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: isDark ? '#ffffff' : '#2a2a2a',
-      textAlign: 'center',
-      marginBottom: 20,
-    },
-    tutorialContent: {
-      marginBottom: 24,
-    },
-    tutorialStepTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#7c3aed',
-      marginBottom: 12,
-    },
-    tutorialText: {
-      fontSize: 15,
-      lineHeight: 22,
-      color: isDark ? '#d1d5db' : '#4b5563',
-    },
-    tutorialFooter: {
-      borderTopWidth: 1,
-      borderTopColor: isDark ? '#374151' : '#e5e7eb',
-      paddingTop: 16,
-    },
-    tutorialProgress: {
-      fontSize: 14,
-      color: isDark ? '#9ca3af' : '#6b7280',
-      textAlign: 'center',
-      marginBottom: 12,
-    },
-    tutorialButtons: {
+    tutorialHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      gap: 12,
-    },
-    tutorialButtonPrimary: {
-      flex: 1,
-      backgroundColor: '#7c3aed',
-      padding: 14,
-      borderRadius: 8,
       alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#374151' : '#e5e7eb',
     },
-    tutorialButtonPrimaryText: {
-      color: '#fff',
+    tutorialTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: isDark ? '#ffffff' : '#1f2937',
+    },
+    tutorialContent: {
+      padding: 20,
+    },
+    tutorialSection: {
+      marginBottom: 20,
+    },
+    tutorialSectionTitle: {
       fontSize: 16,
       fontWeight: '600',
+      color: '#7c3aed',
+      marginBottom: 8,
     },
-    tutorialButtonSecondary: {
-      flex: 1,
-      backgroundColor: isDark ? '#374151' : '#f3f4f6',
-      padding: 14,
-      borderRadius: 8,
+    tutorialText: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: isDark ? '#d1d5db' : '#4b5563',
+      marginBottom: 4,
+    },
+    tutorialBold: {
+      fontWeight: '600',
+      color: isDark ? '#ffffff' : '#1f2937',
+    },
+    tutorialCloseButton: {
+      backgroundColor: '#7c3aed',
+      padding: 16,
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
       alignItems: 'center',
     },
-    tutorialButtonSecondaryText: {
-      color: isDark ? '#f5f5dc' : '#2a2a2a',
+    tutorialCloseButtonText: {
+      color: '#ffffff',
       fontSize: 16,
       fontWeight: '600',
     },
