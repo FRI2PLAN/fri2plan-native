@@ -358,9 +358,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (filter === 'my-tasks') {
       return task.assignedTo === currentUser?.id;
     }
-    if (filter === 'favorites') {
-      return task.isFavorite === 1;
-    }
+
     return true;
   }).filter(task => 
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -548,16 +546,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches ({tasks?.filter(t => t.assignedTo === currentUser?.id).length || 0})
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'favorites' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
-            onPressIn={() => handleLongPressStart('favorites')}
-            onPressOut={handleLongPressEnd}
-            onPress={() => setFilter('favorites')}
-          >
-            <Text style={[styles.filterText, filter === 'favorites' && styles.filterTextActive]}>
-              {favoriteFilter === 'favorites' && '⭐ '}Favoris ({tasks?.filter(t => t.isFavorite === 1).length || 0})
-            </Text>
-          </TouchableOpacity>
+
         </View>
         </View>
       </View>
@@ -603,17 +592,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   ]}>
                     {getPriorityEmoji(task.priority as Priority)} {task.title}
                   </Text>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      toggleFavoriteMutation.mutate({ taskId: task.id });
-                    }}
-                    style={{ padding: 8 }}
-                  >
-                    <Text style={{ fontSize: 20 }}>
-                      {task.isFavorite === 1 ? '⭐' : '☆'}
-                    </Text>
-                  </TouchableOpacity>
+
                 </View>
                 
                 {task.description && (
@@ -1228,7 +1207,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   {"\n"}• En cours : Tâches en cours de réalisation
                   {"\n"}• Terminées : Tâches complétées
                   {"\n"}• Mes tâches : Tâches assignées à vous
-                  {"\n"}• Favoris ⭐ : Tâches marquées comme favorites
+
                 </Text>
               </View>
             )}
@@ -1248,20 +1227,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
             {tutorialStep === 3 && (
               <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>4. Tâches favorites ⭐</Text>
-                <Text style={styles.tutorialText}>
-                  Marquez vos tâches importantes comme favorites !
-                  {"\n\n"}
-                  Appuyez sur l'étoile ☆ à droite du titre pour la transformer en ⭐.
-                  {"\n\n"}
-                  Les tâches favorites apparaissent dans l'onglet "Favoris" pour un accès rapide.
-                </Text>
-              </View>
-            )}
-
-            {tutorialStep === 4 && (
-              <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>5. Commentaires 💬</Text>
+                <Text style={styles.tutorialStepTitle}>4. Commentaires 💬</Text>
                 <Text style={styles.tutorialText}>
                   Collaborez avec votre famille via les commentaires !
                   {"\n\n"}
@@ -1274,9 +1240,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               </View>
             )}
 
-            {tutorialStep === 5 && (
+            {tutorialStep === 4 && (
               <View style={styles.tutorialContent}>
-                <Text style={styles.tutorialStepTitle}>6. Modifier et Supprimer</Text>
+                <Text style={styles.tutorialStepTitle}>5. Modifier et Supprimer</Text>
                 <Text style={styles.tutorialText}>
                   Appuyez sur une tâche pour voir ses détails.
                   {"\n\n"}
@@ -1291,7 +1257,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
             <View style={styles.tutorialFooter}>
               <Text style={styles.tutorialProgress}>
-                {tutorialStep + 1} / 6
+                {tutorialStep + 1} / 5
               </Text>
               <View style={styles.tutorialButtons}>
                 {tutorialStep > 0 && (
@@ -1302,7 +1268,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                     <Text style={styles.tutorialButtonSecondaryText}>Précédent</Text>
                   </TouchableOpacity>
                 )}
-                {tutorialStep < 5 ? (
+                {tutorialStep < 4 ? (
                   <TouchableOpacity 
                     style={styles.tutorialButtonPrimary}
                     onPress={() => setTutorialStep(tutorialStep + 1)}

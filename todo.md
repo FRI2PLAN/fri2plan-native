@@ -1657,3 +1657,37 @@ components/
   * Étape 4: Tâches favorites ⭐
   * Étape 5: Commentaires 💬
   * Étape 2: Ajout filtre "Favoris" dans la liste
+
+
+---
+
+## 🔧 AMÉLIORATIONS TÂCHES - NOUVELLES DEMANDES
+
+### Filtres et recherche
+- [x] Supprimer le bouton "Favoris" (pas de sens pour les tâches)
+- [x] Garder 4 boutons distribués sur 2 lignes (2x2): À faire, En cours, Terminées, Mes tâches
+- [ ] Option alternative: 2 champs (menu déroulant)
+  * Loupe pour recherche (menu déroulant avec champ de recherche)
+  * Filtre: avec les boutons À faire, En cours, Terminées, Mes tâches
+- [x] Supprimer l'étoile favori sur les tâches individuelles
+
+### Espacement et layout
+- [ ] Espace entre page header (titre) et "Nouvelle tâche" = espace entre "Nouvelle tâche" et champ de recherche
+
+### Icône tutoriel
+- [ ] Point d'interrogation identique au Calendrier (help-circle-outline)
+- [ ] Contenu: format présentation (comme Calendrier), pas tutoriel step-by-step
+
+### Interaction longue presse
+- [ ] Appui long sur une tâche: choix Supprimer, Modifier, Valider (terminer la tâche)
+- [ ] Clic court sur une tâche: détail de la tâche
+
+### Modal de détails
+- [ ] Remplacer boutons "Supprimer" et "Modifier" par icônes Poubelle 🗑️ et Stylo ✏️
+
+### Modal de modification
+- [ ] Clic sur "Modifier": ouvrir le même modal que création
+- [ ] Champs: titre, description, assigner, date échéance, récurrence, points, priorité
+
+### Bug commentaires
+- [ ] Corriger erreur "no procedure found on path" lors de l'ajout d'un commentaire
