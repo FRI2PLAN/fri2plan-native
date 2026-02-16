@@ -1706,3 +1706,32 @@ components/
 - [x] Ajouter l'import de Ionicons depuis @expo/vector-icons dans TasksScreen.tsx
 - [x] Erreur: "Property 'Ionicons' doesn't exist" dans le tutoriel
 - [x] Import ajouté: import { Ionicons } from '@expo/vector-icons';
+
+
+---
+
+## 🐛 BUGS TÂCHES À CORRIGER
+
+### Filtre Mes tâches
+- [x] Enlever le filtre "Mes tâches" (pas nécessaire)
+- [x] Suppression du bouton "Mes tâches" dans les filtres
+- [x] Suppression de 'my-tasks' et 'favorites' des types
+- [x] Suppression de la référence dans le tutoriel
+
+### Appui long sur tâche
+- [x] Bug: Valider (terminer tâche) ne fonctionne pas
+- [x] Solution: Corriger completeMutation.mutate({ taskId: id }) au lieu de { id }
+- [x] Bug: Modifier affiche un message d'erreur
+- [x] Solution: Corriger l'appui long pour définir editFormData correctement
+
+### Modification de tâche
+- [ ] Bug: Modification de priorité affiche confirmation mais rien ne change
+- [ ] Vérifier que les mutations updateTask fonctionnent correctement
+
+### Icône tutoriel
+- [ ] Message d'erreur mais fonctionne quand même
+- [ ] Icône différente du Calendrier : utiliser la même icône (help-circle-outline)
+
+### Espacement
+- [ ] Espace entre page header et "Nouvelle tâche" ≠ espace entre "Nouvelle tâche" et barre de recherche
+- [ ] Uniformiser les espacements

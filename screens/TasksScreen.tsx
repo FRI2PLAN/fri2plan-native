@@ -21,10 +21,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
 
-  const [filter, setFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites'>('todo');
-  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites'>('todo');
+  const [filter, setFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed'>('todo');
+  const [favoriteFilter, setFavoriteFilter] = useState<'all' | 'todo' | 'inProgress' | 'completed'>('todo');
   const [longPressProgress, setLongPressProgress] = useState(0);
-  const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites' | null>(null);
+  const [longPressTarget, setLongPressTarget] = useState<'all' | 'todo' | 'inProgress' | 'completed' | null>(null);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +37,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (settingsLoading || hasInitialized.current) return;
     
     if (userSettings?.tasksSelectedList) {
-      const savedFilter = userSettings.tasksSelectedList as 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks';
+      const savedFilter = userSettings.tasksSelectedList as 'all' | 'todo' | 'inProgress' | 'completed';
       setFavoriteFilter(savedFilter);
       setFilter(savedFilter);
     }
@@ -214,7 +214,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   const toggleTask = (id: number) => {
-    completeMutation.mutate({ id });
+    completeMutation.mutate({ taskId: id });
   };
 
   const resetForm = () => {
@@ -310,7 +310,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressStartTimeRef = useRef<number>(0);
 
-  const handleLongPressStart = (tab: 'all' | 'todo' | 'inProgress' | 'completed' | 'my-tasks' | 'favorites') => {
+  const handleLongPressStart = (tab: 'all' | 'todo' | 'inProgress' | 'completed') => {
     setLongPressTarget(tab);
     setLongPressProgress(0);
     longPressStartTimeRef.current = Date.now();
@@ -536,16 +536,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               {favoriteFilter === 'completed' && '⭐ '}Terminées ({tasks?.filter(t => t.status === 'completed').length || 0})
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterTab, filter === 'my-tasks' && styles.filterTabActive, { flex: 1, minWidth: '48%' }]}
-            onPressIn={() => handleLongPressStart('my-tasks')}
-            onPressOut={handleLongPressEnd}
-            onPress={() => setFilter('my-tasks')}
-          >
-            <Text style={[styles.filterText, filter === 'my-tasks' && styles.filterTextActive]}>
-              {favoriteFilter === 'my-tasks' && '⭐ '}Mes tâches ({tasks?.filter(t => t.assignedTo === currentUser?.id).length || 0})
-            </Text>
-          </TouchableOpacity>
+
 
         </View>
         </View>
@@ -582,8 +573,17 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                       text: '✏️ Modifier',
                       onPress: () => {
                         setSelectedTask(task);
-                        setIsEditing(true);
-                        setEditModalOpen(true);
+                        setEditFormData({
+                          title: task.title,
+                          description: task.description || '',
+                          assignedTo: task.assignedTo,
+                          dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+                          recurrence: 'none',
+                          points: task.points || 10,
+                          priority: task.priority || 'medium',
+                          isPrivate: task.isPrivate === 1,
+                        });
+                        setEditModalVisible(true);
                       },
                     },
                     {
@@ -1286,7 +1286,6 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>À faire</Text> : Tâches pas encore commencées</Text>
                 <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>En cours</Text> : Tâches en cours de réalisation</Text>
                 <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Terminées</Text> : Tâches complétées</Text>
-                <Text style={styles.tutorialText}>• <Text style={styles.tutorialBold}>Mes tâches</Text> : Tâches assignées à vous</Text>
               </View>
 
               <View style={styles.tutorialSection}>
