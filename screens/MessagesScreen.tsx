@@ -337,17 +337,17 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       
       {/* Header with tabs */}
       <View style={styles.pageTitleContainer}>
-        <View style={styles.titleRow}>
-          <Text style={styles.pageTitle}>Messages</Text>
-          <TouchableOpacity
-            style={styles.tutorialButton}
-            onPress={() => setShowTutorial(true)}
-          >
-            <Ionicons name="help-circle-outline" size={28} color="#7c3aed" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.pageTitle}>Messages</Text>
+        <TouchableOpacity
+          style={styles.tutorialButton}
+          onPress={() => setShowTutorial(true)}
+        >
+          <Ionicons name="help-circle" size={24} color="#7c3aed" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Onglets */}
+      {/* Tabs Container */}
+      <View style={styles.tabsOuterContainer}>
         <View style={styles.tabsContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'family' && styles.tabActive]}
@@ -728,15 +728,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-  },
-  titleRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    position: 'relative',
   },
   pageTitle: {
     fontSize: 24,
@@ -745,7 +743,14 @@ const styles = StyleSheet.create({
   },
   tutorialButton: {
     position: 'absolute',
-    right: 0,
+    right: 20,
+    padding: 4,
+  },
+  tabsOuterContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   tabsContainer: {
     flexDirection: 'row',
