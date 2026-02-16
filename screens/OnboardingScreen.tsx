@@ -8,9 +8,13 @@ import {
   ScrollView,
   Dimensions,
   SafeAreaView,
+  TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { trpc } from '../lib/trpc';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -24,6 +28,7 @@ interface OnboardingStep {
     pageIndex: number;
   };
   category: 'essential' | 'premium' | 'advanced';
+  requiresFamilyCreation?: boolean;
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
@@ -144,6 +149,18 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
   {
+    title: "Créez votre cercle familial 👨‍👩‍👧‍👦",
+    description: "Pour utiliser FRI2PLAN, vous devez créer votre premier cercle familial. Vous en serez l'administrateur et pourrez inviter d'autres membres.",
+    icon: "people-circle",
+    category: "essential",
+    tips: [
+      "Choisissez un nom simple (ex: Famille Dupont, Les Martin...)",
+      "Vous pourrez inviter d'autres membres avec un code d'invitation",
+      "Vous serez automatiquement administrateur de ce cercle"
+    ],
+    requiresFamilyCreation: true,
+  },
+  {
     title: "Vous êtes prêt ! 🚀",
     description: "Vous avez découvert toutes les fonctionnalités principales. Commencez à organiser votre vie familiale dès maintenant !",
     icon: "checkmark-done-circle",
@@ -164,6 +181,23 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ visible, onComplete, onNavigate }: OnboardingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [familyName, setFamilyName] = useState('');
+  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
+
+  const utils = trpc.useUtils();
+  const createFamily = trpc.family.create.useMutation({
+    onSuccess: () => {
+      Alert.alert('Succès', 'Votre cercle familial a été créé !');
+      utils.family.list.invalidate();
+      setFamilyName('');
+      setIsCreatingFamily(false);
+      handleNext();
+    },
+    onError: (error) => {
+      Alert.alert('Erreur', error.message || 'Erreur lors de la création du cercle');
+      setIsCreatingFamily(false);
+    },
+  });
 
   const step = ONBOARDING_STEPS[currentStep];
   const isFirstStep = currentStep === 0;
@@ -192,7 +226,21 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
   };
 
   const handleSkip = () => {
+    // Ne pas permettre de skip l'étape de création de famille
+    if (step.requiresFamilyCreation) {
+      Alert.alert('Création obligatoire', 'Vous devez créer un cercle familial pour utiliser l\'application');
+      return;
+    }
     onComplete();
+  };
+
+  const handleCreateFamily = () => {
+    if (!familyName.trim()) {
+      Alert.alert('Erreur', 'Le nom du cercle est requis');
+      return;
+    }
+    setIsCreatingFamily(true);
+    createFamily.mutate({ name: familyName.trim() });
   };
 
   return (
@@ -248,6 +296,39 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
                 </View>
               ))}
             </View>
+
+            {/* Family Creation Form */}
+            {step.requiresFamilyCreation && (
+              <View style={styles.familyCreationForm}>
+                <Text style={styles.formLabel}>Nom de votre cercle familial *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Ex: Famille Dupont, Les Martin..."
+                  placeholderTextColor="#9ca3af"
+                  value={familyName}
+                  onChangeText={setFamilyName}
+                  editable={!isCreatingFamily}
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.createFamilyButton,
+                    (!familyName.trim() || isCreatingFamily) && styles.createFamilyButtonDisabled
+                  ]}
+                  onPress={handleCreateFamily}
+                  disabled={!familyName.trim() || isCreatingFamily}
+                  activeOpacity={0.8}
+                >
+                  {isCreatingFamily ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <>
+                      <Ionicons name="people" size={20} color="#ffffff" />
+                      <Text style={styles.createFamilyButtonText}>Créer mon cercle</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Action Button */}
             {step.action && (
@@ -317,7 +398,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: '#1a1a1a',
   },
   container: {
     flex: 1,
@@ -423,14 +504,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     marginTop: 8,
-  },
-  actionButtonText: {
+  },  actionButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 8,
   },
-  navigation: {
+  familyCreationForm: {
+    width: '100%',
+    marginTop: 24,
+    gap: 16,
+  },
+  formLabel: {
+    color: '#f5f5dc',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#4b5563',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#f5f5dc',
+  },
+  createFamilyButton: {
+    backgroundColor: '#7c3aed',
+    borderRadius: 12,
+    paddingVertical: 16,
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  createFamilyButtonDisabled: {
+    opacity: 0.5,
+  },
+  createFamilyButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },  flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
