@@ -1729,9 +1729,12 @@ components/
 - [ ] Vérifier que les mutations updateTask fonctionnent correctement
 
 ### Icône tutoriel
-- [ ] Message d'erreur mais fonctionne quand même
-- [ ] Icône différente du Calendrier : utiliser la même icône (help-circle-outline)
+- [x] Message d'erreur mais fonctionne quand même
+- [x] Icône différente du Calendrier : utiliser la même icône (help-circle-outline)
+- [x] Remplacement de <Text>?</Text> par <Ionicons name="help-circle-outline" size={28} color="#7c3aed" />
+- [x] Suppression de setTutorialStep(0) (plus utilisé)
 
 ### Espacement
-- [ ] Espace entre page header et "Nouvelle tâche" ≠ espace entre "Nouvelle tâche" et barre de recherche
-- [ ] Uniformiser les espacements
+- [x] Espace entre page header et "Nouvelle tâche" ≠ espace entre "Nouvelle tâche" et barre de recherche
+- [x] Uniformiser les espacements
+- [x] Solution: pageTitleContainer paddingBottom: 16 (au lieu de 12) pour correspondre aux autres

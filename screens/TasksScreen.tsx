@@ -429,10 +429,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           style={styles.tutorialButton}
           onPress={() => {
             setTutorialVisible(true);
-            setTutorialStep(0);
           }}
         >
-          <Text style={styles.tutorialButtonText}>?</Text>
+          <Ionicons name="help-circle-outline" size={28} color="#7c3aed" />
         </TouchableOpacity>
       </View>
 
@@ -1357,7 +1356,7 @@ function getStyles(isDark: boolean) {
     pageTitleContainer: {
       backgroundColor: isDark ? '#2a2a2a' : '#fff',
       paddingTop: 16,
-      paddingBottom: 12,
+      paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#374151' : '#e5e7eb',
       flexDirection: 'row',
