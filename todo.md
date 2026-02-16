@@ -1751,8 +1751,46 @@ components/
 
 ---
 
-## 📱 PAGE MESSAGES - ANALYSE WEBVIEW → REACT NATIVE
-- [ ] Analyser le code de la page Messages dans la WebView (organiseur-familial)
-- [ ] Identifier les fonctionnalités principales
-- [ ] Comparer avec React Native actuel
-- [ ] Implémenter les fonctionnalités manquantes
+## 📱 PAGE MESSAGES - IMPLÉMENTATION COMPLÈTE
+
+### Phase 1 : Fonctionnalités critiques
+- [ ] Onglets Famille/Groupes (2 onglets avec switch)
+- [ ] Pièces jointes (fichiers, images, vidéos)
+  * Bouton Caméra (expo-image-picker)
+  * Bouton Fichier (expo-document-picker)
+  * Upload vers S3 (messages.uploadFile)
+  * Prévisualisation avant envoi
+  * Affichage des pièces jointes dans les messages
+- [ ] Réactions emoji sur les messages
+  * Bouton Smile sur chaque message
+  * Ajout de réaction (messages.addReaction)
+  * Affichage des réactions avec compteur
+- [ ] Suppression de messages
+  * Bouton Trash sur chaque message
+  * Confirmation avant suppression
+  * Mutation messages.delete
+- [ ] Marquer comme lu
+  * Mutation messages.markAsRead au chargement
+  * Réinitialisation du compteur de messages non lus
+
+### Phase 2 : Fonctionnalités importantes
+- [ ] Picker d'émojis (48 émojis fréquents)
+  * Bouton Smile dans l'input
+  * Modal avec liste d'émojis
+  * Insertion dans le message
+- [ ] Pagination (50 messages par page)
+  * Bouton "Charger plus" si hasMore
+  * Offset pour charger les messages précédents
+- [ ] Scroll automatique vers le bas après envoi
+- [ ] Bouton "Scroll to top" si on scroll vers le haut
+- [ ] Bouton tutoriel (?) à côté du titre
+  * Icône help-circle-outline (identique Calendrier/Tâches)
+  * Modal de présentation des fonctionnalités
+
+### Phase 3 : Fonctionnalités moyennes
+- [ ] Envoi avec Enter (Shift+Enter pour nouvelle ligne)
+- [ ] Nom réel de l'expéditeur (au lieu de "Utilisateur #X")
+- [ ] Compression d'images avant upload
+  * maxWidth: 1920
+  * quality: 0.8
+  * Conversion en JPEG
