@@ -109,6 +109,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [showAssignPicker, setShowAssignPicker] = useState(false);
   const [showRecurrencePicker, setShowRecurrencePicker] = useState(false);
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
+  const [showEditPriorityPicker, setShowEditPriorityPicker] = useState(false);
 
   // Fetch tasks from API
   const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery();
@@ -928,7 +929,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         </View>
       </Modal>
 
-      {/* Priority Picker Modal */}
+      {/* Priority Picker Modal (Create) */}
       <Modal
         visible={showPriorityPicker}
         animationType="slide"
@@ -955,6 +956,40 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             <TouchableOpacity 
               style={styles.pickerCloseButton}
               onPress={() => setShowPriorityPicker(false)}
+            >
+              <Text style={styles.pickerCloseButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Priority Picker Modal (Edit) */}
+      <Modal
+        visible={showEditPriorityPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEditPriorityPicker(false)}
+      >
+        <View style={styles.pickerModalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <Text style={styles.pickerModalTitle}>Priorité</Text>
+            {(['urgent', 'high', 'medium', 'low'] as Priority[]).map(pri => (
+              <TouchableOpacity 
+                key={pri}
+                style={styles.pickerOption}
+                onPress={() => {
+                  setEditFormData({ ...editFormData, priority: pri });
+                  setShowEditPriorityPicker(false);
+                }}
+              >
+                <Text style={styles.pickerOptionText}>
+                  {getPriorityEmoji(pri)} {getPriorityLabel(pri)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity 
+              style={styles.pickerCloseButton}
+              onPress={() => setShowEditPriorityPicker(false)}
             >
               <Text style={styles.pickerCloseButtonText}>Fermer</Text>
             </TouchableOpacity>
@@ -1215,7 +1250,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 <Text style={styles.label}>Priorité</Text>
                 <TouchableOpacity 
                   style={styles.pickerButton}
-                  onPress={() => setShowPriorityPicker(true)}
+                  onPress={() => setShowEditPriorityPicker(true)}
                 >
                   <Text style={styles.pickerButtonText}>
                     {getPriorityEmoji(editFormData.priority)} {getPriorityLabel(editFormData.priority)}

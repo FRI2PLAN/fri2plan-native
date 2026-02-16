@@ -1738,3 +1738,21 @@ components/
 - [x] Espace entre page header et "Nouvelle tâche" ≠ espace entre "Nouvelle tâche" et barre de recherche
 - [x] Uniformiser les espacements
 - [x] Solution: pageTitleContainer paddingBottom: 16 (au lieu de 12) pour correspondre aux autres
+
+
+---
+
+## 🐛 BUG MODIFICATION PRIORITÉ (URGENT)
+- [x] Quand on modifie la priorité dans la fenêtre de modification, le nouveau choix n'est pas pris en compte
+- [x] L'ancien choix reste inchangé
+- [x] Cause: Le Picker de priorité mettait à jour formData au lieu de editFormData
+- [x] Solution: Création d'un Picker séparé pour l'édition (showEditPriorityPicker)
+- [x] Le nouveau Picker met à jour editFormData.priority correctement
+
+---
+
+## 📱 PAGE MESSAGES - ANALYSE WEBVIEW → REACT NATIVE
+- [ ] Analyser le code de la page Messages dans la WebView (organiseur-familial)
+- [ ] Identifier les fonctionnalités principales
+- [ ] Comparer avec React Native actuel
+- [ ] Implémenter les fonctionnalités manquantes
