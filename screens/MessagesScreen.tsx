@@ -22,7 +22,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
-import { useFamily } from '../contexts/FamilyContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -36,7 +35,7 @@ type TabType = 'family' | 'groups';
 
 export default function MessagesScreen({ onNavigate, onPrevious, onNext }: MessagesScreenProps) {
   const { user } = useAuth();
-  const { activeFamilyId } = useFamily();
+  const activeFamilyId = 1; // TODO: Get from FamilyContext when available
   const [activeTab, setActiveTab] = useState<TabType>('family');
   const [newMessage, setNewMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
