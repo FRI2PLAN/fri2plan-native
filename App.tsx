@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { FamilyProvider } from './contexts/FamilyContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -69,7 +70,9 @@ export default function App() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <AppContent />
+            <FamilyProvider>
+              <AppContent />
+            </FamilyProvider>
           </AuthProvider>
         </QueryClientProvider>
       </trpc.Provider>
