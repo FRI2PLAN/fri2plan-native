@@ -118,7 +118,13 @@ export default function FamiliesScreen({ onNavigate, onPrevious, onNext }: Famil
       
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={[styles.pageTitle, { color: isDark ? '#f5f5dc' : '#2a2a2a' }]}>Cercles</Text>
+        <Text style={[styles.pageTitle, { color: isDark ? '#f5f5dc' : '#2a2a2a' }]}>Mon Fri2Plan</Text>
+        <TouchableOpacity 
+          style={styles.tutorialButton}
+          onPress={() => Alert.alert('Aide', 'Page Mon Fri2Plan - Gérez vos cercles familiaux')}
+        >
+          <Ionicons name="help-circle" size={24} color="#7c3aed" />
+        </TouchableOpacity>
       </View>
 
       {/* Action Buttons */}
@@ -152,6 +158,14 @@ export default function FamiliesScreen({ onNavigate, onPrevious, onNext }: Famil
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7c3aed" />
           }
         >
+          {/* Section Title */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#f5f5dc' : '#2a2a2a' }]}>Vos cercles</Text>
+            <Text style={styles.sectionSubtitle}>
+              {families?.length || 0} cercle{(families?.length || 0) > 1 ? 's' : ''}
+            </Text>
+          </View>
+
           {!families || families.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: isDark ? '#2a2a2a' : '#fff' }]}>
               <Ionicons name="people-outline" size={64} color="#9ca3af" />
@@ -376,10 +390,28 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 16,
     alignItems: 'center',
+    position: 'relative',
   },
   pageTitle: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  tutorialButton: {
+    position: 'absolute',
+    right: 20,
+    padding: 4,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
   },
   actionButtonsContainer: {
     flexDirection: 'row',
