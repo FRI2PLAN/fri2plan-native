@@ -432,7 +432,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             setTutorialVisible(true);
           }}
         >
-          <Ionicons name="help-circle-outline" size={28} color="#7c3aed" />
+          <Ionicons name="help-circle" size={24} color="#7c3aed" />
         </TouchableOpacity>
       </View>
 
@@ -942,15 +942,24 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             {(['urgent', 'high', 'medium', 'low'] as Priority[]).map(pri => (
               <TouchableOpacity 
                 key={pri}
-                style={styles.pickerOption}
+                style={[
+                  styles.pickerOption,
+                  formData.priority === pri && styles.pickerOptionSelected
+                ]}
                 onPress={() => {
                   setFormData({ ...formData, priority: pri });
                   setShowPriorityPicker(false);
                 }}
               >
-                <Text style={styles.pickerOptionText}>
+                <Text style={[
+                  styles.pickerOptionText,
+                  formData.priority === pri && styles.pickerOptionTextSelected
+                ]}>
                   {getPriorityEmoji(pri)} {getPriorityLabel(pri)}
                 </Text>
+                {formData.priority === pri && (
+                  <Ionicons name="checkmark-circle" size={24} color="#7c3aed" />
+                )}
               </TouchableOpacity>
             ))}
             <TouchableOpacity 
@@ -976,15 +985,24 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             {(['urgent', 'high', 'medium', 'low'] as Priority[]).map(pri => (
               <TouchableOpacity 
                 key={pri}
-                style={styles.pickerOption}
+                style={[
+                  styles.pickerOption,
+                  editFormData.priority === pri && styles.pickerOptionSelected
+                ]}
                 onPress={() => {
                   setEditFormData({ ...editFormData, priority: pri });
                   setShowEditPriorityPicker(false);
                 }}
               >
-                <Text style={styles.pickerOptionText}>
+                <Text style={[
+                  styles.pickerOptionText,
+                  editFormData.priority === pri && styles.pickerOptionTextSelected
+                ]}>
                   {getPriorityEmoji(pri)} {getPriorityLabel(pri)}
                 </Text>
+                {editFormData.priority === pri && (
+                  <Ionicons name="checkmark-circle" size={24} color="#7c3aed" />
+                )}
               </TouchableOpacity>
             ))}
             <TouchableOpacity 
@@ -1407,13 +1425,8 @@ function getStyles(isDark: boolean) {
     },
     tutorialButton: {
       position: 'absolute',
-      right: 16,
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: '#7c3aed',
-      alignItems: 'center',
-      justifyContent: 'center',
+      right: 20,
+      padding: 4,
     },
     tutorialButtonText: {
       color: '#fff',
@@ -1737,10 +1750,20 @@ function getStyles(isDark: boolean) {
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    pickerOptionSelected: {
+      backgroundColor: isDark ? '#4c1d95' : '#ede9fe',
     },
     pickerOptionText: {
       fontSize: 16,
       color: isDark ? '#f5f5dc' : '#2a2a2a',
+    },
+    pickerOptionTextSelected: {
+      color: '#7c3aed',
+      fontWeight: '600',
     },
     pickerCloseButton: {
       marginTop: 16,
