@@ -221,20 +221,18 @@ export default function FamiliesScreen({ onNavigate, onPrevious, onNext }: Famil
                   {/* Invite Code (Admin only) */}
                   {family.role === 'admin' && family.status === 'active' && (
                     <View style={styles.inviteCodeSection}>
-                      <Text style={[styles.inviteCodeLabel, { color: isDark ? '#d1d5db' : '#6b7280' }]}>
-                        Code d'invitation
-                      </Text>
                       <View style={styles.inviteCodeRow}>
-                        <View style={[styles.inviteCodeInput, { backgroundColor: isDark ? '#1a1a1a' : '#f3f4f6' }]}>
-                          <Text style={[styles.inviteCodeText, { color: isDark ? '#f5f5dc' : '#2a2a2a' }]}>
-                            {family.inviteCode}
-                          </Text>
-                        </View>
+                        <Text style={[styles.inviteCodeLabel, { color: isDark ? '#d1d5db' : '#6b7280' }]}>
+                          Code d'invitation :
+                        </Text>
+                        <Text style={[styles.inviteCodeText, { color: isDark ? '#f5f5dc' : '#2a2a2a' }]}>
+                          {family.inviteCode}
+                        </Text>
                         <TouchableOpacity
                           style={styles.copyButton}
                           onPress={() => copyInviteCode(family.inviteCode)}
                         >
-                          <Ionicons name="copy-outline" size={20} color="#7c3aed" />
+                          <Ionicons name="copy-outline" size={18} color="#7c3aed" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -550,23 +548,18 @@ const styles = StyleSheet.create({
   inviteCodeLabel: {
     fontSize: 12,
     fontWeight: '500',
-    marginBottom: 8,
+    marginRight: 8,
   },
   inviteCodeRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-  },
-  inviteCodeInput: {
-    flex: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    justifyContent: 'center',
   },
   inviteCodeText: {
     fontFamily: 'monospace',
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '600',
+    flex: 1,
   },
   copyButton: {
     width: 44,
