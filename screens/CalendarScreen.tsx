@@ -426,34 +426,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header - Ligne 1 : Titre + Actions */}
+      {/* Header - Titre centré style Accueil */}
       <View style={styles.pageTitleContainer}>
-        <View style={styles.headerRow1}>
-          <Text style={styles.pageTitle}>{t('calendar.title') || 'Calendrier'}</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setImportModalOpen(true)}>
-              <Text style={styles.headerActionIcon}>📥</Text>
-              <Text style={styles.headerActionText}>{t('calendar.import') || 'Import'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setSubscribeModalOpen(true)}>
-              <Text style={styles.headerActionIcon}>🔔</Text>
-              <Text style={styles.headerActionText}>{t('calendar.subscribe') || 'Abo'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setExportModalOpen(true)}>
-              <Text style={styles.headerActionIcon}>📤</Text>
-              <Text style={styles.headerActionText}>{t('calendar.export') || 'Export'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
-              <Text style={styles.headerActionIcon}>🔽</Text>
-              {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+        <Text style={styles.pageTitle}>{t('calendar.title') || 'Calendrier'}</Text>
+      </View>
+      {/* Barre d'actions + sélecteur de vue */}
+      <View style={styles.calendarActionsBar}>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setImportModalOpen(true)}>
+            <Text style={styles.headerActionIcon}>📥</Text>
+            <Text style={styles.headerActionText}>{t('calendar.import') || 'Import'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setSubscribeModalOpen(true)}>
+            <Text style={styles.headerActionIcon}>🔔</Text>
+            <Text style={styles.headerActionText}>{t('calendar.subscribe') || 'Abo'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setExportModalOpen(true)}>
+            <Text style={styles.headerActionIcon}>📤</Text>
+            <Text style={styles.headerActionText}>{t('calendar.export') || 'Export'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+            <Text style={styles.headerActionIcon}>🔽</Text>
+            {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-        {/* Ligne 2 : Sélecteur de vue - icônes calendrier style tear-off */}
+      </View>
+      {/* Sélecteur de vue - icônes calendrier style tear-off */}
+      <View style={[styles.calendarActionsBar, { paddingTop: 4, paddingBottom: 8 }]}>
         <View style={styles.viewToggleRow}>
           {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
             const isActive = viewMode === mode;
@@ -1433,16 +1436,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
 
   pageTitleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   headerRow1: {
     flexDirection: 'row',
@@ -1450,11 +1448,21 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  calendarActionsBar: {
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pageTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   headerActions: {
     flexDirection: 'row',
