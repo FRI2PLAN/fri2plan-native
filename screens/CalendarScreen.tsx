@@ -453,18 +453,39 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </TouchableOpacity>
           </View>
         </View>
-        {/* Ligne 2 : Sélecteur de vue */}
+        {/* Ligne 2 : Sélecteur de vue - icônes calendrier style tear-off */}
         <View style={styles.viewToggleRow}>
           {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
             const isActive = viewMode === mode;
-            const labels: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '≡' };
+            const numbers: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '' };
             return (
               <TouchableOpacity
                 key={mode}
-                style={[styles.viewPill, isActive && styles.viewPillActive]}
                 onPress={() => saveViewMode(mode)}
+                style={[styles.calIconWrapper, isActive && styles.calIconWrapperActive]}
               >
-                <Text style={[styles.viewPillLabel, isActive && styles.viewPillLabelActive, { fontSize: mode === 'agenda' ? 18 : 16, fontWeight: 'bold' }]}>{labels[mode]}</Text>
+                {mode === 'agenda' ? (
+                  // Icône agenda (liste de lignes)
+                  <View style={[styles.calIcon, isActive && styles.calIconActive]}>
+                    <View style={[styles.calIconBand, isActive && styles.calIconBandActive]} />
+                    <View style={styles.calIconBody}>
+                      <View style={[styles.agendaLine, { width: '70%' }]} />
+                      <View style={[styles.agendaLine, { width: '50%' }]} />
+                      <View style={[styles.agendaLine, { width: '60%' }]} />
+                    </View>
+                  </View>
+                ) : (
+                  // Icône calendrier avec chiffre
+                  <View style={[styles.calIcon, isActive && styles.calIconActive]}>
+                    <View style={[styles.calIconBand, isActive && styles.calIconBandActive]}>
+                      <View style={styles.calIconRing} />
+                      <View style={styles.calIconRing} />
+                    </View>
+                    <View style={styles.calIconBody}>
+                      <Text style={[styles.calIconNumber, isActive && styles.calIconNumberActive]}>{numbers[mode]}</Text>
+                    </View>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -1474,19 +1495,76 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   viewPillActive: {
     backgroundColor: '#7c3aed',
   },
-  viewPillIcon: {
-    fontSize: 14,
-  },
-  viewPillIconActive: {
-    fontSize: 14,
-  },
+  viewPillIcon: { fontSize: 14 },
+  viewPillIconActive: { fontSize: 14 },
   viewPillLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#6b7280',
   },
-  viewPillLabelActive: {
-    color: '#ffffff',
+  viewPillLabelActive: { color: '#ffffff' },
+  // Icônes calendrier tear-off
+  calIconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+    borderRadius: 8,
+  },
+  calIconWrapperActive: {
+    backgroundColor: isDark ? '#4c1d95' : '#ede9fe',
+  },
+  calIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: isDark ? '#6b7280' : '#d1d5db',
+    backgroundColor: isDark ? '#374151' : '#ffffff',
+  },
+  calIconActive: {
+    borderColor: '#7c3aed',
+  },
+  calIconBand: {
+    height: 14,
+    backgroundColor: isDark ? '#6b7280' : '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  calIconBandActive: {
+    backgroundColor: '#7c3aed',
+  },
+  calIconRing: {
+    width: 4,
+    height: 6,
+    borderRadius: 2,
+    backgroundColor: isDark ? '#d1d5db' : '#9ca3af',
+    borderWidth: 1,
+    borderColor: isDark ? '#9ca3af' : '#6b7280',
+  },
+  calIconBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calIconNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isDark ? '#d1d5db' : '#374151',
+    lineHeight: 20,
+  },
+  calIconNumberActive: {
+    color: '#7c3aed',
+  },
+  agendaLine: {
+    height: 2.5,
+    borderRadius: 2,
+    backgroundColor: isDark ? '#6b7280' : '#d1d5db',
+    marginVertical: 2,
+    alignSelf: 'flex-start',
+    marginLeft: 6,
   },
   // View Toggle Styles (legacy - kept for compatibility)
   viewToggleContainer: {
