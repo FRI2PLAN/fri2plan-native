@@ -208,6 +208,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return new Date(year, month, day, hour, minute);
   };
 
+  const getLocale = () => {
+    const lang = i18n.language;
+    if (lang === 'de') return de;
+    if (lang === 'en') return enUS;
+    return fr;
+  };
+
   const eventsQuery = trpc.events.list.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
