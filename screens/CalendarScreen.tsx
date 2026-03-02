@@ -412,52 +412,55 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
-      {/* Page Title */}
+      {/* Header - Ligne 1 : Titre + Actions */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Calendrier</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.importButton}
-            onPress={() => setImportModalOpen(true)}
-          >
-            <Text style={styles.importButtonText}>📅 Import</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.filterButton}
-            onPress={() => setFilterModalOpen(true)}
-          >
-            <Text style={styles.filterButtonText}>📊 Filtres</Text>
-            {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>
-                  {selectedCategories.length + selectedMembers.length}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+        <View style={styles.headerRow1}>
+          <Text style={styles.pageTitle}>{t('calendar.title') || 'Calendrier'}</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setImportModalOpen(true)}>
+              <Text style={styles.headerActionIcon}>📥</Text>
+              <Text style={styles.headerActionText}>{t('calendar.import') || 'Import'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+              <Text style={styles.headerActionIcon}>🔔</Text>
+              <Text style={styles.headerActionText}>{t('calendar.subscribe') || 'Abo'}</Text>
+              {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+              <Text style={styles.headerActionIcon}>📤</Text>
+              <Text style={styles.headerActionText}>{t('calendar.export') || 'Export'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+              <Text style={styles.headerActionIcon}>🔽</Text>
+              {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.viewToggleContainer}>
-          <TouchableOpacity 
-            style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
-            onPress={() => saveViewMode('week')}
-          >
-            <Text style={[styles.viewToggleIcon, viewMode === 'week' && styles.viewToggleIconActive]}>📆</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'week' && styles.viewToggleNumberActive]}>7</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.viewToggleButton, viewMode === 'day' && styles.viewToggleButtonActive]}
-            onPress={() => saveViewMode('day')}
-          >
-            <Text style={[styles.viewToggleIcon, viewMode === 'day' && styles.viewToggleIconActive]}>🗓️</Text>
-            <Text style={[styles.viewToggleNumber, viewMode === 'day' && styles.viewToggleNumberActive]}>1</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.viewToggleButton, viewMode === 'agenda' && styles.viewToggleButtonActive]}
-            onPress={() => saveViewMode('agenda')}
-          >
-            <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
-          </TouchableOpacity>
+        {/* Ligne 2 : Sélecteur de vue */}
+        <View style={styles.viewToggleRow}>
+          {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
+            const isActive = viewMode === mode;
+            const labels: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '≡' };
+            const icons: Record<string, string> = { month: '📅', week: '📆', day: '🗓️', agenda: '📋' };
+            return (
+              <TouchableOpacity
+                key={mode}
+                style={[styles.viewPill, isActive && styles.viewPillActive]}
+                onPress={() => saveViewMode(mode)}
+              >
+                <Text style={[styles.viewPillIcon, isActive && styles.viewPillIconActive]}>{icons[mode]}</Text>
+                <Text style={[styles.viewPillLabel, isActive && styles.viewPillLabelActive]}>{labels[mode]}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -1296,21 +1299,80 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
   pageTitleContainer: {
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
+  headerRow1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   pageTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
+    flex: 1,
     textAlign: 'center',
   },
-
-  // View Toggle Styles
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerActionBtn: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    minWidth: 48,
+    position: 'relative',
+  },
+  headerActionIcon: {
+    fontSize: 16,
+  },
+  headerActionText: {
+    fontSize: 10,
+    color: isDark ? '#d1d5db' : '#6b7280',
+    marginTop: 2,
+  },
+  viewToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  viewPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    gap: 4,
+  },
+  viewPillActive: {
+    backgroundColor: '#7c3aed',
+  },
+  viewPillIcon: {
+    fontSize: 14,
+  },
+  viewPillIconActive: {
+    fontSize: 14,
+  },
+  viewPillLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: isDark ? '#d1d5db' : '#6b7280',
+  },
+  viewPillLabelActive: {
+    color: '#ffffff',
+  },
+  // View Toggle Styles (legacy - kept for compatibility)
   viewToggleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 16,
@@ -1328,7 +1390,6 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 60,
-    color: '#ffffff',
   },
 
   // Agenda View Styles
