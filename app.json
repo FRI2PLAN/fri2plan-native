@@ -31,7 +31,7 @@
         "barStyle": "dark-content",
         "backgroundColor": "#7c3aed"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/favicon.png"
