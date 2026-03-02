@@ -393,7 +393,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             )}
           </TouchableOpacity>
         </View>
-          </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
