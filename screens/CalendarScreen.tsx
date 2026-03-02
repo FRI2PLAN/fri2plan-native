@@ -540,42 +540,70 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
 
-        {/* Events for selected date */}
+        {/* Events for selected date - max 3 + More button */}
         <View style={styles.eventsSection}>
-          <Text style={styles.eventsTitle}>
-            {viewMode === 'agenda' 
-              ? t('calendar.upcomingEvents') || 'Événements à venir'
-              : viewMode === 'week'
-              ? `Semaine du ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}`
-              : format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
-          </Text>
-          
+          <View style={styles.eventsSectionHeader}>
+            <Text style={styles.eventsTitle}>
+              {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+            </Text>
+            {selectedDateEvents.length > 0 && (
+              <TouchableOpacity
+                style={styles.addEventBtn}
+                onPress={() => {
+                  setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
+                  setCreateModalOpen(true);
+                }}
+              >
+                <Text style={styles.addEventBtnText}>+</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {selectedDateEvents.length > 0 ? (
-            selectedDateEvents.map(event => {
-              const category = getCategoryInfo(event.category);
-              return (
-                <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
-                  <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
-                  <View style={styles.eventCardContent}>
-                    <View style={styles.eventHeader}>
-                      <Text style={styles.eventIcon}>{category.icon}</Text>
-                      <Text style={styles.eventTime}>
-                        {format(new Date(event.startTime), 'HH:mm')}
-                      </Text>
-                      {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
+            <>
+              {selectedDateEvents.slice(0, 3).map(event => {
+                const category = getCategoryInfo(event.category);
+                return (
+                  <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
+                    <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
+                    <View style={styles.eventCardContent}>
+                      <View style={styles.eventHeader}>
+                        <Text style={styles.eventIcon}>{category.icon}</Text>
+                        <Text style={styles.eventTime}>
+                          {format(new Date(event.startTime), 'HH:mm')}
+                        </Text>
+                        {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
+                      </View>
+                      <Text style={styles.eventTitle}>{event.title}</Text>
+                      {event.description ? (
+                        <Text style={styles.eventDescription} numberOfLines={1}>{event.description}</Text>
+                      ) : null}
                     </View>
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-                    {event.description && (
-                      <Text style={styles.eventDescription}>{event.description}</Text>
-                    )}
-                  </View>
+                  </TouchableOpacity>
+                );
+              })}
+              {selectedDateEvents.length > 3 && (
+                <TouchableOpacity
+                  style={styles.moreEventsBtn}
+                  onPress={() => setDropdownModalOpen(true)}
+                >
+                  <Text style={styles.moreEventsBtnText}>
+                    {`+ ${selectedDateEvents.length - 3} ${t('calendar.moreEvents') || 'autres événements'}`}
+                  </Text>
                 </TouchableOpacity>
-              );
-            })
+              )}
+            </>
           ) : (
-            <View style={styles.noEvents}>
-              <Text style={styles.noEventsText}>{t('calendar.noEvents')}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.noEvents}
+              onPress={() => {
+                setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
+                setCreateModalOpen(true);
+              }}
+            >
+              <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
+              <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
+            </TouchableOpacity>
           )}
         </View>
           </>
@@ -1265,7 +1293,13 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   privateIcon: { fontSize: 14 },
   eventTitle: { fontSize: 16, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 4 },
   eventDescription: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
-  noEvents: { padding: 40, alignItems: 'center' },
+  noEvents: { padding: 24, alignItems: 'center', borderRadius: 10, backgroundColor: isDark ? '#1f2937' : '#f9fafb', marginTop: 8 },
+  eventsSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  addEventBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+  addEventBtnText: { color: '#fff', fontSize: 20, lineHeight: 28, fontWeight: 'bold' },
+  moreEventsBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', marginTop: 4 },
+  moreEventsBtnText: { fontSize: 14, fontWeight: '600', color: '#7c3aed' },
+  noEventsHint: { fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af', marginTop: 4 },
   noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
