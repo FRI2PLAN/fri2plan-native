@@ -678,7 +678,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                           <Text style={styles.agendaEventTitle}>{event.title}</Text>
                           {cleanDescription(event.description) ? (
                             <Text style={styles.agendaEventDescription}>{cleanDescription(event.description)}</Text>
-                          )}
+                          ) : null}
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -1155,7 +1155,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         <Text style={styles.dropdownEventDescription} numberOfLines={1}>
                           {cleanDescription(event.description)}
                         </Text>
-                      )}
+                      ) : null}
                     </View>
                   </TouchableOpacity>
                 );
