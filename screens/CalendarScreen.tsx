@@ -53,6 +53,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [dropdownModalOpen, setDropdownModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [subscribeUrl, setSubscribeUrl] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
@@ -432,16 +435,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.headerActionIcon}>📥</Text>
               <Text style={styles.headerActionText}>{t('calendar.import') || 'Import'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setSubscribeModalOpen(true)}>
               <Text style={styles.headerActionIcon}>🔔</Text>
               <Text style={styles.headerActionText}>{t('calendar.subscribe') || 'Abo'}</Text>
-              {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
-                </View>
-              )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
+            <TouchableOpacity style={styles.headerActionBtn} onPress={() => setExportModalOpen(true)}>
               <Text style={styles.headerActionIcon}>📤</Text>
               <Text style={styles.headerActionText}>{t('calendar.export') || 'Export'}</Text>
             </TouchableOpacity>
@@ -460,15 +458,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
             const isActive = viewMode === mode;
             const labels: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '≡' };
-            const icons: Record<string, string> = { month: '📅', week: '📆', day: '🗓️', agenda: '📋' };
             return (
               <TouchableOpacity
                 key={mode}
                 style={[styles.viewPill, isActive && styles.viewPillActive]}
                 onPress={() => saveViewMode(mode)}
               >
-                <Text style={[styles.viewPillIcon, isActive && styles.viewPillIconActive]}>{icons[mode]}</Text>
-                <Text style={[styles.viewPillLabel, isActive && styles.viewPillLabelActive]}>{labels[mode]}</Text>
+                <Text style={[styles.viewPillLabel, isActive && styles.viewPillLabelActive, { fontSize: mode === 'agenda' ? 18 : 16, fontWeight: 'bold' }]}>{labels[mode]}</Text>
               </TouchableOpacity>
             );
           })}
@@ -477,6 +473,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
       <ScrollView 
         style={styles.content}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}
       >
         {/* Month View */}
@@ -1276,11 +1275,79 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </TouchableOpacity>
           </View>
         </View>
+       </Modal>
+
+      {/* Subscribe (Abo) Modal */}
+      <Modal visible={subscribeModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('calendar.subscribe') || 'Abonnement calendrier'}</Text>
+            <Text style={[styles.importInfoText, { marginBottom: 12 }]}>
+              {t('calendar.subscribeDesc') || 'Entrez l\'URL d\'un calendrier ICS pour vous y abonner (Google, Apple, etc.).'}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={subscribeUrl}
+              onChangeText={setSubscribeUrl}
+              placeholder="https://calendar.google.com/calendar/ical/..."
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              autoCapitalize="none"
+              keyboardType="url"
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => { setSubscribeModalOpen(false); setSubscribeUrl(''); }}
+              >
+                <Text style={styles.modalButtonTextCancel}>{t('common.cancel') || 'Annuler'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={() => {
+                  if (subscribeUrl.trim()) {
+                    // TODO: appeler l'API d'abonnement
+                    setSubscribeModalOpen(false);
+                    setSubscribeUrl('');
+                  }
+                }}
+              >
+                <Text style={styles.modalButtonTextSave}>{t('calendar.subscribe') || 'S\'abonner'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Export Modal */}
+      <Modal visible={exportModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('calendar.export') || 'Exporter le calendrier'}</Text>
+            <Text style={[styles.importInfoText, { marginBottom: 16 }]}>
+              {t('calendar.exportDesc') || 'Exportez vos événements au format ICS pour les importer dans Google Calendar, Apple Calendar, etc.'}
+            </Text>
+            <TouchableOpacity
+              style={styles.importSelectButton}
+              onPress={() => {
+                // TODO: appeler l'API d'export
+                setExportModalOpen(false);
+              }}
+            >
+              <Text style={styles.importSelectButtonText}>📤 {t('calendar.exportICS') || 'Exporter en .ics'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonCancel, { marginTop: 12 }]}
+              onPress={() => setExportModalOpen(false)}
+            >
+              <Text style={styles.modalButtonTextCancel}>{t('common.close') || 'Fermer'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
 }
-
 const getStyles = (isDark: boolean) => StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
@@ -1345,24 +1412,28 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
 
   pageTitleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   headerRow1: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   pageTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-    flex: 1,
-    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   headerActions: {
     flexDirection: 'row',
