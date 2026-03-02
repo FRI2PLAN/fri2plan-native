@@ -84,10 +84,15 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.content}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           {/* Card sombre de connexion */}
           <View style={styles.card}>
@@ -193,8 +198,8 @@ export default function LoginScreen() {
               <Text style={styles.oauthButtonText}>Continuer avec Apple</Text>
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -206,13 +211,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  content: {
-    flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 60, // Start card after safe zone
-    justifyContent: 'center',
+    paddingTop: 60,
     paddingBottom: 40,
+    justifyContent: 'center',
   },
   card: {
     backgroundColor: '#1f2937', // Card sombre
