@@ -393,6 +393,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             )}
           </TouchableOpacity>
         </View>
+        <View style={styles.viewToggleContainer}>
           <TouchableOpacity 
             style={[styles.viewToggleButton, viewMode === 'week' && styles.viewToggleButtonActive]}
             onPress={() => saveViewMode('week')}
@@ -413,7 +414,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           >
             <Text style={[styles.viewToggleIcon, viewMode === 'agenda' && styles.viewToggleIconActive]}>📝</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </View>
 
       <ScrollView 
@@ -1190,6 +1191,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </View>
       </Modal>
+    </SafeAreaView>
+  );
+}
+
+const getStyles = (isDark: boolean) => StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: 10 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
   dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
