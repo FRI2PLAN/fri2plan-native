@@ -226,6 +226,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     isPrivate: false,
   });
 
+  // Nettoie les descriptions ICS (URLs <http://...>, balises HTML, etc.)
+  const cleanDescription = (desc: string | null | undefined): string => {
+    if (!desc) return '';
+    return desc
+      .replace(/<[^>]*>/g, '') // supprimer balises HTML et <URL>
+      .replace(/https?:\/\/\S+/g, '') // supprimer URLs
+      .replace(/\\n/g, ' ') // remplacer \n littéral
+      .replace(/\s+/g, ' ') // normaliser espaces
+      .trim();
+  };
+
   const getLocale = () => {
     const lang = i18n.language;
     if (lang === 'de') return de;
@@ -575,8 +586,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
                       </View>
                       <Text style={styles.eventTitle}>{event.title}</Text>
-                      {event.description ? (
-                        <Text style={styles.eventDescription} numberOfLines={1}>{event.description}</Text>
+                      {cleanDescription(event.description) ? (
+                        <Text style={styles.eventDescription} numberOfLines={1}>{cleanDescription(event.description)}</Text>
                       ) : null}
                     </View>
                   </TouchableOpacity>
@@ -645,8 +656,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             {event.isPrivate && <Text style={styles.agendaPrivateIcon}>🔒</Text>}
                           </View>
                           <Text style={styles.agendaEventTitle}>{event.title}</Text>
-                          {event.description && (
-                            <Text style={styles.agendaEventDescription}>{event.description}</Text>
+                          {cleanDescription(event.description) ? (
+                            <Text style={styles.agendaEventDescription}>{cleanDescription(event.description)}</Text>
                           )}
                         </View>
                       </TouchableOpacity>
@@ -817,9 +828,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                               <Text style={styles.dayEventTitle} numberOfLines={1}>{event.title}</Text>
                               {event.isPrivate && <Text style={styles.dayEventPrivate}>🔒</Text>}
                             </View>
-                            {event.description && durationMinutes > 30 && (
+                            {cleanDescription(event.description) && durationMinutes > 30 && (
                               <Text style={styles.dayEventDescription} numberOfLines={2}>
-                                {event.description}
+                                {cleanDescription(event.description)}
                               </Text>
                             )}
                           </TouchableOpacity>
@@ -1120,9 +1131,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
                       </View>
                       <Text style={styles.dropdownEventTitle}>{event.title}</Text>
-                      {event.description && (
+                      {cleanDescription(event.description) ? (
                         <Text style={styles.dropdownEventDescription} numberOfLines={1}>
-                          {event.description}
+                          {cleanDescription(event.description)}
                         </Text>
                       )}
                     </View>
