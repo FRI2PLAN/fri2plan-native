@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
+import { useAuth } from '../contexts/AuthContext';
 
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
@@ -37,6 +38,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
+  const { user } = useAuth();
+  const { data: families } = trpc.family.list.useQuery();
+  const activeFamily = families?.[0];
+  const { data: familyMembers = [] } = trpc.family.members.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -208,11 +216,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return new Date(year, month, day, hour, minute);
   };
 
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    startTime: '09:00',
+    endTime: '10:00',
+    category: 'other',
+    reminder: '15',
+    isPrivate: false,
+  });
+
   const getLocale = () => {
     const lang = i18n.language;
     if (lang === 'de') return de;
     if (lang === 'en') return enUS;
     return fr;
+  };
+
+  const getCategoryLabel = (cat: any) => {
+    if (i18n.language === 'de') return cat.labelDe || cat.label;
+    if (i18n.language === 'en') return cat.labelEn || cat.label;
+    return cat.label;
   };
 
   const eventsQuery = trpc.events.list.useQuery(undefined, {
