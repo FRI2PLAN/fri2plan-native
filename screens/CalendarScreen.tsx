@@ -208,6 +208,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return new Date(year, month, day, hour, minute);
   };
 
+  const eventsQuery = trpc.events.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
+  // Mapper startDate/endDate → startTime/endTime pour compatibilité avec le code existant
+  const events = (eventsQuery.data || []).map((e: any) => ({
+    ...e,
+    startTime: e.startDate,
+    endTime: e.endDate,
+  }));
+  const refetch = eventsQuery.refetch;
+
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
@@ -277,7 +288,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       await createEvent.mutateAsync({
         title: formData.title,
         description: formData.description,
-        startDate: startDateTime,
+        startDate: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),
+        endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
@@ -304,7 +316,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         id: selectedEvent.id,
         title: formData.title,
         description: formData.description,
-        startDate: startDateTime,
+        startDate: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),
+        endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
