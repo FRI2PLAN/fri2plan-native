@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert, Dimensions } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
@@ -10,6 +10,8 @@ import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
   { value: 'birthday', label: 'Anniversaire', labelEn: 'Birthday', labelDe: 'Geburtstag', icon: '🎂', color: '#ec4899' },
@@ -20,13 +22,44 @@ const EVENT_CATEGORIES = [
 ];
 
 const REMINDER_OPTIONS = [
-  { value: '5', label: '5 minutes' },
-  { value: '15', label: '15 minutes' },
-  { value: '30', label: '30 minutes' },
-  { value: '60', label: '1 heure', labelEn: '1 hour', labelDe: '1 Stunde' },
-  { value: '120', label: '2 heures', labelEn: '2 hours', labelDe: '2 Stunden' },
-  { value: '1440', label: '1 jour', labelEn: '1 day', labelDe: '1 Tag' },
+  { value: '5', label: '5 min' },
+  { value: '15', label: '15 min' },
+  { value: '30', label: '30 min' },
+  { value: '60', label: '1h' },
+  { value: '120', label: '2h' },
+  { value: '1440', label: '1j' },
 ];
+
+// Boutons icônes pour les modaux
+const ModalIconButton = ({
+  icon,
+  onPress,
+  color,
+  size = 44,
+  disabled = false,
+}: {
+  icon: string;
+  onPress: () => void;
+  color: string;
+  size?: number;
+  disabled?: boolean;
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    disabled={disabled}
+    style={{
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      backgroundColor: color,
+      alignItems: 'center',
+      justifyContent: 'center',
+      opacity: disabled ? 0.5 : 1,
+    }}
+  >
+    <Text style={{ fontSize: 20 }}>{icon}</Text>
+  </TouchableOpacity>
+);
 
 interface CalendarScreenProps {
   onNavigate?: (screen: string) => void;
@@ -62,7 +95,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
 
-  // Load saved view mode and filters
   useEffect(() => {
     loadViewMode();
     loadFilters();
@@ -72,18 +104,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     try {
       const saved = await AsyncStorage.getItem('calendar_view_mode');
       if (saved) setViewMode(saved as any);
-    } catch (error) {
-      console.error('Error loading view mode:', error);
-    }
+    } catch {}
   };
 
   const saveViewMode = async (mode: 'month' | 'week' | 'day' | 'agenda') => {
     try {
       await AsyncStorage.setItem('calendar_view_mode', mode);
       setViewMode(mode);
-    } catch (error) {
-      console.error('Error saving view mode:', error);
-    }
+    } catch {}
   };
 
   const loadFilters = async () => {
@@ -92,18 +120,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const members = await AsyncStorage.getItem('calendar_filter_members');
       if (categories) setSelectedCategories(JSON.parse(categories));
       if (members) setSelectedMembers(JSON.parse(members));
-    } catch (error) {
-      console.error('Error loading filters:', error);
-    }
+    } catch {}
   };
 
   const saveFilters = async () => {
     try {
       await AsyncStorage.setItem('calendar_filter_categories', JSON.stringify(selectedCategories));
       await AsyncStorage.setItem('calendar_filter_members', JSON.stringify(selectedMembers));
-    } catch (error) {
-      console.error('Error saving filters:', error);
-    }
+    } catch {}
   };
 
   const applyFilters = () => {
@@ -122,100 +146,62 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         type: 'text/calendar',
         copyToCacheDirectory: true,
       });
-
       if (result.canceled) return;
-
       setIsImporting(true);
       const file = result.assets[0];
-      
-      // Lire le contenu du fichier
       const response = await fetch(file.uri);
       const icsContent = await response.text();
-      
-      // Parser basique ICS (sans librairie externe)
-      const events = parseICS(icsContent);
-      
-      // Créer les événements en base de données
+      const eventsToImport = parseICS(icsContent);
       let successCount = 0;
-      for (const event of events) {
+      for (const event of eventsToImport) {
         try {
           await createEvent.mutateAsync(event);
           successCount++;
-        } catch (error) {
-          console.error('Error creating event:', error);
-        }
+        } catch {}
       }
-      
       setIsImporting(false);
       setImportModalOpen(false);
       refetch();
-      
-      Alert.alert(
-        'Import réussi',
-        `${successCount} événement(s) importé(s) avec succès.`,
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Import réussi', `${successCount} événement(s) importé(s).`, [{ text: 'OK' }]);
     } catch (error) {
       setIsImporting(false);
-      console.error('Error importing ICS:', error);
-      Alert.alert(
-        'Erreur',
-        'Impossible d\'importer le fichier. Vérifiez qu\'il s\'agit d\'un fichier .ics valide.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Erreur', "Impossible d'importer le fichier.", [{ text: 'OK' }]);
     }
   };
 
   const parseICS = (icsContent: string) => {
-    const events: any[] = [];
+    const eventsArr: any[] = [];
     const lines = icsContent.split('\n');
     let currentEvent: any = null;
-    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
       if (line === 'BEGIN:VEVENT') {
-        currentEvent = {
-          title: '',
-          description: '',
-          startDate: new Date(),
-          durationMinutes: 60,
-          category: 'other',
-          reminderMinutes: 15,
-          isPrivate: 0,
-        };
+        currentEvent = { title: '', description: '', startDate: new Date(), durationMinutes: 60, category: 'other', reminderMinutes: 15, isPrivate: 0 };
       } else if (line === 'END:VEVENT' && currentEvent) {
-        events.push(currentEvent);
+        eventsArr.push(currentEvent);
         currentEvent = null;
       } else if (currentEvent) {
-        if (line.startsWith('SUMMARY:')) {
-          currentEvent.title = line.substring(8);
-        } else if (line.startsWith('DESCRIPTION:')) {
-          currentEvent.description = line.substring(12);
-        } else if (line.startsWith('DTSTART')) {
+        if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8);
+        else if (line.startsWith('DESCRIPTION:')) currentEvent.description = cleanDescription(line.substring(12));
+        else if (line.startsWith('DTSTART')) {
           const dateStr = line.split(':')[1];
           currentEvent.startDate = parseICSDate(dateStr);
         } else if (line.startsWith('DTEND')) {
           const dateStr = line.split(':')[1];
           const endDate = parseICSDate(dateStr);
-          currentEvent.durationMinutes = Math.round(
-            (endDate.getTime() - currentEvent.startDate.getTime()) / (1000 * 60)
-          );
+          currentEvent.durationMinutes = Math.round((endDate.getTime() - currentEvent.startDate.getTime()) / (1000 * 60));
         }
       }
     }
-    
-    return events;
+    return eventsArr;
   };
 
   const parseICSDate = (dateStr: string): Date => {
-    // Format: 20240212T090000Z ou 20240212T090000
     const year = parseInt(dateStr.substring(0, 4));
     const month = parseInt(dateStr.substring(4, 6)) - 1;
     const day = parseInt(dateStr.substring(6, 8));
-    const hour = parseInt(dateStr.substring(9, 11));
-    const minute = parseInt(dateStr.substring(11, 13));
-    
+    const hour = parseInt(dateStr.substring(9, 11)) || 0;
+    const minute = parseInt(dateStr.substring(11, 13)) || 0;
     return new Date(year, month, day, hour, minute);
   };
 
@@ -229,14 +215,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     isPrivate: false,
   });
 
-  // Nettoie les descriptions ICS (URLs <http://...>, balises HTML, etc.)
+  // Nettoie les descriptions ICS (URLs, balises HTML, etc.)
   const cleanDescription = (desc: string | null | undefined): string => {
     if (!desc) return '';
     return desc
-      .replace(/<[^>]*>/g, '') // supprimer balises HTML et <URL>
-      .replace(/https?:\/\/\S+/g, '') // supprimer URLs
-      .replace(/\\n/g, ' ') // remplacer \n littéral
-      .replace(/\s+/g, ' ') // normaliser espaces
+      .replace(/<[^>]*>/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\\n/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim();
   };
 
@@ -253,10 +239,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return cat.label;
   };
 
-  const eventsQuery = trpc.events.list.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
-  // Mapper startDate/endDate → startTime/endTime pour compatibilité avec le code existant
+  const eventsQuery = trpc.events.list.useQuery(undefined, { refetchOnWindowFocus: false });
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
     startTime: e.startDate,
@@ -280,15 +263,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
-    
     let filteredEvents = events;
-    
-    // Filtrer selon le mode de vue
     if (viewMode === 'agenda') {
-      // Agenda : tous les événements à venir
       filteredEvents = filteredEvents.filter(event => new Date(event.startTime) >= new Date());
     } else if (viewMode === 'week') {
-      // Semaine : événements de la semaine actuelle
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
       filteredEvents = filteredEvents.filter(event => {
@@ -296,27 +274,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         return eventDate >= weekStart && eventDate <= weekEnd;
       });
     } else {
-      // Mois et Jour : événements du jour sélectionné
-      filteredEvents = filteredEvents.filter(event => {
-        const eventDate = new Date(event.startTime);
-        return isSameDay(eventDate, date);
-      });
+      filteredEvents = filteredEvents.filter(event => isSameDay(new Date(event.startTime), date));
     }
-    
-    // Appliquer les filtres par catégorie
     if (selectedCategories.length > 0) {
-      filteredEvents = filteredEvents.filter(event => 
-        selectedCategories.includes(event.category)
-      );
+      filteredEvents = filteredEvents.filter(event => selectedCategories.includes(event.category));
     }
-    
-    // Appliquer les filtres par membre
     if (selectedMembers.length > 0) {
-      filteredEvents = filteredEvents.filter(event => 
-        selectedMembers.includes(event.userId)
-      );
+      filteredEvents = filteredEvents.filter(event => selectedMembers.includes(event.userId));
     }
-    
     return filteredEvents;
   };
 
@@ -329,7 +294,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
       const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
-
       await createEvent.mutateAsync({
         title: formData.title,
         description: formData.description,
@@ -340,7 +304,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
       });
-
       setCreateModalOpen(false);
       resetForm();
       refetch();
@@ -351,12 +314,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const handleUpdateEvent = async () => {
     if (!selectedEvent) return;
-
     try {
       const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
       const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
-
       await updateEvent.mutateAsync({
         id: selectedEvent.id,
         title: formData.title,
@@ -368,7 +329,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
       });
-
       setEditModalOpen(false);
       setSelectedEvent(null);
       resetForm();
@@ -380,7 +340,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
-
     try {
       await deleteEvent.mutateAsync({ id: selectedEvent.id });
       setEditModalOpen(false);
@@ -392,22 +351,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      startTime: '09:00',
-      endTime: '10:00',
-      category: 'other',
-      reminder: '15',
-      isPrivate: false,
-    });
+    setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', reminder: '15', isPrivate: false });
   };
 
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
     const startTime = new Date(event.startTime);
     const endTime = new Date(event.endTime);
-    
     setFormData({
       title: event.title,
       description: event.description || '',
@@ -421,229 +371,202 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
+  const hasActiveFilters = selectedCategories.length > 0 || selectedMembers.length > 0;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
-      {/* Header - Titre centré style Accueil */}
+
+      {/* ── Titre centré ── */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>{t('calendar.title') || 'Calendrier'}</Text>
       </View>
-      {/* Barre d'actions + sélecteur de vue */}
-      <View style={styles.calendarActionsBar}>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setImportModalOpen(true)}>
-            <Text style={styles.headerActionIcon}>📥</Text>
-            <Text style={styles.headerActionText}>{t('calendar.import') || 'Import'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setSubscribeModalOpen(true)}>
-            <Text style={styles.headerActionIcon}>🔔</Text>
-            <Text style={styles.headerActionText}>{t('calendar.subscribe') || 'Abo'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setExportModalOpen(true)}>
-            <Text style={styles.headerActionIcon}>📤</Text>
-            <Text style={styles.headerActionText}>{t('calendar.export') || 'Export'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => setFilterModalOpen(true)}>
-            <Text style={styles.headerActionIcon}>🔽</Text>
-            {(selectedCategories.length > 0 || selectedMembers.length > 0) && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* Sélecteur de vue - icônes calendrier style tear-off */}
-      <View style={[styles.calendarActionsBar, { paddingTop: 4, paddingBottom: 8 }]}>
-        <View style={styles.viewToggleRow}>
-          {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
-            const isActive = viewMode === mode;
-            const numbers: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '' };
-            return (
-              <TouchableOpacity
-                key={mode}
-                onPress={() => saveViewMode(mode)}
-                style={[styles.calIconWrapper, isActive && styles.calIconWrapperActive]}
-              >
-                {mode === 'agenda' ? (
-                  // Icône agenda (liste de lignes)
-                  <View style={[styles.calIcon, isActive && styles.calIconActive]}>
-                    <View style={[styles.calIconBand, isActive && styles.calIconBandActive]} />
-                    <View style={styles.calIconBody}>
-                      <View style={[styles.agendaLine, { width: '70%' }]} />
-                      <View style={[styles.agendaLine, { width: '50%' }]} />
-                      <View style={[styles.agendaLine, { width: '60%' }]} />
-                    </View>
-                  </View>
-                ) : (
-                  // Icône calendrier avec chiffre
-                  <View style={[styles.calIcon, isActive && styles.calIconActive]}>
-                    <View style={[styles.calIconBand, isActive && styles.calIconBandActive]}>
-                      <View style={styles.calIconRing} />
-                      <View style={styles.calIconRing} />
-                    </View>
-                    <View style={styles.calIconBody}>
-                      <Text style={[styles.calIconNumber, isActive && styles.calIconNumberActive]}>{numbers[mode]}</Text>
-                    </View>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+
+      {/* ── Barre d'actions : 4 boutons 25% chacun, sans texte ── */}
+      <View style={styles.actionsBar}>
+        {/* Import */}
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setImportModalOpen(true)}>
+          <Text style={styles.actionIcon}>📥</Text>
+        </TouchableOpacity>
+        {/* Abo (icône lien/chaîne) */}
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setSubscribeModalOpen(true)}>
+          <Text style={styles.actionIcon}>🔗</Text>
+        </TouchableOpacity>
+        {/* Export */}
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setExportModalOpen(true)}>
+          <Text style={styles.actionIcon}>📤</Text>
+        </TouchableOpacity>
+        {/* Filtres */}
+        <TouchableOpacity style={[styles.actionBtn, hasActiveFilters && styles.actionBtnActive]} onPress={() => setFilterModalOpen(true)}>
+          <Text style={styles.actionIcon}>⚙️</Text>
+          {hasActiveFilters && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      {/* ── Sélecteur de vue : icônes calendrier (bande rouge) ── */}
+      <View style={styles.viewBar}>
+        {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
+          const isActive = viewMode === mode;
+          const numbers: Record<string, string> = { month: '30', week: '7', day: '1', agenda: '' };
+          return (
+            <TouchableOpacity
+              key={mode}
+              onPress={() => saveViewMode(mode)}
+              style={[styles.calIconWrapper, isActive && styles.calIconWrapperActive]}
+            >
+              {mode === 'agenda' ? (
+                <View style={[styles.calIcon, isActive && styles.calIconActive]}>
+                  <View style={[styles.calIconBand, isActive && styles.calIconBandActive]} />
+                  <View style={styles.calIconBody}>
+                    <View style={[styles.agendaLine, { width: '70%' }]} />
+                    <View style={[styles.agendaLine, { width: '50%' }]} />
+                    <View style={[styles.agendaLine, { width: '60%' }]} />
+                  </View>
+                </View>
+              ) : (
+                <View style={[styles.calIcon, isActive && styles.calIconActive]}>
+                  <View style={[styles.calIconBand, isActive && styles.calIconBandActive]}>
+                    <View style={styles.calIconRing} />
+                    <View style={styles.calIconRing} />
+                  </View>
+                  <View style={styles.calIconBody}>
+                    <Text style={[styles.calIconNumber, isActive && styles.calIconNumberActive]}>{numbers[mode]}</Text>
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* ── Contenu principal scrollable ── */}
+      <ScrollView
         style={styles.content}
-        nestedScrollEnabled={true}
+        nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#ef4444']} />}
       >
-        {/* Month View */}
+        {/* ── Vue Mois ── */}
         {viewMode === 'month' && (
           <>
-            {/* Month Navigation */}
+            {/* Navigation mois : flèches aux extrémités, mois centré */}
             <View style={styles.monthNav}>
-          <TouchableOpacity onPress={() => setCurrentDate(subMonths(currentDate, 1))} style={styles.navButton}>
-            <Text style={styles.navButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.monthTitle}>
-            {format(currentDate, 'MMMM yyyy', { locale: getLocale() })}
-          </Text>
-          <TouchableOpacity onPress={() => setCurrentDate(addMonths(currentDate, 1))} style={styles.navButton}>
-            <Text style={styles.navButtonText}>→</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity onPress={() => setCurrentDate(subMonths(currentDate, 1))} style={styles.navArrow} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Text style={styles.navArrowText}>‹</Text>
+              </TouchableOpacity>
+              <Text style={styles.monthTitle}>
+                {format(currentDate, 'MMMM yyyy', { locale: getLocale() })}
+              </Text>
+              <TouchableOpacity onPress={() => setCurrentDate(addMonths(currentDate, 1))} style={styles.navArrow} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Text style={styles.navArrowText}>›</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Calendar Grid */}
-        <View style={styles.calendar}>
-          <View style={styles.weekRow}>
-            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
-              <View key={index} style={styles.dayHeader}>
-                <Text style={styles.dayHeaderText}>{day}</Text>
+            {/* Grille calendrier */}
+            <View style={styles.calendar}>
+              <View style={styles.weekRow}>
+                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
+                  <View key={index} style={styles.dayHeader}>
+                    <Text style={styles.dayHeaderText}>{day}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+              <View style={styles.daysGrid}>
+                {daysInMonth.map((day) => {
+                  const hasEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day)).length > 0;
+                  const isSelected = isSameDay(day, selectedDate);
+                  const isTodayDate = isToday(day);
+                  return (
+                    <TouchableOpacity
+                      key={day.toString()}
+                      style={[styles.dayCell, isSelected && styles.dayCellSelected, isTodayDate && !isSelected && styles.dayCellToday]}
+                      onPress={() => {
+                        setSelectedDate(day);
+                        const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
+                        if (dayEvents.length > 0) setDropdownModalOpen(true);
+                        else {
+                          setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
+                          setCreateModalOpen(true);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.dayText, isTodayDate && !isSelected && styles.dayTextToday, isSelected && styles.dayTextSelected]}>
+                        {format(day, 'd')}
+                      </Text>
+                      {hasEvents && <View style={styles.eventDot} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
 
-          <View style={styles.daysGrid}>
-            {daysInMonth.map((day, index) => {
-              const hasEvents = getEventsForDate(day).length > 0;
-              const isSelected = isSameDay(day, selectedDate);
-              const isTodayDate = isToday(day);
-
-              return (
+            {/* Événements du jour sélectionné */}
+            <View style={styles.eventsSection}>
+              <View style={styles.eventsSectionHeader}>
+                <Text style={styles.eventsTitle}>
+                  {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
+                </Text>
                 <TouchableOpacity
-                  key={day.toString()}
-                  style={[
-                    styles.dayCell,
-                    isSelected && styles.dayCellSelected,
-                    isTodayDate && styles.dayCellToday,
-                  ]}
+                  style={styles.addEventBtn}
                   onPress={() => {
-                    setSelectedDate(day);
-                    // Vérifier si le jour a des événements
-                    const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
-                    if (dayEvents.length === 0) {
-                      // Jour vide : Ouvrir modal création avec date pré-remplie
-                      setFormData(prev => ({
-                        ...prev,
-                        startTime: '09:00',
-                        endTime: '10:00',
-                      }));
-                      setCreateModalOpen(true);
-                    } else {
-                      // Jour avec événements : Ouvrir dropdown
-                      setDropdownModalOpen(true);
-                    }
+                    setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
+                    setCreateModalOpen(true);
                   }}
                 >
-                  <Text style={[
-                    styles.dayText,
-                    isTodayDate && !isSelected && styles.dayTextToday,
-                    isSelected && styles.dayTextSelected,
-                  ]}>
-                    {format(day, 'd')}
-                  </Text>
-                  {hasEvents && <View style={styles.eventDot} />}
+                  <Text style={styles.addEventBtnText}>+</Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+              </View>
 
-        {/* Events for selected date - max 3 + More button */}
-        <View style={styles.eventsSection}>
-          <View style={styles.eventsSectionHeader}>
-            <Text style={styles.eventsTitle}>
-              {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
-            </Text>
-            {selectedDateEvents.length > 0 && (
-              <TouchableOpacity
-                style={styles.addEventBtn}
-                onPress={() => {
-                  setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
-                  setCreateModalOpen(true);
-                }}
-              >
-                <Text style={styles.addEventBtnText}>+</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {selectedDateEvents.length > 0 ? (
-            <>
-              {selectedDateEvents.slice(0, 3).map(event => {
-                const category = getCategoryInfo(event.category);
-                return (
-                  <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
-                    <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
-                    <View style={styles.eventCardContent}>
-                      <View style={styles.eventHeader}>
-                        <Text style={styles.eventIcon}>{category.icon}</Text>
-                        <Text style={styles.eventTime}>
-                          {format(new Date(event.startTime), 'HH:mm')}
-                        </Text>
-                        {event.isPrivate && <Text style={styles.privateIcon}>🔒</Text>}
-                      </View>
-                      <Text style={styles.eventTitle}>{event.title}</Text>
-                      {cleanDescription(event.description) ? (
-                        <Text style={styles.eventDescription} numberOfLines={1}>{cleanDescription(event.description)}</Text>
-                      ) : null}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-              {selectedDateEvents.length > 3 && (
+              {selectedDateEvents.length > 0 ? (
+                <>
+                  {selectedDateEvents.slice(0, 3).map(event => {
+                    const category = getCategoryInfo(event.category);
+                    const desc = cleanDescription(event.description);
+                    return (
+                      <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
+                        <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
+                        <View style={styles.eventCardContent}>
+                          <View style={styles.eventHeader}>
+                            <Text style={styles.eventIcon}>{category.icon}</Text>
+                            <Text style={styles.eventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                            {event.isPrivate ? <Text style={styles.privateIcon}>🔒</Text> : null}
+                          </View>
+                          <Text style={styles.eventTitle}>{event.title}</Text>
+                          {desc ? <Text style={styles.eventDescription} numberOfLines={1}>{desc}</Text> : null}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {selectedDateEvents.length > 3 && (
+                    <TouchableOpacity style={styles.moreEventsBtn} onPress={() => setDropdownModalOpen(true)}>
+                      <Text style={styles.moreEventsBtnText}>{`+ ${selectedDateEvents.length - 3} ${t('calendar.moreEvents') || 'autres'}`}</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
                 <TouchableOpacity
-                  style={styles.moreEventsBtn}
-                  onPress={() => setDropdownModalOpen(true)}
+                  style={styles.noEvents}
+                  onPress={() => {
+                    setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
+                    setCreateModalOpen(true);
+                  }}
                 >
-                  <Text style={styles.moreEventsBtnText}>
-                    {`+ ${selectedDateEvents.length - 3} ${t('calendar.moreEvents') || 'autres événements'}`}
-                  </Text>
+                  <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
+                  <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
                 </TouchableOpacity>
               )}
-            </>
-          ) : (
-            <TouchableOpacity
-              style={styles.noEvents}
-              onPress={() => {
-                setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
-                setCreateModalOpen(true);
-              }}
-            >
-              <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
-              <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+            </View>
           </>
         )}
 
-        {/* Agenda View */}
+        {/* ── Vue Agenda ── */}
         {viewMode === 'agenda' && (
           <View style={styles.agendaContainer}>
             {events && events.length > 0 ? (
@@ -655,33 +578,26 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   const prevEventDate = index > 0 ? new Date(arr[index - 1].startTime) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
                   const category = getCategoryInfo(event.category);
-
+                  const desc = cleanDescription(event.description);
                   return (
                     <View key={event.id}>
                       {showDateHeader && (
                         <View style={styles.agendaDateHeader}>
                           <Text style={styles.agendaDateText}>
-                            {isToday(eventDate) ? 'Aujourd\'hui' : format(eventDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                            {isToday(eventDate) ? "Aujourd'hui" : format(eventDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
                           </Text>
                         </View>
                       )}
-                      <TouchableOpacity 
-                        style={styles.agendaEventCard}
-                        onPress={() => openEditModal(event)}
-                      >
+                      <TouchableOpacity style={styles.agendaEventCard} onPress={() => openEditModal(event)}>
                         <View style={[styles.agendaEventColorBar, { backgroundColor: category.color }]} />
                         <View style={styles.agendaEventContent}>
                           <View style={styles.agendaEventHeader}>
                             <Text style={styles.agendaEventIcon}>{category.icon}</Text>
-                            <Text style={styles.agendaEventTime}>
-                              {format(eventDate, 'HH:mm')}
-                            </Text>
-                            {event.isPrivate && <Text style={styles.agendaPrivateIcon}>🔒</Text>}
+                            <Text style={styles.agendaEventTime}>{format(eventDate, 'HH:mm')}</Text>
+                            {event.isPrivate ? <Text style={styles.agendaPrivateIcon}>🔒</Text> : null}
                           </View>
                           <Text style={styles.agendaEventTitle}>{event.title}</Text>
-                          {cleanDescription(event.description) ? (
-                            <Text style={styles.agendaEventDescription}>{cleanDescription(event.description)}</Text>
-                          ) : null}
+                          {desc ? <Text style={styles.agendaEventDescription}>{desc}</Text> : null}
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -695,28 +611,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         )}
 
-        {/* Week View */}
+        {/* ── Vue Semaine ── */}
         {viewMode === 'week' && (
           <View style={styles.weekViewContainer}>
-            {/* Week Navigation */}
             <View style={styles.weekNav}>
-              <TouchableOpacity onPress={() => setCurrentDate(subWeeks(currentDate, 1))} style={styles.navButton}>
-                <Text style={styles.navButtonText}>←</Text>
+              <TouchableOpacity onPress={() => setCurrentDate(subWeeks(currentDate, 1))} style={styles.navArrow}>
+                <Text style={styles.navArrowText}>‹</Text>
               </TouchableOpacity>
               <Text style={styles.weekNavTitle}>
-                Semaine du {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}
+                {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}
+                {' – '}
+                {format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: getLocale() })}
               </Text>
-              <TouchableOpacity onPress={() => setCurrentDate(addWeeks(currentDate, 1))} style={styles.navButton}>
-                <Text style={styles.navButtonText}>→</Text>
+              <TouchableOpacity onPress={() => setCurrentDate(addWeeks(currentDate, 1))} style={styles.navArrow}>
+                <Text style={styles.navArrowText}>›</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Week Header (Days) */}
             <View style={styles.weekHeader}>
               <View style={styles.weekTimeColumn} />
               {eachDayOfInterval({
                 start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-                end: endOfWeek(currentDate, { weekStartsOn: 1 })
+                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
               }).map(day => (
                 <View key={day.toString()} style={styles.weekDayHeader}>
                   <Text style={[styles.weekDayName, isToday(day) && styles.weekDayNameToday]}>
@@ -728,55 +643,33 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </View>
               ))}
             </View>
-
-            {/* Week Timeline */}
             <ScrollView style={styles.weekTimeline}>
               {Array.from({ length: 24 }, (_, hour) => (
                 <View key={hour} style={styles.weekTimeRow}>
                   <View style={styles.weekTimeLabel}>
-                    <Text style={styles.weekTimeLabelText}>{hour.toString().padStart(2, '0')}:00</Text>
+                    <Text style={styles.weekTimeLabelText}>{hour.toString().padStart(2, '0')}h</Text>
                   </View>
                   {eachDayOfInterval({
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-                    end: endOfWeek(currentDate, { weekStartsOn: 1 })
+                    end: endOfWeek(currentDate, { weekStartsOn: 1 }),
                   }).map(day => {
-                    const dayEvents = (events || []).filter(event => {
+                    const hourEvents = (events || []).filter(event => {
                       const eventDate = new Date(event.startTime);
                       return isSameDay(eventDate, day) && eventDate.getHours() === hour;
                     });
-
                     return (
                       <View key={day.toString()} style={styles.weekDayColumn}>
-                        {dayEvents.map(event => {
+                        {hourEvents.map(event => {
                           const category = getCategoryInfo(event.category);
-                          const startTime = new Date(event.startTime);
-                          const endTime = new Date(event.endTime);
-                          const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-                          const heightPerMinute = 1.5;
-                          const eventHeight = Math.max(durationMinutes * heightPerMinute, 30);
-                          const topOffset = startTime.getMinutes() * heightPerMinute;
-
                           return (
                             <TouchableOpacity
                               key={event.id}
-                              style={[
-                                styles.weekEventCard,
-                                {
-                                  backgroundColor: category.color + '20',
-                                  borderLeftColor: category.color,
-                                  height: eventHeight,
-                                  top: topOffset,
-                                }
-                              ]}
+                              style={[styles.weekEventCard, { backgroundColor: category.color + '30', borderLeftColor: category.color }]}
                               onPress={() => openEditModal(event)}
                             >
                               <Text style={styles.weekEventIcon}>{category.icon}</Text>
-                              <Text style={styles.weekEventTitle} numberOfLines={1}>
-                                {event.title}
-                              </Text>
-                              <Text style={styles.weekEventTime}>
-                                {format(startTime, 'HH:mm')}
-                              </Text>
+                              <Text style={styles.weekEventTitle} numberOfLines={1}>{event.title}</Text>
+                              <Text style={styles.weekEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -789,30 +682,26 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         )}
 
-        {/* Day View */}
+        {/* ── Vue Jour ── */}
         {viewMode === 'day' && (
           <View style={styles.dayViewContainer}>
-            {/* Day Navigation */}
             <View style={styles.dayNav}>
-              <TouchableOpacity onPress={() => setSelectedDate(subDays(selectedDate, 1))} style={styles.navButton}>
-                <Text style={styles.navButtonText}>←</Text>
+              <TouchableOpacity onPress={() => setSelectedDate(subDays(selectedDate, 1))} style={styles.navArrow}>
+                <Text style={styles.navArrowText}>‹</Text>
               </TouchableOpacity>
               <Text style={styles.dayNavTitle}>
                 {isToday(selectedDate) ? "Aujourd'hui" : format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
               </Text>
-              <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 1))} style={styles.navButton}>
-                <Text style={styles.navButtonText}>→</Text>
+              <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 1))} style={styles.navArrow}>
+                <Text style={styles.navArrowText}>›</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Timeline */}
             <ScrollView style={styles.dayTimeline}>
               {Array.from({ length: 24 }, (_, hour) => {
                 const hourEvents = (events || []).filter(event => {
                   const eventDate = new Date(event.startTime);
                   return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
                 });
-
                 return (
                   <View key={hour} style={styles.dayTimeSlot}>
                     <View style={styles.dayTimeLabel}>
@@ -822,40 +711,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View style={styles.dayTimeHalfHourLine} />
                       {hourEvents.map(event => {
                         const category = getCategoryInfo(event.category);
-                        const startTime = new Date(event.startTime);
-                        const endTime = new Date(event.endTime);
-                        const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-                        const heightPerMinute = 2;
-                        const eventHeight = Math.max(durationMinutes * heightPerMinute, 40);
-                        const topOffset = startTime.getMinutes() * heightPerMinute;
-
+                        const startT = new Date(event.startTime);
+                        const endT = new Date(event.endTime);
+                        const durationMinutes = (endT.getTime() - startT.getTime()) / (1000 * 60);
+                        const eventHeight = Math.max(durationMinutes * 2, 40);
+                        const topOffset = startT.getMinutes() * 2;
+                        const desc = cleanDescription(event.description);
                         return (
                           <TouchableOpacity
                             key={event.id}
-                            style={[
-                              styles.dayEventCard,
-                              { 
-                                backgroundColor: category.color + '20',
-                                borderLeftColor: category.color,
-                                height: eventHeight,
-                                top: topOffset,
-                              }
-                            ]}
+                            style={[styles.dayEventCard, { backgroundColor: category.color + '20', borderLeftColor: category.color, height: eventHeight, top: topOffset }]}
                             onPress={() => openEditModal(event)}
                           >
-                            <Text style={styles.dayEventTime}>
-                              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
-                            </Text>
+                            <Text style={styles.dayEventTime}>{format(startT, 'HH:mm')} - {format(endT, 'HH:mm')}</Text>
                             <View style={styles.dayEventHeader}>
                               <Text style={styles.dayEventIcon}>{category.icon}</Text>
                               <Text style={styles.dayEventTitle} numberOfLines={1}>{event.title}</Text>
-                              {event.isPrivate && <Text style={styles.dayEventPrivate}>🔒</Text>}
+                              {event.isPrivate ? <Text style={styles.dayEventPrivate}>🔒</Text> : null}
                             </View>
-                            {cleanDescription(event.description) && durationMinutes > 30 && (
-                              <Text style={styles.dayEventDescription} numberOfLines={2}>
-                                {cleanDescription(event.description)}
-                              </Text>
-                            )}
+                            {desc && durationMinutes > 30 ? (
+                              <Text style={styles.dayEventDescription} numberOfLines={2}>{desc}</Text>
+                            ) : null}
                           </TouchableOpacity>
                         );
                       })}
@@ -868,370 +744,175 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         )}
       </ScrollView>
 
-      {/* Create Event Modal */}
+      {/* ════════════════════════════════════════════════════════════
+          MODAUX — boutons remplacés par icônes rondes
+          ════════════════════════════════════════════════════════════ */}
+
+      {/* ── Créer événement ── */}
       <Modal visible={createModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.addEvent')}</Text>
-            
+            <Text style={styles.modalTitle}>{t('calendar.addEvent') || 'Nouvel événement'}</Text>
             <ScrollView style={styles.modalForm}>
-              <Text style={styles.label}>{t('common.title')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.title}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
-                placeholder={t('calendar.addEvent')}
-              />
-
-              <Text style={styles.label}>{t('calendar.description')}</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.description}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-                placeholder={t('calendar.description')}
-                multiline
-                numberOfLines={3}
-              />
-
-              <Text style={styles.label}>{t('calendar.category')}</Text>
+              <Text style={styles.label}>{t('common.title') || 'Titre'}</Text>
+              <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholder={t('calendar.addEvent') || 'Titre'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.description') || 'Description'}</Text>
+              <TextInput style={[styles.input, styles.textArea]} value={formData.description} onChangeText={text => setFormData(p => ({ ...p, description: text }))} multiline numberOfLines={3} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.category') || 'Catégorie'}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {EVENT_CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.value}
-                    style={[
-                      styles.categoryButton,
-                      formData.category === cat.value && { backgroundColor: cat.color },
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, category: cat.value }))}
-                  >
+                {EVENT_CATEGORIES.map(cat => (
+                  <TouchableOpacity key={cat.value} style={[styles.categoryButton, formData.category === cat.value && { backgroundColor: cat.color }]} onPress={() => setFormData(p => ({ ...p, category: cat.value }))}>
                     <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                    <Text style={[
-                      styles.categoryLabel,
-                      formData.category === cat.value && styles.categoryLabelSelected,
-                    ]}>
-                      {getCategoryLabel(cat)}
-                    </Text>
+                    <Text style={[styles.categoryLabel, formData.category === cat.value && styles.categoryLabelSelected]}>{getCategoryLabel(cat)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
-              <Text style={styles.label}>{t('calendar.startTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.startTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, startTime: text }))}
-                placeholder="09:00"
-              />
-
-              <Text style={styles.label}>{t('calendar.endTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.endTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, endTime: text }))}
-                placeholder="10:00"
-              />
-
-              <Text style={styles.label}>{t('calendar.reminder')}</Text>
+              <Text style={styles.label}>{t('calendar.startTime') || 'Début'}</Text>
+              <TextInput style={styles.input} value={formData.startTime} onChangeText={text => setFormData(p => ({ ...p, startTime: text }))} placeholder="09:00" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.endTime') || 'Fin'}</Text>
+              <TextInput style={styles.input} value={formData.endTime} onChangeText={text => setFormData(p => ({ ...p, endTime: text }))} placeholder="10:00" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.reminderButton,
-                      formData.reminder === option.value && styles.reminderButtonSelected,
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, reminder: option.value }))}
-                  >
-                    <Text style={[
-                      styles.reminderButtonText,
-                      formData.reminder === option.value && styles.reminderButtonTextSelected,
-                    ]}>
-                      {option.label}
-                    </Text>
+                {REMINDER_OPTIONS.map(option => (
+                  <TouchableOpacity key={option.value} style={[styles.reminderButton, formData.reminder === option.value && styles.reminderButtonSelected]} onPress={() => setFormData(p => ({ ...p, reminder: option.value }))}>
+                    <Text style={[styles.reminderButtonText, formData.reminder === option.value && styles.reminderButtonTextSelected]}>{option.label}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
-              <TouchableOpacity
-                style={styles.checkboxRow}
-                onPress={() => setFormData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
-              >
+              <TouchableOpacity style={styles.checkboxRow} onPress={() => setFormData(p => ({ ...p, isPrivate: !p.isPrivate }))}>
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
-                  {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
+                  {formData.isPrivate ? <Text style={styles.checkmark}>✓</Text> : null}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private')}</Text>
+                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setCreateModalOpen(false);
-                  resetForm();
-                }}
-              >
-                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleCreateEvent}
-              >
-                <Text style={styles.modalButtonTextSave}>{t('common.save')}</Text>
-              </TouchableOpacity>
+            {/* Boutons icônes */}
+            <View style={styles.iconBtnRow}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setCreateModalOpen(false); resetForm(); }} />
+              <ModalIconButton icon="✓" color="#10b981" onPress={handleCreateEvent} />
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Edit Event Modal */}
+      {/* ── Modifier événement ── */}
       <Modal visible={editModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('common.edit')}</Text>
-            
+            <Text style={styles.modalTitle}>{t('common.edit') || 'Modifier'}</Text>
             <ScrollView style={styles.modalForm}>
-              <Text style={styles.label}>{t('common.title')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.title}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
-              />
-
-              <Text style={styles.label}>{t('calendar.description')}</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.description}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
-                multiline
-                numberOfLines={3}
-              />
-
-              <Text style={styles.label}>{t('calendar.category')}</Text>
+              <Text style={styles.label}>{t('common.title') || 'Titre'}</Text>
+              <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.description') || 'Description'}</Text>
+              <TextInput style={[styles.input, styles.textArea]} value={formData.description} onChangeText={text => setFormData(p => ({ ...p, description: text }))} multiline numberOfLines={3} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.category') || 'Catégorie'}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {EVENT_CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.value}
-                    style={[
-                      styles.categoryButton,
-                      formData.category === cat.value && { backgroundColor: cat.color },
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, category: cat.value }))}
-                  >
+                {EVENT_CATEGORIES.map(cat => (
+                  <TouchableOpacity key={cat.value} style={[styles.categoryButton, formData.category === cat.value && { backgroundColor: cat.color }]} onPress={() => setFormData(p => ({ ...p, category: cat.value }))}>
                     <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                    <Text style={[
-                      styles.categoryLabel,
-                      formData.category === cat.value && styles.categoryLabelSelected,
-                    ]}>
-                      {getCategoryLabel(cat)}
-                    </Text>
+                    <Text style={[styles.categoryLabel, formData.category === cat.value && styles.categoryLabelSelected]}>{getCategoryLabel(cat)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
-              <Text style={styles.label}>{t('calendar.startTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.startTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, startTime: text }))}
-              />
-
-              <Text style={styles.label}>{t('calendar.endTime')}</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.endTime}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, endTime: text }))}
-              />
-
-              <Text style={styles.label}>{t('calendar.reminder')}</Text>
+              <Text style={styles.label}>{t('calendar.startTime') || 'Début'}</Text>
+              <TextInput style={styles.input} value={formData.startTime} onChangeText={text => setFormData(p => ({ ...p, startTime: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.endTime') || 'Fin'}</Text>
+              <TextInput style={styles.input} value={formData.endTime} onChangeText={text => setFormData(p => ({ ...p, endTime: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.reminderButton,
-                      formData.reminder === option.value && styles.reminderButtonSelected,
-                    ]}
-                    onPress={() => setFormData(prev => ({ ...prev, reminder: option.value }))}
-                  >
-                    <Text style={[
-                      styles.reminderButtonText,
-                      formData.reminder === option.value && styles.reminderButtonTextSelected,
-                    ]}>
-                      {option.label}
-                    </Text>
+                {REMINDER_OPTIONS.map(option => (
+                  <TouchableOpacity key={option.value} style={[styles.reminderButton, formData.reminder === option.value && styles.reminderButtonSelected]} onPress={() => setFormData(p => ({ ...p, reminder: option.value }))}>
+                    <Text style={[styles.reminderButtonText, formData.reminder === option.value && styles.reminderButtonTextSelected]}>{option.label}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
-              <TouchableOpacity
-                style={styles.checkboxRow}
-                onPress={() => setFormData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
-              >
+              <TouchableOpacity style={styles.checkboxRow} onPress={() => setFormData(p => ({ ...p, isPrivate: !p.isPrivate }))}>
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
-                  {formData.isPrivate && <Text style={styles.checkmark}>✓</Text>}
+                  {formData.isPrivate ? <Text style={styles.checkmark}>✓</Text> : null}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private')}</Text>
+                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonDelete]}
-                onPress={handleDeleteEvent}
-              >
-                <Text style={styles.modalButtonTextDelete}>{t('common.delete')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setEditModalOpen(false);
-                  setSelectedEvent(null);
-                  resetForm();
-                }}
-              >
-                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleUpdateEvent}
-              >
-                <Text style={styles.modalButtonTextSave}>{t('common.save')}</Text>
-              </TouchableOpacity>
+            {/* Boutons icônes : Supprimer | Annuler | Sauvegarder */}
+            <View style={styles.iconBtnRow}>
+              <ModalIconButton icon="🗑" color="#ef4444" onPress={handleDeleteEvent} />
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setEditModalOpen(false); setSelectedEvent(null); resetForm(); }} />
+              <ModalIconButton icon="✓" color="#10b981" onPress={handleUpdateEvent} />
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Dropdown Modal - Day Events */}
+      {/* ── Dropdown événements du jour ── */}
       <Modal visible={dropdownModalOpen} animationType="fade" transparent>
-        <TouchableOpacity 
-          style={styles.dropdownOverlay} 
-          activeOpacity={1}
-          onPress={() => setDropdownModalOpen(false)}
-        >
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setDropdownModalOpen(false)}>
           <View style={styles.dropdownContent} onStartShouldSetResponder={() => true}>
             <Text style={styles.dropdownTitle}>
               {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
             </Text>
-            
-            {/* Add Event Button */}
-            <TouchableOpacity
-              style={styles.dropdownAddButton}
-              onPress={() => {
-                setDropdownModalOpen(false);
-                setFormData(prev => ({
-                  ...prev,
-                  startTime: '09:00',
-                  endTime: '10:00',
-                }));
-                setCreateModalOpen(true);
-              }}
-            >
-              <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent')}</Text>
+            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); setFormData(p => ({ ...p, startTime: '09:00', endTime: '10:00' })); setCreateModalOpen(true); }}>
+              <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
-
-            {/* Events List */}
             <ScrollView style={styles.dropdownEventsList}>
               {(events || []).filter(e => isSameDay(new Date(e.startTime), selectedDate)).map(event => {
                 const category = getCategoryInfo(event.category);
+                const desc = cleanDescription(event.description);
                 return (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={styles.dropdownEventCard}
-                    onPress={() => {
-                      setDropdownModalOpen(false);
-                      openEditModal(event);
-                    }}
-                  >
+                  <TouchableOpacity key={event.id} style={styles.dropdownEventCard} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
                     <View style={[styles.dropdownEventColorBar, { backgroundColor: category.color }]} />
                     <View style={styles.dropdownEventContent}>
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
-                        <Text style={styles.dropdownEventTime}>
-                          {format(new Date(event.startTime), 'HH:mm')}
-                        </Text>
-                        {event.isPrivate && <Text style={styles.dropdownPrivateIcon}>🔒</Text>}
+                        <Text style={styles.dropdownEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                        {event.isPrivate ? <Text style={styles.dropdownPrivateIcon}>🔒</Text> : null}
                       </View>
                       <Text style={styles.dropdownEventTitle}>{event.title}</Text>
-                      {cleanDescription(event.description) ? (
-                        <Text style={styles.dropdownEventDescription} numberOfLines={1}>
-                          {cleanDescription(event.description)}
-                        </Text>
-                      ) : null}
+                      {desc ? <Text style={styles.dropdownEventDescription} numberOfLines={1}>{desc}</Text> : null}
                     </View>
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
-
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.dropdownCloseButton}
-              onPress={() => setDropdownModalOpen(false)}
-            >
-              <Text style={styles.dropdownCloseButtonText}>{t('common.close')}</Text>
-            </TouchableOpacity>
+            {/* Bouton icône fermer */}
+            <View style={[styles.iconBtnRow, { justifyContent: 'center' }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setDropdownModalOpen(false)} />
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
 
-      {/* Filter Modal */}
+      {/* ── Filtres ── */}
       <Modal visible={filterModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Filtres</Text>
-            
+            <Text style={styles.modalTitle}>{t('calendar.filters') || 'Filtres'}</Text>
             <ScrollView style={styles.modalForm}>
-              {/* Category Filters */}
-              <Text style={styles.filterSectionTitle}>Par catégorie</Text>
+              <Text style={styles.filterSectionTitle}>{t('calendar.byCategory') || 'Par catégorie'}</Text>
               <View style={styles.filterCheckboxContainer}>
-                {EVENT_CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.value}
-                    style={styles.filterCheckboxRow}
-                    onPress={() => {
-                      if (selectedCategories.includes(cat.value)) {
-                        setSelectedCategories(selectedCategories.filter(c => c !== cat.value));
-                      } else {
-                        setSelectedCategories([...selectedCategories, cat.value]);
-                      }
-                    }}
-                  >
-                    <View style={[
-                      styles.checkbox,
-                      selectedCategories.includes(cat.value) && styles.checkboxChecked
-                    ]}>
-                      {selectedCategories.includes(cat.value) && <Text style={styles.checkmark}>✓</Text>}
+                {EVENT_CATEGORIES.map(cat => (
+                  <TouchableOpacity key={cat.value} style={styles.filterCheckboxRow} onPress={() => {
+                    if (selectedCategories.includes(cat.value)) setSelectedCategories(selectedCategories.filter(c => c !== cat.value));
+                    else setSelectedCategories([...selectedCategories, cat.value]);
+                  }}>
+                    <View style={[styles.checkbox, selectedCategories.includes(cat.value) && styles.checkboxChecked]}>
+                      {selectedCategories.includes(cat.value) ? <Text style={styles.checkmark}>✓</Text> : null}
                     </View>
                     <Text style={styles.filterCheckboxIcon}>{cat.icon}</Text>
                     <Text style={styles.filterCheckboxLabel}>{getCategoryLabel(cat)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-
-              {/* Member Filters */}
               {familyMembers && familyMembers.length > 0 && (
                 <>
-                  <Text style={styles.filterSectionTitle}>Par membre</Text>
+                  <Text style={styles.filterSectionTitle}>{t('calendar.byMember') || 'Par membre'}</Text>
                   <View style={styles.filterCheckboxContainer}>
                     {familyMembers.map((member: any) => (
-                      <TouchableOpacity
-                        key={member.id}
-                        style={styles.filterCheckboxRow}
-                        onPress={() => {
-                          if (selectedMembers.includes(member.id)) {
-                            setSelectedMembers(selectedMembers.filter(m => m !== member.id));
-                          } else {
-                            setSelectedMembers([...selectedMembers, member.id]);
-                          }
-                        }}
-                      >
-                        <View style={[
-                          styles.checkbox,
-                          selectedMembers.includes(member.id) && styles.checkboxChecked
-                        ]}>
-                          {selectedMembers.includes(member.id) && <Text style={styles.checkmark}>✓</Text>}
+                      <TouchableOpacity key={member.id} style={styles.filterCheckboxRow} onPress={() => {
+                        if (selectedMembers.includes(member.id)) setSelectedMembers(selectedMembers.filter(m => m !== member.id));
+                        else setSelectedMembers([...selectedMembers, member.id]);
+                      }}>
+                        <View style={[styles.checkbox, selectedMembers.includes(member.id) && styles.checkboxChecked]}>
+                          {selectedMembers.includes(member.id) ? <Text style={styles.checkmark}>✓</Text> : null}
                         </View>
                         <Text style={styles.filterCheckboxLabel}>{member.name}</Text>
                       </TouchableOpacity>
@@ -1240,77 +921,42 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </>
               )}
             </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={resetFilters}
-              >
-                <Text style={styles.modalButtonTextCancel}>Réinitialiser</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setFilterModalOpen(false)}
-              >
-                <Text style={styles.modalButtonTextCancel}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={applyFilters}
-              >
-                <Text style={styles.modalButtonTextSave}>Appliquer</Text>
-              </TouchableOpacity>
+            {/* Boutons icônes : Réinitialiser | Annuler | Appliquer */}
+            <View style={styles.iconBtnRow}>
+              <ModalIconButton icon="↺" color={isDark ? '#374151' : '#e5e7eb'} onPress={resetFilters} />
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setFilterModalOpen(false)} />
+              <ModalIconButton icon="✓" color="#10b981" onPress={applyFilters} />
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Import ICS Modal */}
+      {/* ── Import ICS ── */}
       <Modal visible={importModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Importer un calendrier</Text>
-            
-            <View style={styles.importInfo}>
-              <Text style={styles.importInfoText}>
-                Sélectionnez un fichier .ics (iCalendar) pour importer vos événements.
-              </Text>
-              <Text style={styles.importInfoNote}>
-                ⚠️ Les événements récurrents ne sont pas supportés.
-              </Text>
+            <Text style={styles.modalTitle}>{t('calendar.import') || 'Importer'}</Text>
+            <Text style={styles.importInfoText}>Sélectionnez un fichier .ics (iCalendar) pour importer vos événements.</Text>
+            <Text style={styles.importInfoNote}>⚠️ Les événements récurrents ne sont pas supportés.</Text>
+            <TouchableOpacity style={styles.importSelectButton} onPress={handleImportICS} disabled={isImporting}>
+              <Text style={styles.importSelectButtonText}>{isImporting ? '🔄 Import en cours...' : '📂 Sélectionner un fichier .ics'}</Text>
+            </TouchableOpacity>
+            {/* Bouton icône fermer */}
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setImportModalOpen(false)} disabled={isImporting} />
             </View>
-
-            <TouchableOpacity
-              style={styles.importSelectButton}
-              onPress={handleImportICS}
-              disabled={isImporting}
-            >
-              <Text style={styles.importSelectButtonText}>
-                {isImporting ? '🔄 Import en cours...' : '📂 Sélectionner un fichier .ics'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonCancel, { marginTop: 20 }]}
-              onPress={() => setImportModalOpen(false)}
-              disabled={isImporting}
-            >
-              <Text style={styles.modalButtonTextCancel}>Fermer</Text>
-            </TouchableOpacity>
           </View>
         </View>
-       </Modal>
+      </Modal>
 
-      {/* Subscribe (Abo) Modal */}
+      {/* ── Abonnement calendrier ── */}
       <Modal visible={subscribeModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.subscribe') || 'Abonnement calendrier'}</Text>
-            <Text style={[styles.importInfoText, { marginBottom: 12 }]}>
-              {t('calendar.subscribeDesc') || 'Entrez l\'URL d\'un calendrier ICS pour vous y abonner (Google, Apple, etc.).'}
-            </Text>
+            <Text style={styles.modalTitle}>{t('calendar.subscribe') || 'Abonnement'}</Text>
+            <Text style={styles.importInfoText}>{t('calendar.subscribeDesc') || "Entrez l'URL d'un calendrier ICS (Google, Apple, etc.)."}</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { marginTop: 12 }]}
               value={subscribeUrl}
               onChangeText={setSubscribeUrl}
               placeholder="https://calendar.google.com/calendar/ical/..."
@@ -1319,121 +965,41 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               keyboardType="url"
               multiline
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => { setSubscribeModalOpen(false); setSubscribeUrl(''); }}
-              >
-                <Text style={styles.modalButtonTextCancel}>{t('common.cancel') || 'Annuler'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={() => {
-                  if (subscribeUrl.trim()) {
-                    // TODO: appeler l'API d'abonnement
-                    setSubscribeModalOpen(false);
-                    setSubscribeUrl('');
-                  }
-                }}
-              >
-                <Text style={styles.modalButtonTextSave}>{t('calendar.subscribe') || 'S\'abonner'}</Text>
-              </TouchableOpacity>
+            {/* Boutons icônes */}
+            <View style={styles.iconBtnRow}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setSubscribeModalOpen(false); setSubscribeUrl(''); }} />
+              <ModalIconButton icon="🔗" color="#7c3aed" onPress={() => { if (subscribeUrl.trim()) { setSubscribeModalOpen(false); setSubscribeUrl(''); } }} />
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Export Modal */}
+      {/* ── Export ── */}
       <Modal visible={exportModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.export') || 'Exporter le calendrier'}</Text>
-            <Text style={[styles.importInfoText, { marginBottom: 16 }]}>
-              {t('calendar.exportDesc') || 'Exportez vos événements au format ICS pour les importer dans Google Calendar, Apple Calendar, etc.'}
-            </Text>
-            <TouchableOpacity
-              style={styles.importSelectButton}
-              onPress={() => {
-                // TODO: appeler l'API d'export
-                setExportModalOpen(false);
-              }}
-            >
+            <Text style={styles.modalTitle}>{t('calendar.export') || 'Exporter'}</Text>
+            <Text style={styles.importInfoText}>{t('calendar.exportDesc') || 'Exportez vos événements au format ICS.'}</Text>
+            <TouchableOpacity style={[styles.importSelectButton, { marginTop: 16 }]} onPress={() => setExportModalOpen(false)}>
               <Text style={styles.importSelectButtonText}>📤 {t('calendar.exportICS') || 'Exporter en .ics'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonCancel, { marginTop: 12 }]}
-              onPress={() => setExportModalOpen(false)}
-            >
-              <Text style={styles.modalButtonTextCancel}>{t('common.close') || 'Fermer'}</Text>
-            </TouchableOpacity>
+            {/* Bouton icône fermer */}
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setExportModalOpen(false)} />
+            </View>
           </View>
         </View>
       </Modal>
     </SafeAreaView>
   );
 }
-const getStyles = (isDark: boolean) => StyleSheet.create({
-  weekRow: { flexDirection: 'row', marginBottom: 10 },
-  dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  dayHeaderText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f5f5dc' : '#6b7280' },
-  daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 5 },
-  dayCellSelected: { backgroundColor: '#7c3aed' },
-  dayCellToday: { borderWidth: 2, borderColor: '#7c3aed' },
-  dayText: { fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
-  dayTextSelected: { color: '#fff', fontWeight: 'bold' },
-  dayTextToday: { color: '#7c3aed', fontWeight: 'bold' },
-  eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 2 },
-  eventsSection: { margin: 10, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 20 },
-  eventsTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16, textTransform: 'capitalize' },
-  eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
-  eventColorBar: { width: 4 },
-  eventCardContent: { flex: 1, padding: 16 },
-  eventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  eventIcon: { fontSize: 18, marginRight: 8 },
-  eventTime: { fontSize: 16, fontWeight: 'bold', color: '#7c3aed', flex: 1 },
-  privateIcon: { fontSize: 14 },
-  eventTitle: { fontSize: 16, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 4 },
-  eventDescription: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
-  noEvents: { padding: 24, alignItems: 'center', borderRadius: 10, backgroundColor: isDark ? '#1f2937' : '#f9fafb', marginTop: 8 },
-  eventsSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  addEventBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
-  addEventBtnText: { color: '#fff', fontSize: 20, lineHeight: 28, fontWeight: 'bold' },
-  moreEventsBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', marginTop: 4 },
-  moreEventsBtnText: { fontSize: 14, fontWeight: '600', color: '#7c3aed' },
-  noEventsHint: { fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af', marginTop: 4 },
-  noEventsText: { fontSize: 16, color: isDark ? '#f5f5dc' : '#9ca3af' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 24, width: '90%', maxHeight: '80%' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
-  modalForm: { maxHeight: 400 },
-  label: { fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 12, marginBottom: 6 },
-  input: { backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, color: isDark ? '#ffffff' : '#1f2937' },
-  textArea: { height: 80, textAlignVertical: 'top' },
-  categoryScroll: { marginVertical: 8 },
-  categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
-  categoryIcon: { fontSize: 18, marginRight: 6 },
-  categoryLabel: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
-  categoryLabelSelected: { color: '#fff', fontWeight: '600' },
-  reminderScroll: { marginVertical: 8 },
-  reminderButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 8, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
-  reminderButtonSelected: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  reminderButtonText: { fontSize: 14, color: isDark ? '#f5f5dc' : '#6b7280' },
-  reminderButtonTextSelected: { color: '#fff', fontWeight: '600' },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
-  checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
-  checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  checkmark: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  checkboxLabel: { fontSize: 16, color: isDark ? '#ffffff' : '#374151' },
-  modalButtons: { flexDirection: 'row', marginTop: 20, gap: 8 },
-  modalButton: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
-  modalButtonCancel: { backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6' },
-  modalButtonSave: { backgroundColor: '#7c3aed' },
-  modalButtonDelete: { backgroundColor: '#ef4444' },
-  modalButtonTextCancel: { color: isDark ? '#ffffff' : '#6b7280', fontSize: 16, fontWeight: '600' },
-  modalButtonTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  modalButtonTextDelete: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
+// ─── Styles ────────────────────────────────────────────────────────────────────
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
+  content: { flex: 1 },
+
+  // ── Titre page ──
   pageTitleContainer: {
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
     paddingHorizontal: 20,
@@ -1442,549 +1008,259 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
-  headerRow1: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  calendarActionsBar: {
-    backgroundColor: isDark ? '#1f2937' : '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
     textAlign: 'center',
   },
-  headerActions: {
+
+  // ── Barre d'actions (4 × 25%) ──
+  actionsBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
-  headerActionBtn: {
+  actionBtn: {
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    minWidth: 48,
+    justifyContent: 'center',
+    paddingVertical: 10,
     position: 'relative',
   },
-  headerActionIcon: {
-    fontSize: 16,
+  actionBtnActive: {
+    backgroundColor: isDark ? '#312e81' : '#ede9fe',
   },
-  headerActionText: {
-    fontSize: 10,
-    color: isDark ? '#d1d5db' : '#6b7280',
-    marginTop: 2,
-  },
-  viewToggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  viewPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    gap: 4,
-  },
-  viewPillActive: {
-    backgroundColor: '#7c3aed',
-  },
-  viewPillIcon: { fontSize: 14 },
-  viewPillIconActive: { fontSize: 14 },
-  viewPillLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: isDark ? '#d1d5db' : '#6b7280',
-  },
-  viewPillLabelActive: { color: '#ffffff' },
-  // Icônes calendrier tear-off
-  calIconWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
+  actionIcon: { fontSize: 22 },
+  filterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 8,
+    backgroundColor: '#ef4444',
     borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  calIconWrapperActive: {
-    backgroundColor: isDark ? '#4c1d95' : '#ede9fe',
+  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+
+  // ── Barre sélecteur de vue ──
+  viewBar: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    justifyContent: 'space-around',
   },
+  calIconWrapper: { alignItems: 'center', justifyContent: 'center', padding: 4, borderRadius: 8 },
+  calIconWrapperActive: { backgroundColor: isDark ? '#4c1d95' : '#ede9fe' },
   calIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: isDark ? '#6b7280' : '#d1d5db',
+    width: 44, height: 44, borderRadius: 8, overflow: 'hidden',
+    borderWidth: 1.5, borderColor: isDark ? '#6b7280' : '#d1d5db',
     backgroundColor: isDark ? '#374151' : '#ffffff',
   },
-  calIconActive: {
-    borderColor: '#7c3aed',
-  },
+  calIconActive: { borderColor: '#ef4444' },
   calIconBand: {
-    height: 14,
-    backgroundColor: isDark ? '#6b7280' : '#e5e7eb',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    height: 14, backgroundColor: isDark ? '#6b7280' : '#e5e7eb',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
   },
-  calIconBandActive: {
-    backgroundColor: '#7c3aed',
-  },
+  calIconBandActive: { backgroundColor: '#ef4444' },
   calIconRing: {
-    width: 4,
-    height: 6,
-    borderRadius: 2,
+    width: 4, height: 6, borderRadius: 2,
     backgroundColor: isDark ? '#d1d5db' : '#9ca3af',
-    borderWidth: 1,
-    borderColor: isDark ? '#9ca3af' : '#6b7280',
+    borderWidth: 1, borderColor: isDark ? '#9ca3af' : '#6b7280',
   },
-  calIconBody: {
-    flex: 1,
+  calIconBody: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  calIconNumber: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#d1d5db' : '#374151', lineHeight: 20 },
+  calIconNumberActive: { color: '#ef4444' },
+  agendaLine: { height: 2.5, borderRadius: 2, backgroundColor: isDark ? '#6b7280' : '#d1d5db', marginVertical: 2, alignSelf: 'flex-start', marginLeft: 6 },
+
+  // ── Navigation mois ──
+  monthNav: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
   },
-  calIconNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  navArrow: {
+    width: 40, height: 40,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  navArrowText: {
+    fontSize: 28,
+    fontWeight: '300',
     color: isDark ? '#d1d5db' : '#374151',
-    lineHeight: 20,
+    lineHeight: 32,
   },
-  calIconNumberActive: {
-    color: '#7c3aed',
-  },
-  agendaLine: {
-    height: 2.5,
-    borderRadius: 2,
-    backgroundColor: isDark ? '#6b7280' : '#d1d5db',
-    marginVertical: 2,
-    alignSelf: 'flex-start',
-    marginLeft: 6,
-  },
-  // View Toggle Styles (legacy - kept for compatibility)
-  viewToggleContainer: {
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  viewToggleButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 60,
-  },
-
-  // Agenda View Styles
-  agendaContainer: {
-    padding: 16,
-  },
-  agendaDateHeader: {
-    paddingVertical: 12,
-    marginTop: 16,
-    marginBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: '#7c3aed',
-  },
-  agendaDateText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-  agendaEventCard: {
-    flexDirection: 'row',
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: isDark ? '#374151' : '#e5e7eb',
-    overflow: 'hidden',
-  },
-  agendaEventColorBar: {
-    width: 4,
-  },
-  agendaEventContent: {
-    flex: 1,
-    padding: 12,
-  },
-  agendaEventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  agendaEventIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  agendaEventTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#fbbf24' : '#7c3aed',
-    marginRight: 8,
-  },
-  agendaPrivateIcon: {
-    fontSize: 14,
-  },
-  agendaEventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginBottom: 4,
-  },
-  agendaEventDescription: {
-    fontSize: 14,
-    color: isDark ? '#d1d5db' : '#6b7280',
-  },
-  agendaEmpty: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  agendaEmptyText: {
-    fontSize: 16,
-    color: isDark ? '#9ca3af' : '#9ca3af',
-  },
-
-  // Week View Styles
-  weekViewContainer: {
-    flex: 1,
-  },
-  weekNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  weekNavTitle: {
+  monthTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-  },
-  weekHeader: {
-    flexDirection: 'row',
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    borderBottomWidth: 2,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  weekTimeColumn: {
-    width: 60,
-  },
-  weekDayHeader: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  weekDayName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: isDark ? '#9ca3af' : '#6b7280',
-    textTransform: 'uppercase',
-  },
-  weekDayNameToday: {
-    color: '#7c3aed',
-  },
-  weekDayNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginTop: 4,
-  },
-  weekDayNumberToday: {
-    color: '#7c3aed',
-  },
-  weekTimeline: {
-    flex: 1,
-  },
-  weekTimeRow: {
-    flexDirection: 'row',
-    minHeight: 90,
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  weekTimeLabel: {
-    width: 60,
-    paddingTop: 8,
-    paddingRight: 8,
-    alignItems: 'flex-end',
-  },
-  weekTimeLabelText: {
-    fontSize: 11,
-    color: isDark ? '#9ca3af' : '#6b7280',
-    fontWeight: '600',
-  },
-  weekDayColumn: {
-    flex: 1,
-    position: 'relative',
-    borderRightWidth: 1,
-    borderRightColor: isDark ? '#2a2a2a' : '#f3f4f6',
-  },
-  weekEventCard: {
-    position: 'absolute',
-    left: 2,
-    right: 2,
-    borderLeftWidth: 3,
-    borderRadius: 4,
-    padding: 4,
-    overflow: 'hidden',
-  },
-  weekEventIcon: {
-    fontSize: 12,
-  },
-  weekEventTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-  weekEventTime: {
-    fontSize: 9,
-    color: isDark ? '#fbbf24' : '#7c3aed',
-    marginTop: 2,
-  },
-
-  // Day View Styles
-  dayViewContainer: {
-    flex: 1,
-  },
-  dayNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  dayNavTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-  dayTimeline: {
-    flex: 1,
-  },
-  dayTimeSlot: {
-    flexDirection: 'row',
-    minHeight: 120,
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
-  dayTimeLabel: {
-    width: 60,
-    paddingTop: 8,
-    paddingRight: 8,
-    alignItems: 'flex-end',
-  },
-  dayTimeLabelText: {
-    fontSize: 12,
-    color: isDark ? '#9ca3af' : '#6b7280',
-    fontWeight: '600',
-  },
-  dayTimeContent: {
-    flex: 1,
-    position: 'relative',
-    paddingLeft: 8,
-  },
-  dayTimeHalfHourLine: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
-  },
-  dayEventCard: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    borderLeftWidth: 4,
-    borderRadius: 8,
-    padding: 8,
-    overflow: 'hidden',
-  },
-  dayEventTime: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: isDark ? '#fbbf24' : '#7c3aed',
-    marginBottom: 4,
-  },
-  dayEventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  dayEventIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  dayEventTitle: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-  dayEventPrivate: {
-    fontSize: 12,
-  },
-  dayEventDescription: {
-    fontSize: 12,
-    color: isDark ? '#d1d5db' : '#6b7280',
-    marginTop: 2,
-  },
-
-  // Coming Soon Styles
-  comingSoonContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  comingSoonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginBottom: 8,
-  },
-  comingSoonSubtext: {
-    fontSize: 16,
-    color: isDark ? '#9ca3af' : '#6b7280',
-  },
-
-  // Dropdown Modal Styles
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownContent: {
-    backgroundColor: isDark ? '#1a1a1a' : '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '90%',
-    maxHeight: '70%',
-  },
-  dropdownTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginBottom: 16,
+    textAlign: 'center',
     textTransform: 'capitalize',
-  },
-  dropdownAddButton: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dropdownAddButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  dropdownEventsList: {
-    maxHeight: 300,
-  },
-  dropdownEventCard: {
-    flexDirection: 'row',
-    backgroundColor: isDark ? '#2a2a2a' : '#f9fafb',
-    borderRadius: 8,
-    marginBottom: 10,
-    overflow: 'hidden',
-  },
-  dropdownEventColorBar: {
-    width: 4,
-  },
-  dropdownEventContent: {
     flex: 1,
-    padding: 12,
-  },
-  dropdownEventHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  dropdownEventIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  dropdownEventTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7c3aed',
-    flex: 1,
-  },
-  dropdownPrivateIcon: {
-    fontSize: 14,
-  },
-  dropdownEventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginBottom: 2,
-  },
-  dropdownEventDescription: {
-    fontSize: 14,
-    color: isDark ? '#f5f5dc' : '#6b7280',
-  },
-  dropdownCloseButton: {
-    backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  dropdownCloseButtonText: {
-    color: isDark ? '#ffffff' : '#374151',
-    fontSize: 16,
-    fontWeight: '600',
   },
 
-  // Filter Modal Styles
-  filterSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: isDark ? '#ffffff' : '#1f2937',
-    marginTop: 16,
-    marginBottom: 12,
+  // ── Grille calendrier ──
+  calendar: {
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  filterCheckboxContainer: {
-    gap: 8,
-  },
-  filterCheckboxRow: {
+  weekRow: { flexDirection: 'row', marginBottom: 4 },
+  dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 6 },
+  dayHeaderText: { fontSize: 13, fontWeight: '600', color: isDark ? '#9ca3af' : '#6b7280' },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dayCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 2 },
+  dayCellSelected: { backgroundColor: '#7c3aed' },
+  dayCellToday: { borderWidth: 2, borderColor: '#ef4444' },
+  dayText: { fontSize: 15, color: isDark ? '#ffffff' : '#1f2937' },
+  dayTextSelected: { color: '#fff', fontWeight: 'bold' },
+  dayTextToday: { color: '#ef4444', fontWeight: 'bold' },
+  eventDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 3 },
+
+  // ── Section événements ──
+  eventsSection: { margin: 10, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 16 },
+  eventsSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  eventsTitle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', textTransform: 'capitalize', flex: 1 },
+  addEventBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+  addEventBtnText: { color: '#fff', fontSize: 20, lineHeight: 28, fontWeight: 'bold' },
+  eventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 10, overflow: 'hidden' },
+  eventColorBar: { width: 4 },
+  eventCardContent: { flex: 1, padding: 12 },
+  eventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  eventIcon: { fontSize: 16, marginRight: 6 },
+  eventTime: { fontSize: 14, fontWeight: 'bold', color: '#7c3aed', flex: 1 },
+  privateIcon: { fontSize: 12 },
+  eventTitle: { fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 2 },
+  eventDescription: { fontSize: 13, color: isDark ? '#d1d5db' : '#6b7280' },
+  moreEventsBtn: { paddingVertical: 8, alignItems: 'center', borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', marginTop: 4 },
+  moreEventsBtnText: { fontSize: 13, fontWeight: '600', color: '#7c3aed' },
+  noEvents: { padding: 20, alignItems: 'center', borderRadius: 10, backgroundColor: isDark ? '#1f2937' : '#f9fafb', marginTop: 4 },
+  noEventsText: { fontSize: 15, color: isDark ? '#9ca3af' : '#9ca3af' },
+  noEventsHint: { fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af', marginTop: 4 },
+
+  // ── Agenda ──
+  agendaContainer: { padding: 16 },
+  agendaDateHeader: { paddingVertical: 10, marginTop: 14, marginBottom: 6, borderBottomWidth: 2, borderBottomColor: '#7c3aed' },
+  agendaDateText: { fontSize: 15, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937' },
+  agendaEventCard: { flexDirection: 'row', backgroundColor: isDark ? '#1f2937' : '#fff', borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', overflow: 'hidden' },
+  agendaEventColorBar: { width: 4 },
+  agendaEventContent: { flex: 1, padding: 12 },
+  agendaEventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  agendaEventIcon: { fontSize: 16, marginRight: 6 },
+  agendaEventTime: { fontSize: 13, fontWeight: '600', color: isDark ? '#fbbf24' : '#7c3aed', marginRight: 6 },
+  agendaPrivateIcon: { fontSize: 12 },
+  agendaEventTitle: { fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 2 },
+  agendaEventDescription: { fontSize: 13, color: isDark ? '#d1d5db' : '#6b7280' },
+  agendaEmpty: { padding: 40, alignItems: 'center' },
+  agendaEmptyText: { fontSize: 15, color: isDark ? '#9ca3af' : '#9ca3af' },
+
+  // ── Semaine ──
+  weekViewContainer: { flex: 1 },
+  weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 10, backgroundColor: isDark ? '#1f2937' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  weekNavTitle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', flex: 1, textAlign: 'center' },
+  weekHeader: { flexDirection: 'row', backgroundColor: isDark ? '#1f2937' : '#fff', borderBottomWidth: 2, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  weekTimeColumn: { width: 50 },
+  weekDayHeader: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  weekDayName: { fontSize: 11, fontWeight: '600', color: isDark ? '#9ca3af' : '#6b7280', textTransform: 'uppercase' },
+  weekDayNameToday: { color: '#7c3aed' },
+  weekDayNumber: { fontSize: 15, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginTop: 2 },
+  weekDayNumberToday: { color: '#7c3aed' },
+  weekTimeline: { flex: 1 },
+  weekTimeRow: { flexDirection: 'row', minHeight: 80, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  weekTimeLabel: { width: 50, paddingTop: 6, paddingRight: 6, alignItems: 'flex-end' },
+  weekTimeLabelText: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280', fontWeight: '600' },
+  weekDayColumn: { flex: 1, position: 'relative', borderRightWidth: 1, borderRightColor: isDark ? '#2a2a2a' : '#f3f4f6' },
+  weekEventCard: { position: 'absolute', left: 1, right: 1, borderLeftWidth: 3, borderRadius: 3, padding: 3, overflow: 'hidden' },
+  weekEventIcon: { fontSize: 10 },
+  weekEventTitle: { fontSize: 10, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' },
+  weekEventTime: { fontSize: 9, color: isDark ? '#fbbf24' : '#7c3aed', marginTop: 1 },
+
+  // ── Jour ──
+  dayViewContainer: { flex: 1 },
+  dayNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 10, backgroundColor: isDark ? '#1f2937' : '#fff', borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  dayNavTitle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', flex: 1, textAlign: 'center' },
+  dayTimeline: { flex: 1 },
+  dayTimeSlot: { flexDirection: 'row', minHeight: 100, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  dayTimeLabel: { width: 56, paddingTop: 8, paddingRight: 8, alignItems: 'flex-end' },
+  dayTimeLabelText: { fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', fontWeight: '600' },
+  dayTimeContent: { flex: 1, position: 'relative', paddingLeft: 6 },
+  dayTimeHalfHourLine: { position: 'absolute', top: 50, left: 0, right: 0, height: 1, backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6' },
+  dayEventCard: { position: 'absolute', left: 6, right: 6, borderLeftWidth: 4, borderRadius: 6, padding: 6, overflow: 'hidden' },
+  dayEventTime: { fontSize: 10, fontWeight: '600', color: isDark ? '#fbbf24' : '#7c3aed', marginBottom: 2 },
+  dayEventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 1 },
+  dayEventIcon: { fontSize: 12, marginRight: 3 },
+  dayEventTitle: { flex: 1, fontSize: 13, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' },
+  dayEventPrivate: { fontSize: 11 },
+  dayEventDescription: { fontSize: 11, color: isDark ? '#d1d5db' : '#6b7280', marginTop: 2 },
+
+  // ── Modaux ──
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 16, padding: 20, width: '90%', maxHeight: '85%' },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
+  modalForm: { maxHeight: 400 },
+  label: { fontSize: 13, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 10, marginBottom: 4 },
+  input: { backgroundColor: isDark ? '#000000' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 15, color: isDark ? '#ffffff' : '#1f2937' },
+  textArea: { height: 80, textAlignVertical: 'top' },
+  categoryScroll: { marginVertical: 6 },
+  categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 6, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
+  categoryIcon: { fontSize: 16, marginRight: 4 },
+  categoryLabel: { fontSize: 13, color: isDark ? '#d1d5db' : '#6b7280' },
+  categoryLabelSelected: { color: '#fff', fontWeight: '600' },
+  reminderScroll: { marginVertical: 6 },
+  reminderButton: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#ffffff' : '#e5e7eb', marginRight: 6, backgroundColor: isDark ? '#2a2a2a' : '#fff' },
+  reminderButtonSelected: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  reminderButtonText: { fontSize: 13, color: isDark ? '#d1d5db' : '#6b7280' },
+  reminderButtonTextSelected: { color: '#fff', fontWeight: '600' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
+  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
+  checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  checkmark: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  checkboxLabel: { fontSize: 15, color: isDark ? '#ffffff' : '#374151' },
+
+  // ── Boutons icônes modaux ──
+  iconBtnRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 16,
   },
-  filterCheckboxIcon: {
-    fontSize: 18,
-    marginLeft: 8,
-    marginRight: 8,
-  },
-  filterCheckboxLabel: {
-    fontSize: 16,
-    color: isDark ? '#ffffff' : '#374151',
-  },
+
+  // ── Dropdown ──
+  dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  dropdownContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 16, padding: 20, width: '90%', maxHeight: '70%' },
+  dropdownTitle: { fontSize: 17, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 14, textTransform: 'capitalize' },
+  dropdownAddButton: { backgroundColor: '#7c3aed', paddingVertical: 11, borderRadius: 8, alignItems: 'center', marginBottom: 14 },
+  dropdownAddButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  dropdownEventsList: { maxHeight: 280 },
+  dropdownEventCard: { flexDirection: 'row', backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 8, marginBottom: 8, overflow: 'hidden' },
+  dropdownEventColorBar: { width: 4 },
+  dropdownEventContent: { flex: 1, padding: 10 },
+  dropdownEventHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 },
+  dropdownEventIcon: { fontSize: 16, marginRight: 6 },
+  dropdownEventTime: { fontSize: 13, fontWeight: '600', color: '#7c3aed', flex: 1 },
+  dropdownPrivateIcon: { fontSize: 12 },
+  dropdownEventTitle: { fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 1 },
+  dropdownEventDescription: { fontSize: 13, color: isDark ? '#d1d5db' : '#6b7280' },
+
+  // ── Filtres ──
+  filterSectionTitle: { fontSize: 15, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginTop: 14, marginBottom: 10 },
+  filterCheckboxContainer: { gap: 6 },
+  filterCheckboxRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
+  filterCheckboxIcon: { fontSize: 16, marginLeft: 6, marginRight: 6 },
+  filterCheckboxLabel: { fontSize: 15, color: isDark ? '#ffffff' : '#374151' },
+
+  // ── Import/Export ──
+  importInfo: { marginBottom: 16 },
+  importInfoText: { fontSize: 14, color: isDark ? '#d1d5db' : '#6b7280', lineHeight: 20 },
+  importInfoNote: { fontSize: 13, color: '#f59e0b', marginTop: 8 },
+  importSelectButton: { backgroundColor: '#7c3aed', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 },
+  importSelectButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
 });
-

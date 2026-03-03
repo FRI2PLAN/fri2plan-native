@@ -1544,3 +1544,25 @@ components/
   - [ ] Tous les autres écrans
 - [ ] Connecter toggle SettingsScreen au Context
 - [ ] Tester changement dark mode en temps réel
+
+## CalendarScreen - Refonte visuelle et fonctionnelle (séance 02/03/2026)
+- [x] Corriger erreur "Text strings must be rendered"
+- [ ] Dark mode : contraste strict (texte blanc sur fond sombre)
+- [ ] Traductions complètes FR/EN/DE pour tous les textes
+- [ ] Icônes vues améliorées : 30 (mois), 7 (semaine), 1 (jour), agenda
+- [ ] Header : boutons Import, Abonnement URL, Export calendrier
+- [ ] Liste d'événements filtrée sous le calendrier (filtre mois/semaine)
+- [ ] Option "More" ouvrant une modal scrollable pour les événements supplémentaires
+
+## CalendarScreen - Améliorations visuelles (03/03/2026)
+- [x] Supprimer les textes sous les icônes Import/Abo/Export/Filtres
+- [x] Uniformiser les boutons à 25% de largeur chacun
+- [x] Import + Export côte à côte
+- [x] Trouver une meilleure icône pour Abo (pas cloche)
+- [x] Bande des icônes calendrier 30/7/1 en rouge au lieu de violet
+- [x] Mois en cours centré
+- [x] Flèches navigation aux extrémités de l'écran avec padding identique
+- [x] Pas de scroll sur la vue mois (calendrier fixe)
+- [ ] Header sticky : calendrier scroll derrière la barre des icônes vues
+- [x] Corriger erreur "Text strings must be rendered"
+- [x] Remplacer les boutons texte par des icônes dans TOUS les modaux
