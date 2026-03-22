@@ -8,10 +8,10 @@ import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 
-// Create QueryClient
+// Create QueryClient (stable, never recreated)
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -21,12 +21,21 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create tRPC client
-const trpcClient = createTRPCClient();
-
 function AppContent() {
-  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout } = useAuth();
+  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Recreate tRPC client whenever the auth token changes so requests include the correct Bearer token
+  const trpcClient = useMemo(() => createTRPCClient(), [token]);
+
+  // Invalidate all queries when the token changes (login / logout)
+  const prevTokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevTokenRef.current !== token) {
+      prevTokenRef.current = token;
+      queryClient.clear();
+    }
+  }, [token]);
 
   if (isLoading) {
     return (
@@ -36,23 +45,24 @@ function AppContent() {
     );
   }
 
-  if (isAuthenticated) {
-    return (
-      <>
-        <AppNavigator onLogout={logout} />
-        <OnboardingScreen
-          visible={!hasSeenOnboarding}
-          onComplete={completeOnboarding}
-          onNavigate={(pageIndex) => {
-            setCurrentPage(pageIndex);
-            // TODO: Implement navigation to specific page
-          }}
-        />
-      </>
-    );
-  }
-
-  return <LoginScreen />;
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      {isAuthenticated ? (
+        <>
+          <AppNavigator onLogout={logout} />
+          <OnboardingScreen
+            visible={!hasSeenOnboarding}
+            onComplete={completeOnboarding}
+            onNavigate={(pageIndex) => {
+              setCurrentPage(pageIndex);
+            }}
+          />
+        </>
+      ) : (
+        <LoginScreen />
+      )}
+    </trpc.Provider>
+  );
 }
 
 export default function App() {
@@ -66,13 +76,11 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }
