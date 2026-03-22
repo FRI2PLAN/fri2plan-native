@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RichHeader from './RichHeader';
 import QuickActionsModal from './QuickActionsModal';
 import NotificationsModal from './NotificationsModal';
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
 
 interface FixedHeaderLayoutProps {
   children: React.ReactNode;
@@ -13,7 +12,7 @@ interface FixedHeaderLayoutProps {
 }
 
 export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderLayoutProps) {
-  const navigation = useNavigation();
+  const { logout } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
@@ -45,13 +44,9 @@ export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderL
           text: 'Déconnexion',
           style: 'destructive',
           onPress: async () => {
-            // Supprimer le token
-            await AsyncStorage.removeItem('authToken');
-            // Rediriger vers Login
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' as never }],
-            });
+            // Utiliser AuthContext.logout() qui vide token + user
+            // AppContent basculera automatiquement vers LoginScreen
+            await logout();
           },
         },
       ]

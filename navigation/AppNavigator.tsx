@@ -60,11 +60,7 @@ function HomeScreen({
     
     return (
       <View key={page.key} style={styles.page}>
-        {index === 0 ? (
-          <PageComponent onLogout={onLogout} onNavigate={onPageChange} />
-        ) : (
-          <PageComponent onNavigate={onPageChange} />
-        )}
+        <PageComponent onLogout={onLogout} onNavigate={onPageChange} />
       </View>
     );
   };
