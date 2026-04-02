@@ -251,5 +251,19 @@
     "contact": "Contact us",
     "documentation": "Documentation",
     "tutorials": "Tutorials"
+  },
+  "tabs": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "tasks": "Tasks",
+    "shopping": "Shopping",
+    "messages": "Messages",
+    "notes": "Notes",
+    "budget": "Budget",
+    "rewards": "Rewards",
+    "requests": "Requests",
+    "members": "Members",
+    "settings": "Settings",
+    "dashboard": "Dashboard"
   }
 }

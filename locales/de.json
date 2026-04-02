@@ -252,5 +252,19 @@
     "contact": "Kontaktieren Sie uns",
     "documentation": "Dokumentation",
     "tutorials": "Anleitungen"
+  },
+  "tabs": {
+    "home": "Startseite",
+    "calendar": "Kalender",
+    "tasks": "Aufgaben",
+    "shopping": "Einkauf",
+    "messages": "Nachrichten",
+    "notes": "Notizen",
+    "budget": "Budget",
+    "rewards": "Belohnungen",
+    "requests": "Anfragen",
+    "members": "Mitglieder",
+    "settings": "Einstellungen",
+    "dashboard": "Dashboard"
   }
 }
