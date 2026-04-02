@@ -400,111 +400,48 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
     });
     setShowAddToShopping(false);
     Alert.alert('✓', `${ingredientsToAdd.length} ingrédient(s) ajouté(s) à la liste`);
-  };  // ─── Rendu repas (carte) avec Drag & Drop ────────────────────────────────────────
-  const MealCard = useCallback(({ meal }: { meal: Meal }) => {
-    const pan = useRef(new Animated.ValueXY()).current;
-    const isDragging = useRef(false);
-    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [isBeingDragged, setIsBeingDragged] = useState(false);
+  };
 
-    const panResponder = useRef(PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: () => isDragging.current,
-      onPanResponderGrant: () => {
-        pan.setOffset({ x: (pan.x as any)._value, y: (pan.y as any)._value });
-        pan.setValue({ x: 0, y: 0 });
-      },
-      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: (_, gestureState) => {
-        if (!isDragging.current) return;
-        isDragging.current = false;
-        setIsBeingDragged(false);
-        setDraggingMeal(null);
-        pan.flattenOffset();
-        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
-
-        // Trouver le jour cible selon la position Y
-        const absY = gestureState.moveY + scrollOffsetRef.current;
-        let targetDay: Date | null = null;
-        for (const [key, rect] of Object.entries(dayBlockRefs.current)) {
-          if (absY >= rect.y && absY <= rect.y + rect.height) {
-            targetDay = new Date(key);
-            break;
-          }
-        }
-        if (targetDay) moveMealToDay(meal, targetDay);
-        setDragOverDay(null);
-      },
-      onPanResponderTerminate: () => {
-        isDragging.current = false;
-        setIsBeingDragged(false);
-        setDraggingMeal(null);
-        pan.flattenOffset();
-        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
-        setDragOverDay(null);
-      },
-    })).current;
-
-    const handleLongPressIn = () => {
-      longPressTimer.current = setTimeout(() => {
-        isDragging.current = true;
-        setIsBeingDragged(true);
-        setDraggingMeal(meal);
-      }, 500);
-    };
-
-    const handlePressOut = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-    };
-
-    return (
-      <Animated.View
-        key={meal.id}
-        style={[
-          s.mealCard,
-          isBeingDragged && { opacity: 0.7, transform: [{ translateX: pan.x }, { translateY: pan.y }], zIndex: 999, elevation: 10 },
-        ]}
-        {...panResponder.panHandlers}
-      >
-        <View
-          onStartShouldSetResponder={() => true}
-          onResponderGrant={handleLongPressIn}
-          onResponderRelease={handlePressOut}
-        >
-          <View style={s.mealCardHeader}>
-            <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
-            <View style={s.mealCardInfo}>
-              <Text style={s.mealName} numberOfLines={1}>{meal.name}</Text>
-              <Text style={s.mealMeta}>{customLabels[meal.mealType]} · {meal.servings} pers.</Text>
-              {isBeingDragged && <Text style={{ color: '#7c3aed', fontSize: 10 }}>Glisser vers un autre jour...</Text>}
-            </View>
-            <View style={s.mealCardActions}>
-              <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
-                <Text style={s.mealActionBtn}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openAddToShopping(meal)}>
-                <Text style={s.mealActionBtn}>🛒</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openEdit(meal)}>
-                <Text style={s.mealActionBtn}>✏️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', meal.name, [
-                { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                { text: '🗑', style: 'destructive', onPress: () => deleteMeal.mutate({ mealId: meal.id }) },
-              ])}>
-                <Text style={s.mealActionBtn}>🗑</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+  const renderMealCard = (meal: Meal) => (
+    <View key={meal.id} style={s.mealCard}>
+      <View style={s.mealCardHeader}>
+        <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
+        <View style={s.mealCardInfo}>
+          <Text style={s.mealName} numberOfLines={1}>{meal.name}</Text>
+          <Text style={s.mealMeta}>{customLabels[meal.mealType]} · {meal.servings} pers.</Text>
         </View>
-      </Animated.View>
-    );
-  }, [customLabels, toggleFavorite, openAddToShopping, openEdit, deleteMeal, moveMealToDay, t]);
+        <View style={s.mealCardActions}>
+          <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
+            <Text style={s.mealActionBtn}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openAddToShopping(meal)}>
+            <Text style={s.mealActionBtn}>🛒</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onLongPress={() => setDraggingMeal(meal)}
+            onPress={() => openEdit(meal)}
+          >
+            <Text style={s.mealActionBtn}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', meal.name, [
+            { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+            { text: '🗑', style: 'destructive', onPress: () => deleteMeal.mutate({ mealId: meal.id }) },
+          ])}>
+            <Text style={s.mealActionBtn}>🗑</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      {/* Bouton déplacer vers un autre jour */}
+      <TouchableOpacity
+        style={s.moveMealBtn}
+        onPress={() => setDraggingMeal(meal)}
+      >
+        <Text style={s.moveMealBtnText}>↕️ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-  const renderMealCard = useCallback((meal: Meal) => <MealCard key={meal.id} meal={meal} />, [MealCard]); Vue semaine ───────────────────────────────────────────────────────────
+  // ─── Vue semaine ─────────────────────────────────────────────────────────────
   const renderWeekView = () => (
     <View style={s.weekContainer}>
       {/* Navigation semaine */}
@@ -899,6 +836,8 @@ function getStyles(isDark: boolean) {
     mealMeta: { fontSize: 12, color: subtext, marginTop: 2 },
     mealCardActions: { flexDirection: 'row', gap: 4 },
     mealActionBtn: { fontSize: 18, padding: 2 },
+    moveMealBtn: { marginTop: 4, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: isDark ? '#2d1b69' : '#ede9fe', borderRadius: 8, alignSelf: 'flex-start' },
+    moveMealBtnText: { fontSize: 12, color: '#7c3aed', fontWeight: '600' },
     reuseBtn: { alignSelf: 'flex-end', marginBottom: 4 },
     reuseBtnText: { fontSize: 12, color: '#7c3aed' },
     // Historique
