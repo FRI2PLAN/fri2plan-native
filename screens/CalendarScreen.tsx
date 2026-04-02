@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
@@ -214,6 +215,15 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     reminder: '15',
     isPrivate: false,
   });
+  // Pickers date/heure
+  const [eventDate, setEventDate] = useState(new Date());
+  const [startTimeDate, setStartTimeDate] = useState(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; });
+  const [endTimeDate, setEndTimeDate] = useState(() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showReminderDropdown, setShowReminderDropdown] = useState(false);
 
   // Nettoie les descriptions ICS (URLs, balises HTML, etc.)
   const cleanDescription = (desc: string | null | undefined): string => {
@@ -295,8 +305,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const handleCreateEvent = async () => {
     try {
-      const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
-      const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
+      const dateStr = format(eventDate, 'yyyy-MM-dd');
+      const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
+      const endDateTime = new Date(`${dateStr}T${format(endTimeDate, 'HH:mm')}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
       await createEvent.mutateAsync({
         title: formData.title,
@@ -319,8 +330,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const handleUpdateEvent = async () => {
     if (!selectedEvent) return;
     try {
-      const startDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.startTime}:00`);
-      const endDateTime = new Date(`${format(selectedDate, 'yyyy-MM-dd')}T${formData.endTime}:00`);
+      const dateStr = format(eventDate, 'yyyy-MM-dd');
+      const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
+      const endDateTime = new Date(`${dateStr}T${format(endTimeDate, 'HH:mm')}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
       await updateEvent.mutateAsync({
         id: selectedEvent.id,
@@ -356,12 +368,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const resetForm = () => {
     setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', reminder: '15', isPrivate: false });
+    const now = new Date();
+    setEventDate(selectedDate);
+    const s = new Date(selectedDate); s.setHours(9, 0, 0, 0); setStartTimeDate(s);
+    const e = new Date(selectedDate); e.setHours(10, 0, 0, 0); setEndTimeDate(e);
+    setShowDatePicker(false); setShowStartTimePicker(false); setShowEndTimePicker(false);
+    setShowCategoryDropdown(false); setShowReminderDropdown(false);
   };
 
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
     const startTime = new Date(event.startTime);
     const endTime = new Date(event.endTime);
+    setEventDate(startTime);
+    setStartTimeDate(startTime);
+    setEndTimeDate(endTime);
     setFormData({
       title: event.title,
       description: event.description || '',
@@ -768,37 +789,55 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('calendar.addEvent') || 'Nouvel événement'}</Text>
-            <ScrollView style={styles.modalForm}>
+            <ScrollView style={styles.modalForm} keyboardShouldPersistTaps="handled">
+              {/* Titre */}
               <Text style={styles.label}>{t('common.title') || 'Titre'}</Text>
-              <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholder={t('calendar.addEvent') || 'Titre'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholder={t('common.title') || 'Titre'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              {/* Description */}
               <Text style={styles.label}>{t('calendar.description') || 'Description'}</Text>
               <TextInput style={[styles.input, styles.textArea]} value={formData.description} onChangeText={text => setFormData(p => ({ ...p, description: text }))} multiline numberOfLines={3} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              {/* Catégorie — Dropdown */}
               <Text style={styles.label}>{t('calendar.category') || 'Catégorie'}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {EVENT_CATEGORIES.map(cat => (
-                  <TouchableOpacity key={cat.value} style={[styles.categoryButton, formData.category === cat.value && { backgroundColor: cat.color }]} onPress={() => setFormData(p => ({ ...p, category: cat.value }))}>
-                    <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                    <Text style={[styles.categoryLabel, formData.category === cat.value && styles.categoryLabelSelected]}>{getCategoryLabel(cat)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <Text style={styles.label}>{t('calendar.startTime') || 'Début'}</Text>
-              <TextInput style={styles.input} value={formData.startTime} onChangeText={text => setFormData(p => ({ ...p, startTime: text }))} placeholder="09:00" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-              <Text style={styles.label}>{t('calendar.endTime') || 'Fin'}</Text>
-              <TextInput style={styles.input} value={formData.endTime} onChangeText={text => setFormData(p => ({ ...p, endTime: text }))} placeholder="10:00" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowCategoryDropdown(true)}>
+                <Text style={styles.dropdownTriggerText}>{getCategoryLabel(getCategoryInfo(formData.category))} {getCategoryInfo(formData.category).icon}</Text>
+                <Text style={styles.dropdownChevron}>▼</Text>
+              </TouchableOpacity>
+              {/* Date */}
+              <Text style={styles.label}>{t('common.date') || 'Date'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+              )}
+              {/* Heure début */}
+              <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowStartTimePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
+              </TouchableOpacity>
+              {showStartTimePicker && (
+                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
+              )}
+              {/* Heure fin */}
+              <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowEndTimePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
+              </TouchableOpacity>
+              {showEndTimePicker && (
+                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
+              )}
+              {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map(option => (
-                  <TouchableOpacity key={option.value} style={[styles.reminderButton, formData.reminder === option.value && styles.reminderButtonSelected]} onPress={() => setFormData(p => ({ ...p, reminder: option.value }))}>
-                    <Text style={[styles.reminderButtonText, formData.reminder === option.value && styles.reminderButtonTextSelected]}>{option.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
+                <Text style={styles.dropdownTriggerText}>🔔 {REMINDER_OPTIONS.find(o => o.value === formData.reminder)?.label || '15 min'}</Text>
+                <Text style={styles.dropdownChevron}>▼</Text>
+              </TouchableOpacity>
+              {/* Privé */}
               <TouchableOpacity style={styles.checkboxRow} onPress={() => setFormData(p => ({ ...p, isPrivate: !p.isPrivate }))}>
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
                   {formData.isPrivate ? <Text style={styles.checkmark}>✓</Text> : null}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Privé'}</Text>
+                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Événement privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
             {/* Boutons icônes */}
@@ -815,37 +854,55 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('common.edit') || 'Modifier'}</Text>
-            <ScrollView style={styles.modalForm}>
+            <ScrollView style={styles.modalForm} keyboardShouldPersistTaps="handled">
+              {/* Titre */}
               <Text style={styles.label}>{t('common.title') || 'Titre'}</Text>
               <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              {/* Description */}
               <Text style={styles.label}>{t('calendar.description') || 'Description'}</Text>
               <TextInput style={[styles.input, styles.textArea]} value={formData.description} onChangeText={text => setFormData(p => ({ ...p, description: text }))} multiline numberOfLines={3} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              {/* Catégorie — Dropdown */}
               <Text style={styles.label}>{t('calendar.category') || 'Catégorie'}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {EVENT_CATEGORIES.map(cat => (
-                  <TouchableOpacity key={cat.value} style={[styles.categoryButton, formData.category === cat.value && { backgroundColor: cat.color }]} onPress={() => setFormData(p => ({ ...p, category: cat.value }))}>
-                    <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                    <Text style={[styles.categoryLabel, formData.category === cat.value && styles.categoryLabelSelected]}>{getCategoryLabel(cat)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <Text style={styles.label}>{t('calendar.startTime') || 'Début'}</Text>
-              <TextInput style={styles.input} value={formData.startTime} onChangeText={text => setFormData(p => ({ ...p, startTime: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-              <Text style={styles.label}>{t('calendar.endTime') || 'Fin'}</Text>
-              <TextInput style={styles.input} value={formData.endTime} onChangeText={text => setFormData(p => ({ ...p, endTime: text }))} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowCategoryDropdown(true)}>
+                <Text style={styles.dropdownTriggerText}>{getCategoryLabel(getCategoryInfo(formData.category))} {getCategoryInfo(formData.category).icon}</Text>
+                <Text style={styles.dropdownChevron}>▼</Text>
+              </TouchableOpacity>
+              {/* Date */}
+              <Text style={styles.label}>{t('common.date') || 'Date'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+              )}
+              {/* Heure début */}
+              <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowStartTimePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
+              </TouchableOpacity>
+              {showStartTimePicker && (
+                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
+              )}
+              {/* Heure fin */}
+              <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowEndTimePicker(true)}>
+                <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
+              </TouchableOpacity>
+              {showEndTimePicker && (
+                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
+              )}
+              {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reminderScroll}>
-                {REMINDER_OPTIONS.map(option => (
-                  <TouchableOpacity key={option.value} style={[styles.reminderButton, formData.reminder === option.value && styles.reminderButtonSelected]} onPress={() => setFormData(p => ({ ...p, reminder: option.value }))}>
-                    <Text style={[styles.reminderButtonText, formData.reminder === option.value && styles.reminderButtonTextSelected]}>{option.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
+                <Text style={styles.dropdownTriggerText}>🔔 {REMINDER_OPTIONS.find(o => o.value === formData.reminder)?.label || '15 min'}</Text>
+                <Text style={styles.dropdownChevron}>▼</Text>
+              </TouchableOpacity>
+              {/* Privé */}
               <TouchableOpacity style={styles.checkboxRow} onPress={() => setFormData(p => ({ ...p, isPrivate: !p.isPrivate }))}>
                 <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
                   {formData.isPrivate ? <Text style={styles.checkmark}>✓</Text> : null}
                 </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Privé'}</Text>
+                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Événement privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
             {/* Boutons icônes : Supprimer | Annuler | Sauvegarder */}
@@ -1004,6 +1061,44 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* ── Dropdown Catégorie ── */}
+      <Modal visible={showCategoryDropdown} animationType="fade" transparent>
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setShowCategoryDropdown(false)}>
+          <View style={[styles.dropdownContent, { paddingVertical: 8 }]} onStartShouldSetResponder={() => true}>
+            <Text style={styles.dropdownTitle}>{t('calendar.category') || 'Catégorie'}</Text>
+            {EVENT_CATEGORIES.map(cat => (
+              <TouchableOpacity
+                key={cat.value}
+                style={[styles.pickerOption, formData.category === cat.value && { backgroundColor: cat.color + '33' }]}
+                onPress={() => { setFormData(p => ({ ...p, category: cat.value })); setShowCategoryDropdown(false); }}
+              >
+                <Text style={styles.pickerOptionText}>{cat.icon} {getCategoryLabel(cat)}</Text>
+                {formData.category === cat.value && <Text style={{ color: cat.color, fontSize: 18 }}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── Dropdown Rappel ── */}
+      <Modal visible={showReminderDropdown} animationType="fade" transparent>
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setShowReminderDropdown(false)}>
+          <View style={[styles.dropdownContent, { paddingVertical: 8 }]} onStartShouldSetResponder={() => true}>
+            <Text style={styles.dropdownTitle}>{t('calendar.reminder') || 'Rappel'}</Text>
+            {REMINDER_OPTIONS.map(option => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.pickerOption, formData.reminder === option.value && { backgroundColor: isDark ? '#374151' : '#ede9fe' }]}
+                onPress={() => { setFormData(p => ({ ...p, reminder: option.value })); setShowReminderDropdown(false); }}
+              >
+                <Text style={styles.pickerOptionText}>🔔 {option.label}</Text>
+                {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -1280,4 +1375,38 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   importInfoNote: { fontSize: 13, color: '#f59e0b', marginTop: 8 },
   importSelectButton: { backgroundColor: '#7c3aed', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 },
   importSelectButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+
+  // ── Dropdown Trigger (catégorie, rappel, date, heure) ──
+  dropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  dropdownTriggerText: {
+    fontSize: 15,
+    color: isDark ? '#ffffff' : '#1f2937',
+    flex: 1,
+  },
+  dropdownChevron: {
+    fontSize: 12,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    marginLeft: 8,
+  },
+
+  // ── Picker options (dans les modaux dropdown) ──
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  pickerOptionText: {
+    fontSize: 16,
+    color: isDark ? '#ffffff' : '#1f2937',
+  },
 });

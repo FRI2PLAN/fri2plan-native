@@ -14,7 +14,13 @@
     "search": "Rechercher",
     "filter": "Filtrer",
     "sort": "Trier",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "title": "Titre",
+    "private": "Événement privé",
+    "date": "Date",
+    "time": "Heure",
+    "startDate": "Date de début",
+    "endDate": "Date de fin"
   },
   "auth": {
     "login": "Connexion",

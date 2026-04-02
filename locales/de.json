@@ -14,7 +14,13 @@
     "search": "Suchen",
     "filter": "Filtern",
     "sort": "Sortieren",
-    "refresh": "Aktualisieren"
+    "refresh": "Aktualisieren",
+    "title": "Titel",
+    "private": "Privates Ereignis",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum"
   },
   "auth": {
     "login": "Anmelden",

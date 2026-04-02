@@ -14,7 +14,13 @@
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "title": "Title",
+    "private": "Private event",
+    "date": "Date",
+    "time": "Time",
+    "startDate": "Start date",
+    "endDate": "End date"
   },
   "auth": {
     "login": "Login",
