@@ -32,7 +32,7 @@ type ShoppingTab = 'lists' | 'history';
 
 const EMPTY_LIST_FORM = { name: '', description: '', targetDate: undefined as Date | undefined, isPrivate: false };
 
-export default function ShoppingScreen() {
+export default function ShoppingScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
@@ -262,9 +262,8 @@ export default function ShoppingScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={s.container}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+  const content = (
+    <>
 
       {/* Titre */}
       <View style={s.titleBar}>
@@ -505,6 +504,14 @@ export default function ShoppingScreen() {
           }}
         />
       )}
+    </>
+  );
+
+  if (embedded) return content;
+  return (
+    <SafeAreaView style={s.container}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      {content}
     </SafeAreaView>
   );
 }

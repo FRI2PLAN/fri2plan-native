@@ -8,7 +8,7 @@ import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
-import ShoppingScreen from '../screens/ShoppingScreen';
+import ShoppingMealsScreen from '../screens/ShoppingMealsScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import RequestsScreen from '../screens/RequestsScreen';
 import NotesScreen from '../screens/NotesScreen';
@@ -38,7 +38,7 @@ const PAGES = [
   { key: '0', component: DashboardScreen, name: 'Dashboard' },
   { key: '1', component: CalendarScreen, name: 'Calendar' },
   { key: '2', component: TasksScreen, name: 'Tasks' },
-  { key: '3', component: ShoppingScreen, name: 'Shopping' },
+  { key: '3', component: ShoppingMealsScreen, name: 'Shopping' },
   { key: '4', component: MessagesScreen, name: 'Messages' },
   { key: '5', component: RequestsScreen, name: 'Requests' },
   { key: '6', component: NotesScreen, name: 'Notes' },

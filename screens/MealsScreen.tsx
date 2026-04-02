@@ -49,7 +49,7 @@ interface RecipeSuggestion {
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function MealsScreen() {
+export default function MealsScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
@@ -368,9 +368,8 @@ export default function MealsScreen() {
     </View>
   );
 
-  return (
-    <SafeAreaView style={s.container}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+  const content = (
+    <>
 
       {/* Titre */}
       <View style={s.titleBar}>
@@ -613,6 +612,14 @@ export default function MealsScreen() {
           onChange={(_, d) => { setShowTimePicker(false); if (d) setForm(p => { const nd = new Date(p.date); nd.setHours(d.getHours(), d.getMinutes()); return { ...p, date: nd }; }); }}
         />
       )}
+    </>
+  );
+
+  if (embedded) return content;
+  return (
+    <SafeAreaView style={s.container}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      {content}
     </SafeAreaView>
   );
 }
