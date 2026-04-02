@@ -265,6 +265,7 @@
     "requests": "Anfragen",
     "members": "Mitglieder",
     "settings": "Einstellungen",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "meals": "Mahlzeiten"
   }
 }

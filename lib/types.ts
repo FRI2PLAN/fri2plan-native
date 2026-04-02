@@ -211,17 +211,78 @@ export type AppRouter = {
     lists: {
       query: () => Promise<ShoppingList[]>;
     };
+    listsByFamily: {
+      useQuery: (input: { familyId: number }) => any;
+      query: (input: { familyId: number }) => Promise<ShoppingList[]>;
+    };
+    itemsByList: {
+      useQuery: (input: { listId: number }, opts?: any) => any;
+      query: (input: { listId: number }) => Promise<ShoppingItem[]>;
+    };
+    itemsHistory: {
+      useQuery: (input: { familyId: number }) => any;
+      query: (input: { familyId: number }) => Promise<ShoppingItem[]>;
+    };
     items: {
       query: (input: { listId: number }) => Promise<ShoppingItem[]>;
     };
     createList: {
-      mutate: (input: { name: string }) => Promise<ShoppingList>;
+      mutate: (input: { name: string; description?: string; targetDate?: string; isPrivate?: number }) => Promise<ShoppingList>;
+    };
+    updateList: {
+      mutate: (input: { listId: number; name: string; description?: string; targetDate?: string; isPrivate?: number }) => Promise<ShoppingList>;
+    };
+    deleteList: {
+      mutate: (input: { listId: number }) => Promise<void>;
+    };
+    archiveList: {
+      mutate: (input: { listId: number }) => Promise<void>;
+    };
+    unarchiveList: {
+      mutate: (input: { listId: number }) => Promise<void>;
+    };
+    duplicateList: {
+      mutate: (input: { listId: number }) => Promise<{ listId: number }>;
     };
     addItem: {
-      mutate: (input: { listId: number; name: string; quantity?: number }) => Promise<ShoppingItem>;
+      mutate: (input: { listId: number; name: string; quantity?: string }) => Promise<ShoppingItem>;
+    };
+    updateItem: {
+      mutate: (input: { itemId: number; name: string; quantity?: string }) => Promise<ShoppingItem>;
     };
     toggleItem: {
-      mutate: (input: { id: number }) => Promise<ShoppingItem>;
+      mutate: (input: { itemId: number }) => Promise<ShoppingItem>;
+    };
+    deleteItem: {
+      mutate: (input: { itemId: number }) => Promise<void>;
+    };
+    deleteCheckedItems: {
+      mutate: (input: { listId: number }) => Promise<void>;
+    };
+    deduplicateItems: {
+      mutate: (input: { listId: number }) => Promise<{ removed: number }>;
+    };
+  };
+  meals: {
+    list: {
+      useQuery: (input: { familyId: number; startDate: string; endDate: string }) => any;
+      query: (input: { familyId: number; startDate: string; endDate: string }) => Promise<any[]>;
+    };
+    history: {
+      useQuery: (input: { familyId: number; limit: number }) => any;
+      query: (input: { familyId: number; limit: number }) => Promise<any[]>;
+    };
+    create: {
+      mutate: (input: { familyId: number; name: string; mealType: string; date: string; servings?: number; notes?: string; ingredients?: string }) => Promise<any>;
+    };
+    update: {
+      mutate: (input: { mealId: number; name?: string; mealType?: string; date?: string; servings?: number; notes?: string; ingredients?: string }) => Promise<any>;
+    };
+    delete: {
+      mutate: (input: { mealId: number }) => Promise<void>;
+    };
+    toggleFavorite: {
+      mutate: (input: { mealId: number; isFavorite: boolean }) => Promise<any>;
     };
   };
   messages: {

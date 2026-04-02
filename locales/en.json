@@ -264,6 +264,7 @@
     "requests": "Requests",
     "members": "Members",
     "settings": "Settings",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "meals": "Meals"
   }
 }
