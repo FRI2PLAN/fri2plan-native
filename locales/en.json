@@ -22,7 +22,11 @@
     "startDate": "Start date",
     "endDate": "End date",
     "description": "Description",
-    "create": "Create"
+    "create": "Create",
+    "back": "Back",
+    "name": "Name",
+    "notes": "Notes",
+    "saved": "Settings saved"
   },
   "auth": {
     "login": "Login",
@@ -164,10 +168,27 @@
   "shopping": {
     "title": "Shopping",
     "addList": "New list",
-    "noLists": "No lists",
+    "noLists": "No active list",
     "addItem": "Add item",
     "quantity": "Quantity",
-    "category": "Category"
+    "category": "Category",
+    "newList": "New list",
+    "editList": "Edit list",
+    "listName": "List name",
+    "listDescription": "Description (optional)",
+    "targetDate": "Target date",
+    "noDate": "No date",
+    "activeLists": "Active",
+    "history": "History",
+    "noHistory": "No archived list",
+    "open": "Open",
+    "duplicate": "Duplicate",
+    "archive": "Archive",
+    "deleteChecked": "Delete checked items",
+    "itemName": "Item",
+    "noItems": "No items",
+    "editItem": "Edit item",
+    "selectList": "Select a list"
   },
   "messages": {
     "title": "Messages",
@@ -266,5 +287,28 @@
     "settings": "Settings",
     "dashboard": "Dashboard",
     "meals": "Meals"
+  },
+  "meals": {
+    "newMeal": "New meal",
+    "editMeal": "Edit meal",
+    "mealName": "Meal name",
+    "mealType": "Meal type",
+    "servings": "Servings",
+    "week": "Week",
+    "history": "History",
+    "favorites": "Favorites",
+    "noMeal": "No meal",
+    "noHistory": "No meals in history",
+    "reuse": "Reuse",
+    "defaultServings": "Default servings",
+    "mealTimes": "Meal times",
+    "mealLabels": "Custom labels",
+    "searchRecipe": "Search a recipe",
+    "searchPlaceholder": "Ex: chicken, pasta...",
+    "importUrl": "Import from URL",
+    "ingredients": "Ingredients",
+    "notesPlaceholder": "Ingredients, instructions...",
+    "addToShopping": "Add to shopping list",
+    "noIngredients": "No ingredients found in notes"
   }
 }

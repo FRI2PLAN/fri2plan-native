@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role?: string;
   avatar?: string;
+  familyId?: number;
 }
 
 export interface Family {
@@ -262,6 +263,10 @@ export type AppRouter = {
     deduplicateItems: {
       mutate: (input: { listId: number }) => Promise<{ removed: number }>;
     };
+    addItemsMerged: {
+      useMutation: () => any;
+      mutate: (input: { listId: number; items: { name: string; quantity?: string }[] }) => Promise<void>;
+    };
   };
   meals: {
     list: {
@@ -282,7 +287,12 @@ export type AppRouter = {
       mutate: (input: { mealId: number }) => Promise<void>;
     };
     toggleFavorite: {
+      useMutation: () => any;
       mutate: (input: { mealId: number; isFavorite: boolean }) => Promise<any>;
+    };
+    importFromUrl: {
+      useMutation: () => any;
+      mutateAsync: (input: { url: string }) => Promise<any>;
     };
   };
   messages: {

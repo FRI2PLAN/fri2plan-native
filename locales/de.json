@@ -22,7 +22,11 @@
     "startDate": "Startdatum",
     "endDate": "Enddatum",
     "description": "Beschreibung",
-    "create": "Erstellen"
+    "create": "Erstellen",
+    "back": "Zurück",
+    "name": "Name",
+    "notes": "Notizen",
+    "saved": "Einstellungen gespeichert"
   },
   "auth": {
     "login": "Anmelden",
@@ -164,10 +168,27 @@
   "shopping": {
     "title": "Einkaufen",
     "addList": "Neue Liste",
-    "noLists": "Keine Listen",
+    "noLists": "Keine aktive Liste",
     "addItem": "Artikel hinzufügen",
     "quantity": "Menge",
-    "category": "Kategorie"
+    "category": "Kategorie",
+    "newList": "Neue Liste",
+    "editList": "Liste bearbeiten",
+    "listName": "Listenname",
+    "listDescription": "Beschreibung (optional)",
+    "targetDate": "Zieldatum",
+    "noDate": "Kein Datum",
+    "activeLists": "Aktiv",
+    "history": "Verlauf",
+    "noHistory": "Keine archivierte Liste",
+    "open": "Öffnen",
+    "duplicate": "Duplizieren",
+    "archive": "Archivieren",
+    "deleteChecked": "Markierte Artikel löschen",
+    "itemName": "Artikel",
+    "noItems": "Keine Artikel",
+    "editItem": "Artikel bearbeiten",
+    "selectList": "Liste auswählen"
   },
   "messages": {
     "title": "Nachrichten",
@@ -267,5 +288,28 @@
     "settings": "Einstellungen",
     "dashboard": "Dashboard",
     "meals": "Mahlzeiten"
+  },
+  "meals": {
+    "newMeal": "Neue Mahlzeit",
+    "editMeal": "Mahlzeit bearbeiten",
+    "mealName": "Name der Mahlzeit",
+    "mealType": "Mahlzeittyp",
+    "servings": "Portionen",
+    "week": "Woche",
+    "history": "Verlauf",
+    "favorites": "Favoriten",
+    "noMeal": "Keine Mahlzeit",
+    "noHistory": "Keine Mahlzeiten im Verlauf",
+    "reuse": "Wiederverwenden",
+    "defaultServings": "Standardportionen",
+    "mealTimes": "Mahlzeiten-Zeiten",
+    "mealLabels": "Benutzerdefinierte Labels",
+    "searchRecipe": "Rezept suchen",
+    "searchPlaceholder": "z.B. Hähnchen, Nudeln...",
+    "importUrl": "Von URL importieren",
+    "ingredients": "Zutaten",
+    "notesPlaceholder": "Zutaten, Anweisungen...",
+    "addToShopping": "Zur Einkaufsliste hinzufügen",
+    "noIngredients": "Keine Zutaten in den Notizen gefunden"
   }
 }

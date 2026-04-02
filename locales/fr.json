@@ -2,7 +2,7 @@
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",
-    "save": "Enregistrer",
+    "save": "Sauvegarder",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
@@ -22,7 +22,11 @@
     "startDate": "Date de début",
     "endDate": "Date de fin",
     "description": "Description",
-    "create": "Créer"
+    "create": "Créer",
+    "back": "Retour",
+    "name": "Nom",
+    "notes": "Notes",
+    "saved": "Paramètres sauvegardés"
   },
   "auth": {
     "login": "Connexion",
@@ -164,10 +168,27 @@
   "shopping": {
     "title": "Courses",
     "addList": "Nouvelle liste",
-    "noLists": "Aucune liste",
+    "noLists": "Aucune liste active",
     "addItem": "Ajouter un article",
     "quantity": "Quantité",
-    "category": "Catégorie"
+    "category": "Catégorie",
+    "newList": "Nouvelle liste",
+    "editList": "Modifier la liste",
+    "listName": "Nom de la liste",
+    "listDescription": "Description (optionnel)",
+    "targetDate": "Date cible",
+    "noDate": "Aucune date",
+    "activeLists": "Actives",
+    "history": "Historique",
+    "noHistory": "Aucune liste archivée",
+    "open": "Ouvrir",
+    "duplicate": "Dupliquer",
+    "archive": "Archiver",
+    "deleteChecked": "Supprimer les articles cochés",
+    "itemName": "Article",
+    "noItems": "Aucun article",
+    "editItem": "Modifier l'article",
+    "selectList": "Choisir une liste"
   },
   "messages": {
     "title": "Messages",
@@ -266,5 +287,28 @@
     "settings": "Paramètres",
     "dashboard": "Tableau de bord",
     "meals": "Repas"
+  },
+  "meals": {
+    "newMeal": "Nouveau repas",
+    "editMeal": "Modifier le repas",
+    "mealName": "Nom du repas",
+    "mealType": "Type de repas",
+    "servings": "Portions",
+    "week": "Semaine",
+    "history": "Historique",
+    "favorites": "Favoris",
+    "noMeal": "Aucun repas",
+    "noHistory": "Aucun repas dans l'historique",
+    "reuse": "Réutiliser",
+    "defaultServings": "Portions par défaut",
+    "mealTimes": "Heures des repas",
+    "mealLabels": "Labels personnalisés",
+    "searchRecipe": "Rechercher une recette",
+    "searchPlaceholder": "Ex: poulet, pâtes...",
+    "importUrl": "Importer depuis une URL",
+    "ingredients": "Ingrédients",
+    "notesPlaceholder": "Ingrédients, instructions...",
+    "addToShopping": "Ajouter aux courses",
+    "noIngredients": "Aucun ingrédient trouvé dans les notes"
   }
 }

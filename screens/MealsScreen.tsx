@@ -1,52 +1,94 @@
-import React, { useState, useMemo, useCallback } from 'react';
+/**
+ * MealsScreen — Onglet Repas
+ * Connecté à la BD via tRPC (routes meals.*)
+ * - Vue semaine avec navigation ◀/▶
+ * - Historique + Favoris
+ * - Paramètres : heures par type, portions, labels (AsyncStorage)
+ * - Import recette depuis URL (trpc.meals.importFromUrl)
+ * - Recherche TheMealDB (5 suggestions max)
+ * - Ajout ingrédients aux courses (trpc.shopping.addItemsMerged)
+ */
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView,
-  RefreshControl, Modal, TextInput, Alert, ActivityIndicator,
-  Image, FlatList, Platform
+  View, Text, TextInput, TouchableOpacity, FlatList, Modal,
+  StyleSheet, ScrollView, Alert, ActivityIndicator, SafeAreaView, Switch,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
-import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
+import {
+  format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks,
+} from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 type MealsTab = 'week' | 'history' | 'settings';
-
-const MEAL_ICONS: Record<MealType, string> = {
-  breakfast: '☀️', lunch: '🥗', dinner: '🍽️', snack: '🍎',
-};
-const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
-const DEFAULT_LABELS: Record<MealType, string> = {
-  breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner', snack: 'Collation',
-};
-const DEFAULT_TIMES: Record<MealType, string> = {
-  breakfast: '08:00', lunch: '12:00', dinner: '19:00', snack: '16:00',
-};
 
 interface Meal {
   id: number;
   name: string;
-  mealType: MealType;
   date: string;
+  mealType: MealType;
   servings?: number;
   notes?: string;
-  ingredients?: string;
   imageUrl?: string;
-  isFavorite?: number;
+  sourceUrl?: string;
+  isFavorite?: boolean | number;
+  isCompleted?: boolean | number;
+  assignedTo?: number;
+  familyId?: number;
 }
 
-interface RecipeSuggestion {
-  id: string;
-  name: string;
-  category: string;
-  area: string;
-  thumb: string;
-  ingredients: string[];
+interface TheMealDbResult {
+  idMeal: string;
+  strMeal: string;
+  strCategory: string;
+  strMealThumb: string;
+  strIngredient1?: string;
+  strIngredient2?: string;
+  strIngredient3?: string;
+  strIngredient4?: string;
+  strIngredient5?: string;
+  strIngredient6?: string;
+  strIngredient7?: string;
+  strIngredient8?: string;
+  strIngredient9?: string;
+  strIngredient10?: string;
+  strMeasure1?: string;
+  strMeasure2?: string;
+  strMeasure3?: string;
+  strMeasure4?: string;
+  strMeasure5?: string;
+  strMeasure6?: string;
+  strMeasure7?: string;
+  strMeasure8?: string;
+  strMeasure9?: string;
+  strMeasure10?: string;
 }
+
+const DEFAULT_TIMES: Record<MealType, string> = {
+  breakfast: '08:00',
+  lunch: '12:00',
+  dinner: '19:00',
+  snack: '16:00',
+};
+
+const DEFAULT_LABELS: Record<MealType, string> = {
+  breakfast: 'Petit-déjeuner',
+  lunch: 'Déjeuner',
+  dinner: 'Dîner',
+  snack: 'Collation',
+};
+
+const MEAL_EMOJIS: Record<MealType, string> = {
+  breakfast: '☀️',
+  lunch: '🥗',
+  dinner: '🍽️',
+  snack: '🍎',
+};
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function MealsScreen({ embedded = false }: { embedded?: boolean } = {}) {
@@ -55,564 +97,617 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
   const s = getStyles(isDark);
   const utils = trpc.useUtils();
 
-  const [mealsTab, setMealsTab] = useState<MealsTab>('week');
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [refreshing, setRefreshing] = useState(false);
+  // ─── Locale date-fns ───────────────────────────────────────────────────────
+  const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
 
-  // Dialog ajout / modification
-  const [addModal, setAddModal] = useState(false);
-  const [editMeal, setEditMeal] = useState<Meal | null>(null);
-  const [preselectedDate, setPreselectedDate] = useState<string | null>(null);
+  // ─── Famille ───────────────────────────────────────────────────────────────
+  const { data: families = [] } = trpc.family.list.useQuery();
+  const activeFamily = families[0];
+  const familyId = activeFamily?.id;
 
-  // Formulaire repas
-  const emptyForm = { name: '', mealType: 'dinner' as MealType, date: new Date(), servings: 4, notes: '', ingredients: '' };
-  const [form, setForm] = useState({ ...emptyForm });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [mealTypeModal, setMealTypeModal] = useState(false);
+  // ─── Membres ───────────────────────────────────────────────────────────────
+  const { data: members = [] } = trpc.family.members.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId }
+  );
 
-  // Recherche de recettes
-  const [recipeSearch, setRecipeSearch] = useState('');
-  const [recipeSuggestions, setRecipeSuggestions] = useState<RecipeSuggestion[]>([]);
-  const [recipeLoading, setRecipeLoading] = useState(false);
-  const [recipeModal, setRecipeModal] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<RecipeSuggestion | null>(null);
+  // ─── Onglets ───────────────────────────────────────────────────────────────
+  const [tab, setTab] = useState<MealsTab>('week');
 
-  // Paramètres
+  // ─── Semaine courante ──────────────────────────────────────────────────────
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+
+  // ─── Repas de la semaine ───────────────────────────────────────────────────
+  const { data: weekMeals = [], isLoading: mealsLoading } = trpc.meals.list.useQuery(
+    { familyId: familyId!, startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') },
+    { enabled: !!familyId }
+  );
+
+  // ─── Historique ────────────────────────────────────────────────────────────
+  const { data: historyMeals = [], isLoading: historyLoading } = trpc.meals.history.useQuery(
+    { familyId: familyId!, limit: 50 },
+    { enabled: !!familyId && tab === 'history' }
+  );
+
+  // ─── Favoris ───────────────────────────────────────────────────────────────
+  const { data: favoriteMeals = [] } = trpc.meals.favorites.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId && tab === 'history' }
+  );
+
+  // ─── Paramètres (AsyncStorage) ─────────────────────────────────────────────
   const [defaultServings, setDefaultServings] = useState(4);
-  const [customLabels, setCustomLabels] = useState({ ...DEFAULT_LABELS });
-  const [customTimes, setCustomTimes] = useState({ ...DEFAULT_TIMES });
+  const [customLabels, setCustomLabels] = useState<Record<MealType, string>>({ ...DEFAULT_LABELS });
+  const [customTimes, setCustomTimes] = useState<Record<MealType, string>>({ ...DEFAULT_TIMES });
 
-  const getLocale = () => i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
+  useEffect(() => {
+    if (!familyId) return;
+    const loadSettings = async () => {
+      try {
+        const [srv, lbl, tms] = await Promise.all([
+          AsyncStorage.getItem(`mealSettings_${familyId}_servings`),
+          AsyncStorage.getItem(`mealSettings_${familyId}_labels`),
+          AsyncStorage.getItem(`mealSettings_${familyId}_times`),
+        ]);
+        if (srv) setDefaultServings(Number(srv));
+        if (lbl) setCustomLabels(JSON.parse(lbl));
+        if (tms) setCustomTimes(JSON.parse(tms));
+      } catch {}
+    };
+    loadSettings();
+  }, [familyId]);
 
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)), [currentWeekStart]);
-  const startDate = format(currentWeekStart, 'yyyy-MM-dd HH:mm:ss');
-  const endDate = format(addDays(currentWeekStart, 6), 'yyyy-MM-dd') + ' 23:59:59';
+  const saveSettings = useCallback(async () => {
+    if (!familyId) return;
+    await Promise.all([
+      AsyncStorage.setItem(`mealSettings_${familyId}_servings`, String(defaultServings)),
+      AsyncStorage.setItem(`mealSettings_${familyId}_labels`, JSON.stringify(customLabels)),
+      AsyncStorage.setItem(`mealSettings_${familyId}_times`, JSON.stringify(customTimes)),
+    ]);
+    Alert.alert('✓', t('common.saved') || 'Paramètres sauvegardés');
+  }, [familyId, defaultServings, customLabels, customTimes]);
 
-  const { data: meals = [], refetch: refetchMeals } = trpc.meals.list.useQuery({ familyId: 1, startDate, endDate });
-  const { data: history = [], refetch: refetchHistory } = trpc.meals.history.useQuery({ familyId: 1, limit: 100 });
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+  const createMeal = trpc.meals.create.useMutation({ onSuccess: () => utils.meals.list.invalidate() });
+  const updateMeal = trpc.meals.update.useMutation({ onSuccess: () => { utils.meals.list.invalidate(); utils.meals.history.invalidate(); } });
+  const deleteMeal = trpc.meals.delete.useMutation({ onSuccess: () => { utils.meals.list.invalidate(); utils.meals.history.invalidate(); } });
+  const toggleFavorite = trpc.meals.toggleFavorite.useMutation({ onSuccess: () => { utils.meals.history.invalidate(); utils.meals.favorites.invalidate(); } });
+  const importFromUrl = trpc.meals.importFromUrl.useMutation();
+  const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
 
-  const invalidateMeals = () => { utils.meals.list.invalidate(); utils.meals.history.invalidate(); };
+  // ─── Listes de courses (pour ajouter ingrédients) ─────────────────────────
+  const { data: shoppingLists = [] } = trpc.shopping.listsByFamily.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId }
+  );
+  const activeLists = useMemo(() => shoppingLists.filter((l: any) => !l.isArchived), [shoppingLists]);
 
-  const createMut = trpc.meals.create.useMutation({
-    onSuccess: () => { invalidateMeals(); setAddModal(false); setForm({ ...emptyForm }); setSelectedRecipe(null); },
-    onError: (e) => Alert.alert('Erreur', e.message),
+  // ─── Formulaire repas ──────────────────────────────────────────────────────
+  const [showForm, setShowForm] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [form, setForm] = useState({
+    name: '',
+    mealType: 'dinner' as MealType,
+    servings: defaultServings,
+    notes: '',
+    sourceUrl: '',
+    ingredients: [] as string[],
   });
-  const updateMut = trpc.meals.update.useMutation({
-    onSuccess: () => { invalidateMeals(); setEditMeal(null); },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
-  const deleteMut = trpc.meals.delete.useMutation({
-    onSuccess: () => invalidateMeals(),
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
-  const favoriteMut = trpc.meals.toggleFavorite.useMutation({
-    onSuccess: () => invalidateMeals(),
-  });
 
-  const mealsByDay = useMemo(() => {
-    const map: Record<string, Meal[]> = {};
-    for (const day of weekDays) {
-      const key = format(day, 'yyyy-MM-dd');
-      map[key] = (meals as Meal[]).filter(m => m.date.startsWith(key));
-    }
-    return map;
-  }, [meals, weekDays]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([refetchMeals(), refetchHistory()]);
-    setRefreshing(false);
+  const openCreate = (day?: Date) => {
+    setEditingMeal(null);
+    setSelectedDay(day || new Date());
+    setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', sourceUrl: '', ingredients: [] });
+    setShowForm(true);
+    setRecipeSearch('');
+    setRecipeSuggestions([]);
+    setImportUrl('');
+    setImportResult(null);
   };
 
-  const openAddModal = (date?: string) => {
-    const d = date ? new Date(date) : new Date();
-    setForm({ ...emptyForm, date: d, servings: defaultServings });
-    setPreselectedDate(date || null);
-    setSelectedRecipe(null);
-    setAddModal(true);
-  };
-
-  const openEditModal = (meal: Meal) => {
-    setEditMeal(meal);
+  const openEdit = (meal: Meal) => {
+    setEditingMeal(meal);
+    setSelectedDay(parseISO(meal.date));
     setForm({
       name: meal.name,
       mealType: meal.mealType,
-      date: new Date(meal.date.replace(' ', 'T')),
-      servings: meal.servings || 4,
+      servings: meal.servings || defaultServings,
       notes: meal.notes || '',
-      ingredients: meal.ingredients || '',
+      sourceUrl: meal.sourceUrl || '',
+      ingredients: [],
     });
-    setAddModal(true);
+    setShowForm(true);
+    setRecipeSearch('');
+    setRecipeSuggestions([]);
+    setImportUrl('');
+    setImportResult(null);
   };
 
-  const handleSubmit = () => {
-    if (!form.name.trim()) { Alert.alert('Erreur', 'Le nom est requis'); return; }
-    const dateStr = format(form.date, 'yyyy-MM-dd HH:mm:ss');
-    const payload = {
-      name: form.name,
-      mealType: form.mealType,
-      date: dateStr,
-      servings: form.servings,
-      notes: form.notes || undefined,
-      ingredients: form.ingredients || undefined,
-    };
-    if (editMeal) {
-      updateMut.mutate({ mealId: editMeal.id, ...payload });
+  const saveMeal = async () => {
+    if (!form.name.trim() || !familyId) return;
+    const mealTime = customTimes[form.mealType] || DEFAULT_TIMES[form.mealType];
+    const dateStr = format(selectedDay, 'yyyy-MM-dd') + 'T' + mealTime + ':00';
+
+    if (editingMeal) {
+      await updateMeal.mutateAsync({
+        mealId: editingMeal.id,
+        name: form.name.trim(),
+        mealType: form.mealType,
+        date: dateStr,
+        servings: form.servings,
+        notes: form.notes || undefined,
+        sourceUrl: form.sourceUrl || undefined,
+      });
     } else {
-      createMut.mutate({ familyId: 1, ...payload });
+      await createMeal.mutateAsync({
+        familyId,
+        name: form.name.trim(),
+        mealType: form.mealType,
+        date: dateStr,
+        servings: form.servings,
+        notes: form.notes || undefined,
+        sourceUrl: form.sourceUrl || undefined,
+      });
     }
+    setShowForm(false);
   };
 
-  const handleDelete = (meal: Meal) => {
-    Alert.alert('Supprimer ?', `"${meal.name}"`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteMut.mutate({ mealId: meal.id }) },
-    ]);
-  };
+  // ─── Recherche TheMealDB ───────────────────────────────────────────────────
+  const [recipeSearch, setRecipeSearch] = useState('');
+  const [recipeSuggestions, setRecipeSuggestions] = useState<TheMealDbResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  // ── Recherche de recettes TheMealDB ──────────────────────────────────────
   const searchRecipes = useCallback(async (query: string) => {
-    if (!query.trim() || query.length < 2) { setRecipeSuggestions([]); return; }
-    setRecipeLoading(true);
+    if (query.length < 2) { setRecipeSuggestions([]); return; }
+    setSearchLoading(true);
     try {
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
       const data = await res.json();
-      const rawMeals = (data.meals || []).slice(0, 5);
-      const suggestions: RecipeSuggestion[] = rawMeals.map((m: any) => {
-        const ingredients: string[] = [];
-        for (let i = 1; i <= 20; i++) {
-          const ing = (m[`strIngredient${i}`] || '').trim();
-          const meas = (m[`strMeasure${i}`] || '').trim();
-          if (ing) ingredients.push(meas ? `${meas} ${ing}` : ing);
-        }
-        return { id: m.idMeal, name: m.strMeal, category: m.strCategory, area: m.strArea, thumb: m.strMealThumb, ingredients };
-      });
-      setRecipeSuggestions(suggestions);
+      setRecipeSuggestions((data.meals || []).slice(0, 5));
     } catch {
-      Alert.alert('Erreur', 'Impossible de rechercher des recettes');
+      setRecipeSuggestions([]);
     } finally {
-      setRecipeLoading(false);
+      setSearchLoading(false);
     }
   }, []);
 
-  const importRecipe = (recipe: RecipeSuggestion) => {
-    setSelectedRecipe(recipe);
-    setForm(p => ({
-      ...p,
-      name: recipe.name,
-      ingredients: recipe.ingredients.join(', '),
-    }));
-    setRecipeModal(false);
+  useEffect(() => {
+    const timer = setTimeout(() => searchRecipes(recipeSearch), 500);
+    return () => clearTimeout(timer);
+  }, [recipeSearch]);
+
+  const importFromTheMealDb = (meal: TheMealDbResult) => {
+    // Extraire les ingrédients
+    const ingredients: string[] = [];
+    for (let i = 1; i <= 10; i++) {
+      const ing = (meal as any)[`strIngredient${i}`];
+      const msr = (meal as any)[`strMeasure${i}`];
+      if (ing && ing.trim()) {
+        ingredients.push(msr && msr.trim() ? `${msr.trim()} ${ing.trim()}` : ing.trim());
+      }
+    }
+    setForm(p => ({ ...p, name: meal.strMeal, ingredients }));
     setRecipeSuggestions([]);
     setRecipeSearch('');
   };
 
-  // ── Composant carte repas ─────────────────────────────────────────────────
-  const MealCard = ({ meal }: { meal: Meal }) => (
-    <View style={s.mealCard}>
-      {meal.imageUrl ? (
-        <Image source={{ uri: meal.imageUrl }} style={s.mealThumb} />
-      ) : (
-        <Text style={s.mealIcon}>{MEAL_ICONS[meal.mealType] || '🍽️'}</Text>
-      )}
-      <View style={{ flex: 1 }}>
-        <Text style={s.mealName} numberOfLines={1}>{meal.name}</Text>
-        <Text style={s.mealMeta}>{customLabels[meal.mealType] || meal.mealType} · {meal.servings || 4} pers.</Text>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 4 }}>
-        <TouchableOpacity onPress={() => favoriteMut.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })} style={s.mealActionBtn}>
-          <Text style={{ fontSize: 18 }}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => openEditModal(meal)} style={s.mealActionBtn}>
-          <Text style={{ fontSize: 16 }}>✏️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDelete(meal)} style={s.mealActionBtn}>
-          <Text style={{ fontSize: 16 }}>🗑</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  // ─── Import depuis URL ─────────────────────────────────────────────────────
+  const [importUrl, setImportUrl] = useState('');
+  const [importResult, setImportResult] = useState<any>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
-  // ── Vue Semaine ───────────────────────────────────────────────────────────
-  const WeekView = () => (
-    <View>
-      {/* Navigation semaine */}
-      <View style={s.weekNav}>
-        <TouchableOpacity onPress={() => setCurrentWeekStart(d => addDays(d, -7))} style={s.weekNavBtn}>
-          <Text style={s.weekNavText}>◀</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} style={s.weekTitleBtn}>
-          <Text style={s.weekTitle}>
-            {format(currentWeekStart, 'd MMM', { locale: getLocale() })} – {format(addDays(currentWeekStart, 6), 'd MMM yyyy', { locale: getLocale() })}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setCurrentWeekStart(d => addDays(d, 7))} style={s.weekNavBtn}>
-          <Text style={s.weekNavText}>▶</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Jours */}
-      {weekDays.map(day => {
-        const key = format(day, 'yyyy-MM-dd');
-        const dayMeals = mealsByDay[key] || [];
-        const isToday = isSameDay(day, new Date());
-        return (
-          <View key={key} style={[s.daySection, isToday && s.daySectionToday]}>
-            <View style={s.dayHeader}>
-              <Text style={[s.dayLabel, isToday && s.dayLabelToday]}>
-                {format(day, 'EEEE d MMM', { locale: getLocale() })}
-              </Text>
-              <TouchableOpacity onPress={() => openAddModal(key)} style={s.addDayBtn}>
-                <Text style={s.addDayBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-            {dayMeals.length === 0 ? (
-              <TouchableOpacity onPress={() => openAddModal(key)} style={s.emptyDay}>
-                <Text style={s.emptyDayText}>Appuyer pour ajouter un repas</Text>
-              </TouchableOpacity>
-            ) : (
-              dayMeals.map((meal: Meal) => <MealCard key={meal.id} meal={meal} />)
-            )}
-          </View>
-        );
-      })}
-    </View>
-  );
-
-  // ── Vue Historique ────────────────────────────────────────────────────────
-  const HistoryView = () => {
-    const favorites = (history as Meal[]).filter(m => m.isFavorite);
-    const recent = (history as Meal[]).filter(m => !m.isFavorite);
-    return (
-      <View>
-        {favorites.length > 0 && (
-          <>
-            <Text style={s.sectionTitle}>❤️ Favoris</Text>
-            {favorites.map((meal: Meal) => (
-              <View key={meal.id} style={s.historyCard}>
-                <Text style={s.historyIcon}>{MEAL_ICONS[meal.mealType] || '🍽️'}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.historyName} numberOfLines={1}>{meal.name}</Text>
-                  <Text style={s.historyMeta}>{format(new Date(meal.date.replace(' ', 'T')), 'dd MMM yyyy', { locale: getLocale() })}</Text>
-                </View>
-                <TouchableOpacity onPress={() => { openAddModal(); setForm(p => ({ ...p, name: meal.name, mealType: meal.mealType, ingredients: meal.ingredients || '', notes: meal.notes || '' })); }} style={[s.mealActionBtn, { backgroundColor: '#ede9fe' }]}>
-                  <Text style={{ fontSize: 14 }}>↩️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => favoriteMut.mutate({ mealId: meal.id, isFavorite: false })} style={s.mealActionBtn}>
-                  <Text style={{ fontSize: 18 }}>❤️</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </>
-        )}
-        {recent.length > 0 && (
-          <>
-            <Text style={s.sectionTitle}>🕐 Récents</Text>
-            {recent.slice(0, 30).map((meal: Meal) => (
-              <View key={meal.id} style={s.historyCard}>
-                <Text style={s.historyIcon}>{MEAL_ICONS[meal.mealType] || '🍽️'}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.historyName} numberOfLines={1}>{meal.name}</Text>
-                  <Text style={s.historyMeta}>{format(new Date(meal.date.replace(' ', 'T')), 'dd MMM yyyy', { locale: getLocale() })}</Text>
-                </View>
-                <TouchableOpacity onPress={() => { openAddModal(); setForm(p => ({ ...p, name: meal.name, mealType: meal.mealType, ingredients: meal.ingredients || '', notes: meal.notes || '' })); }} style={[s.mealActionBtn, { backgroundColor: '#ede9fe' }]}>
-                  <Text style={{ fontSize: 14 }}>↩️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => favoriteMut.mutate({ mealId: meal.id, isFavorite: true })} style={s.mealActionBtn}>
-                  <Text style={{ fontSize: 18 }}>🤍</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </>
-        )}
-        {favorites.length === 0 && recent.length === 0 && (
-          <View style={s.emptyState}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🍽️</Text>
-            <Text style={s.emptyText}>Aucun repas dans l'historique</Text>
-          </View>
-        )}
-      </View>
-    );
+  const doImportFromUrl = async () => {
+    if (!importUrl.trim()) return;
+    setImportLoading(true);
+    try {
+      const result = await importFromUrl.mutateAsync({ url: importUrl.trim() });
+      setImportResult(result);
+      setForm(p => ({
+        ...p,
+        name: result.name || p.name,
+        mealType: result.mealType || p.mealType,
+        servings: result.servings || p.servings,
+        notes: result.notes || p.notes,
+        sourceUrl: importUrl.trim(),
+        ingredients: result.ingredients || [],
+      }));
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message || 'Import impossible');
+    } finally {
+      setImportLoading(false);
+    }
   };
 
-  // ── Vue Paramètres ────────────────────────────────────────────────────────
-  const SettingsView = () => (
-    <View>
-      <Text style={s.sectionTitle}>⚙️ Paramètres repas</Text>
-      <View style={s.settingsCard}>
-        <Text style={s.label}>Portions par défaut</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
-          <TouchableOpacity style={s.counterBtn} onPress={() => setDefaultServings(p => Math.max(1, p - 1))}>
-            <Text style={s.counterBtnText}>−</Text>
+  // ─── Ajout ingrédients aux courses ────────────────────────────────────────
+  const [showAddToShopping, setShowAddToShopping] = useState(false);
+  const [ingredientsToAdd, setIngredientsToAdd] = useState<string[]>([]);
+  const [targetMealForShopping, setTargetMealForShopping] = useState<Meal | null>(null);
+
+  const openAddToShopping = (meal: Meal) => {
+    // Extraire les ingrédients depuis les notes
+    const notes = meal.notes || '';
+    const lines = notes.split('\n');
+    const ingStart = lines.findIndex(l => l.includes('Ingrédients'));
+    const ingEnd = lines.findIndex((l, i) => i > ingStart && (l.includes('Préparation') || l.includes('Temps')));
+    const ingLines = ingStart >= 0
+      ? lines.slice(ingStart + 1, ingEnd > 0 ? ingEnd : undefined).filter(l => l.startsWith('•')).map(l => l.replace('• ', ''))
+      : [];
+    setIngredientsToAdd(ingLines);
+    setTargetMealForShopping(meal);
+    setShowAddToShopping(true);
+  };
+
+  const doAddToShopping = async (listId: number) => {
+    if (!ingredientsToAdd.length) return;
+    await addItemsMerged.mutateAsync({
+      listId,
+      items: ingredientsToAdd.map(name => ({ name })),
+    });
+    setShowAddToShopping(false);
+    Alert.alert('✓', `${ingredientsToAdd.length} ingrédient(s) ajouté(s) à la liste`);
+  };
+
+  // ─── Rendu repas (carte) ───────────────────────────────────────────────────
+  const renderMealCard = (meal: Meal) => (
+    <View key={meal.id} style={s.mealCard}>
+      <View style={s.mealCardHeader}>
+        <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
+        <View style={s.mealCardInfo}>
+          <Text style={s.mealName} numberOfLines={1}>{meal.name}</Text>
+          <Text style={s.mealMeta}>{customLabels[meal.mealType]} · {meal.servings} pers.</Text>
+        </View>
+        <View style={s.mealCardActions}>
+          <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
+            <Text style={s.mealActionBtn}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
-          <Text style={s.counterValue}>{defaultServings}</Text>
-          <TouchableOpacity style={s.counterBtn} onPress={() => setDefaultServings(p => p + 1)}>
-            <Text style={s.counterBtnText}>+</Text>
+          <TouchableOpacity onPress={() => openAddToShopping(meal)}>
+            <Text style={s.mealActionBtn}>🛒</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openEdit(meal)}>
+            <Text style={s.mealActionBtn}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', meal.name, [
+            { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+            { text: '🗑', style: 'destructive', onPress: () => deleteMeal.mutate({ mealId: meal.id }) },
+          ])}>
+            <Text style={s.mealActionBtn}>🗑</Text>
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={s.sectionTitle}>Libellés des repas</Text>
-      {MEAL_TYPES.map(type => (
-        <View key={type} style={s.settingsCard}>
-          <Text style={s.label}>{MEAL_ICONS[type]} {DEFAULT_LABELS[type]}</Text>
+    </View>
+  );
+
+  // ─── Vue semaine ───────────────────────────────────────────────────────────
+  const renderWeekView = () => (
+    <View style={s.weekContainer}>
+      {/* Navigation semaine */}
+      <View style={s.weekNav}>
+        <TouchableOpacity onPress={() => setWeekStart(w => subWeeks(w, 1))} style={s.weekNavBtn}>
+          <Text style={s.weekNavBtnText}>◀</Text>
+        </TouchableOpacity>
+        <Text style={s.weekLabel}>
+          {format(weekStart, 'd MMM', { locale: dateFnsLocale })} – {format(weekEnd, 'd MMM yyyy', { locale: dateFnsLocale })}
+        </Text>
+        <TouchableOpacity onPress={() => setWeekStart(w => addWeeks(w, 1))} style={s.weekNavBtn}>
+          <Text style={s.weekNavBtnText}>▶</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView>
+        {weekDays.map(day => {
+          const isToday = isSameDay(day, new Date());
+          const dayMeals = (weekMeals as Meal[]).filter(m => {
+            try { return isSameDay(parseISO(m.date), day); } catch { return false; }
+          });
+          return (
+            <View key={day.toISOString()} style={[s.dayBlock, isToday && s.dayBlockToday]}>
+              <View style={s.dayHeader}>
+                <Text style={[s.dayName, isToday && s.dayNameToday]}>
+                  {format(day, 'EEE d', { locale: dateFnsLocale })}
+                </Text>
+                <TouchableOpacity onPress={() => openCreate(day)} style={s.addDayBtn}>
+                  <Text style={s.addDayBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+              {dayMeals.length === 0 ? (
+                <Text style={s.noMealText}>{t('meals.noMeal') || 'Aucun repas'}</Text>
+              ) : (
+                dayMeals.map(renderMealCard)
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
+  // ─── Vue historique ────────────────────────────────────────────────────────
+  const renderHistoryView = () => (
+    <ScrollView contentContainerStyle={{ padding: 12 }}>
+      {favoriteMeals.length > 0 && (
+        <>
+          <Text style={s.sectionTitle}>❤️ {t('meals.favorites') || 'Favoris'}</Text>
+          {(favoriteMeals as Meal[]).map(renderMealCard)}
+        </>
+      )}
+      <Text style={s.sectionTitle}>🕐 {t('meals.history') || 'Historique'}</Text>
+      {historyLoading ? <ActivityIndicator color="#7c3aed" /> : (
+        (historyMeals as Meal[]).length === 0
+          ? <Text style={s.emptyText}>{t('meals.noHistory') || 'Aucun repas dans l\'historique'}</Text>
+          : (historyMeals as Meal[]).map(m => (
+            <View key={m.id}>
+              {renderMealCard(m)}
+              <TouchableOpacity style={s.reuseBtn} onPress={() => openCreate()}>
+                <Text style={s.reuseBtnText}>↩️ {t('meals.reuse') || 'Réutiliser'}</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+      )}
+    </ScrollView>
+  );
+
+  // ─── Vue paramètres ────────────────────────────────────────────────────────
+  const renderSettingsView = () => (
+    <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <Text style={s.sectionTitle}>{t('meals.defaultServings') || 'Portions par défaut'}</Text>
+      <View style={s.settingsRow}>
+        <TouchableOpacity onPress={() => setDefaultServings(v => Math.max(1, v - 1))} style={s.counterBtn}>
+          <Text style={s.counterBtnText}>−</Text>
+        </TouchableOpacity>
+        <Text style={s.counterValue}>{defaultServings}</Text>
+        <TouchableOpacity onPress={() => setDefaultServings(v => v + 1)} style={s.counterBtn}>
+          <Text style={s.counterBtnText}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={s.sectionTitle}>{t('meals.mealTimes') || 'Heures des repas'}</Text>
+      {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
+        <View key={type} style={s.settingsRow}>
+          <Text style={s.settingsLabel}>{MEAL_EMOJIS[type]} {customLabels[type]}</Text>
           <TextInput
-            style={[s.input, { marginTop: 6 }]}
-            value={customLabels[type]}
-            onChangeText={v => setCustomLabels(p => ({ ...p, [type]: v }))}
-            placeholder={DEFAULT_LABELS[type]}
-            placeholderTextColor="#9ca3af"
+            style={[s.timeInput]}
+            value={customTimes[type]}
+            onChangeText={v => setCustomTimes(p => ({ ...p, [type]: v }))}
+            placeholder="HH:MM"
+            placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            keyboardType="numbers-and-punctuation"
+            maxLength={5}
           />
         </View>
       ))}
-    </View>
+
+      <Text style={s.sectionTitle}>{t('meals.mealLabels') || 'Labels personnalisés'}</Text>
+      {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
+        <View key={type} style={s.settingsRow}>
+          <Text style={s.settingsLabel}>{MEAL_EMOJIS[type]}</Text>
+          <TextInput
+            style={[s.labelInput]}
+            value={customLabels[type]}
+            onChangeText={v => setCustomLabels(p => ({ ...p, [type]: v }))}
+            placeholder={DEFAULT_LABELS[type]}
+            placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+          />
+        </View>
+      ))}
+
+      <TouchableOpacity style={s.saveSettingsBtn} onPress={saveSettings}>
+        <Text style={s.saveSettingsBtnText}>✓ {t('common.save') || 'Sauvegarder'}</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 
-  const content = (
-    <>
+  // ─── Formulaire repas (modal) ──────────────────────────────────────────────
+  const renderForm = () => (
+    <Modal visible={showForm} transparent animationType="slide">
+      <View style={s.overlay}>
+        <ScrollView contentContainerStyle={s.formScroll}>
+          <View style={s.modal}>
+            <Text style={s.modalTitle}>
+              {editingMeal ? (t('meals.editMeal') || 'Modifier le repas') : (t('meals.newMeal') || 'Nouveau repas')}
+            </Text>
 
-      {/* Titre */}
+            {/* Nom */}
+            <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
+            <TextInput
+              style={s.input}
+              value={form.name}
+              onChangeText={n => setForm(p => ({ ...p, name: n }))}
+              placeholder={t('meals.mealName') || 'Nom du repas'}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+
+            {/* Recherche TheMealDB */}
+            <Text style={s.label}>🔍 {t('meals.searchRecipe') || 'Rechercher une recette'}</Text>
+            <TextInput
+              style={s.input}
+              value={recipeSearch}
+              onChangeText={setRecipeSearch}
+              placeholder={t('meals.searchPlaceholder') || 'Ex: chicken, pasta...'}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+            {searchLoading && <ActivityIndicator size="small" color="#7c3aed" />}
+            {recipeSuggestions.length > 0 && (
+              <View style={s.suggestions}>
+                {recipeSuggestions.map(r => (
+                  <TouchableOpacity key={r.idMeal} style={s.suggestionItem} onPress={() => importFromTheMealDb(r)}>
+                    <View style={s.suggestionInfo}>
+                      <Text style={s.suggestionName}>{r.strMeal}</Text>
+                      <Text style={s.suggestionMeta}>{r.strCategory}</Text>
+                    </View>
+                    <Text style={s.importBtn}>⬇️</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Import depuis URL */}
+            <Text style={s.label}>🔗 {t('meals.importUrl') || 'Importer depuis une URL'}</Text>
+            <View style={s.importRow}>
+              <TextInput
+                style={[s.input, { flex: 1, marginBottom: 0 }]}
+                value={importUrl}
+                onChangeText={setImportUrl}
+                placeholder="https://www.marmiton.org/..."
+                placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              <TouchableOpacity style={s.importUrlBtn} onPress={doImportFromUrl} disabled={importLoading}>
+                {importLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.importUrlBtnText}>⬇️</Text>}
+              </TouchableOpacity>
+            </View>
+            {importResult && (
+              <View style={s.importSuccess}>
+                <Text style={s.importSuccessText}>✓ {importResult.name} importé ({importResult.ingredients?.length || 0} ingrédients)</Text>
+              </View>
+            )}
+
+            {/* Ingrédients importés */}
+            {form.ingredients.length > 0 && (
+              <View style={s.ingredientsList}>
+                <Text style={s.label}>🥕 {t('meals.ingredients') || 'Ingrédients'} ({form.ingredients.length})</Text>
+                {form.ingredients.slice(0, 5).map((ing, i) => (
+                  <Text key={i} style={s.ingredientItem}>• {ing}</Text>
+                ))}
+                {form.ingredients.length > 5 && <Text style={s.ingredientItem}>... +{form.ingredients.length - 5}</Text>}
+              </View>
+            )}
+
+            {/* Type de repas */}
+            <Text style={s.label}>{t('meals.mealType') || 'Type'}</Text>
+            <View style={s.typeSelector}>
+              {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
+                <TouchableOpacity
+                  key={type}
+                  style={[s.typeBtn, form.mealType === type && s.typeBtnActive]}
+                  onPress={() => setForm(p => ({ ...p, mealType: type }))}
+                >
+                  <Text style={s.typeEmoji}>{MEAL_EMOJIS[type]}</Text>
+                  <Text style={[s.typeBtnText, form.mealType === type && s.typeBtnTextActive]}>
+                    {customLabels[type]}
+                  </Text>
+                  <Text style={s.typeTime}>{customTimes[type]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Portions */}
+            <Text style={s.label}>{t('meals.servings') || 'Portions'}</Text>
+            <View style={s.settingsRow}>
+              <TouchableOpacity onPress={() => setForm(p => ({ ...p, servings: Math.max(1, p.servings - 1) }))} style={s.counterBtn}>
+                <Text style={s.counterBtnText}>−</Text>
+              </TouchableOpacity>
+              <Text style={s.counterValue}>{form.servings}</Text>
+              <TouchableOpacity onPress={() => setForm(p => ({ ...p, servings: p.servings + 1 }))} style={s.counterBtn}>
+                <Text style={s.counterBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Notes */}
+            <Text style={s.label}>{t('common.notes') || 'Notes'}</Text>
+            <TextInput
+              style={[s.input, { height: 80 }]}
+              value={form.notes}
+              onChangeText={n => setForm(p => ({ ...p, notes: n }))}
+              placeholder={t('meals.notesPlaceholder') || 'Ingrédients, instructions...'}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              multiline
+            />
+
+            {/* Actions */}
+            <View style={s.modalActions}>
+              <TouchableOpacity style={s.cancelBtn} onPress={() => setShowForm(false)}>
+                <Text style={s.cancelBtnText}>✕</Text>
+              </TouchableOpacity>
+              {editingMeal && (
+                <TouchableOpacity style={[s.cancelBtn, { backgroundColor: '#ef4444' }]} onPress={() => {
+                  Alert.alert(t('common.delete') || 'Supprimer', editingMeal.name, [
+                    { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+                    { text: '🗑', style: 'destructive', onPress: () => { deleteMeal.mutate({ mealId: editingMeal.id }); setShowForm(false); } },
+                  ]);
+                }}>
+                  <Text style={s.saveBtnText}>🗑</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={s.saveBtn} onPress={saveMeal}>
+                <Text style={s.saveBtnText}>✓</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+
+  // ─── Modal ajout aux courses ───────────────────────────────────────────────
+  const renderAddToShoppingModal = () => (
+    <Modal visible={showAddToShopping} transparent animationType="slide">
+      <View style={s.overlay}>
+        <View style={s.modal}>
+          <Text style={s.modalTitle}>🛒 {t('meals.addToShopping') || 'Ajouter aux courses'}</Text>
+          {ingredientsToAdd.length === 0 ? (
+            <Text style={s.emptyText}>{t('meals.noIngredients') || 'Aucun ingrédient trouvé dans les notes'}</Text>
+          ) : (
+            <>
+              <Text style={s.label}>{ingredientsToAdd.length} ingrédient(s) :</Text>
+              <ScrollView style={{ maxHeight: 150 }}>
+                {ingredientsToAdd.map((ing, i) => <Text key={i} style={s.ingredientItem}>• {ing}</Text>)}
+              </ScrollView>
+              <Text style={[s.label, { marginTop: 12 }]}>{t('shopping.selectList') || 'Choisir une liste'} :</Text>
+              {activeLists.length === 0 ? (
+                <Text style={s.emptyText}>{t('shopping.noLists') || 'Aucune liste active'}</Text>
+              ) : (
+                activeLists.map((list: any) => (
+                  <TouchableOpacity key={list.id} style={s.listChoiceBtn} onPress={() => doAddToShopping(list.id)}>
+                    <Text style={s.listChoiceBtnText}>📋 {list.name}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </>
+          )}
+          <TouchableOpacity style={[s.cancelBtn, { alignSelf: 'flex-end', marginTop: 12 }]} onPress={() => setShowAddToShopping(false)}>
+            <Text style={s.cancelBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // ─── Rendu principal ───────────────────────────────────────────────────────
+  const content = (
+    <View style={s.container}>
+      {/* Titre + bouton */}
       <View style={s.titleBar}>
         <Text style={s.title}>{t('tabs.meals') || 'Repas'}</Text>
-      </View>
-
-      {/* Bouton Ajouter */}
-      <View style={s.newBtnContainer}>
-        <TouchableOpacity style={s.newBtn} onPress={() => openAddModal()}>
-          <Text style={s.newBtnText}>+ Ajouter un repas</Text>
+        <TouchableOpacity style={s.createBtn} onPress={() => openCreate()}>
+          <Text style={s.createBtnText}>+ {t('meals.newMeal') || 'Nouveau'}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Onglets */}
-      <View style={s.tabs}>
-        {([
-          { key: 'week', label: '📅 Semaine' },
-          { key: 'history', label: '🕐 Historique' },
-          { key: 'settings', label: '⚙️ Paramètres' },
-        ] as { key: MealsTab; label: string }[]).map(({ key, label }) => (
-          <TouchableOpacity key={key} style={[s.tab, mealsTab === key && s.tabActive]} onPress={() => setMealsTab(key)}>
-            <Text style={[s.tabText, mealsTab === key && s.tabTextActive]}>{label}</Text>
+      <View style={s.tabBar}>
+        {(['week', 'history', 'settings'] as MealsTab[]).map(tb => (
+          <TouchableOpacity key={tb} style={[s.tabBtn, tab === tb && s.tabBtnActive]} onPress={() => setTab(tb)}>
+            <Text style={[s.tabBtnText, tab === tb && s.tabBtnTextActive]}>
+              {tb === 'week' ? (t('meals.week') || 'Semaine') : tb === 'history' ? (t('meals.history') || 'Historique') : '⚙️'}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <ScrollView
-        style={s.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}
-        keyboardShouldPersistTaps="handled"
-      >
-        {mealsTab === 'week' && <WeekView />}
-        {mealsTab === 'history' && <HistoryView />}
-        {mealsTab === 'settings' && <SettingsView />}
-        <View style={{ height: 80 }} />
-      </ScrollView>
+      {/* Contenu selon onglet */}
+      <View style={{ flex: 1 }}>
+        {tab === 'week' && (mealsLoading ? <ActivityIndicator style={{ marginTop: 40 }} color="#7c3aed" /> : renderWeekView())}
+        {tab === 'history' && renderHistoryView()}
+        {tab === 'settings' && renderSettingsView()}
+      </View>
 
-      {/* ══ MODAL Ajout / Modification repas ══ */}
-      <Modal visible={addModal} animationType="slide" transparent onRequestClose={() => { setAddModal(false); setEditMeal(null); }}>
-        <View style={s.modalOverlay}>
-          <View style={s.modalContent}>
-            <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>{editMeal ? 'Modifier le repas' : 'Nouveau repas'}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[s.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setAddModal(false); setEditMeal(null); setSelectedRecipe(null); }}>
-                  <Text style={s.iconBtnText}>✕</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[s.iconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
-                  <Text style={[s.iconBtnText, { color: '#fff' }]}>{(createMut.isPending || updateMut.isPending) ? '…' : '✓'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-              {/* Bouton recherche recette */}
-              {!editMeal && (
-                <TouchableOpacity style={s.recipeSearchBtn} onPress={() => setRecipeModal(true)}>
-                  <Text style={s.recipeSearchBtnText}>🔍 Chercher une recette</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Recette importée */}
-              {selectedRecipe && (
-                <View style={s.importedRecipe}>
-                  <Image source={{ uri: selectedRecipe.thumb }} style={s.importedThumb} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.importedName} numberOfLines={2}>{selectedRecipe.name}</Text>
-                    <Text style={s.importedMeta}>{selectedRecipe.category} · {selectedRecipe.area}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setSelectedRecipe(null)}>
-                    <Text style={{ fontSize: 18, color: '#9ca3af' }}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* Nom */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Nom *</Text>
-                <TextInput style={s.input} placeholder="Nom du repas" placeholderTextColor="#9ca3af" value={form.name} onChangeText={v => setForm(p => ({ ...p, name: v }))} />
-              </View>
-
-              {/* Type de repas */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Type</Text>
-                <TouchableOpacity style={s.pickerBtn} onPress={() => setMealTypeModal(true)}>
-                  <Text style={s.pickerBtnText}>{MEAL_ICONS[form.mealType]} {customLabels[form.mealType]}</Text>
-                  <Text style={{ color: '#9ca3af' }}>▼</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Date */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Date</Text>
-                <TouchableOpacity style={s.pickerBtn} onPress={() => setShowDatePicker(true)}>
-                  <Text style={s.pickerBtnText}>📅 {format(form.date, 'EEEE d MMMM yyyy', { locale: getLocale() })}</Text>
-                  <Text style={{ color: '#9ca3af' }}>▼</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Heure */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Heure</Text>
-                <TouchableOpacity style={s.pickerBtn} onPress={() => setShowTimePicker(true)}>
-                  <Text style={s.pickerBtnText}>🕐 {format(form.date, 'HH:mm')}</Text>
-                  <Text style={{ color: '#9ca3af' }}>▼</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Portions */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Portions</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                  <TouchableOpacity style={s.counterBtn} onPress={() => setForm(p => ({ ...p, servings: Math.max(1, p.servings - 1) }))}>
-                    <Text style={s.counterBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={s.counterValue}>{form.servings}</Text>
-                  <TouchableOpacity style={s.counterBtn} onPress={() => setForm(p => ({ ...p, servings: p.servings + 1 }))}>
-                    <Text style={s.counterBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Ingrédients */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Ingrédients</Text>
-                <TextInput
-                  style={[s.input, { height: 80, textAlignVertical: 'top' }]}
-                  placeholder="Ingrédients (séparés par des virgules)..."
-                  placeholderTextColor="#9ca3af"
-                  value={form.ingredients}
-                  onChangeText={v => setForm(p => ({ ...p, ingredients: v }))}
-                  multiline
-                />
-              </View>
-
-              {/* Notes */}
-              <View style={s.formGroup}>
-                <Text style={s.label}>Notes</Text>
-                <TextInput
-                  style={[s.input, { height: 60, textAlignVertical: 'top' }]}
-                  placeholder="Notes..."
-                  placeholderTextColor="#9ca3af"
-                  value={form.notes}
-                  onChangeText={v => setForm(p => ({ ...p, notes: v }))}
-                  multiline
-                />
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ══ MODAL Recherche recettes ══ */}
-      <Modal visible={recipeModal} animationType="slide" transparent onRequestClose={() => setRecipeModal(false)}>
-        <View style={s.modalOverlay}>
-          <View style={[s.modalContent, { maxHeight: '85%' }]}>
-            <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>🔍 Rechercher une recette</Text>
-              <TouchableOpacity style={[s.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setRecipeModal(false); setRecipeSuggestions([]); setRecipeSearch(''); }}>
-                <Text style={s.iconBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ padding: 16 }}>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-                <TextInput
-                  style={[s.input, { flex: 1 }]}
-                  placeholder="Ex: chicken, pasta, beef..."
-                  placeholderTextColor="#9ca3af"
-                  value={recipeSearch}
-                  onChangeText={setRecipeSearch}
-                  onSubmitEditing={() => searchRecipes(recipeSearch)}
-                  returnKeyType="search"
-                  autoFocus
-                />
-                <TouchableOpacity style={s.addBtn} onPress={() => searchRecipes(recipeSearch)} disabled={recipeLoading}>
-                  {recipeLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontSize: 16 }}>🔍</Text>}
-                </TouchableOpacity>
-              </View>
-
-              <Text style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
-                Recherche en anglais recommandée (ex: "chicken", "pasta", "beef", "salmon")
-              </Text>
-
-              <ScrollView style={{ maxHeight: 400 }} keyboardShouldPersistTaps="handled">
-                {recipeSuggestions.length === 0 && !recipeLoading && recipeSearch.length >= 2 && (
-                  <View style={s.emptyState}>
-                    <Text style={s.emptyText}>Aucune recette trouvée pour "{recipeSearch}"</Text>
-                  </View>
-                )}
-                {recipeSuggestions.map(recipe => (
-                  <TouchableOpacity key={recipe.id} style={s.recipeCard} onPress={() => importRecipe(recipe)}>
-                    <Image source={{ uri: recipe.thumb }} style={s.recipeThumb} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.recipeName} numberOfLines={2}>{recipe.name}</Text>
-                      <Text style={s.recipeMeta}>{recipe.category} · {recipe.area}</Text>
-                      <Text style={s.recipeIngCount}>{recipe.ingredients.length} ingrédients</Text>
-                    </View>
-                    <View style={[s.importBtn]}>
-                      <Text style={s.importBtnText}>Importer</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ══ MODAL Type de repas ══ */}
-      <Modal visible={mealTypeModal} animationType="fade" transparent onRequestClose={() => setMealTypeModal(false)}>
-        <TouchableOpacity style={s.pickerOverlay} activeOpacity={1} onPress={() => setMealTypeModal(false)}>
-          <View style={s.pickerModal}>
-            <Text style={s.pickerTitle}>Type de repas</Text>
-            {MEAL_TYPES.map(type => (
-              <TouchableOpacity key={type} style={s.pickerOption} onPress={() => { setForm(p => ({ ...p, mealType: type })); setMealTypeModal(false); }}>
-                <Text style={s.pickerOptionText}>{MEAL_ICONS[type]} {customLabels[type]}</Text>
-                {form.mealType === type && <Text style={{ color: '#7c3aed', fontWeight: 'bold' }}>✓</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* DateTimePicker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={form.date}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => { setShowDatePicker(false); if (d) setForm(p => { const nd = new Date(d); nd.setHours(p.date.getHours(), p.date.getMinutes()); return { ...p, date: nd }; }); }}
-        />
-      )}
-      {showTimePicker && (
-        <DateTimePicker
-          value={form.date}
-          mode="time"
-          is24Hour
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => { setShowTimePicker(false); if (d) setForm(p => { const nd = new Date(p.date); nd.setHours(d.getHours(), d.getMinutes()); return { ...p, date: nd }; }); }}
-        />
-      )}
-    </>
+      {renderForm()}
+      {renderAddToShoppingModal()}
+    </View>
   );
 
   if (embedded) return content;
@@ -631,97 +726,95 @@ function getStyles(isDark: boolean) {
   const text = isDark ? '#f9fafb' : '#111827';
   const subtext = isDark ? '#9ca3af' : '#6b7280';
   const border = isDark ? '#374151' : '#e5e7eb';
-  const inputBg = isDark ? '#111827' : '#f3f4f6';
+  const inputBg = isDark ? '#000000' : '#ffffff';
+  const inputBorder = isDark ? '#ffffff' : '#d1d5db';
 
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: bg },
-    titleBar: { backgroundColor: card, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: border, alignItems: 'center' },
-    title: { fontSize: 22, fontWeight: 'bold', color: text },
-    newBtnContainer: { padding: 10, backgroundColor: card, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: border },
-    newBtn: { backgroundColor: '#7c3aed', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
-    newBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-    tabs: { flexDirection: 'row', backgroundColor: card, paddingHorizontal: 10, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: border },
-    tab: { flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' },
-    tabActive: { backgroundColor: '#7c3aed' },
-    tabText: { fontSize: 11, color: subtext, fontWeight: '500' },
-    tabTextActive: { color: '#fff', fontWeight: '700' },
-    content: { flex: 1, paddingHorizontal: 10, paddingTop: 8 },
-    emptyState: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 32 },
-    emptyText: { fontSize: 15, color: subtext, textAlign: 'center', marginBottom: 16 },
-
+    titleBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 8 },
+    title: { fontSize: 22, fontWeight: '700', color: text },
+    createBtn: { backgroundColor: '#7c3aed', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+    createBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+    tabBar: { flexDirection: 'row', paddingHorizontal: 12, gap: 8, marginBottom: 4 },
+    tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    tabBtnActive: { backgroundColor: '#7c3aed' },
+    tabBtnText: { fontSize: 13, fontWeight: '600', color: subtext },
+    tabBtnTextActive: { color: '#fff' },
     // Semaine
-    weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-    weekNavBtn: { padding: 10, borderRadius: 8, backgroundColor: card, borderWidth: 1, borderColor: border },
-    weekNavText: { fontSize: 18, color: '#7c3aed' },
-    weekTitleBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
-    weekTitle: { fontSize: 14, fontWeight: '600', color: text },
-    daySection: { backgroundColor: card, borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: border },
-    daySectionToday: { borderColor: '#7c3aed', borderWidth: 2 },
-    dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-    dayLabel: { fontSize: 14, fontWeight: '600', color: text, textTransform: 'capitalize' },
-    dayLabelToday: { color: '#7c3aed' },
-    addDayBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
-    addDayBtnText: { color: '#fff', fontSize: 20, lineHeight: 26 },
-    emptyDay: { paddingVertical: 12, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: border, borderStyle: 'dashed' },
-    emptyDayText: { fontSize: 13, color: subtext },
-
+    weekContainer: { flex: 1 },
+    weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderBottomColor: border },
+    weekNavBtn: { padding: 8 },
+    weekNavBtnText: { fontSize: 18, color: '#7c3aed' },
+    weekLabel: { fontSize: 14, fontWeight: '600', color: text },
+    dayBlock: { borderBottomWidth: 1, borderBottomColor: border, padding: 10 },
+    dayBlockToday: { borderLeftWidth: 3, borderLeftColor: '#7c3aed' },
+    dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+    dayName: { fontSize: 14, fontWeight: '700', color: text, textTransform: 'capitalize' },
+    dayNameToday: { color: '#7c3aed' },
+    addDayBtn: { backgroundColor: '#7c3aed', borderRadius: 14, width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+    addDayBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
+    noMealText: { fontSize: 12, color: subtext, fontStyle: 'italic', paddingLeft: 4 },
     // Carte repas
-    mealCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#111827' : '#f9fafb', borderRadius: 10, padding: 8, marginBottom: 6, gap: 8 },
-    mealIcon: { fontSize: 24, width: 36, textAlign: 'center' },
-    mealThumb: { width: 36, height: 36, borderRadius: 8 },
-    mealName: { fontSize: 14, fontWeight: '600', color: text },
-    mealMeta: { fontSize: 12, color: subtext },
-    mealActionBtn: { padding: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
-
+    mealCard: { backgroundColor: card, borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: border },
+    mealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    mealEmoji: { fontSize: 22 },
+    mealCardInfo: { flex: 1 },
+    mealName: { fontSize: 14, fontWeight: '700', color: text },
+    mealMeta: { fontSize: 12, color: subtext, marginTop: 2 },
+    mealCardActions: { flexDirection: 'row', gap: 4 },
+    mealActionBtn: { fontSize: 18, padding: 2 },
+    reuseBtn: { alignSelf: 'flex-end', marginBottom: 4 },
+    reuseBtnText: { fontSize: 12, color: '#7c3aed' },
     // Historique
-    sectionTitle: { fontSize: 16, fontWeight: '700', color: text, marginBottom: 8, marginTop: 4 },
-    historyCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: border, gap: 8 },
-    historyIcon: { fontSize: 22, width: 30, textAlign: 'center' },
-    historyName: { fontSize: 14, fontWeight: '600', color: text },
-    historyMeta: { fontSize: 12, color: subtext },
-
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: text, marginTop: 12, marginBottom: 8 },
+    emptyText: { textAlign: 'center', color: subtext, marginTop: 20, fontSize: 14 },
     // Paramètres
-    settingsCard: { backgroundColor: card, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: border },
-    counterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
-    counterBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold', lineHeight: 24 },
-    counterValue: { fontSize: 20, fontWeight: 'bold', color: text, minWidth: 30, textAlign: 'center' },
-
-    // Modaux
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 30, maxHeight: '92%' },
-    modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, borderBottomWidth: 1, borderBottomColor: border },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: text, flex: 1 },
-    iconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-    iconBtnText: { fontSize: 16, fontWeight: 'bold', color: '#374151' },
-
+    settingsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: border },
+    settingsLabel: { fontSize: 15, color: text, flex: 1 },
+    timeInput: { backgroundColor: inputBg, borderWidth: 1, borderColor: inputBorder, borderRadius: 8, padding: 8, color: text, width: 80, textAlign: 'center' },
+    labelInput: { backgroundColor: inputBg, borderWidth: 1, borderColor: inputBorder, borderRadius: 8, padding: 8, color: text, flex: 1, maxWidth: 160 },
+    counterBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    counterBtnText: { fontSize: 20, color: text, fontWeight: '700' },
+    counterValue: { fontSize: 18, fontWeight: '700', color: text, minWidth: 40, textAlign: 'center' },
+    saveSettingsBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 20 },
+    saveSettingsBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
     // Formulaire
-    formGroup: { marginBottom: 14 },
-    label: { fontSize: 13, fontWeight: '600', color: text, marginBottom: 5 },
-    input: { backgroundColor: inputBg, borderRadius: 10, padding: 11, fontSize: 15, color: text, borderWidth: 1, borderColor: border },
-    pickerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: inputBg, borderRadius: 10, padding: 11, borderWidth: 1, borderColor: border },
-    pickerBtnText: { fontSize: 15, color: text, flex: 1 },
-    addBtn: { backgroundColor: '#7c3aed', width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-
-    // Recherche recette
-    recipeSearchBtn: { backgroundColor: '#ede9fe', borderRadius: 10, padding: 12, alignItems: 'center', marginBottom: 14, borderWidth: 1, borderColor: '#c4b5fd' },
-    recipeSearchBtnText: { fontSize: 15, color: '#7c3aed', fontWeight: '600' },
-    importedRecipe: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f3ff', borderRadius: 10, padding: 10, marginBottom: 14, gap: 10, borderWidth: 1, borderColor: '#c4b5fd' },
-    importedThumb: { width: 50, height: 50, borderRadius: 8 },
-    importedName: { fontSize: 14, fontWeight: '600', color: '#5b21b6' },
-    importedMeta: { fontSize: 12, color: '#7c3aed' },
-    recipeCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 12, padding: 10, marginBottom: 8, gap: 10, borderWidth: 1, borderColor: border },
-    recipeThumb: { width: 60, height: 60, borderRadius: 10 },
-    recipeName: { fontSize: 14, fontWeight: '600', color: text },
-    recipeMeta: { fontSize: 12, color: subtext },
-    recipeIngCount: { fontSize: 11, color: '#7c3aed', marginTop: 2 },
-    importBtn: { backgroundColor: '#7c3aed', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-    importBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-
-    // Picker modal
-    pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    pickerModal: { backgroundColor: card, borderRadius: 16, padding: 18, width: '85%' },
-    pickerTitle: { fontSize: 17, fontWeight: 'bold', color: text, marginBottom: 12 },
-    pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 6, borderRadius: 8, marginBottom: 2 },
-    pickerOptionText: { fontSize: 15, color: text },
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center' },
+    formScroll: { flexGrow: 1, justifyContent: 'center', padding: 12 },
+    modal: { backgroundColor: card, borderRadius: 16, padding: 20 },
+    modalTitle: { fontSize: 18, fontWeight: '700', color: text, marginBottom: 12 },
+    label: { fontSize: 13, fontWeight: '600', color: subtext, marginBottom: 4, marginTop: 8 },
+    input: { backgroundColor: inputBg, borderWidth: 1, borderColor: inputBorder, borderRadius: 10, padding: 12, color: text, fontSize: 15, marginBottom: 4 },
+    typeSelector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+    typeBtn: { flex: 1, minWidth: '45%', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 10, alignItems: 'center' },
+    typeBtnActive: { backgroundColor: '#7c3aed' },
+    typeEmoji: { fontSize: 20 },
+    typeBtnText: { fontSize: 12, fontWeight: '600', color: subtext, marginTop: 2 },
+    typeBtnTextActive: { color: '#fff' },
+    typeTime: { fontSize: 11, color: subtext, marginTop: 2 },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
+    cancelBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    cancelBtnText: { color: text, fontSize: 18, fontWeight: '700' },
+    saveBtn: { backgroundColor: '#7c3aed', borderRadius: 10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    saveBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+    // Recherche recettes
+    suggestions: { backgroundColor: card, borderWidth: 1, borderColor: border, borderRadius: 10, marginBottom: 4 },
+    suggestionItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: border },
+    suggestionInfo: { flex: 1 },
+    suggestionName: { fontSize: 14, fontWeight: '600', color: text },
+    suggestionMeta: { fontSize: 12, color: subtext },
+    importBtn: { fontSize: 20 },
+    // Import URL
+    importRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 },
+    importUrlBtn: { backgroundColor: '#7c3aed', borderRadius: 10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    importUrlBtnText: { fontSize: 20 },
+    importSuccess: { backgroundColor: isDark ? '#064e3b' : '#d1fae5', borderRadius: 8, padding: 8, marginBottom: 4 },
+    importSuccessText: { color: isDark ? '#6ee7b7' : '#065f46', fontSize: 13 },
+    // Ingrédients
+    ingredientsList: { backgroundColor: isDark ? '#1f2937' : '#f9fafb', borderRadius: 10, padding: 10, marginBottom: 4 },
+    ingredientItem: { fontSize: 13, color: text, marginBottom: 2 },
+    // Ajout aux courses
+    listChoiceBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 12, marginBottom: 8 },
+    listChoiceBtnText: { fontSize: 15, color: text, fontWeight: '600' },
   });
 }
