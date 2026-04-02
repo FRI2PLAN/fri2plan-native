@@ -5,7 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -254,6 +254,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // Grille complète : du lundi de la première semaine au dimanche de la dernière semaine
+  const calendarGridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarGridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarGrid = eachDayOfInterval({ start: calendarGridStart, end: calendarGridEnd });
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -479,14 +483,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 ))}
               </View>
               <View style={styles.daysGrid}>
-                {daysInMonth.map((day) => {
-                  const hasEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day)).length > 0;
+                {calendarGrid.map((day) => {
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const hasEvents = isCurrentMonth && (events || []).filter(e => isSameDay(new Date(e.startTime), day)).length > 0;
                   const isSelected = isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
                   return (
                     <TouchableOpacity
                       key={day.toString()}
-                      style={[styles.dayCell, isSelected && styles.dayCellSelected, isTodayDate && !isSelected && styles.dayCellToday]}
+                      style={[
+                        styles.dayCell,
+                        isSelected && styles.dayCellSelected,
+                        isTodayDate && !isSelected && styles.dayCellToday,
+                        !isCurrentMonth && styles.dayCellOutside,
+                      ]}
                       onPress={() => {
                         setSelectedDate(day);
                         const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
@@ -497,7 +507,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         }
                       }}
                     >
-                      <Text style={[styles.dayText, isTodayDate && !isSelected && styles.dayTextToday, isSelected && styles.dayTextSelected]}>
+                      <Text style={[
+                        styles.dayText,
+                        isTodayDate && !isSelected && styles.dayTextToday,
+                        isSelected && styles.dayTextSelected,
+                        !isCurrentMonth && styles.dayTextOutside,
+                      ]}>
                         {format(day, 'd')}
                       </Text>
                       {hasEvents && <View style={styles.eventDot} />}
@@ -1120,9 +1135,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayCell: { width: '14.28%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 8, marginBottom: 2 },
   dayCellSelected: { backgroundColor: '#7c3aed' },
   dayCellToday: { borderWidth: 2, borderColor: '#ef4444' },
+  dayCellOutside: { opacity: 0.35 },
   dayText: { fontSize: 15, color: isDark ? '#ffffff' : '#1f2937' },
   dayTextSelected: { color: '#fff', fontWeight: 'bold' },
   dayTextToday: { color: '#ef4444', fontWeight: 'bold' },
+  dayTextOutside: { color: isDark ? '#6b7280' : '#9ca3af' },
   eventDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#7c3aed', position: 'absolute', bottom: 3 },
 
   // ── Section événements ──
