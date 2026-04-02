@@ -8,7 +8,7 @@
     "edit": "Modifier",
     "add": "Ajouter",
     "close": "Fermer",
-    "confirm": "Confirmer",
+    "confirm": "Confirmation",
     "yes": "Oui",
     "no": "Non",
     "search": "Rechercher",
@@ -16,11 +16,13 @@
     "sort": "Trier",
     "refresh": "Actualiser",
     "title": "Titre",
-    "private": "Événement privé",
+    "private": "Privé (visible uniquement par moi)",
     "date": "Date",
     "time": "Heure",
     "startDate": "Date de début",
-    "endDate": "Date de fin"
+    "endDate": "Date de fin",
+    "description": "Description",
+    "create": "Créer"
   },
   "auth": {
     "login": "Connexion",
@@ -117,13 +119,21 @@
     "exportDesc": "Exportez vos événements au format ICS.",
     "exportICS": "📤 Exporter en .ics",
     "moreEvents": "autres",
-    "weekDays": ["L", "M", "M", "J", "V", "S", "D"]
+    "weekDays": [
+      "L",
+      "M",
+      "M",
+      "J",
+      "V",
+      "S",
+      "D"
+    ]
   },
   "tasks": {
     "title": "Tâches",
     "addTask": "Nouvelle tâche",
     "noTasks": "Aucune tâche",
-    "pending": "En cours",
+    "pending": "À faire",
     "completed": "Terminées",
     "priority": "Priorité",
     "urgent": "Urgent",
@@ -132,7 +142,24 @@
     "low": "Basse",
     "dueDate": "Date d'échéance",
     "assignedTo": "Assignée à",
-    "status": "Statut"
+    "status": "Statut",
+    "newTask": "Nouvelle tâche",
+    "empty": "Aucune tâche pour le moment",
+    "inProgress": "En cours",
+    "myTasks": "Mes tâches",
+    "favorites": "Favoris",
+    "today": "Aujourd'hui",
+    "upcoming": "À venir",
+    "chooseDate": "Choisir une date",
+    "assignTo": "Assigner à",
+    "recurrence": "Récurrence",
+    "points": "Points",
+    "postpone": "Reporter",
+    "postponeBy": "Reporter de...",
+    "details": "Détails de la tâche",
+    "editTask": "Modifier la tâche",
+    "deleteConfirm": "Supprimer cette tâche ?",
+    "noTask": "Aucune tâche"
   },
   "shopping": {
     "title": "Courses",

@@ -33,11 +33,16 @@ export interface Task {
   title: string;
   description?: string;
   dueDate?: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'todo' | 'inProgress' | 'completed';
   assignedTo?: number;
   familyId: number;
   points?: number;
+  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  isFavorite?: number; // 0 or 1
+  isPrivate?: number;  // 0 or 1
+  postponeCount?: number;
+  createdBy?: number;
 }
 
 export interface ShoppingList {
@@ -121,6 +126,9 @@ export type AppRouter = {
     register: {
       mutate: (input: { name: string; email: string; password: string }) => Promise<{ user: User; token: string }>;
     };
+    me: {
+      query: () => Promise<User>;
+    };
   };
   user: {
     me: {
@@ -133,6 +141,9 @@ export type AppRouter = {
     };
     create: {
       mutate: (input: { name: string }) => Promise<Family>;
+    };
+    members: {
+      query: (input: { familyId: number }) => Promise<Array<{ id: number; name: string; status: string; role?: string }>>;
     };
   };
   events: {
@@ -154,16 +165,46 @@ export type AppRouter = {
       query: () => Promise<Task[]>;
     };
     create: {
-      mutate: (input: Partial<Task>) => Promise<Task>;
+      mutate: (input: {
+        title: string;
+        description?: string;
+        assignedTo?: number;
+        dueDate?: Date;
+        recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+        points?: number;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+        isPrivate?: number;
+      }) => Promise<Task>;
     };
     update: {
-      mutate: (input: { id: number } & Partial<Task>) => Promise<Task>;
+      mutate: (input: {
+        taskId: number;
+        title?: string;
+        description?: string;
+        assignedTo?: number;
+        dueDate?: Date;
+        recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+        points?: number;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+        isPrivate?: number;
+        status?: 'todo' | 'inProgress' | 'completed';
+        isFavorite?: number;
+      }) => Promise<Task>;
     };
     delete: {
-      mutate: (input: { id: number }) => Promise<void>;
+      mutate: (input: { taskId: number }) => Promise<void>;
     };
     complete: {
-      mutate: (input: { id: number }) => Promise<Task>;
+      mutate: (input: { taskId: number }) => Promise<{ points: number }>;
+    };
+    postpone: {
+      mutate: (input: { taskId: number; days: number }) => Promise<{ newDueDate: string; postponeCount: number }>;
+    };
+    toggleFavorite: {
+      mutate: (input: { taskId: number }) => Promise<{ isFavorite: number }>;
+    };
+    updatePriorities: {
+      mutate: (input: Array<{ taskId: number; priority: 'low' | 'medium' | 'high' | 'urgent' }>) => Promise<void>;
     };
   };
   shopping: {
@@ -220,6 +261,9 @@ export type AppRouter = {
     list: {
       query: () => Promise<Reward[]>;
     };
+    myPoints: {
+      query: () => Promise<{ points: number }>;
+    };
     redeem: {
       mutate: (input: { id: number }) => Promise<void>;
     };
@@ -233,6 +277,14 @@ export type AppRouter = {
     };
     review: {
       mutate: (input: { id: number; status: 'approved' | 'rejected' }) => Promise<Request>;
+    };
+  };
+  settings: {
+    get: {
+      query: () => Promise<{ tasksSelectedList?: string; [key: string]: any }>;
+    };
+    update: {
+      mutate: (input: Record<string, any>) => Promise<void>;
     };
   };
 };

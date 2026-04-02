@@ -8,7 +8,7 @@
     "edit": "Bearbeiten",
     "add": "Hinzufügen",
     "close": "Schließen",
-    "confirm": "Bestätigen",
+    "confirm": "Bestätigung",
     "yes": "Ja",
     "no": "Nein",
     "search": "Suchen",
@@ -16,11 +16,13 @@
     "sort": "Sortieren",
     "refresh": "Aktualisieren",
     "title": "Titel",
-    "private": "Privates Ereignis",
+    "private": "Privat (nur für mich sichtbar)",
     "date": "Datum",
     "time": "Uhrzeit",
     "startDate": "Startdatum",
-    "endDate": "Enddatum"
+    "endDate": "Enddatum",
+    "description": "Beschreibung",
+    "create": "Erstellen"
   },
   "auth": {
     "login": "Anmelden",
@@ -117,13 +119,21 @@
     "exportDesc": "Exportieren Sie Ihre Ereignisse im ICS-Format.",
     "exportICS": "📤 Als .ics exportieren",
     "moreEvents": "weitere",
-    "weekDays": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+    "weekDays": [
+      "Mo",
+      "Di",
+      "Mi",
+      "Do",
+      "Fr",
+      "Sa",
+      "So"
+    ]
   },
   "tasks": {
     "title": "Aufgaben",
     "addTask": "Neue Aufgabe",
     "noTasks": "Keine Aufgaben",
-    "pending": "Ausstehend",
+    "pending": "Zu erledigen",
     "completed": "Abgeschlossen",
     "priority": "Priorität",
     "urgent": "Dringend",
@@ -132,7 +142,24 @@
     "low": "Niedrig",
     "dueDate": "Fälligkeitsdatum",
     "assignedTo": "Zugewiesen an",
-    "status": "Status"
+    "status": "Status",
+    "newTask": "Neue Aufgabe",
+    "empty": "Noch keine Aufgaben",
+    "inProgress": "In Bearbeitung",
+    "myTasks": "Meine Aufgaben",
+    "favorites": "Favoriten",
+    "today": "Heute",
+    "upcoming": "Demnächst",
+    "chooseDate": "Datum wählen",
+    "assignTo": "Zuweisen an",
+    "recurrence": "Wiederholung",
+    "points": "Punkte",
+    "postpone": "Verschieben",
+    "postponeBy": "Verschieben um...",
+    "details": "Aufgabendetails",
+    "editTask": "Aufgabe bearbeiten",
+    "deleteConfirm": "Diese Aufgabe löschen?",
+    "noTask": "Keine Aufgabe"
   },
   "shopping": {
     "title": "Einkaufen",

@@ -1421,15 +1421,15 @@ components/
 ### Sprint 6 : 4 niveaux de priorité
 **Objectif :** Passer de 3 à 4 niveaux de priorité (✅ Déjà implémenté Sprint 2)
 
-- [ ] Modifier type priority : "urgent" | "high" | "medium" | "low"
-- [ ] Modifier getPriorityColor() pour 4 niveaux :
+- [x] Modifier type priority : "urgent" | "high" | "medium" | "low"
+- [x] Modifier getPriorityColor() pour 4 niveaux :
   - urgent: #dc2626 (rouge foncé) 🔴
   - high: #f59e0b (orange) 🟠
   - medium: #fbbf24 (jaune) 🟡
   - low: #10b981 (vert) 🟢
-- [ ] Modifier getPriorityLabel() pour 4 niveaux
-- [ ] Mettre à jour picker priorité (4 options avec emojis)
-- [ ] Tester affichage 4 niveau### Sprint 7 : Tutoriel et Polissage final
+- [x] Modifier getPriorityLabel() pour 4 niveaux
+- [x] Mettre à jour picker priorité (4 options avec emojis)
+- [x] Tester affichage 4 niveau### Sprint 7 : Tutoriel et Polissage final
 **Objectif :** Ajouter tutoriel interactif et finaliser
 
 - [x] Créer modal Tutorial
@@ -1547,8 +1547,8 @@ components/
 
 ## CalendarScreen - Refonte visuelle et fonctionnelle (séance 02/03/2026)
 - [x] Corriger erreur "Text strings must be rendered"
-- [ ] Dark mode : contraste strict (texte blanc sur fond sombre)
-- [ ] Traductions complètes FR/EN/DE pour tous les textes
+- [x] Dark mode : contraste strict (texte blanc sur fond sombre)
+- [x] Traductions complètes FR/EN/DE pour tous les textes
 - [ ] Icônes vues améliorées : 30 (mois), 7 (semaine), 1 (jour), agenda
 - [ ] Header : boutons Import, Abonnement URL, Export calendrier
 - [ ] Liste d'événements filtrée sous le calendrier (filtre mois/semaine)
@@ -1566,3 +1566,26 @@ components/
 - [ ] Header sticky : calendrier scroll derrière la barre des icônes vues
 - [x] Corriger erreur "Text strings must be rendered"
 - [x] Remplacer les boutons texte par des icônes dans TOUS les modaux
+
+## 📅 2026-04-02 — Refonte complète TasksScreen (webview parity)
+
+- [x] Corriger bug calendrier : grille mensuelle avec jours hors-mois visibles
+- [x] Traductions complètes FR/EN/DE pour CalendarScreen et TasksScreen
+- [x] Dropdown catégorie + DatePicker/TimePicker natifs dans CalendarScreen
+- [x] Mettre à jour types.ts avec routes tRPC complètes (postpone, toggleFavorite, updatePriorities)
+- [x] Réécrire TasksScreen.tsx avec toutes les fonctionnalités webview :
+  - Section "Aujourd'hui" (bandeau violet, collapsible)
+  - Section "À venir" (groupée par date, collapsible)
+  - Filtres : En cours / Terminées / Mes tâches
+  - Favoris (⭐ toggle sur les tâches)
+  - Reporter une tâche (postpone)
+  - Changer le statut depuis le détail (dropdown)
+  - Récurrence dans la modification
+  - useAuth pour "Mes tâches" (vrai user ID)
+  - trpc.utils pour invalidation cache
+  - Priorité 'urgent' | 'high' | 'medium' | 'low'
+  - Status 'todo' | 'inProgress' | 'completed'
+  - Points affichés et récompense à la complétion
+  - Modaux pickers partagés création/modification
+  - Formulaire partagé TaskForm pour DRY
+  - Dark mode complet

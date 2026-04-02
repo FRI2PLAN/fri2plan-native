@@ -8,7 +8,7 @@
     "edit": "Edit",
     "add": "Add",
     "close": "Close",
-    "confirm": "Confirm",
+    "confirm": "Confirmation",
     "yes": "Yes",
     "no": "No",
     "search": "Search",
@@ -16,11 +16,13 @@
     "sort": "Sort",
     "refresh": "Refresh",
     "title": "Title",
-    "private": "Private event",
+    "private": "Private (visible only to me)",
     "date": "Date",
     "time": "Time",
     "startDate": "Start date",
-    "endDate": "End date"
+    "endDate": "End date",
+    "description": "Description",
+    "create": "Create"
   },
   "auth": {
     "login": "Login",
@@ -117,13 +119,21 @@
     "exportDesc": "Export your events in ICS format.",
     "exportICS": "📤 Export as .ics",
     "moreEvents": "more",
-    "weekDays": ["M", "T", "W", "T", "F", "S", "S"]
+    "weekDays": [
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
+    ]
   },
   "tasks": {
     "title": "Tasks",
     "addTask": "New task",
     "noTasks": "No tasks",
-    "pending": "Pending",
+    "pending": "To do",
     "completed": "Completed",
     "priority": "Priority",
     "urgent": "Urgent",
@@ -132,7 +142,24 @@
     "low": "Low",
     "dueDate": "Due date",
     "assignedTo": "Assigned to",
-    "status": "Status"
+    "status": "Status",
+    "newTask": "New task",
+    "empty": "No tasks yet",
+    "inProgress": "In progress",
+    "myTasks": "My tasks",
+    "favorites": "Favorites",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "chooseDate": "Choose a date",
+    "assignTo": "Assign to",
+    "recurrence": "Recurrence",
+    "points": "Points",
+    "postpone": "Postpone",
+    "postponeBy": "Postpone by...",
+    "details": "Task details",
+    "editTask": "Edit task",
+    "deleteConfirm": "Delete this task?",
+    "noTask": "No task"
   },
   "shopping": {
     "title": "Shopping",
