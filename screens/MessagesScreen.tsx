@@ -1,275 +1,452 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Modal, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { trpc } from '../lib/trpc';
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, de, enUS } from 'date-fns/locale';
+import EmojiPicker from 'rn-emoji-keyboard';
 
 interface MessagesScreenProps {
   onNavigate?: (screen: string) => void;
-
   onPrevious?: () => void;
-  onNext?: () => void;}
+  onNext?: () => void;
+}
 
 export default function MessagesScreen({ onNavigate, onPrevious, onNext }: MessagesScreenProps) {
+  const { isDark } = useTheme();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const styles = getStyles(isDark);
+  
+  // États
+  const [activeTab, setActiveTab] = useState<'general' | 'groups'>('general');
   const [newMessage, setNewMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-
-  // Fetch messages from API
-  const { data: messages, isLoading, refetch } = trpc.messages.list.useQuery();
-
-  // Mutation to send message
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Récupérer la locale date-fns selon la langue
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'fr': return fr;
+      case 'de': return de;
+      case 'en': return enUS;
+      default: return fr;
+    }
+  };
+  
+  // Récupérer l'ID de la famille active (à adapter selon votre contexte)
+  const { data: families = [] } = trpc.family.list.useQuery();
+  const activeFamilyId = families[0]?.id || 0;
+  
+  // Fetch messages - utiliser l'ancien endpoint simple pour l'instant
+  const { data: messagesSimple, isLoading, refetch } = trpc.messages.list.useQuery();
+  
+  // Adapter le format des messages simples
+  const messages = messagesSimple || [];
+  
+  // Mutation pour envoyer un message
   const sendMutation = trpc.messages.send.useMutation({
     onSuccess: () => {
       setNewMessage('');
       refetch();
+      // Scroll vers le bas après envoi
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     },
+    onError: (error) => {
+      Alert.alert(t('common.error'), t('messages.sendError'));
+    }
   });
-
+  
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   };
-
+  
   const handleSendMessage = () => {
     if (newMessage.trim()) {
       sendMutation.mutate({ content: newMessage.trim() });
     }
   };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      {/* Page Title */}
-      <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Messages</Text>
-      </View>
-
-      {/* Messages List */}
-      <ScrollView 
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
-        }
-      >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#7c3aed" />
-            <Text style={styles.loadingText}>Chargement...</Text>
+  
+  const handleEmojiSelected = (emoji: any) => {
+    if (reactingToMessageId) {
+      // Mode réaction : pour l'instant, juste fermer le picker (backend pas prêt)
+      setReactingToMessageId(null);
+    } else {
+      // Mode saisie : ajouter l'emoji au message
+      setNewMessage(prev => prev + emoji.emoji);
+    }
+    setIsEmojiPickerOpen(false);
+  };
+  
+  const renderMessage = (message: any) => {
+    const isOwnMessage = message.senderId === user?.id;
+    
+    return (
+      <View key={message.id} style={[styles.messageCard, isOwnMessage && styles.ownMessageCard]}>
+        {/* Avatar et nom */}
+        <View style={styles.messageHeader}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {isOwnMessage ? user?.name?.charAt(0).toUpperCase() : message.senderId?.toString().charAt(0) || '?'}
+            </Text>
           </View>
-        ) : messages && messages.length > 0 ? (
-          messages.map(message => {
-            const isOwnMessage = message.senderId === user?.id;
-            return (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageCard,
-                  isOwnMessage && styles.messageCardOwn
-                ]}
-              >
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageSender}>
-                    {isOwnMessage ? 'Vous' : `Utilisateur #${message.senderId}`}
-                  </Text>
-                  <Text style={styles.messageTime}>
-                    {formatDistanceToNow(new Date(message.createdAt), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </Text>
-                </View>
-                <Text style={styles.messageContent}>{message.content}</Text>
-              </View>
-            );
-          })
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Aucun message pour le moment</Text>
-            <Text style={styles.emptyStateSubtext}>Envoyez le premier message à votre famille !</Text>
+          <View style={styles.messageHeaderInfo}>
+            <Text style={styles.messageSender}>
+              {isOwnMessage ? t('messages.you') : `${t('messages.user')} #${message.senderId}`}
+            </Text>
+            <Text style={styles.messageTime}>
+              {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
+            </Text>
           </View>
-        )}
-      </ScrollView>
-
-      {/* Message Input */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={90}
-      >
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Écrivez un message..."
-            value={newMessage}
-            onChangeText={setNewMessage}
-            multiline
-            maxLength={500}
-          />
+        </View>
+        
+        {/* Contenu */}
+        <Text style={styles.messageContent}>{message.content}</Text>
+        
+        {/* Actions */}
+        <View style={styles.messageActions}>
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!newMessage.trim() || sendMutation.isLoading) && styles.sendButtonDisabled
-            ]}
-            onPress={handleSendMessage}
-            disabled={!newMessage.trim() || sendMutation.isLoading}
+            style={styles.actionButton}
+            onPress={() => {
+              setReactingToMessageId(message.id);
+              setIsEmojiPickerOpen(true);
+            }}
           >
-            {sendMutation.isLoading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.sendButtonText}>Envoyer</Text>
-            )}
+            <Text style={styles.actionButtonText}>😊 {t('messages.react')}</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
+    );
+  };
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      
+      {/* Header avec titre */}
+      <View style={styles.header}>
+        <Text style={styles.pageTitle}>{t('messages.title')}</Text>
+      </View>
+      
+      {/* Onglets */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'general' && styles.activeTab]}
+          onPress={() => setActiveTab('general')}
+        >
+          <Text style={[styles.tabText, activeTab === 'general' && styles.activeTabText]}>
+            💬 {t('messages.general')}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'groups' && styles.activeTab]}
+          onPress={() => setActiveTab('groups')}
+        >
+          <Text style={[styles.tabText, activeTab === 'groups' && styles.activeTabText]}>
+            👥 {t('messages.groups')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Contenu selon l'onglet */}
+      {activeTab === 'general' ? (
+        <KeyboardAvoidingView
+          style={styles.contentContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={100}
+        >
+          {/* Liste des messages */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesListContent}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
+          >
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#7c3aed" />
+              </View>
+            ) : messages.length > 0 ? (
+              messages.map(renderMessage)
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>{t('messages.noMessages')}</Text>
+                <Text style={styles.emptySubtext}>{t('messages.sendFirst')}</Text>
+              </View>
+            )}
+          </ScrollView>
+          
+          {/* Zone de saisie */}
+          <View style={styles.inputContainer}>
+            <TouchableOpacity
+              style={styles.emojiButton}
+              onPress={() => {
+                setReactingToMessageId(null);
+                setIsEmojiPickerOpen(true);
+              }}
+            >
+              <Text style={styles.emojiButtonText}>😊</Text>
+            </TouchableOpacity>
+            
+            <TextInput
+              style={styles.input}
+              value={newMessage}
+              onChangeText={setNewMessage}
+              placeholder={t('messages.typeMessage')}
+              placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
+              multiline
+              maxLength={500}
+            />
+            
+            <TouchableOpacity
+              style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
+              onPress={handleSendMessage}
+              disabled={!newMessage.trim() || sendMutation.isPending}
+            >
+              {sendMutation.isPending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.sendButtonText}>➤</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={styles.comingSoonContainer}>
+          <Text style={styles.comingSoonText}>{t('messages.groupsComingSoon')}</Text>
+          <Text style={styles.comingSoonSubtext}>{t('messages.groupsComingSoonDesc')}</Text>
+        </View>
+      )}
+      
+      {/* Emoji Picker */}
+      <EmojiPicker
+        onEmojiSelected={handleEmojiSelected}
+        open={isEmojiPickerOpen}
+        onClose={() => setIsEmojiPickerOpen(false)}
+        enableSearchBar
+        enableRecentlyUsed
+      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    backgroundColor: isDark ? '#111827' : '#fff',
   },
-  headerTitle: {
+  pageTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    fontWeight: '700',
+    color: isDark ? '#fff' : '#111827',
+    textAlign: 'center',
   },
-  headerBadge: {
+  tabsContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
+    backgroundColor: isDark ? '#111827' : '#fff',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#374151' : '#e5e7eb',
+    alignItems: 'center',
+  },
+  activeTab: {
     backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
   },
-  headerBadgeText: {
-    color: '#fff',
+  tabText: {
     fontSize: 14,
     fontWeight: '600',
+    color: isDark ? '#d1d5db' : '#4b5563',
   },
-  content: {
+  activeTabText: {
+    color: '#fff',
+  },
+  contentContainer: {
     flex: 1,
+  },
+  messagesList: {
+    flex: 1,
+  },
+  messagesListContent: {
     padding: 16,
   },
   loadingContainer: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 40,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6b7280',
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: isDark ? '#d1d5db' : '#1f2937',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: isDark ? '#9ca3af' : '#6b7280',
   },
   messageCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#374151' : '#fff',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
     maxWidth: '85%',
     alignSelf: 'flex-start',
   },
-  messageCardOwn: {
-    backgroundColor: '#7c3aed',
+  ownMessageCard: {
+    backgroundColor: isDark ? '#312e81' : '#ede9fe',
+    borderColor: isDark ? '#4c1d95' : '#c4b5fd',
     alignSelf: 'flex-end',
   },
   messageHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#7c3aed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  messageHeaderInfo: {
+    flex: 1,
   },
   messageSender: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: isDark ? '#fff' : '#111827',
   },
   messageTime: {
     fontSize: 12,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
   },
   messageContent: {
-    fontSize: 16,
-    color: '#1f2937',
+    fontSize: 15,
+    color: isDark ? '#e5e7eb' : '#374151',
     lineHeight: 22,
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
+  messageActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: isDark ? '#4b5563' : '#e5e7eb',
   },
-  emptyStateText: {
-    fontSize: 18,
+  actionButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    color: '#7c3aed',
     fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#9ca3af',
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
+    alignItems: 'flex-end',
+    padding: 12,
+    backgroundColor: isDark ? '#111827' : '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    gap: 12,
+    borderTopColor: isDark ? '#374151' : '#e5e7eb',
+    gap: 8,
+  },
+  emojiButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    borderRadius: 20,
+  },
+  emojiButtonText: {
+    fontSize: 24,
   },
   input: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    minHeight: 40,
     maxHeight: 100,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: isDark ? '#fff' : '#111827',
   },
   sendButton: {
+    width: 40,
+    height: 40,
     backgroundColor: '#7c3aed',
-    borderRadius: 8,
-    paddingHorizontal: 20,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: isDark ? '#4b5563' : '#d1d5db',
   },
   sendButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  comingSoonContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  comingSoonText: {
+    fontSize: 18,
     fontWeight: '600',
+    color: isDark ? '#d1d5db' : '#1f2937',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-
-  pageTitleContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+  comingSoonSubtext: {
+    fontSize: 14,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    textAlign: 'center',
   },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  textAlign: 'center',
-    },
 });

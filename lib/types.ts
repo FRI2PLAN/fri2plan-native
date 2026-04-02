@@ -64,9 +64,40 @@ export interface ShoppingItem {
 export interface Message {
   id: number;
   content: string;
-  senderId: number;
+  senderId?: number;
+  userId?: number;
+  userName?: string;
   familyId: number;
   createdAt: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
+  reactions?: Record<string, { userId: number; userName: string }[]>;
+}
+
+export interface DiscussionGroup {
+  id: number;
+  name: string;
+  description?: string;
+  familyId: number;
+  creatorId: number;
+  creatorName?: string;
+  createdAt: string;
+}
+
+export interface GroupMessage {
+  id: number;
+  groupId: number;
+  userId: number;
+  userName?: string;
+  content: string;
+  createdAt: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
+  reactions?: Record<string, { userId: number; userName: string }[]>;
 }
 
 export interface Note {
@@ -297,10 +328,101 @@ export type AppRouter = {
   };
   messages: {
     list: {
-      query: () => Promise<Message[]>;
+      query: (input?: { familyId?: number; limit?: number; offset?: number }) => Promise<{ messages: Message[]; hasMore: boolean }>;
+      useQuery: (input: { familyId: number; limit: number; offset: number }, opts?: any) => any;
+    };
+    create: {
+      mutate: (input: { content: string; attachmentUrl?: string; attachmentType?: string; attachmentName?: string; attachmentSize?: number }) => Promise<Message>;
+      useMutation: (opts?: any) => any;
+    };
+    delete: {
+      mutate: (input: { messageId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    deleteAll: {
+      mutate: (input: { familyId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    addReaction: {
+      mutate: (input: { messageId: number; emoji: string }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    markAsRead: {
+      mutate: (input: { familyId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    getUnreadCount: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<number>;
+    };
+    uploadFile: {
+      mutateAsync: (input: { fileName: string; fileType: string; fileSize: number; fileData: string }) => Promise<{ url: string }>;
+      useMutation: (opts?: any) => any;
     };
     send: {
       mutate: (input: { content: string }) => Promise<Message>;
+    };
+  };
+  discussionGroups: {
+    list: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<DiscussionGroup[]>;
+    };
+    create: {
+      mutate: (input: { name: string; description?: string; familyId: number; memberIds?: number[] }) => Promise<DiscussionGroup>;
+      useMutation: (opts?: any) => any;
+    };
+    update: {
+      mutate: (input: { groupId: number; name: string; description?: string }) => Promise<DiscussionGroup>;
+      useMutation: (opts?: any) => any;
+    };
+    delete: {
+      mutate: (input: { groupId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    messages: {
+      useQuery: (input: { groupId: number }, opts?: any) => any;
+      query: (input: { groupId: number }) => Promise<GroupMessage[]>;
+    };
+    sendMessage: {
+      mutate: (input: { groupId: number; message: string; attachmentUrl?: string; attachmentType?: string; attachmentName?: string; attachmentSize?: number }) => Promise<GroupMessage>;
+      useMutation: (opts?: any) => any;
+    };
+    deleteMessage: {
+      mutate: (input: { messageId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    addReaction: {
+      mutate: (input: { messageId: number; emoji: string }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    markAsRead: {
+      mutate: (input: { groupId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    unreadCount: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<number>;
+    };
+    unreadCountPerGroup: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<Record<number, number>>;
+    };
+    getMembers: {
+      useQuery: (input: { groupId: number }, opts?: any) => any;
+      query: (input: { groupId: number }) => Promise<Array<{ id: number; name: string }>>;
+    };
+    addMember: {
+      mutate: (input: { groupId: number; userId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    removeMember: {
+      mutate: (input: { groupId: number; userId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    leaveGroup: {
+      mutate: (input: { groupId: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
     };
   };
   notes: {
