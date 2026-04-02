@@ -103,11 +103,15 @@ export interface GroupMessage {
 export interface Note {
   id: number;
   title: string;
-  content: string;
-  isPrivate: boolean;
+  content?: string;
+  isPrivate: number | boolean;
+  isPinned?: number | boolean;
+  attachments?: string;
   userId: number;
   familyId: number;
+  authorName?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Budget {
@@ -140,9 +144,25 @@ export interface Request {
   id: number;
   title: string;
   description?: string;
+  type: 'outing' | 'purchase' | 'permission' | 'other';
   status: 'pending' | 'approved' | 'rejected';
-  requestedBy: number;
+  requestedBy?: number;
+  userId: number;
   familyId: number;
+  requesterName?: string;
+  requestedDate?: string;
+  reviewComment?: string;
+  targetAdminId?: number | null;
+  isFavorite?: number;
+  createdAt: string;
+}
+
+export interface RequestComment {
+  id: number;
+  requestId: number;
+  userId: number;
+  userName?: string;
+  message: string;
   createdAt: string;
 }
 
@@ -430,13 +450,28 @@ export type AppRouter = {
       query: () => Promise<Note[]>;
     };
     create: {
-      mutate: (input: Partial<Note>) => Promise<Note>;
+      mutate: (input: {
+        title: string;
+        content?: string;
+        isPrivate?: boolean;
+        attachments?: string;
+      }) => Promise<Note>;
     };
     update: {
-      mutate: (input: { id: number } & Partial<Note>) => Promise<Note>;
+      mutate: (input: {
+        noteId: number;
+        title?: string;
+        content?: string;
+        isPinned?: number;
+        isPrivate?: number;
+        attachments?: string;
+      }) => Promise<Note>;
     };
     delete: {
-      mutate: (input: { id: number }) => Promise<void>;
+      mutate: (input: { noteId: number }) => Promise<void>;
+    };
+    uploadFile: {
+      mutate: (input: { fileName: string; fileData: string; fileType: string }) => Promise<{ url: string; fileName: string; fileType: string }>;
     };
   };
   budget: {
@@ -463,13 +498,34 @@ export type AppRouter = {
   };
   requests: {
     list: {
-      query: () => Promise<Request[]>;
+      query: (input: { familyId: number }) => Promise<Request[]>;
     };
     create: {
-      mutate: (input: Partial<Request>) => Promise<Request>;
+      mutate: (input: {
+        type: 'outing' | 'purchase' | 'permission' | 'other';
+        title: string;
+        description?: string;
+        requestedDate?: Date;
+        targetAdminId?: number | null;
+      }) => Promise<{ requestId: number }>;
     };
     review: {
-      mutate: (input: { id: number; status: 'approved' | 'rejected' }) => Promise<Request>;
+      mutate: (input: { requestId: number; status: 'approved' | 'rejected'; reviewComment?: string }) => Promise<{ success: boolean }>;
+    };
+    delete: {
+      mutate: (input: { requestId: number }) => Promise<{ success: boolean }>;
+    };
+    addComment: {
+      mutate: (input: { requestId: number; message: string }) => Promise<{ success: boolean }>;
+    };
+    listComments: {
+      query: (input: { requestId: number }) => Promise<RequestComment[]>;
+    };
+    getUnreadCommentsCounts: {
+      query: (input: { familyId: number }) => Promise<Record<number, number>>;
+    };
+    markCommentsRead: {
+      mutate: (input: { requestId: number }) => Promise<{ success: boolean }>;
     };
   };
   settings: {

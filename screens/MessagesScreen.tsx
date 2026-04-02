@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -224,10 +225,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           </View>
         </KeyboardAvoidingView>
       ) : (
-        <View style={styles.comingSoonContainer}>
-          <Text style={styles.comingSoonText}>{t('messages.groupsComingSoon')}</Text>
-          <Text style={styles.comingSoonSubtext}>{t('messages.groupsComingSoonDesc')}</Text>
-        </View>
+        <DiscussionGroupsTab activeFamilyId={activeFamilyId} />
       )}
       
       {/* Emoji Picker */}
