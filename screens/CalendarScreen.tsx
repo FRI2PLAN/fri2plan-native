@@ -476,7 +476,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             {/* Grille calendrier */}
             <View style={styles.calendar}>
               <View style={styles.weekRow}>
-                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
+                {(t('calendar.weekDays', { returnObjects: true }) as string[] || ['L', 'M', 'M', 'J', 'V', 'S', 'D']).map((day: string, index: number) => (
                   <View key={index} style={styles.dayHeader}>
                     <Text style={styles.dayHeaderText}>{day}</Text>
                   </View>
@@ -599,7 +599,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       {showDateHeader && (
                         <View style={styles.agendaDateHeader}>
                           <Text style={styles.agendaDateText}>
-                            {isToday(eventDate) ? "Aujourd'hui" : format(eventDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                            {isToday(eventDate) ? t('dashboard.today') || "Aujourd'hui" : format(eventDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
                           </Text>
                         </View>
                       )}
@@ -620,7 +620,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 })
             ) : (
               <View style={styles.agendaEmpty}>
-                <Text style={styles.agendaEmptyText}>Aucun événement à venir</Text>
+                <Text style={styles.agendaEmptyText}>{t('calendar.noUpcomingEvents') || 'Aucun événement à venir'}</Text>
               </View>
             )}
           </View>
@@ -705,7 +705,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={styles.navArrowText}>‹</Text>
               </TouchableOpacity>
               <Text style={styles.dayNavTitle}>
-                {isToday(selectedDate) ? "Aujourd'hui" : format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
+                {isToday(selectedDate) ? t('dashboard.today') || "Aujourd'hui" : format(selectedDate, 'EEEE d MMMM yyyy', { locale: getLocale() })}
               </Text>
               <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 1))} style={styles.navArrow}>
                 <Text style={styles.navArrowText}>›</Text>
@@ -951,10 +951,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('calendar.import') || 'Importer'}</Text>
-            <Text style={styles.importInfoText}>Sélectionnez un fichier .ics (iCalendar) pour importer vos événements.</Text>
-            <Text style={styles.importInfoNote}>⚠️ Les événements récurrents ne sont pas supportés.</Text>
+              <Text style={styles.importInfoText}>{t('calendar.importDesc') || 'Sélectionnez un fichier .ics (iCalendar) pour importer vos événements.'}</Text>
+            <Text style={styles.importInfoNote}>{t('calendar.importNote') || '⚠️ Les événements récurrents ne sont pas supportés.'}</Text>
             <TouchableOpacity style={styles.importSelectButton} onPress={handleImportICS} disabled={isImporting}>
-              <Text style={styles.importSelectButtonText}>{isImporting ? '🔄 Import en cours...' : '📂 Sélectionner un fichier .ics'}</Text>
+              <Text style={styles.importSelectButtonText}>{isImporting ? t('calendar.importing') || '🔄 Import en cours...' : t('calendar.importSelect') || '📂 Sélectionner un fichier .ics'}</Text>
             </TouchableOpacity>
             {/* Bouton icône fermer */}
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
@@ -996,7 +996,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <Text style={styles.modalTitle}>{t('calendar.export') || 'Exporter'}</Text>
             <Text style={styles.importInfoText}>{t('calendar.exportDesc') || 'Exportez vos événements au format ICS.'}</Text>
             <TouchableOpacity style={[styles.importSelectButton, { marginTop: 16 }]} onPress={() => setExportModalOpen(false)}>
-              <Text style={styles.importSelectButtonText}>📤 {t('calendar.exportICS') || 'Exporter en .ics'}</Text>
+              <Text style={styles.importSelectButtonText}>{t('calendar.exportICS') || '📤 Exporter en .ics'}</Text>
             </TouchableOpacity>
             {/* Bouton icône fermer */}
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>

@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Tex
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -18,6 +19,7 @@ type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScreenProps) {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const styles = getStyles(isDark);
 
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'my-tasks'>('all');
@@ -241,10 +243,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'Urgent';
-      case 'high': return 'Haute';
-      case 'medium': return 'Moyenne';
-      case 'low': return 'Faible';
+      case 'urgent': return t('tasks.urgent') || 'Urgent';
+      case 'high': return t('tasks.high') || 'Haute';
+      case 'medium': return t('tasks.medium') || 'Moyenne';
+      case 'low': return t('tasks.low') || 'Faible';
       default: return '';
     }
   };
