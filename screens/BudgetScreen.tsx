@@ -25,6 +25,21 @@ const CURRENCIES = [
   { value: 'USD', symbol: '$', flag: '🇺🇸' },
 ];
 
+// Mapping des noms Lucide (backend) vers emojis (React Native)
+const LUCIDE_TO_EMOJI: Record<string, string> = {
+  ShoppingCart: '🛒', Car: '🚗', Smile: '😊', Heart: '❤️',
+  GraduationCap: '🎓', Home: '🏠', Shirt: '👕', Wallet: '💼',
+  DollarSign: '💵', CreditCard: '💳', TrendingUp: '📈', Gift: '🎁',
+};
+
+const getCategoryEmoji = (icon?: string): string => {
+  if (!icon) return '💼';
+  // Si c'est déjà un emoji (contient un caractère non-ASCII)
+  if (/[^\x00-\x7F]/.test(icon)) return icon;
+  // Sinon c'est un nom Lucide
+  return LUCIDE_TO_EMOJI[icon] || '💼';
+};
+
 const EXPENSE_CATEGORIES = [
   { value: 'Alimentation', emoji: '🛒', color: '#10b981' },
   { value: 'Transport', emoji: '🚗', color: '#3b82f6' },
@@ -204,7 +219,11 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     onError: (e: any) => Alert.alert(t('common.error'), e.message),
   });
   const createProject = trpc.budget.createSavingsProject.useMutation({
-    onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); refetchProjects(); },
+    onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); setEditingProjectId(null); refetchProjects(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const updateProject = trpc.budget.updateSavingsProject.useMutation({
+    onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); setEditingProjectId(null); refetchProjects(); },
     onError: (e: any) => Alert.alert(t('common.error'), e.message),
   });
   const deleteProject = trpc.budget.deleteSavingsProject.useMutation({
@@ -264,9 +283,15 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     return { income, expense, balance: income - expense };
   }, [filteredTx]);
 
-  // ── Toutes les catégories (défaut + custom) ──
+  // ── Toutes les catégories (défaut + personnalisées)
   const allCategories = useMemo(() => {
-    const custom = (categories as any[]).map((c: any) => ({ value: c.name, emoji: c.icon || '💼', color: c.color || '#7c3aed', id: c.id }));
+    const dbCats = (categories as any[]).map((cat: any) => ({
+      value: cat.name,
+      emoji: getCategoryEmoji(cat.icon),
+      color: cat.color || '#64748b',
+    }));
+    // Fusionner avec les catégories par défaut (sans doublons)
+    const custom = dbCats.filter(d => !EXPENSE_CATEGORIES.find(e => e.value === d.value));
     return [...EXPENSE_CATEGORIES, ...custom];
   }, [categories]);
 
@@ -316,7 +341,11 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     if (isNaN(target) || target <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
     // Encoder la devise dans le nom
     const nameWithCurrency = `${projectForm.name.trim()} [${projectForm.currency}]`;
-    createProject.mutate({ familyId: activeFamilyId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+    if (editingProjectId) {
+      updateProject.mutate({ budgetConfigId: editingProjectId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+    } else {
+      createProject.mutate({ familyId: activeFamilyId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+    }
   };
 
   const handleDeleteProject = (project: any) => {
@@ -375,7 +404,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       {/* Onglets */}
       <View style={styles.tabsContainer}>
         {([
-          { key: 'expenses', label: t('budget.tabExpenses'), emoji: '💰' },
+          { key: 'expenses', label: t('budget.tabTransactions'), emoji: '💰' },
           { key: 'projects', label: t('budget.tabProjects'), emoji: '🤝' },
           { key: 'settings', label: t('budget.tabSettings'), emoji: '⚙️' },
         ] as { key: TabType; label: string; emoji: string }[]).map(tab => (
@@ -583,7 +612,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
             ) : (
               (categories as any[]).map((cat: any) => (
                 <View key={cat.id} style={styles.settingsItem}>
-                  <Text style={styles.settingsItemIcon}>{cat.icon || '💼'}</Text>
+                  <Text style={styles.settingsItemIcon}>{getCategoryEmoji(cat.icon)}</Text>
                   <Text style={styles.settingsItemName}>{cat.name}</Text>
                   <View style={[styles.colorDot, { backgroundColor: cat.color || '#7c3aed' }]} />
                   <TouchableOpacity onPress={() => {
@@ -739,7 +768,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       <Modal visible={projectModalOpen} animationType="slide" transparent onRequestClose={() => setProjectModalOpen(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('budget.newProject')}</Text>
+            <Text style={styles.modalTitle}>{editingProjectId ? t('budget.editProject') : t('budget.newProject')}</Text>
 
             <Text style={styles.fieldLabel}>{t('budget.projectName')}</Text>
             <TextInput
@@ -778,8 +807,8 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setProjectModalOpen(false)}>
                 <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProject} disabled={createProject.isPending}>
-                {createProject.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.create')}</Text>}
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProject} disabled={createProject.isPending || updateProject.isPending}>
+                {(createProject.isPending || updateProject.isPending) ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{editingProjectId ? t('common.save') : t('common.create')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -805,9 +834,19 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                       <Text style={styles.backButton}>← {t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={styles.projectDetailTitle}>{displayName}</Text>
-                    <TouchableOpacity onPress={() => handleDeleteProject(selectedProject)}>
-                      <Text style={styles.deleteIcon}>🗑️</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity onPress={() => {
+                        setProjectForm({ name: getProjectDisplayName(selectedProject), currency: getProjectCurrency(selectedProject), targetAmount: (selectedProject.targetAmount / 100).toFixed(2) });
+                        setEditingProjectId(selectedProject.id);
+                        setProjectDetailOpen(false);
+                        setProjectModalOpen(true);
+                      }}>
+                        <Text style={styles.editIcon}>✏️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteProject(selectedProject)}>
+                        <Text style={styles.deleteIcon}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <ScrollView style={styles.projectDetailContent}>
@@ -864,7 +903,12 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                       projectTxs.map((tx: any) => {
                         const payer = (members as any[]).find(m => m.id === tx.userId);
                         return (
-                          <View key={tx.id} style={styles.txCard}>
+                          <TouchableOpacity
+                            key={tx.id}
+                            style={styles.txCard}
+                            onLongPress={() => handleDeleteTx(tx.id)}
+                            onPress={() => handleEditTx(tx)}
+                          >
                             <View style={styles.txInfo}>
                               <Text style={styles.txCategory}>{tx.description || tx.category}</Text>
                               <Text style={styles.txDate}>
@@ -875,8 +919,11 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                               <Text style={[styles.txAmount, { color: '#ef4444' }]}>
                                 -{(tx.amount / 100).toFixed(2)} {getCurrencySymbol(currency)}
                               </Text>
+                              <TouchableOpacity onPress={() => handleDeleteTx(tx.id)} style={{ padding: 4 }}>
+                                <Text style={{ fontSize: 14 }}>🗑️</Text>
+                              </TouchableOpacity>
                             </View>
-                          </View>
+                          </TouchableOpacity>
                         );
                       })
                     )}
@@ -999,7 +1046,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                   style={[styles.catChip, catBudgetForm.categoryId === String(cat.id) && styles.catChipActive]}
                   onPress={() => setCatBudgetForm(f => ({ ...f, categoryId: String(cat.id) }))}
                 >
-                  <Text style={styles.catChipEmoji}>{cat.icon || '💼'}</Text>
+                  <Text style={styles.catChipEmoji}>{getCategoryEmoji(cat.icon)}</Text>
                   <Text style={[styles.catChipText, catBudgetForm.categoryId === String(cat.id) && styles.catChipTextActive]}>{cat.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -1179,6 +1226,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   settingsItemName: { flex: 1, fontSize: 14, color: isDark ? '#e5e7eb' : '#111827' },
   colorDot: { width: 16, height: 16, borderRadius: 8 },
   deleteIcon: { fontSize: 18 },
+  editIcon: { fontSize: 18 },
   catBudgetItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6' },
   catBudgetInfo: { flex: 1 },
   catBudgetName: { fontSize: 14, fontWeight: '600', color: isDark ? '#e5e7eb' : '#111827' },

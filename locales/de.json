@@ -308,9 +308,11 @@
   },
   "budget": {
     "title": "Budget",
+    "tabTransactions": "Transaktionen",
     "tabExpenses": "Ausgaben",
     "tabProjects": "Projekte",
     "tabSettings": "Einstellungen",
+    "editProject": "Projekt bearbeiten",
     "addExpense": "Neue Ausgabe",
     "addTransaction": "Neue Transaktion",
     "editTransaction": "Transaktion bearbeiten",
