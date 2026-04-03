@@ -684,4 +684,75 @@ export type AppRouter = {
       mutate: (input: Record<string, any>) => Promise<void>;
     };
   };
+  menstrual: {
+    getSettings: {
+      useQuery: (opts?: any) => any;
+      query: () => Promise<MenstrualSettings | null>;
+    };
+    toggleFeature: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { enabled: boolean }) => Promise<void>;
+    };
+    updateSettings: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: Partial<MenstrualSettings>) => Promise<void>;
+    };
+    createCycle: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: {
+        startDate: Date;
+        endDate?: Date;
+        notes?: string;
+        symptoms?: string;
+        mood?: 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
+        flowIntensity?: 'light' | 'medium' | 'heavy';
+      }) => Promise<MenstrualCycle>;
+    };
+    getCycles: {
+      useQuery: (input: { limit: number }, opts?: any) => any;
+      query: (input: { limit: number }) => Promise<MenstrualCycle[]>;
+    };
+    updateCycle: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: {
+        cycleId: number;
+        endDate?: Date;
+        periodLength?: number;
+        notes?: string;
+        symptoms?: string;
+        mood?: 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
+        flowIntensity?: 'light' | 'medium' | 'heavy';
+      }) => Promise<void>;
+    };
+    deleteCycle: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { cycleId: number }) => Promise<void>;
+    };
+  };
 };
+
+export interface MenstrualSettings {
+  userId: number;
+  isEnabled: number; // 0 or 1
+  cycleDuration: number;
+  periodDuration: number;
+  lastPeriodDate?: string;
+  notifyByEmail?: number;
+  notifyByPush?: number;
+  autoCreateEvents?: number;
+}
+
+export interface MenstrualCycle {
+  id: number;
+  userId: number;
+  startDate: string;
+  endDate?: string;
+  cycleLength?: number;
+  periodLength?: number;
+  notes?: string;
+  symptoms?: string;
+  mood?: 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
+  flowIntensity?: 'light' | 'medium' | 'heavy';
+  status?: 'early' | 'regular' | 'late';
+  createdAt: string;
+}

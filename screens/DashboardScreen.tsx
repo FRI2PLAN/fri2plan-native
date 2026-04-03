@@ -166,6 +166,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { id: 'referral', name: 'Parrainer', icon: '🎯', pageIndex: 10 },
     { id: 'settings', name: 'Paramètres', icon: '⚙️', pageIndex: 11 },
     { id: 'help', name: 'Aide', icon: '❓', pageIndex: 12 },
+    { id: 'calendrier-intime', name: 'Cal. Intime', icon: '🌸', pageIndex: 13 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {

@@ -18,6 +18,7 @@ import MembersScreen from '../screens/MembersScreen';
 import ReferralScreen from '../screens/ReferralScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HelpScreen from '../screens/HelpScreen';
+import CalendrierIntimeScreen from '../screens/CalendrierIntimeScreen';
 
 const Drawer = createDrawerNavigator();
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -47,6 +48,7 @@ const PAGES = [
   { key: '10', component: ReferralScreen, name: 'Referral' },
   { key: '11', component: SettingsScreen, name: 'Settings' },
   { key: '12', component: HelpScreen, name: 'Help' },
+  { key: '13', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
 ];
 
 function HomeScreen({

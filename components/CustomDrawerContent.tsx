@@ -27,6 +27,7 @@ const PAGES = [
   { index: 10, name: 'Referral', label: '🔗 Parrainage' },
   { index: 11, name: 'Settings', label: '⚙️ Paramètres' },
   { index: 12, name: 'Help', label: '❓ Aide' },
+  { index: 13, name: 'CalendrierIntime', label: '🌸 Calendrier Intime' },
 ];
 
 export default function CustomDrawerContent({

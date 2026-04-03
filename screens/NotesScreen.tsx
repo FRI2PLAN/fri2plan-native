@@ -301,15 +301,30 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Header */}
+      {/* Titre centré */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>{t('notes.title')}</Text>
+      </View>
+
+      {/* Filtres Toutes + Privées + bouton + sur la même ligne */}
+      <View style={styles.filterRow}>
+        {(['all', 'private'] as const).map(f => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterChip, filterPrivacy === f && styles.filterChipActive]}
+            onPress={() => setFilterPrivacy(f)}
+          >
+            <Text style={[styles.filterChipText, filterPrivacy === f && styles.filterChipTextActive]}>
+              {f === 'all' ? `📋 ${t('notes.filterAll')}` : `🔒 ${t('notes.filterPrivate')}`}
+            </Text>
+          </TouchableOpacity>
+        ))}
         <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Barre de recherche */}
+      {/* Barre de recherche sous les filtres */}
       <View style={styles.searchContainer}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
@@ -324,21 +339,6 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
             <Text style={styles.clearSearch}>✕</Text>
           </TouchableOpacity>
         )}
-      </View>
-
-      {/* Filtres */}
-      <View style={styles.filterRow}>
-        {(['all', 'public', 'private'] as const).map(f => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterChip, filterPrivacy === f && styles.filterChipActive]}
-            onPress={() => setFilterPrivacy(f)}
-          >
-            <Text style={[styles.filterChipText, filterPrivacy === f && styles.filterChipTextActive]}>
-              {f === 'all' ? `📋 ${t('notes.filterAll')}` : f === 'public' ? `🌐 ${t('notes.filterPublic')}` : `🔒 ${t('notes.filterPrivate')}`}
-            </Text>
-          </TouchableOpacity>
-        ))}
       </View>
 
       {/* Liste */}
@@ -526,8 +526,6 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -535,19 +533,20 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   pageTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: isDark ? '#fff' : '#111827'},
+    color: isDark ? '#fff' : '#111827',
+    textAlign: 'center'},
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
     alignItems: 'center'},
   addButtonText: {
     color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 32},
+    fontSize: 24,
+    fontWeight: '300',
+    lineHeight: 28},
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',

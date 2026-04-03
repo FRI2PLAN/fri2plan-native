@@ -257,15 +257,11 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Header */}
+      {/* Titre centré */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>{t('requests.title')}</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
       </View>
-
-      {/* Filtres de statut (icônes seules) + menu 3 points pour les types */}
+      {/* Filtres de statut + menu 3 points + bouton + sur la même ligne */}
       <View style={styles.filterRow}>
         <View style={styles.filterContainer}>
           {(['pending', 'approved', 'rejected'] as FilterStatus[]).map(status => (
@@ -280,7 +276,6 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
             </TouchableOpacity>
           ))}
         </View>
-
         {/* Menu 3 points pour les types */}
         <View style={styles.typeMenuWrapper}>
           <TouchableOpacity
@@ -315,9 +310,12 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
               </View>
             </Pressable>
           )}
-        </View>
+         </View>
+        {/* Bouton + */}
+        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
-
       {/* Liste */}
       <ScrollView
         style={styles.list}
@@ -582,8 +580,6 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
     backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -591,19 +587,20 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   pageTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: isDark ? '#fff' : '#111827'},
+    color: isDark ? '#fff' : '#111827',
+    textAlign: 'center'},
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
     alignItems: 'center'},
   addButtonText: {
     color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 32},
+    fontSize: 24,
+    fontWeight: '300',
+    lineHeight: 28},
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
