@@ -196,60 +196,84 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     const isOwnMessage = message.userId === user?.id;
     
     return (
-      <View key={message.id} style={[styles.messageWrapper, isOwnMessage ? styles.ownMessageWrapper : styles.otherMessageWrapper]}>
-        <View style={[styles.messageCard, isOwnMessage && styles.ownMessageCard]}>
-        <View style={styles.messageHeader}>
-          <View style={[styles.avatar, isOwnMessage && styles.ownAvatar]}>
+      <View key={message.id} style={styles.messageRow}>
+        {/* Spacer gauche pour mes messages */}
+        {isOwnMessage && <View style={styles.messageSpacer} />}
+
+        {/* Avatar (autres seulement) */}
+        {!isOwnMessage && (
+          <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {message.userName?.charAt(0).toUpperCase() || '?'}
             </Text>
           </View>
-          <View style={styles.messageHeaderInfo}>
-            <Text style={[styles.messageSender, isOwnMessage && styles.ownMessageSender]}>{message.userName || t('messages.unknownUser')}</Text>
+        )}
+
+        {/* Bulle */}
+        <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
+          {/* Nom expéditeur */}
+          <Text style={[styles.messageSender, isOwnMessage && styles.ownMessageSender]}>
+            {message.userName || t('messages.unknownUser')}
+          </Text>
+
+          {/* Contenu */}
+          <Text style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>
+            {message.content}
+          </Text>
+
+          {/* Pièce jointe image */}
+          {message.attachmentUrl && message.attachmentType === 'image' && (
+            <TouchableOpacity onPress={() => setLightboxImage(message.attachmentUrl)}>
+              <Image source={{ uri: message.attachmentUrl }} style={styles.attachmentImage} />
+            </TouchableOpacity>
+          )}
+
+          {/* Réactions */}
+          {message.reactions && Object.keys(message.reactions).length > 0 && (
+            <View style={styles.reactionsContainer}>
+              {Object.entries(message.reactions).map(([emoji, users]: [string, any]) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={styles.reactionBubble}
+                  onPress={() => {
+                    setReactingToMessageId(message.id);
+                    addReaction.mutate({ messageId: message.id, emoji });
+                  }}
+                >
+                  <Text style={styles.reactionEmoji}>{emoji}</Text>
+                  <Text style={styles.reactionCount}>{users.length}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Timestamp + bouton réagir */}
+          <View style={styles.bubbleFooter}>
             <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
               {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setReactingToMessageId(message.id);
+                setIsEmojiPickerOpen(true);
+              }}
+            >
+              <Text style={[styles.reactButtonText, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>😊</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        
-        <Text style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>{message.content}</Text>
-        
-        {message.attachmentUrl && message.attachmentType === 'image' && (
-          <TouchableOpacity onPress={() => setLightboxImage(message.attachmentUrl)}>
-            <Image source={{ uri: message.attachmentUrl }} style={styles.attachmentImage} />
-          </TouchableOpacity>
-        )}
-        
-        {message.reactions && Object.keys(message.reactions).length > 0 && (
-          <View style={styles.reactionsContainer}>
-            {Object.entries(message.reactions).map(([emoji, users]: [string, any]) => (
-              <TouchableOpacity
-                key={emoji}
-                style={styles.reactionBubble}
-                onPress={() => {
-                  setReactingToMessageId(message.id);
-                  addReaction.mutate({ messageId: message.id, emoji });
-                }}
-              >
-                <Text style={styles.reactionEmoji}>{emoji}</Text>
-                <Text style={styles.reactionCount}>{users.length}</Text>
-              </TouchableOpacity>
-            ))}
+
+        {/* Avatar (moi à droite) */}
+        {isOwnMessage && (
+          <View style={[styles.avatar, styles.ownAvatar]}>
+            <Text style={styles.avatarText}>
+              {message.userName?.charAt(0).toUpperCase() || '?'}
+            </Text>
           </View>
         )}
-        
-        <View style={styles.messageActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => {
-              setReactingToMessageId(message.id);
-              setIsEmojiPickerOpen(true);
-            }}
-          >
-            <Text style={styles.actionButtonText}>😊 {t('messages.react')}</Text>
-          </TouchableOpacity>
-        </View>
-        </View>
+
+        {/* Spacer droit pour les autres */}
+        {!isOwnMessage && <View style={styles.messageSpacer} />}
       </View>
     );
   };
@@ -620,31 +644,31 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   messagesListContent: {
     padding: 16,
   },
-  // Wrapper pleine largeur pour aligner les bulles
-  messageWrapper: {
-    width: '100%',
+  // Layout des bulles de messages
+  messageRow: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
     marginBottom: 12,
+    paddingHorizontal: 4,
   },
-  ownMessageWrapper: {
-    justifyContent: 'flex-end',
+  messageSpacer: {
+    flex: 1,
+    minWidth: 40,
   },
-  otherMessageWrapper: {
-    justifyContent: 'flex-start',
-  },
-  messageCard: {
-    backgroundColor: isDark ? '#374151' : '#fff',
+  messageBubble: {
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
+    maxWidth: '70%',
+    flexShrink: 1,
+  },
+  otherBubble: {
+    backgroundColor: isDark ? '#374151' : '#fff',
+    borderTopLeftRadius: 4,
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#e5e7eb',
-    maxWidth: '75%',
-    borderTopLeftRadius: 4,
   },
-  ownMessageCard: {
+  ownBubble: {
     backgroundColor: '#7c3aed',
-    borderColor: '#7c3aed',
-    borderTopLeftRadius: 16,
     borderTopRightRadius: 4,
   },
   ownAvatar: {
@@ -655,6 +679,17 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   ownMessageContent: {
     color: '#fff',
+  },
+  bubbleFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    gap: 8,
+  },
+  reactButtonText: {
+    fontSize: 16,
+    color: '#7c3aed',
   },
   messageHeader: {
     flexDirection: 'row',
