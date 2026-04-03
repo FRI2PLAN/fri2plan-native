@@ -396,7 +396,11 @@
     "newCategoryBudget": "Nouveau budget par catégorie",
     "budgetAmount": "Montant du budget",
     "alertThreshold": "Seuil d'alerte",
-    "deleteCategoryBudgetConfirm": "Supprimer ce budget ?"
+    "deleteCategoryBudgetConfirm": "Supprimer ce budget ?",
+    "projectMembers": "Participants",
+    "projectMembersHint": "Tous les membres sont inclus par défaut",
+    "projectParticipants": "Participants",
+    "shareInviteMessage": "Rejoins notre projet \"{{projectName}}\" sur Fri2Plan ! Télécharge l'app : {{appUrl}}"
   },
   "rewards": {
     "title": "Récompenses",
@@ -484,5 +488,19 @@
     "notesPlaceholder": "Ingrédients, instructions...",
     "addToShopping": "Ajouter aux courses",
     "noIngredients": "Aucun ingrédient trouvé dans les notes"
+  },
+  "quickActions": {
+    "title": "Actions rapides",
+    "newEvent": "Nouvel événement",
+    "newTask": "Nouvelle tâche",
+    "newNote": "Nouvelle note",
+    "newExpense": "Nouvelle dépense",
+    "newRequest": "Nouvelle requête"
+  },
+  "favorites": {
+    "addShortcut": "Ajouter un raccourci",
+    "editShortcut": "Modifier le raccourci",
+    "remove": "Supprimer ce raccourci",
+    "chooseOther": "Choisir une autre page"
   }
 }

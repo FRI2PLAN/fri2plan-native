@@ -5,10 +5,8 @@ import {
   Modal,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 interface QuickActionsModalProps {
@@ -28,42 +26,41 @@ interface QuickAction {
 export default function QuickActionsModal({ visible, onClose, onNavigate }: QuickActionsModalProps) {
   const { t } = useTranslation();
 
-  // Only 5 options like WebView
   const quickActions: QuickAction[] = [
     {
       id: 'event',
       icon: 'calendar',
-      label: 'Nouvel événement',
-      pageIndex: 1, // Calendar
-      color: '#3b82f6', // Bleu
+      label: t('quickActions.newEvent', 'Nouvel événement'),
+      pageIndex: 1,
+      color: '#3b82f6',
     },
     {
       id: 'task',
       icon: 'checkmark-circle',
-      label: 'Nouvelle tâche',
-      pageIndex: 2, // Tasks
-      color: '#10b981', // Vert
+      label: t('quickActions.newTask', 'Nouvelle tâche'),
+      pageIndex: 2,
+      color: '#10b981',
     },
     {
       id: 'note',
-      icon: 'document',
-      label: 'Nouvelle note',
-      pageIndex: 6, // Notes
-      color: '#06b6d4', // Cyan
+      icon: 'document-text',
+      label: t('quickActions.newNote', 'Nouvelle note'),
+      pageIndex: 6,
+      color: '#06b6d4',
     },
     {
       id: 'expense',
       icon: 'cash',
-      label: 'Nouvelle dépense',
-      pageIndex: 7, // Budget
-      color: '#f59e0b', // Orange
+      label: t('quickActions.newExpense', 'Nouvelle dépense'),
+      pageIndex: 7,
+      color: '#f59e0b',
     },
     {
       id: 'request',
       icon: 'help-circle',
-      label: 'Nouvelle requête',
-      pageIndex: 5, // Requests
-      color: '#ec4899', // Rose
+      label: t('quickActions.newRequest', 'Nouvelle requête'),
+      pageIndex: 5,
+      color: '#ec4899',
     },
   ];
 
@@ -78,7 +75,7 @@ export default function QuickActionsModal({ visible, onClose, onNavigate }: Quic
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <TouchableOpacity
@@ -89,18 +86,21 @@ export default function QuickActionsModal({ visible, onClose, onNavigate }: Quic
         <View style={styles.modalContainer}>
           <TouchableOpacity activeOpacity={1}>
             <View style={styles.modalContent}>
+              {/* Handle bar */}
+              <View style={styles.handleBar} />
+
               {/* Header */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  Actions rapides
+                  {t('quickActions.title', 'Actions rapides')}
                 </Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                     <Ionicons name="close" size={24} color="#6b7280" />
+                  <Ionicons name="close" size={24} color="#6b7280" />
                 </TouchableOpacity>
               </View>
 
-              {/* Actions List (vertical) */}
-              <ScrollView style={styles.actionsContainer}>
+              {/* Actions List — pas de ScrollView, tout visible directement */}
+              <View style={styles.actionsContainer}>
                 {quickActions.map((action) => (
                   <TouchableOpacity
                     key={action.id}
@@ -114,16 +114,13 @@ export default function QuickActionsModal({ visible, onClose, onNavigate }: Quic
                         { backgroundColor: action.color },
                       ]}
                     >
-                      <Ionicons
-                        name={action.icon}
-                        size={24}
-                        color="#fff"
-                      />
+                      <Ionicons name={action.icon} size={22} color="#fff" />
                     </View>
                     <Text style={styles.actionLabel}>{action.label}</Text>
+                    <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           </TouchableOpacity>
         </View>
@@ -135,54 +132,64 @@ export default function QuickActionsModal({ visible, onClose, onNavigate }: Quic
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
-    width: '90%',
-    maxWidth: 400,
+    width: '100%',
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 32,
+  },
+  handleBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#d1d5db',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1f2937',
   },
   closeButton: {
     padding: 4,
   },
   actionsContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    marginBottom: 8,
+    marginVertical: 3,
     backgroundColor: '#f9fafb',
   },
   actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   actionLabel: {
     fontSize: 16,

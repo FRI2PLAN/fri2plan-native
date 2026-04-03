@@ -1,7 +1,7 @@
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, RefreshControl, ActivityIndicator, Alert, Modal,
-  KeyboardAvoidingView, Platform, Switch, Pressable, FlatList
+  KeyboardAvoidingView, Platform, Switch, Pressable, FlatList, Share, Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -195,6 +195,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [projectForm, setProjectForm] = useState({ name: '', currency: 'CHF', targetAmount: '' });
+  const [projectSelectedMembers, setProjectSelectedMembers] = useState<number[]>([]);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [projectDetailOpen, setProjectDetailOpen] = useState(false);
 
@@ -263,7 +264,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
   // ── Reset forms ──
   const resetTxForm = () => setTxForm({ type: 'expense', amount: '', category: '', description: '', date: new Date(), isPrivate: false, projectId: undefined });
-  const resetProjectForm = () => setProjectForm({ name: '', currency: 'CHF', targetAmount: '' });
+  const resetProjectForm = () => { setProjectForm({ name: '', currency: 'CHF', targetAmount: '' }); setProjectSelectedMembers([]); };
   const resetCatForm = () => { setCatForm({ name: '', color: '#7c3aed', icon: '💼' }); setEditingCatId(null); };
   const resetCatBudgetForm = () => { setCatBudgetForm({ categoryId: '', budgetAmount: '', period: 'monthly', alertThreshold: '80' }); setEditingCatBudgetId(null); };
 
@@ -314,13 +315,12 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     (transactions as any[]).filter((t: any) => t.projectId === projectId);
 
   const getProjectCurrency = (project: any): string => {
-    // La devise est encodée dans le nom: "Vacances [EUR]"
-    const match = project.name?.match(/\[(\w+)\]$/);
+    // La devise est encodée dans le nom: "Vacances [EUR]" ou "Vacances [EUR][m:1,2]"
+    const match = project.name?.match(/\[([A-Z]+)\]/);
     return match ? match[1] : 'CHF';
   };
-
   const getProjectDisplayName = (project: any): string => {
-    return project.name?.replace(/\s*\[\w+\]$/, '') || project.name;
+    return project.name?.replace(/\s*\[[A-Z]+\](\[m:[\d,]+\])?$/, '') || project.name;
   };
 
   // ── Handlers ──
@@ -349,18 +349,41 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     setTxModalOpen(true);
   };
 
+  // Encoder les membres dans la description du projet: "[EUR][m:1,2,3]"
+  const encodeProjectMeta = (currency: string, memberIds: number[]) => {
+    const membersStr = memberIds.length > 0 ? `[m:${memberIds.join(',')}]` : '';
+    return `[${currency}]${membersStr}`;
+  };
+  const getProjectMemberIds = (project: any): number[] => {
+    const match = project.name?.match(/\[m:([\d,]+)\]/);
+    if (!match) return (members as any[]).map((m: any) => m.id); // tous les membres par défaut
+    return match[1].split(',').map(Number).filter(Boolean);
+  };
   const handleSaveProject = () => {
     if (!projectForm.name.trim()) return Alert.alert(t('common.error'), t('budget.projectNameRequired'));
-    // Budget optionnel
     const targetRaw = projectForm.targetAmount.trim();
     const target = targetRaw ? parseFloat(targetRaw) : 0;
     if (targetRaw && (isNaN(target) || target < 0)) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
-    // Encoder la devise dans le nom
-    const nameWithCurrency = `${projectForm.name.trim()} [${projectForm.currency}]`;
+    // Encoder devise + membres dans le nom
+    const selectedMemberIds = projectSelectedMembers.length > 0
+      ? projectSelectedMembers
+      : (members as any[]).map((m: any) => m.id);
+    const meta = encodeProjectMeta(projectForm.currency, selectedMemberIds);
+    const nameWithMeta = `${projectForm.name.trim()} ${meta}`;
     if (editingProjectId) {
-      updateProject.mutate({ budgetConfigId: editingProjectId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+      updateProject.mutate({ budgetConfigId: editingProjectId, name: nameWithMeta, targetAmount: Math.round(target * 100) });
     } else {
-      createProject.mutate({ familyId: activeFamilyId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+      createProject.mutate({ familyId: activeFamilyId, name: nameWithMeta, targetAmount: Math.round(target * 100) });
+    }
+  };
+  const handleShareProject = async (project: any) => {
+    const displayName = getProjectDisplayName(project);
+    const appUrl = 'https://app.fri2plan.ch';
+    const message = t('budget.shareInviteMessage', { projectName: displayName, appUrl });
+    try {
+      await Share.share({ message, title: displayName });
+    } catch (e) {
+      // ignore
     }
   };
 
@@ -821,6 +844,36 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               keyboardType="decimal-pad"
             />
 
+            {/* Sélection des membres */}
+            <Text style={styles.fieldLabel}>{t('budget.projectMembers')}</Text>
+            <Text style={styles.fieldHint}>{t('budget.projectMembersHint')}</Text>
+            <View style={styles.memberSelectRow}>
+              {(members as any[]).map((m: any) => {
+                const isSelected = projectSelectedMembers.length === 0 || projectSelectedMembers.includes(m.id);
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    style={[styles.memberChip, isSelected && styles.memberChipActive]}
+                    onPress={() => {
+                      if (projectSelectedMembers.length === 0) {
+                        // Tous sélectionnés par défaut → désélectionner les autres
+                        const others = (members as any[]).filter((x: any) => x.id !== m.id).map((x: any) => x.id);
+                        setProjectSelectedMembers(others);
+                      } else if (isSelected) {
+                        const next = projectSelectedMembers.filter(id => id !== m.id);
+                        setProjectSelectedMembers(next.length === 0 ? [] : next);
+                      } else {
+                        setProjectSelectedMembers(prev => [...prev, m.id]);
+                      }
+                    }}
+                  >
+                    <Text style={styles.memberChipEmoji}>👤</Text>
+                    <Text style={[styles.memberChipText, isSelected && styles.memberChipTextActive]}>{m.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setProjectModalOpen(false)}>
                 <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
@@ -843,7 +896,9 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               const projectTxs = getProjectTransactions(selectedProject.id);
               const totalSpent = projectTxs.reduce((s: number, t: any) => s + t.amount / 100, 0);
               const target = selectedProject.targetAmount / 100;
-              const settlements = calculateSplit(projectTxs, members as any[], currency);
+              const projectMemberIds = getProjectMemberIds(selectedProject);
+              const projectMembers = (members as any[]).filter((m: any) => projectMemberIds.includes(m.id));
+              const settlements = calculateSplit(projectTxs, projectMembers, currency);
 
               return (
                 <>
@@ -853,8 +908,13 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                     </TouchableOpacity>
                     <Text style={styles.projectDetailTitle}>{displayName}</Text>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity onPress={() => handleShareProject(selectedProject)}>
+                        <Text style={styles.editIcon}>📤</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => {
+                        const mIds = getProjectMemberIds(selectedProject);
                         setProjectForm({ name: getProjectDisplayName(selectedProject), currency: getProjectCurrency(selectedProject), targetAmount: (selectedProject.targetAmount / 100).toFixed(2) });
+                        setProjectSelectedMembers(mIds);
                         setEditingProjectId(selectedProject.id);
                         setProjectDetailOpen(false);
                         setProjectModalOpen(true);
@@ -877,6 +937,20 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                         <View style={[styles.progressFill, { width: `${Math.min(totalSpent / target, 1) * 100}%` as any }]} />
                       </View>
                     </View>
+
+                    {/* Membres du projet */}
+                    {projectMembers.length > 0 && (
+                      <View style={styles.projectMembersSection}>
+                        <Text style={styles.projectMembersLabel}>👥 {t('budget.projectParticipants')}</Text>
+                        <View style={styles.projectMembersRow}>
+                          {projectMembers.map((m: any) => (
+                            <View key={m.id} style={styles.projectMemberBadge}>
+                              <Text style={styles.projectMemberBadgeText}>{m.name}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
 
                     {/* Calcul du split */}
                     {settlements.length > 0 && (
@@ -1006,7 +1080,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
             <Text style={styles.fieldLabel}>{t('budget.paidBy')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-              {(members as any[]).map((m: any) => (
+              {(selectedProject ? (members as any[]).filter((m: any) => getProjectMemberIds(selectedProject).includes(m.id)) : (members as any[])).map((m: any) => (
                 <TouchableOpacity
                   key={m.id}
                   style={[styles.catChip, projectTxForm.payerId === m.id && styles.catChipActive]}
@@ -1357,4 +1431,31 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyText: { fontSize: 16, fontWeight: '600', color: isDark ? '#d1d5db' : '#1f2937', marginBottom: 6 },
   emptySubtext: { fontSize: 13, color: isDark ? '#6b7280' : '#9ca3af', textAlign: 'center' },
+  // Sélection membres projet
+  memberSelectRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  memberChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20,
+    borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
+  },
+  memberChipActive: { borderColor: '#7c3aed', backgroundColor: isDark ? '#1e1b4b' : '#ede9fe' },
+  memberChipEmoji: { fontSize: 16 },
+  memberChipText: { fontSize: 13, color: isDark ? '#d1d5db' : '#374151', fontWeight: '500' },
+  memberChipTextActive: { color: '#7c3aed', fontWeight: '700' },
+  fieldHint: { fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 6, fontStyle: 'italic' },
+  // Membres dans le détail projet
+  projectMembersSection: {
+    marginHorizontal: 16, marginBottom: 10,
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12, padding: 12, elevation: 1,
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  projectMembersLabel: { fontSize: 13, fontWeight: '700', color: isDark ? '#d1d5db' : '#374151', marginBottom: 8 },
+  projectMembersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  projectMemberBadge: {
+    backgroundColor: isDark ? '#374151' : '#ede9fe',
+    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4,
+  },
+  projectMemberBadgeText: { fontSize: 12, color: isDark ? '#d1d5db' : '#7c3aed', fontWeight: '600' },
 });

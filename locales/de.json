@@ -396,7 +396,11 @@
     "deleteCategoryBudgetConfirm": "Dieses Budget löschen?",
     "tabOnPartage": "Geteilte Ausgaben",
     "newOnPartage": "Neue geteilte Ausgabe",
-    "targetAmountOptionalPlaceholder": "Leer lassen wenn unbekannt"
+    "targetAmountOptionalPlaceholder": "Leer lassen wenn unbekannt",
+    "projectMembers": "Teilnehmer",
+    "projectMembersHint": "Alle Mitglieder sind standardmäßig eingeschlossen",
+    "projectParticipants": "Teilnehmer",
+    "shareInviteMessage": "Tritt unserem Projekt \"{{projectName}}\" auf Fri2Plan bei! App herunterladen: {{appUrl}}"
   },
   "rewards": {
     "title": "Belohnungen",
@@ -485,5 +489,19 @@
     "notesPlaceholder": "Zutaten, Anweisungen...",
     "addToShopping": "Zur Einkaufsliste hinzufügen",
     "noIngredients": "Keine Zutaten in den Notizen gefunden"
+  },
+  "quickActions": {
+    "title": "Schnellaktionen",
+    "newEvent": "Neues Ereignis",
+    "newTask": "Neue Aufgabe",
+    "newNote": "Neue Notiz",
+    "newExpense": "Neue Ausgabe",
+    "newRequest": "Neue Anfrage"
+  },
+  "favorites": {
+    "addShortcut": "Verknüpfung hinzufügen",
+    "editShortcut": "Verknüpfung bearbeiten",
+    "remove": "Diese Verknüpfung entfernen",
+    "chooseOther": "Andere Seite wählen"
   }
 }

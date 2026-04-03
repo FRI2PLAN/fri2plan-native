@@ -396,7 +396,11 @@
     "deleteCategoryBudgetConfirm": "Delete this budget?",
     "tabOnPartage": "Shared Expenses",
     "newOnPartage": "New shared expense",
-    "targetAmountOptionalPlaceholder": "Leave empty if unknown"
+    "targetAmountOptionalPlaceholder": "Leave empty if unknown",
+    "projectMembers": "Participants",
+    "projectMembersHint": "All members are included by default",
+    "projectParticipants": "Participants",
+    "shareInviteMessage": "Join our project \"{{projectName}}\" on Fri2Plan! Download the app: {{appUrl}}"
   },
   "rewards": {
     "title": "Rewards",
@@ -484,5 +488,19 @@
     "notesPlaceholder": "Ingredients, instructions...",
     "addToShopping": "Add to shopping list",
     "noIngredients": "No ingredients found in notes"
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "newEvent": "New event",
+    "newTask": "New task",
+    "newNote": "New note",
+    "newExpense": "New expense",
+    "newRequest": "New request"
+  },
+  "favorites": {
+    "addShortcut": "Add a shortcut",
+    "editShortcut": "Edit shortcut",
+    "remove": "Remove this shortcut",
+    "chooseOther": "Choose another page"
   }
 }

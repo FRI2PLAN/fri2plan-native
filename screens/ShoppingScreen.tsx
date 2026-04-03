@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * ShoppingScreen — Onglet Courses
  * Connecté à la BD via tRPC (routes shopping.*)
@@ -6,7 +7,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, SafeAreaView,
+  StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
