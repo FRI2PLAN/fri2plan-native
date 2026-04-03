@@ -41,6 +41,14 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       default: return fr;
     }
   };
+
+  // Corriger le fuseau horaire : le backend stocke en UTC sans 'Z'
+  const parseUTCDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    // Ajouter 'Z' si pas déjà présent pour forcer l'interprétation UTC
+    const normalized = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+    return new Date(normalized);
+  };
   
   // Récupérer les membres de la famille
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -211,10 +219,12 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
 
         {/* Bulle */}
         <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
-          {/* Nom expéditeur */}
-          <Text style={[styles.messageSender, isOwnMessage && styles.ownMessageSender]}>
-            {message.userName || t('messages.unknownUser')}
-          </Text>
+          {/* Nom expéditeur (seulement pour les autres) */}
+          {!isOwnMessage && (
+            <Text style={styles.messageSender}>
+              {message.userName || t('messages.unknownUser')}
+            </Text>
+          )}
 
           {/* Contenu */}
           <Text style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>
@@ -250,7 +260,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
           {/* Timestamp + bouton réagir */}
           <View style={styles.bubbleFooter}>
             <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
-              {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
+              {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
             <TouchableOpacity
               onPress={() => {
@@ -714,9 +724,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   messageSender: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#fff' : '#111827',
+    fontSize: 13,
+    fontWeight: '700',
+    color: isDark ? '#e5e7eb' : '#374151',
+    marginBottom: 4,
+    textAlign: 'left',
   },
   messageTime: {
     fontSize: 12,

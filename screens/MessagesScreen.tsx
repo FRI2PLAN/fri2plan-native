@@ -37,6 +37,13 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     }
   };
 
+  // Corriger le fuseau horaire : le backend stocke en UTC sans 'Z'
+  const parseUTCDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    const normalized = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+    return new Date(normalized);
+  };
+
   // Récupérer la famille active
   const { data: families = [] } = trpc.family.list.useQuery();
   const activeFamilyId = (families as any[])[0]?.id || 1;
@@ -139,7 +146,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
           {/* Timestamp */}
           <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
-            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
+            {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
           </Text>
 
           {/* Réactions existantes */}
