@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Switch, Pressable, FlatList
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -128,6 +129,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const styles = getStyles(isDark);
+  const insets = useSafeAreaInsets();
 
   const getLocale = () => {
     switch (i18n.language) {
@@ -833,8 +835,8 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
       {/* Modal Détail Projet */}
       <Modal visible={projectDetailOpen && !!selectedProject} animationType="slide" transparent onRequestClose={() => setProjectDetailOpen(false)}>
-        <View style={styles.modalOverlayFull}>
-          <SafeAreaView style={styles.projectDetailContainer}>
+        <View style={[styles.modalOverlayFull, { paddingTop: insets.top }]}>
+          <View style={styles.projectDetailContainer}>
             {selectedProject && (() => {
               const currency = getProjectCurrency(selectedProject);
               const displayName = getProjectDisplayName(selectedProject);
@@ -948,7 +950,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                 </>
               );
             })()}
-          </SafeAreaView>
+          </View>
         </View>
       </Modal>
 

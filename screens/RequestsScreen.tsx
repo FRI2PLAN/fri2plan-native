@@ -624,11 +624,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    gap: 6,
     flex: 1,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
   },
   filterTab: {
-    width: 44,
+    flex: 1,
     height: 44,
     borderRadius: 10,
     borderWidth: 2,
@@ -636,6 +637,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#1f2937' : '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 4,
   },
   filterTabActive: {
     borderColor: '#7c3aed',
