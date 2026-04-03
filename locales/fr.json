@@ -28,7 +28,8 @@
     "notes": "Notes",
     "saved": "Paramètres sauvegardés",
     "success": "Succès",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "optional": "optionnel"
   },
   "auth": {
     "login": "Connexion",
@@ -313,6 +314,9 @@
     "tabProjects": "Projets",
     "tabSettings": "Paramètres",
     "editProject": "Modifier le projet",
+    "tabOnPartage": "On Partage",
+    "newOnPartage": "Nouveau partage",
+    "targetAmountOptionalPlaceholder": "Laisser vide si inconnu",
     "addExpense": "Nouvelle dépense",
     "addTransaction": "Nouvelle transaction",
     "editTransaction": "Modifier la transaction",

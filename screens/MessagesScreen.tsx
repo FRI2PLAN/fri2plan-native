@@ -367,14 +367,14 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 12,
     alignItems: 'flex-end',
-    maxWidth: '88%',
+    width: '100%',
   },
   ownWrapper: {
-    alignSelf: 'flex-end',
     flexDirection: 'row-reverse',
+    justifyContent: 'flex-start',
   },
   otherWrapper: {
-    alignSelf: 'flex-start',
+    justifyContent: 'flex-start',
   },
   avatar: {
     width: 32,
@@ -397,7 +397,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   bubble: {
     borderRadius: 16,
     padding: 10,
-    maxWidth: '100%',
+    maxWidth: '75%',
     flexShrink: 1,
   },
   otherBubble: {

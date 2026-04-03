@@ -28,7 +28,8 @@
     "notes": "Notes",
     "saved": "Settings saved",
     "success": "Success",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "optional": "optional"
   },
   "auth": {
     "login": "Login",
@@ -368,7 +369,10 @@
     "newCategoryBudget": "New category budget",
     "budgetAmount": "Budget amount",
     "alertThreshold": "Alert threshold",
-    "deleteCategoryBudgetConfirm": "Delete this budget?"
+    "deleteCategoryBudgetConfirm": "Delete this budget?",
+    "tabOnPartage": "Shared Expenses",
+    "newOnPartage": "New shared expense",
+    "targetAmountOptionalPlaceholder": "Leave empty if unknown"
   },
   "rewards": {
     "title": "Rewards",

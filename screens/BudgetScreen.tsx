@@ -53,6 +53,17 @@ const EXPENSE_CATEGORIES = [
 
 const INCOME_CATEGORIES = ['Salaire', 'Allocation', 'Cadeau', 'Autre'];
 
+// Catégories spécifiques aux projets partagés (On Partage)
+const PROJECT_CATEGORIES = [
+  { value: 'Restaurant', emoji: '🍽️' },
+  { value: 'Courses', emoji: '🛒' },
+  { value: 'Logement', emoji: '🏠' },
+  { value: 'Transport', emoji: '🚗' },
+  { value: 'Bar', emoji: '🍺' },
+  { value: 'Activités', emoji: '🎪' },
+  { value: 'Autre', emoji: '💼' },
+];
+
 type TabType = 'expenses' | 'projects' | 'settings';
 type FilterType = 'all' | 'income' | 'expense';
 type FilterPeriod = 'all' | 'week' | 'month' | 'year';
@@ -188,9 +199,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   // ── Formulaire dépense projet ──
   const [projectTxModalOpen, setProjectTxModalOpen] = useState(false);
   const [projectTxForm, setProjectTxForm] = useState({
-    amount: '', category: 'Autre', description: '', payerId: 0, date: new Date(),
+    amount: '', category: 'Restaurant', description: '', payerId: user?.id || 0, date: new Date(),
   });
   const [showProjectDatePicker, setShowProjectDatePicker] = useState(false);
+  const [showCatDropdown, setShowCatDropdown] = useState(false);
 
   // ── Formulaire catégorie ──
   const [catModalOpen, setCatModalOpen] = useState(false);
@@ -337,8 +349,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
   const handleSaveProject = () => {
     if (!projectForm.name.trim()) return Alert.alert(t('common.error'), t('budget.projectNameRequired'));
-    const target = parseFloat(projectForm.targetAmount);
-    if (isNaN(target) || target <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    // Budget optionnel
+    const targetRaw = projectForm.targetAmount.trim();
+    const target = targetRaw ? parseFloat(targetRaw) : 0;
+    if (targetRaw && (isNaN(target) || target < 0)) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
     // Encoder la devise dans le nom
     const nameWithCurrency = `${projectForm.name.trim()} [${projectForm.currency}]`;
     if (editingProjectId) {
@@ -359,6 +373,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     if (!selectedProject) return;
     const amount = parseFloat(projectTxForm.amount);
     if (isNaN(amount) || amount <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    const payerId = projectTxForm.payerId || user?.id || 0;
     createTx.mutate({
       familyId: activeFamilyId,
       type: 'expense',
@@ -368,9 +383,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       date: projectTxForm.date,
       isPrivate: 0,
       projectId: selectedProject.id,
+      payerId, // Passer le payeur sélectionné
     });
     setProjectTxModalOpen(false);
-    setProjectTxForm({ amount: '', category: 'Autre', description: '', payerId: user?.id || 0, date: new Date() });
+    setProjectTxForm({ amount: '', category: 'Restaurant', description: '', payerId: user?.id || 0, date: new Date() });
   };
 
   const handleSaveCat = () => {
@@ -405,7 +421,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
       <View style={styles.tabsContainer}>
         {([
           { key: 'expenses', label: t('budget.tabTransactions'), emoji: '💰' },
-          { key: 'projects', label: t('budget.tabProjects'), emoji: '🤝' },
+          { key: 'projects', label: t('budget.tabOnPartage'), emoji: '🤝' },
           { key: 'settings', label: t('budget.tabSettings'), emoji: '⚙️' },
         ] as { key: TabType; label: string; emoji: string }[]).map(tab => (
           <TouchableOpacity
@@ -528,7 +544,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           <TouchableOpacity style={styles.addButton} onPress={() => { resetProjectForm(); setProjectModalOpen(true); }}>
-            <Text style={styles.addButtonText}>+ {t('budget.newProject')}</Text>
+            <Text style={styles.addButtonText}>+ {t('budget.newOnPartage')}</Text>
           </TouchableOpacity>
 
           {(savingsProjects as any[]).length === 0 ? (
@@ -793,12 +809,12 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>{t('budget.targetAmount')} ({projectForm.currency})</Text>
+            <Text style={styles.fieldLabel}>{t('budget.targetAmount')} ({projectForm.currency}) <Text style={{ color: '#9ca3af', fontWeight: '400' }}>({t('common.optional')})</Text></Text>
             <TextInput
               style={styles.input}
               value={projectForm.targetAmount}
               onChangeText={v => setProjectForm(f => ({ ...f, targetAmount: v }))}
-              placeholder="0.00"
+              placeholder={t('budget.targetAmountOptionalPlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
               keyboardType="decimal-pad"
             />
@@ -960,6 +976,31 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               placeholder={t('budget.descriptionPlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
+
+            <Text style={styles.fieldLabel}>{t('budget.category')}</Text>
+            <TouchableOpacity
+              style={styles.dropdownBtn}
+              onPress={() => setShowCatDropdown(v => !v)}
+            >
+              <Text style={styles.dropdownBtnText}>
+                {PROJECT_CATEGORIES.find(c => c.value === projectTxForm.category)?.emoji} {projectTxForm.category}
+              </Text>
+              <Text style={styles.dropdownArrow}>{showCatDropdown ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {showCatDropdown && (
+              <View style={styles.dropdownList}>
+                {PROJECT_CATEGORIES.map(cat => (
+                  <TouchableOpacity
+                    key={cat.value}
+                    style={[styles.dropdownItem, projectTxForm.category === cat.value && styles.dropdownItemActive]}
+                    onPress={() => { setProjectTxForm(f => ({ ...f, category: cat.value })); setShowCatDropdown(false); }}
+                  >
+                    <Text style={styles.dropdownItemEmoji}>{cat.emoji}</Text>
+                    <Text style={[styles.dropdownItemText, projectTxForm.category === cat.value && styles.dropdownItemTextActive]}>{cat.value}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             <Text style={styles.fieldLabel}>{t('budget.paidBy')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
@@ -1227,6 +1268,16 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   colorDot: { width: 16, height: 16, borderRadius: 8 },
   deleteIcon: { fontSize: 18 },
   editIcon: { fontSize: 18 },
+  // Dropdown catégorie projet
+  dropdownBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: isDark ? '#1f2937' : '#f9fafb', marginBottom: 4 },
+  dropdownBtnText: { fontSize: 15, color: isDark ? '#e5e7eb' : '#111827' },
+  dropdownArrow: { fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af' },
+  dropdownList: { borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', borderRadius: 10, backgroundColor: isDark ? '#1f2937' : '#fff', marginBottom: 8, overflow: 'hidden' },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6' },
+  dropdownItemActive: { backgroundColor: '#7c3aed22' },
+  dropdownItemEmoji: { fontSize: 20 },
+  dropdownItemText: { fontSize: 15, color: isDark ? '#e5e7eb' : '#111827' },
+  dropdownItemTextActive: { color: '#7c3aed', fontWeight: '600' },
   catBudgetItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6' },
   catBudgetInfo: { flex: 1 },
   catBudgetName: { fontSize: 14, fontWeight: '600', color: isDark ? '#e5e7eb' : '#111827' },

@@ -552,6 +552,7 @@ export type AppRouter = {
         date: Date;
         isPrivate?: number;
         projectId?: number;
+        payerId?: number; // Pour les dépenses de projet partagé
       }) => Promise<{ transactionId: number }>;
     };
     updateTransaction: {
