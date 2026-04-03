@@ -1,406 +1,1259 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView,
+  TextInput, RefreshControl, ActivityIndicator, Alert, Modal,
+  KeyboardAvoidingView, Platform, Switch, Pressable, FlatList
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, formatDistanceToNow } from 'date-fns';
+import { fr, de, enUS } from 'date-fns/locale';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface BudgetScreenProps {
   onNavigate?: (screen: string) => void;
-
   onPrevious?: () => void;
-  onNext?: () => void;}
+  onNext?: () => void;
+}
 
-export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetScreenProps) {
-  const [view, setView] = useState<'overview' | 'transactions'>('overview');
-  const [refreshing, setRefreshing] = useState(false);
+const CURRENCIES = [
+  { value: 'CHF', symbol: 'CHF', flag: '🇨🇭' },
+  { value: 'EUR', symbol: '€', flag: '🇪🇺' },
+  { value: 'USD', symbol: '$', flag: '🇺🇸' },
+];
 
-  const currentMonth = format(new Date(), 'yyyy-MM');
+const EXPENSE_CATEGORIES = [
+  { value: 'Alimentation', emoji: '🛒', color: '#10b981' },
+  { value: 'Transport', emoji: '🚗', color: '#3b82f6' },
+  { value: 'Loisirs', emoji: '😊', color: '#f59e0b' },
+  { value: 'Santé', emoji: '❤️', color: '#ef4444' },
+  { value: 'Éducation', emoji: '🎓', color: '#8b5cf6' },
+  { value: 'Logement', emoji: '🏠', color: '#6b7280' },
+  { value: 'Vêtements', emoji: '👕', color: '#ec4899' },
+  { value: 'Autre', emoji: '💼', color: '#64748b' },
+];
 
-  // Fetch budget and transactions from API
-  const { data: budget, isLoading: budgetLoading, refetch: refetchBudget } = trpc.budget.get.useQuery({ month: currentMonth });
-  const { data: transactions, isLoading: transactionsLoading, refetch: refetchTransactions } = trpc.budget.transactions.useQuery();
+const INCOME_CATEGORIES = ['Salaire', 'Allocation', 'Cadeau', 'Autre'];
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([refetchBudget(), refetchTransactions()]);
-    setRefreshing(false);
-  };
+type TabType = 'expenses' | 'projects' | 'settings';
+type FilterType = 'all' | 'income' | 'expense';
+type FilterPeriod = 'all' | 'week' | 'month' | 'year';
 
-  const totalIncome = budget?.totalIncome || 0;
-  const totalExpenses = budget?.totalExpenses || 0;
-  const remaining = totalIncome - totalExpenses;
+// ─── Calcul du split Tricount ─────────────────────────────────────────────────
+function calculateSplit(
+  transactions: any[],
+  members: any[],
+  currency: string
+): { from: string; to: string; amount: number; currency: string }[] {
+  // Calculer ce que chaque membre a payé et ce qu'il doit
+  const paid: Record<number, number> = {};
+  const owes: Record<number, number> = {};
 
-  // Group transactions by category
-  const expensesByCategory = (transactions || [])
-    .filter(t => t.type === 'expense')
-    .reduce((acc, t) => {
-      if (!acc[t.category]) {
-        acc[t.category] = 0;
-      }
-      acc[t.category] += t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+  members.forEach(m => { paid[m.id] = 0; owes[m.id] = 0; });
 
-  const categories = Object.entries(expensesByCategory).map(([category, amount]) => ({
-    category,
-    spent: amount,
-    color: getCategoryColor(category),
-  }));
+  const total = transactions.reduce((sum, t) => sum + t.amount / 100, 0);
+  const perPerson = members.length > 0 ? total / members.length : 0;
 
-  function getCategoryColor(category: string): string {
-    const colors: Record<string, string> = {
-      'Alimentation': '#10b981',
-      'Transport': '#3b82f6',
-      'Loisirs': '#f59e0b',
-      'Santé': '#ef4444',
-      'Éducation': '#8b5cf6',
-      'Logement': '#06b6d4',
-      'Autre': '#6b7280',
-    };
-    return colors[category] || '#6b7280';
+  transactions.forEach(t => {
+    if (t.userId && paid[t.userId] !== undefined) {
+      paid[t.userId] += t.amount / 100;
+    }
+  });
+
+  members.forEach(m => {
+    owes[m.id] = perPerson - (paid[m.id] || 0);
+  });
+
+  // Algorithme de simplification des dettes
+  const debtors = members.filter(m => owes[m.id] > 0.01).sort((a, b) => owes[b.id] - owes[a.id]);
+  const creditors = members.filter(m => owes[m.id] < -0.01).sort((a, b) => owes[a.id] - owes[b.id]);
+
+  const settlements: { from: string; to: string; amount: number; currency: string }[] = [];
+
+  let i = 0, j = 0;
+  const debtAmounts = debtors.map(m => owes[m.id]);
+  const creditAmounts = creditors.map(m => -owes[m.id]);
+
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(debtAmounts[i], creditAmounts[j]);
+    if (amount > 0.01) {
+      settlements.push({
+        from: debtors[i].name || `#${debtors[i].id}`,
+        to: creditors[j].name || `#${creditors[j].id}`,
+        amount: Math.round(amount * 100) / 100,
+        currency,
+      });
+    }
+    debtAmounts[i] -= amount;
+    creditAmounts[j] -= amount;
+    if (debtAmounts[i] < 0.01) i++;
+    if (creditAmounts[j] < 0.01) j++;
   }
 
-  const isLoading = budgetLoading || transactionsLoading;
+  return settlements;
+}
 
+// ─── Composant principal ──────────────────────────────────────────────────────
+export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetScreenProps) {
+  const { isDark } = useTheme();
+  const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const styles = getStyles(isDark);
+
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'fr': return fr;
+      case 'de': return de;
+      default: return enUS;
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>('expenses');
+  const [refreshing, setRefreshing] = useState(false);
+
+  // ── Famille ──
+  const { data: families = [] } = trpc.family.list.useQuery();
+  const activeFamilyId = (families as any[])[0]?.id || 1;
+  const { data: members = [] } = trpc.family.members.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+
+  // ── Données budget ──
+  const { data: transactions = [], isLoading: txLoading, refetch: refetchTx } = trpc.budget.listTransactions.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+  const { data: budgetBalance, refetch: refetchBalance } = trpc.budget.getBudgetBalance.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+  const { data: categories = [], refetch: refetchCats } = trpc.budget.listCategories.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+  const { data: categoryBudgets = [], refetch: refetchCatBudgets } = trpc.budget.listCategoryBudgets.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+  const { data: savingsProjects = [], refetch: refetchProjects } = trpc.budget.listSavingsProjects.useQuery(
+    { familyId: activeFamilyId },
+    { enabled: !!activeFamilyId }
+  );
+
+  // ── Filtres transactions ──
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('month');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // ── Formulaire transaction ──
+  const [txModalOpen, setTxModalOpen] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<number | null>(null);
+  const [txForm, setTxForm] = useState({
+    type: 'expense' as 'income' | 'expense',
+    amount: '',
+    category: '',
+    description: '',
+    date: new Date(),
+    isPrivate: false,
+    projectId: undefined as number | undefined,
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // ── Formulaire projet ──
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
+  const [projectForm, setProjectForm] = useState({ name: '', currency: 'CHF', targetAmount: '' });
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [projectDetailOpen, setProjectDetailOpen] = useState(false);
+
+  // ── Formulaire dépense projet ──
+  const [projectTxModalOpen, setProjectTxModalOpen] = useState(false);
+  const [projectTxForm, setProjectTxForm] = useState({
+    amount: '', category: 'Autre', description: '', payerId: 0, date: new Date(),
+  });
+  const [showProjectDatePicker, setShowProjectDatePicker] = useState(false);
+
+  // ── Formulaire catégorie ──
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [catForm, setCatForm] = useState({ name: '', color: '#7c3aed', icon: '💼' });
+  const [editingCatId, setEditingCatId] = useState<number | null>(null);
+
+  // ── Formulaire budget catégorie ──
+  const [catBudgetModalOpen, setCatBudgetModalOpen] = useState(false);
+  const [catBudgetForm, setCatBudgetForm] = useState({ categoryId: '', budgetAmount: '', period: 'monthly' as 'weekly' | 'monthly' | 'yearly', alertThreshold: '80' });
+  const [editingCatBudgetId, setEditingCatBudgetId] = useState<number | null>(null);
+
+  // ── Devise par défaut (settings) ──
+  const [defaultCurrency, setDefaultCurrency] = useState('CHF');
+
+  // ── Mutations ──
+  const createTx = trpc.budget.createTransaction.useMutation({
+    onSuccess: () => { setTxModalOpen(false); resetTxForm(); refetchTx(); refetchBalance(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const updateTx = trpc.budget.updateTransaction.useMutation({
+    onSuccess: () => { setTxModalOpen(false); setEditingTxId(null); resetTxForm(); refetchTx(); refetchBalance(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const deleteTx = trpc.budget.deleteTransaction.useMutation({
+    onSuccess: () => { refetchTx(); refetchBalance(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const createProject = trpc.budget.createSavingsProject.useMutation({
+    onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); refetchProjects(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const deleteProject = trpc.budget.deleteSavingsProject.useMutation({
+    onSuccess: () => { setProjectDetailOpen(false); setSelectedProject(null); refetchProjects(); refetchTx(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const createCat = trpc.budget.createCategory.useMutation({
+    onSuccess: () => { setCatModalOpen(false); resetCatForm(); refetchCats(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const deleteCat = trpc.budget.deleteCategory.useMutation({
+    onSuccess: () => refetchCats(),
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const createCatBudget = trpc.budget.createCategoryBudget.useMutation({
+    onSuccess: () => { setCatBudgetModalOpen(false); resetCatBudgetForm(); refetchCatBudgets(); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+  const deleteCatBudget = trpc.budget.deleteCategoryBudget.useMutation({
+    onSuccess: () => refetchCatBudgets(),
+    onError: (e: any) => Alert.alert(t('common.error'), e.message),
+  });
+
+  // ── Reset forms ──
+  const resetTxForm = () => setTxForm({ type: 'expense', amount: '', category: '', description: '', date: new Date(), isPrivate: false, projectId: undefined });
+  const resetProjectForm = () => setProjectForm({ name: '', currency: 'CHF', targetAmount: '' });
+  const resetCatForm = () => { setCatForm({ name: '', color: '#7c3aed', icon: '💼' }); setEditingCatId(null); };
+  const resetCatBudgetForm = () => { setCatBudgetForm({ categoryId: '', budgetAmount: '', period: 'monthly', alertThreshold: '80' }); setEditingCatBudgetId(null); };
+
+  // ── Refresh ──
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchTx(), refetchBalance(), refetchProjects(), refetchCats(), refetchCatBudgets()]);
+    setRefreshing(false);
+  }, []);
+
+  // ── Filtrage transactions ──
+  const filteredTx = useMemo(() => {
+    let list = (transactions as any[]).filter((t: any) => !t.projectId); // exclure les dépenses de projets
+    if (filterType !== 'all') list = list.filter((t: any) => t.type === filterType);
+    if (filterCategory !== 'all') list = list.filter((t: any) => t.category === filterCategory);
+    if (filterPeriod !== 'all') {
+      const now = new Date();
+      const start = new Date();
+      if (filterPeriod === 'week') start.setDate(now.getDate() - 7);
+      else if (filterPeriod === 'month') start.setMonth(now.getMonth() - 1);
+      else if (filterPeriod === 'year') start.setFullYear(now.getFullYear() - 1);
+      list = list.filter((t: any) => new Date(t.date) >= start);
+    }
+    return list.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions, filterType, filterCategory, filterPeriod]);
+
+  // ── Stats ──
+  const stats = useMemo(() => {
+    const income = filteredTx.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + t.amount / 100, 0);
+    const expense = filteredTx.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + t.amount / 100, 0);
+    return { income, expense, balance: income - expense };
+  }, [filteredTx]);
+
+  // ── Toutes les catégories (défaut + custom) ──
+  const allCategories = useMemo(() => {
+    const custom = (categories as any[]).map((c: any) => ({ value: c.name, emoji: c.icon || '💼', color: c.color || '#7c3aed', id: c.id }));
+    return [...EXPENSE_CATEGORIES, ...custom];
+  }, [categories]);
+
+  // ── Transactions d'un projet ──
+  const getProjectTransactions = (projectId: number) =>
+    (transactions as any[]).filter((t: any) => t.projectId === projectId);
+
+  const getProjectCurrency = (project: any): string => {
+    // La devise est encodée dans le nom: "Vacances [EUR]"
+    const match = project.name?.match(/\[(\w+)\]$/);
+    return match ? match[1] : 'CHF';
+  };
+
+  const getProjectDisplayName = (project: any): string => {
+    return project.name?.replace(/\s*\[\w+\]$/, '') || project.name;
+  };
+
+  // ── Handlers ──
+  const handleSaveTx = () => {
+    const amount = parseFloat(txForm.amount);
+    if (isNaN(amount) || amount <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    if (!txForm.category) return Alert.alert(t('common.error'), t('budget.categoryRequired'));
+    const amountCents = Math.round(amount * 100);
+    if (editingTxId) {
+      updateTx.mutate({ transactionId: editingTxId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0 });
+    } else {
+      createTx.mutate({ familyId: activeFamilyId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0 });
+    }
+  };
+
+  const handleDeleteTx = (id: number) => {
+    Alert.alert(t('common.confirm'), t('budget.deleteTxConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteTx.mutate({ transactionId: id }) },
+    ]);
+  };
+
+  const handleEditTx = (tx: any) => {
+    setEditingTxId(tx.id);
+    setTxForm({ type: tx.type, amount: (tx.amount / 100).toFixed(2), category: tx.category, description: tx.description || '', date: new Date(tx.date), isPrivate: tx.isPrivate === 1, projectId: tx.projectId });
+    setTxModalOpen(true);
+  };
+
+  const handleSaveProject = () => {
+    if (!projectForm.name.trim()) return Alert.alert(t('common.error'), t('budget.projectNameRequired'));
+    const target = parseFloat(projectForm.targetAmount);
+    if (isNaN(target) || target <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    // Encoder la devise dans le nom
+    const nameWithCurrency = `${projectForm.name.trim()} [${projectForm.currency}]`;
+    createProject.mutate({ familyId: activeFamilyId, name: nameWithCurrency, targetAmount: Math.round(target * 100) });
+  };
+
+  const handleDeleteProject = (project: any) => {
+    Alert.alert(t('common.confirm'), t('budget.deleteProjectConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteProject.mutate({ budgetConfigId: project.id }) },
+    ]);
+  };
+
+  const handleSaveProjectTx = () => {
+    if (!selectedProject) return;
+    const amount = parseFloat(projectTxForm.amount);
+    if (isNaN(amount) || amount <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    createTx.mutate({
+      familyId: activeFamilyId,
+      type: 'expense',
+      amount: Math.round(amount * 100),
+      category: projectTxForm.category,
+      description: projectTxForm.description || undefined,
+      date: projectTxForm.date,
+      isPrivate: 0,
+      projectId: selectedProject.id,
+    });
+    setProjectTxModalOpen(false);
+    setProjectTxForm({ amount: '', category: 'Autre', description: '', payerId: user?.id || 0, date: new Date() });
+  };
+
+  const handleSaveCat = () => {
+    if (!catForm.name.trim()) return Alert.alert(t('common.error'), t('budget.categoryNameRequired'));
+    createCat.mutate({ familyId: activeFamilyId, name: catForm.name.trim(), color: catForm.color, icon: catForm.icon });
+  };
+
+  const handleSaveCatBudget = () => {
+    const catId = parseInt(catBudgetForm.categoryId);
+    const amount = parseFloat(catBudgetForm.budgetAmount);
+    const threshold = parseInt(catBudgetForm.alertThreshold);
+    if (isNaN(catId)) return Alert.alert(t('common.error'), t('budget.categoryRequired'));
+    if (isNaN(amount) || amount <= 0) return Alert.alert(t('common.error'), t('budget.invalidAmount'));
+    createCatBudget.mutate({ familyId: activeFamilyId, categoryId: catId, budgetAmount: Math.round(amount * 100), period: catBudgetForm.period, alertThreshold: threshold });
+  };
+
+  const getCurrencySymbol = (code: string) => CURRENCIES.find(c => c.value === code)?.symbol || code;
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ────────────────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+
       {/* Header */}
-      {/* Page Title */}
-      <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Budget</Text>
+      <View style={styles.header}>
+        <Text style={styles.pageTitle}>{t('budget.title')}</Text>
       </View>
 
-      {/* View Toggle */}
-      <View style={styles.viewToggle}>
-        <TouchableOpacity
-          style={[styles.toggleButton, view === 'overview' && styles.toggleButtonActive]}
-          onPress={() => setView('overview')}
-        >
-          <Text style={[styles.toggleText, view === 'overview' && styles.toggleTextActive]}>
-            Vue d'ensemble
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, view === 'transactions' && styles.toggleButtonActive]}
-          onPress={() => setView('transactions')}
-        >
-          <Text style={[styles.toggleText, view === 'transactions' && styles.toggleTextActive]}>
-            Transactions
-          </Text>
-        </TouchableOpacity>
+      {/* Onglets */}
+      <View style={styles.tabsContainer}>
+        {([
+          { key: 'expenses', label: t('budget.tabExpenses'), emoji: '💰' },
+          { key: 'projects', label: t('budget.tabProjects'), emoji: '🤝' },
+          { key: 'settings', label: t('budget.tabSettings'), emoji: '⚙️' },
+        ] as { key: TabType; label: string; emoji: string }[]).map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <Text style={styles.tabEmoji}>{tab.emoji}</Text>
+            <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <ScrollView 
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
-        }
-      >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#7c3aed" />
-            <Text style={styles.loadingText}>Chargement...</Text>
+      {/* ── ONGLET DÉPENSES ── */}
+      {activeTab === 'expenses' && (
+        <ScrollView
+          style={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { borderLeftColor: '#10b981' }]}>
+              <Text style={styles.statLabel}>{t('budget.income')}</Text>
+              <Text style={[styles.statValue, { color: '#10b981' }]}>+{stats.income.toFixed(2)}</Text>
+              <Text style={styles.statCurrency}>{defaultCurrency}</Text>
+            </View>
+            <View style={[styles.statCard, { borderLeftColor: '#ef4444' }]}>
+              <Text style={styles.statLabel}>{t('budget.expenses')}</Text>
+              <Text style={[styles.statValue, { color: '#ef4444' }]}>-{stats.expense.toFixed(2)}</Text>
+              <Text style={styles.statCurrency}>{defaultCurrency}</Text>
+            </View>
+            <View style={[styles.statCard, { borderLeftColor: stats.balance >= 0 ? '#7c3aed' : '#f59e0b' }]}>
+              <Text style={styles.statLabel}>{t('budget.balance')}</Text>
+              <Text style={[styles.statValue, { color: stats.balance >= 0 ? '#7c3aed' : '#f59e0b' }]}>
+                {stats.balance >= 0 ? '+' : ''}{stats.balance.toFixed(2)}
+              </Text>
+              <Text style={styles.statCurrency}>{defaultCurrency}</Text>
+            </View>
           </View>
-        ) : view === 'overview' ? (
-          <>
-            {/* Summary Cards */}
-            <View style={styles.summaryContainer}>
-              <View style={[styles.summaryCard, { backgroundColor: '#dbeafe' }]}>
-                <Text style={styles.summaryLabel}>Revenus</Text>
-                <Text style={styles.summaryAmount}>{totalIncome.toFixed(2)} €</Text>
-              </View>
-              <View style={[styles.summaryCard, { backgroundColor: '#fee2e2' }]}>
-                <Text style={styles.summaryLabel}>Dépenses</Text>
-                <Text style={styles.summaryAmount}>{totalExpenses.toFixed(2)} €</Text>
-              </View>
-              <View style={[styles.summaryCard, { backgroundColor: remaining >= 0 ? '#d1fae5' : '#fee2e2' }]}>
-                <Text style={styles.summaryLabel}>Solde</Text>
-                <Text style={[styles.summaryAmount, remaining < 0 && { color: '#ef4444' }]}>
-                  {remaining.toFixed(2)} €
-                </Text>
-              </View>
-            </View>
 
-            {/* Budget by Category */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Dépenses par catégorie</Text>
-              {categories.length > 0 ? (
-                categories.map((cat, index) => (
-                  <View key={index} style={styles.budgetItem}>
-                    <View style={styles.budgetHeader}>
-                      <View style={styles.budgetInfo}>
-                        <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
-                        <Text style={styles.budgetCategory}>{cat.category}</Text>
-                      </View>
-                      <Text style={styles.budgetAmount}>{cat.spent.toFixed(2)} €</Text>
-                    </View>
-                    <View style={styles.progressBar}>
-                      <View 
-                        style={[
-                          styles.progressFill, 
-                          { 
-                            width: `${Math.min((cat.spent / totalExpenses) * 100, 100)}%`,
-                            backgroundColor: cat.color 
-                          }
-                        ]} 
-                      />
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>Aucune dépense pour ce mois</Text>
-              )}
-            </View>
-          </>
-        ) : (
-          /* Transactions List */
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Transactions récentes</Text>
-            {transactions && transactions.length > 0 ? (
-              transactions.map(transaction => (
-                <View key={transaction.id} style={styles.transactionCard}>
-                  <View style={styles.transactionHeader}>
-                    <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionCategory}>{transaction.category}</Text>
-                      {transaction.description && (
-                        <Text style={styles.transactionDescription}>{transaction.description}</Text>
-                      )}
-                    </View>
-                    <Text style={[
-                      styles.transactionAmount,
-                      transaction.type === 'income' ? styles.incomeAmount : styles.expenseAmount
-                    ]}>
-                      {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toFixed(2)} €
-                    </Text>
-                  </View>
-                  <Text style={styles.transactionDate}>
-                    {format(new Date(transaction.date), 'dd MMMM yyyy', { locale: fr })}
+          {/* Filtres */}
+          <View style={styles.filtersSection}>
+            {/* Type */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+              {(['all', 'income', 'expense'] as FilterType[]).map(f => (
+                <TouchableOpacity
+                  key={f}
+                  style={[styles.filterChip, filterType === f && styles.filterChipActive]}
+                  onPress={() => setFilterType(f)}
+                >
+                  <Text style={[styles.filterChipText, filterType === f && styles.filterChipTextActive]}>
+                    {f === 'all' ? t('budget.all') : f === 'income' ? `📈 ${t('budget.income')}` : `📉 ${t('budget.expenses')}`}
                   </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {/* Période */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+              {([
+                { key: 'all', label: t('budget.allPeriods') },
+                { key: 'week', label: t('budget.thisWeek') },
+                { key: 'month', label: t('budget.thisMonth') },
+                { key: 'year', label: t('budget.thisYear') },
+              ] as { key: FilterPeriod; label: string }[]).map(f => (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.filterChip, filterPeriod === f.key && styles.filterChipActive]}
+                  onPress={() => setFilterPeriod(f.key)}
+                >
+                  <Text style={[styles.filterChipText, filterPeriod === f.key && styles.filterChipTextActive]}>{f.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Bouton ajouter */}
+          <TouchableOpacity style={styles.addButton} onPress={() => { resetTxForm(); setEditingTxId(null); setTxModalOpen(true); }}>
+            <Text style={styles.addButtonText}>+ {t('budget.addTransaction')}</Text>
+          </TouchableOpacity>
+
+          {/* Liste transactions */}
+          {txLoading ? (
+            <ActivityIndicator size="large" color="#7c3aed" style={{ marginTop: 40 }} />
+          ) : filteredTx.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{t('budget.noTransactions')}</Text>
+            </View>
+          ) : (
+            filteredTx.map((tx: any) => {
+              const catInfo = allCategories.find(c => c.value === tx.category) || EXPENSE_CATEGORIES[7];
+              return (
+                <TouchableOpacity key={tx.id} style={styles.txCard} onPress={() => handleEditTx(tx)} onLongPress={() => handleDeleteTx(tx.id)}>
+                  <View style={[styles.txIcon, { backgroundColor: catInfo.color + '22' }]}>
+                    <Text style={styles.txIconText}>{catInfo.emoji}</Text>
+                  </View>
+                  <View style={styles.txInfo}>
+                    <Text style={styles.txCategory}>{tx.category}</Text>
+                    {tx.description && <Text style={styles.txDesc} numberOfLines={1}>{tx.description}</Text>}
+                    <Text style={styles.txDate}>{format(new Date(tx.date), 'dd/MM/yyyy', { locale: getLocale() })}</Text>
+                  </View>
+                  <View style={styles.txRight}>
+                    <Text style={[styles.txAmount, { color: tx.type === 'income' ? '#10b981' : '#ef4444' }]}>
+                      {tx.type === 'income' ? '+' : '-'}{(tx.amount / 100).toFixed(2)}
+                    </Text>
+                    <Text style={styles.txCurrency}>{defaultCurrency}</Text>
+                    {tx.isPrivate === 1 && <Text style={styles.privateBadge}>🔒</Text>}
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
+
+      {/* ── ONGLET PROJETS PARTAGÉS ── */}
+      {activeTab === 'projects' && (
+        <ScrollView
+          style={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <TouchableOpacity style={styles.addButton} onPress={() => { resetProjectForm(); setProjectModalOpen(true); }}>
+            <Text style={styles.addButtonText}>+ {t('budget.newProject')}</Text>
+          </TouchableOpacity>
+
+          {(savingsProjects as any[]).length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{t('budget.noProjects')}</Text>
+              <Text style={styles.emptySubtext}>{t('budget.noProjectsHint')}</Text>
+            </View>
+          ) : (
+            (savingsProjects as any[]).map((project: any) => {
+              const currency = getProjectCurrency(project);
+              const displayName = getProjectDisplayName(project);
+              const projectTxs = getProjectTransactions(project.id);
+              const totalSpent = projectTxs.reduce((s: number, t: any) => s + t.amount / 100, 0);
+              const target = project.targetAmount / 100;
+              const progress = target > 0 ? Math.min(totalSpent / target, 1) : 0;
+
+              return (
+                <TouchableOpacity
+                  key={project.id}
+                  style={styles.projectCard}
+                  onPress={() => { setSelectedProject(project); setProjectDetailOpen(true); }}
+                >
+                  <View style={styles.projectCardHeader}>
+                    <Text style={styles.projectName}>{displayName}</Text>
+                    <View style={styles.projectCurrencyBadge}>
+                      <Text style={styles.projectCurrencyText}>{CURRENCIES.find(c => c.value === currency)?.flag} {currency}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.projectStats}>
+                    <Text style={styles.projectSpent}>{totalSpent.toFixed(2)} {getCurrencySymbol(currency)}</Text>
+                    <Text style={styles.projectTarget}>/ {target.toFixed(2)} {getCurrencySymbol(currency)}</Text>
+                  </View>
+                  {/* Barre de progression */}
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
+                  </View>
+                  <Text style={styles.projectMembers}>
+                    👥 {projectTxs.length} {t('budget.expenses').toLowerCase()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
+
+      {/* ── ONGLET PARAMÈTRES ── */}
+      {activeTab === 'settings' && (
+        <ScrollView
+          style={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {/* Devise par défaut */}
+          <View style={styles.settingsSection}>
+            <Text style={styles.settingsSectionTitle}>{t('budget.defaultCurrency')}</Text>
+            <View style={styles.currencyRow}>
+              {CURRENCIES.map(c => (
+                <TouchableOpacity
+                  key={c.value}
+                  style={[styles.currencyChip, defaultCurrency === c.value && styles.currencyChipActive]}
+                  onPress={() => setDefaultCurrency(c.value)}
+                >
+                  <Text style={styles.currencyFlag}>{c.flag}</Text>
+                  <Text style={[styles.currencyLabel, defaultCurrency === c.value && styles.currencyLabelActive]}>{c.value}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Catégories personnalisées */}
+          <View style={styles.settingsSection}>
+            <View style={styles.settingsSectionHeader}>
+              <Text style={styles.settingsSectionTitle}>{t('budget.customCategories')}</Text>
+              <TouchableOpacity style={styles.settingsAddBtn} onPress={() => { resetCatForm(); setCatModalOpen(true); }}>
+                <Text style={styles.settingsAddBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            {(categories as any[]).length === 0 ? (
+              <Text style={styles.settingsEmpty}>{t('budget.noCustomCategories')}</Text>
+            ) : (
+              (categories as any[]).map((cat: any) => (
+                <View key={cat.id} style={styles.settingsItem}>
+                  <Text style={styles.settingsItemIcon}>{cat.icon || '💼'}</Text>
+                  <Text style={styles.settingsItemName}>{cat.name}</Text>
+                  <View style={[styles.colorDot, { backgroundColor: cat.color || '#7c3aed' }]} />
+                  <TouchableOpacity onPress={() => {
+                    Alert.alert(t('common.confirm'), t('budget.deleteCategoryConfirm'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      { text: t('common.delete'), style: 'destructive', onPress: () => deleteCat.mutate({ categoryId: cat.id }) },
+                    ]);
+                  }}>
+                    <Text style={styles.deleteIcon}>🗑️</Text>
+                  </TouchableOpacity>
                 </View>
               ))
-            ) : (
-              <Text style={styles.emptyText}>Aucune transaction</Text>
             )}
           </View>
-        )}
-      </ScrollView>
+
+          {/* Budgets par catégorie */}
+          <View style={styles.settingsSection}>
+            <View style={styles.settingsSectionHeader}>
+              <Text style={styles.settingsSectionTitle}>{t('budget.categoryBudgets')}</Text>
+              <TouchableOpacity style={styles.settingsAddBtn} onPress={() => { resetCatBudgetForm(); setCatBudgetModalOpen(true); }}>
+                <Text style={styles.settingsAddBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            {(categoryBudgets as any[]).length === 0 ? (
+              <Text style={styles.settingsEmpty}>{t('budget.noCategoryBudgets')}</Text>
+            ) : (
+              (categoryBudgets as any[]).map((cb: any) => {
+                const spent = cb.spent || 0;
+                const budget = cb.budgetAmount / 100;
+                const pct = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+                const isAlert = pct >= cb.alertThreshold;
+                return (
+                  <View key={cb.id} style={styles.catBudgetItem}>
+                    <View style={styles.catBudgetInfo}>
+                      <Text style={styles.catBudgetName}>{cb.categoryName || t('common.unknown')}</Text>
+                      <Text style={styles.catBudgetPeriod}>{cb.period}</Text>
+                    </View>
+                    <View style={styles.catBudgetRight}>
+                      <Text style={[styles.catBudgetPct, isAlert && { color: '#ef4444' }]}>{pct}%</Text>
+                      <Text style={styles.catBudgetAmount}>{budget.toFixed(0)} {defaultCurrency}</Text>
+                      <TouchableOpacity onPress={() => {
+                        Alert.alert(t('common.confirm'), t('budget.deleteCategoryBudgetConfirm'), [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          { text: t('common.delete'), style: 'destructive', onPress: () => deleteCatBudget.mutate({ budgetId: cb.id }) },
+                        ]);
+                      }}>
+                        <Text style={styles.deleteIcon}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MODALS
+      ══════════════════════════════════════════════════════════════════════ */}
+
+      {/* Modal Transaction */}
+      <Modal visible={txModalOpen} animationType="slide" transparent onRequestClose={() => setTxModalOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{editingTxId ? t('budget.editTransaction') : t('budget.addTransaction')}</Text>
+
+            {/* Type */}
+            <View style={styles.typeToggle}>
+              <TouchableOpacity
+                style={[styles.typeBtn, txForm.type === 'expense' && styles.typeBtnActive]}
+                onPress={() => setTxForm(f => ({ ...f, type: 'expense', category: '' }))}
+              >
+                <Text style={[styles.typeBtnText, txForm.type === 'expense' && styles.typeBtnTextActive]}>📉 {t('budget.expense')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.typeBtn, txForm.type === 'income' && styles.typeBtnActiveIncome]}
+                onPress={() => setTxForm(f => ({ ...f, type: 'income', category: '' }))}
+              >
+                <Text style={[styles.typeBtnText, txForm.type === 'income' && styles.typeBtnTextActive]}>📈 {t('budget.income')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Montant */}
+            <Text style={styles.fieldLabel}>{t('budget.amount')} ({defaultCurrency})</Text>
+            <TextInput
+              style={styles.input}
+              value={txForm.amount}
+              onChangeText={v => setTxForm(f => ({ ...f, amount: v }))}
+              placeholder="0.00"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              keyboardType="decimal-pad"
+            />
+
+            {/* Catégorie */}
+            <Text style={styles.fieldLabel}>{t('budget.category')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+              {(txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' })) : allCategories).map(cat => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[styles.catChip, txForm.category === cat.value && styles.catChipActive]}
+                  onPress={() => setTxForm(f => ({ ...f, category: cat.value }))}
+                >
+                  <Text style={styles.catChipEmoji}>{cat.emoji}</Text>
+                  <Text style={[styles.catChipText, txForm.category === cat.value && styles.catChipTextActive]}>{cat.value}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Description */}
+            <Text style={styles.fieldLabel}>{t('budget.description')}</Text>
+            <TextInput
+              style={styles.input}
+              value={txForm.description}
+              onChangeText={v => setTxForm(f => ({ ...f, description: v }))}
+              placeholder={t('budget.descriptionPlaceholder')}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+
+            {/* Date */}
+            <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.dateButtonText}>📅 {format(txForm.date, 'dd/MM/yyyy')}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={txForm.date}
+                mode="date"
+                display="default"
+                onChange={(_, d) => { setShowDatePicker(false); if (d) setTxForm(f => ({ ...f, date: d })); }}
+              />
+            )}
+
+            {/* Privé */}
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>🔒 {t('budget.private')}</Text>
+              <Switch value={txForm.isPrivate} onValueChange={v => setTxForm(f => ({ ...f, isPrivate: v }))} trackColor={{ true: '#7c3aed' }} />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setTxModalOpen(false)}>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveTx} disabled={createTx.isPending || updateTx.isPending}>
+                {(createTx.isPending || updateTx.isPending) ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Nouveau Projet */}
+      <Modal visible={projectModalOpen} animationType="slide" transparent onRequestClose={() => setProjectModalOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('budget.newProject')}</Text>
+
+            <Text style={styles.fieldLabel}>{t('budget.projectName')}</Text>
+            <TextInput
+              style={styles.input}
+              value={projectForm.name}
+              onChangeText={v => setProjectForm(f => ({ ...f, name: v }))}
+              placeholder={t('budget.projectNamePlaceholder')}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+
+            <Text style={styles.fieldLabel}>{t('budget.currency')}</Text>
+            <View style={styles.currencyRow}>
+              {CURRENCIES.map(c => (
+                <TouchableOpacity
+                  key={c.value}
+                  style={[styles.currencyChip, projectForm.currency === c.value && styles.currencyChipActive]}
+                  onPress={() => setProjectForm(f => ({ ...f, currency: c.value }))}
+                >
+                  <Text style={styles.currencyFlag}>{c.flag}</Text>
+                  <Text style={[styles.currencyLabel, projectForm.currency === c.value && styles.currencyLabelActive]}>{c.value}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.fieldLabel}>{t('budget.targetAmount')} ({projectForm.currency})</Text>
+            <TextInput
+              style={styles.input}
+              value={projectForm.targetAmount}
+              onChangeText={v => setProjectForm(f => ({ ...f, targetAmount: v }))}
+              placeholder="0.00"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              keyboardType="decimal-pad"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setProjectModalOpen(false)}>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProject} disabled={createProject.isPending}>
+                {createProject.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.create')}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Détail Projet */}
+      <Modal visible={projectDetailOpen && !!selectedProject} animationType="slide" transparent onRequestClose={() => setProjectDetailOpen(false)}>
+        <View style={styles.modalOverlayFull}>
+          <SafeAreaView style={styles.projectDetailContainer}>
+            {selectedProject && (() => {
+              const currency = getProjectCurrency(selectedProject);
+              const displayName = getProjectDisplayName(selectedProject);
+              const projectTxs = getProjectTransactions(selectedProject.id);
+              const totalSpent = projectTxs.reduce((s: number, t: any) => s + t.amount / 100, 0);
+              const target = selectedProject.targetAmount / 100;
+              const settlements = calculateSplit(projectTxs, members as any[], currency);
+
+              return (
+                <>
+                  <View style={styles.projectDetailHeader}>
+                    <TouchableOpacity onPress={() => setProjectDetailOpen(false)}>
+                      <Text style={styles.backButton}>← {t('common.back')}</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.projectDetailTitle}>{displayName}</Text>
+                    <TouchableOpacity onPress={() => handleDeleteProject(selectedProject)}>
+                      <Text style={styles.deleteIcon}>🗑️</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={styles.projectDetailContent}>
+                    {/* Résumé */}
+                    <View style={styles.projectSummaryCard}>
+                      <Text style={styles.projectSummaryLabel}>{t('budget.totalSpent')}</Text>
+                      <Text style={styles.projectSummaryAmount}>{totalSpent.toFixed(2)} {getCurrencySymbol(currency)}</Text>
+                      <Text style={styles.projectSummaryTarget}>/ {target.toFixed(2)} {getCurrencySymbol(currency)}</Text>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: `${Math.min(totalSpent / target, 1) * 100}%` as any }]} />
+                      </View>
+                    </View>
+
+                    {/* Calcul du split */}
+                    {settlements.length > 0 && (
+                      <View style={styles.splitSection}>
+                        <Text style={styles.splitTitle}>💸 {t('budget.splitSummary')}</Text>
+                        {settlements.map((s, i) => (
+                          <View key={i} style={styles.settlementCard}>
+                            <Text style={styles.settlementText}>
+                              <Text style={styles.settlementFrom}>{s.from}</Text>
+                              {` ${t('budget.owes')} `}
+                              <Text style={styles.settlementAmount}>{s.amount.toFixed(2)} {getCurrencySymbol(s.currency)}</Text>
+                              {` ${t('budget.to')} `}
+                              <Text style={styles.settlementTo}>{s.to}</Text>
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {settlements.length === 0 && projectTxs.length > 0 && (
+                      <View style={styles.splitSection}>
+                        <Text style={styles.splitTitle}>✅ {t('budget.allSettled')}</Text>
+                      </View>
+                    )}
+
+                    {/* Bouton ajouter dépense */}
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={() => {
+                        setProjectTxForm({ amount: '', category: 'Autre', description: '', payerId: user?.id || 0, date: new Date() });
+                        setProjectTxModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.addButtonText}>+ {t('budget.addExpense')}</Text>
+                    </TouchableOpacity>
+
+                    {/* Liste dépenses du projet */}
+                    <Text style={styles.sectionTitle}>{t('budget.projectExpenses')}</Text>
+                    {projectTxs.length === 0 ? (
+                      <Text style={styles.settingsEmpty}>{t('budget.noProjectExpenses')}</Text>
+                    ) : (
+                      projectTxs.map((tx: any) => {
+                        const payer = (members as any[]).find(m => m.id === tx.userId);
+                        return (
+                          <View key={tx.id} style={styles.txCard}>
+                            <View style={styles.txInfo}>
+                              <Text style={styles.txCategory}>{tx.description || tx.category}</Text>
+                              <Text style={styles.txDate}>
+                                {payer ? `👤 ${payer.name}` : ''} · {format(new Date(tx.date), 'dd/MM/yyyy')}
+                              </Text>
+                            </View>
+                            <View style={styles.txRight}>
+                              <Text style={[styles.txAmount, { color: '#ef4444' }]}>
+                                -{(tx.amount / 100).toFixed(2)} {getCurrencySymbol(currency)}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                    <View style={{ height: 60 }} />
+                  </ScrollView>
+                </>
+              );
+            })()}
+          </SafeAreaView>
+        </View>
+      </Modal>
+
+      {/* Modal Dépense Projet */}
+      <Modal visible={projectTxModalOpen} animationType="slide" transparent onRequestClose={() => setProjectTxModalOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('budget.addExpense')}</Text>
+
+            <Text style={styles.fieldLabel}>{t('budget.amount')} ({selectedProject ? getProjectCurrency(selectedProject) : 'CHF'})</Text>
+            <TextInput
+              style={styles.input}
+              value={projectTxForm.amount}
+              onChangeText={v => setProjectTxForm(f => ({ ...f, amount: v }))}
+              placeholder="0.00"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.fieldLabel}>{t('budget.description')}</Text>
+            <TextInput
+              style={styles.input}
+              value={projectTxForm.description}
+              onChangeText={v => setProjectTxForm(f => ({ ...f, description: v }))}
+              placeholder={t('budget.descriptionPlaceholder')}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+
+            <Text style={styles.fieldLabel}>{t('budget.paidBy')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+              {(members as any[]).map((m: any) => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.catChip, projectTxForm.payerId === m.id && styles.catChipActive]}
+                  onPress={() => setProjectTxForm(f => ({ ...f, payerId: m.id }))}
+                >
+                  <Text style={styles.catChipEmoji}>👤</Text>
+                  <Text style={[styles.catChipText, projectTxForm.payerId === m.id && styles.catChipTextActive]}>{m.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.dateButton} onPress={() => setShowProjectDatePicker(true)}>
+              <Text style={styles.dateButtonText}>📅 {format(projectTxForm.date, 'dd/MM/yyyy')}</Text>
+            </TouchableOpacity>
+            {showProjectDatePicker && (
+              <DateTimePicker
+                value={projectTxForm.date}
+                mode="date"
+                display="default"
+                onChange={(_, d) => { setShowProjectDatePicker(false); if (d) setProjectTxForm(f => ({ ...f, date: d })); }}
+              />
+            )}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setProjectTxModalOpen(false)}>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProjectTx} disabled={createTx.isPending}>
+                {createTx.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Catégorie */}
+      <Modal visible={catModalOpen} animationType="slide" transparent onRequestClose={() => setCatModalOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('budget.newCategory')}</Text>
+            <Text style={styles.fieldLabel}>{t('budget.categoryName')}</Text>
+            <TextInput
+              style={styles.input}
+              value={catForm.name}
+              onChangeText={v => setCatForm(f => ({ ...f, name: v }))}
+              placeholder={t('budget.categoryNamePlaceholder')}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+            <Text style={styles.fieldLabel}>{t('budget.icon')}</Text>
+            <TextInput
+              style={styles.input}
+              value={catForm.icon}
+              onChangeText={v => setCatForm(f => ({ ...f, icon: v }))}
+              placeholder="💼"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setCatModalOpen(false)}>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveCat} disabled={createCat.isPending}>
+                {createCat.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Modal Budget Catégorie */}
+      <Modal visible={catBudgetModalOpen} animationType="slide" transparent onRequestClose={() => setCatBudgetModalOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('budget.newCategoryBudget')}</Text>
+
+            <Text style={styles.fieldLabel}>{t('budget.category')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+              {(categories as any[]).map((cat: any) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.catChip, catBudgetForm.categoryId === String(cat.id) && styles.catChipActive]}
+                  onPress={() => setCatBudgetForm(f => ({ ...f, categoryId: String(cat.id) }))}
+                >
+                  <Text style={styles.catChipEmoji}>{cat.icon || '💼'}</Text>
+                  <Text style={[styles.catChipText, catBudgetForm.categoryId === String(cat.id) && styles.catChipTextActive]}>{cat.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.fieldLabel}>{t('budget.budgetAmount')} ({defaultCurrency})</Text>
+            <TextInput
+              style={styles.input}
+              value={catBudgetForm.budgetAmount}
+              onChangeText={v => setCatBudgetForm(f => ({ ...f, budgetAmount: v }))}
+              placeholder="0.00"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.fieldLabel}>{t('budget.alertThreshold')} (%)</Text>
+            <TextInput
+              style={styles.input}
+              value={catBudgetForm.alertThreshold}
+              onChangeText={v => setCatBudgetForm(f => ({ ...f, alertThreshold: v }))}
+              placeholder="80"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              keyboardType="number-pad"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setCatBudgetModalOpen(false)}>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveCatBudget} disabled={createCatBudget.isPending}>
+                {createCatBudget.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>{t('common.save')}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+// ─── Styles ──────────────────────────────────────────────────────────────────
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    backgroundColor: isDark ? '#111827' : '#fff',
+  },
+  pageTitle: { fontSize: 24, fontWeight: '700', color: isDark ? '#fff' : '#111827', textAlign: 'center' },
+  tabsContainer: {
+    flexDirection: 'row', padding: 10, gap: 6,
+    backgroundColor: isDark ? '#111827' : '#fff',
+    borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+  },
+  tab: {
+    flex: 1, paddingVertical: 8, borderRadius: 10,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+  activeTab: { backgroundColor: '#7c3aed' },
+  tabEmoji: { fontSize: 16 },
+  tabText: { fontSize: 11, fontWeight: '600', color: isDark ? '#d1d5db' : '#4b5563', marginTop: 2 },
+  activeTabText: { color: '#fff' },
+  content: { flex: 1 },
+  // Stats
+  statsRow: { flexDirection: 'row', padding: 12, gap: 8 },
+  statCard: {
+    flex: 1, backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 10, padding: 10, borderLeftWidth: 3,
+    elevation: 1,
   },
+  statLabel: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 2 },
+  statValue: { fontSize: 16, fontWeight: '700' },
+  statCurrency: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280' },
+  // Filtres
+  filtersSection: { paddingHorizontal: 12, marginBottom: 4 },
+  filterRow: { marginBottom: 6 },
+  filterChip: {
+    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, marginRight: 6,
+    borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+  },
+  filterChipActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
+  filterChipText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151' },
+  filterChipTextActive: { color: '#fff', fontWeight: '700' },
+  // Bouton ajouter
   addButton: {
-    backgroundColor: '#7c3aed',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    marginHorizontal: 16, marginVertical: 8, paddingVertical: 12,
+    backgroundColor: '#7c3aed', borderRadius: 10, alignItems: 'center',
   },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  // Transactions
+  txCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    marginHorizontal: 16, marginBottom: 8, borderRadius: 10, padding: 12,
+    elevation: 1, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
   },
-  viewToggle: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+  txIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  txIconText: { fontSize: 20 },
+  txInfo: { flex: 1 },
+  txCategory: { fontSize: 14, fontWeight: '600', color: isDark ? '#fff' : '#111827' },
+  txDesc: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 1 },
+  txDate: { fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginTop: 2 },
+  txRight: { alignItems: 'flex-end' },
+  txAmount: { fontSize: 15, fontWeight: '700' },
+  txCurrency: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280' },
+  privateBadge: { fontSize: 12, marginTop: 2 },
+  // Projets
+  projectCard: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    marginHorizontal: 16, marginBottom: 12, borderRadius: 12, padding: 16,
+    elevation: 2, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
   },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
+  projectCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  projectName: { fontSize: 16, fontWeight: '700', color: isDark ? '#fff' : '#111827', flex: 1 },
+  projectCurrencyBadge: {
+    backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
   },
-  toggleButtonActive: {
-    backgroundColor: '#7c3aed',
+  projectCurrencyText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' },
+  projectStats: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
+  projectSpent: { fontSize: 20, fontWeight: '700', color: '#7c3aed' },
+  projectTarget: { fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280', marginLeft: 4 },
+  progressBar: { height: 6, backgroundColor: isDark ? '#374151' : '#e5e7eb', borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
+  progressFill: { height: 6, backgroundColor: '#7c3aed', borderRadius: 3 },
+  projectMembers: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' },
+  // Détail projet
+  modalOverlayFull: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
+  projectDetailContainer: { flex: 1 },
+  projectDetailHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
+    backgroundColor: isDark ? '#111827' : '#fff',
   },
-  toggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
+  backButton: { fontSize: 14, color: '#7c3aed', fontWeight: '600' },
+  projectDetailTitle: { fontSize: 18, fontWeight: '700', color: isDark ? '#fff' : '#111827', flex: 1, textAlign: 'center' },
+  projectDetailContent: { flex: 1 },
+  projectSummaryCard: {
+    margin: 16, backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12, padding: 16, elevation: 2,
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
   },
-  toggleTextActive: {
-    color: '#fff',
+  projectSummaryLabel: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 4 },
+  projectSummaryAmount: { fontSize: 28, fontWeight: '700', color: '#7c3aed' },
+  projectSummaryTarget: { fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 8 },
+  splitSection: {
+    marginHorizontal: 16, marginBottom: 12, backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12, padding: 14, elevation: 1,
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
   },
-  content: {
-    flex: 1,
+  splitTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginBottom: 10 },
+  settlementCard: {
+    backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 8, padding: 10, marginBottom: 6,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+  settlementText: { fontSize: 14, color: isDark ? '#e5e7eb' : '#374151' },
+  settlementFrom: { fontWeight: '700', color: '#ef4444' },
+  settlementAmount: { fontWeight: '700', color: '#7c3aed' },
+  settlementTo: { fontWeight: '700', color: '#10b981' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginHorizontal: 16, marginTop: 8, marginBottom: 8 },
+  // Settings
+  settingsSection: {
+    marginHorizontal: 16, marginBottom: 16, backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12, padding: 14, elevation: 1,
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6b7280',
+  settingsSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  settingsSectionTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827' },
+  settingsAddBtn: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#7c3aed',
+    justifyContent: 'center', alignItems: 'center',
   },
-  summaryContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
+  settingsAddBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
+  settingsEmpty: { fontSize: 13, color: isDark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' },
+  settingsItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
+  settingsItemIcon: { fontSize: 20 },
+  settingsItemName: { flex: 1, fontSize: 14, color: isDark ? '#e5e7eb' : '#111827' },
+  colorDot: { width: 16, height: 16, borderRadius: 8 },
+  deleteIcon: { fontSize: 18 },
+  catBudgetItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6' },
+  catBudgetInfo: { flex: 1 },
+  catBudgetName: { fontSize: 14, fontWeight: '600', color: isDark ? '#e5e7eb' : '#111827' },
+  catBudgetPeriod: { fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af' },
+  catBudgetRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  catBudgetPct: { fontSize: 13, fontWeight: '700', color: '#7c3aed' },
+  catBudgetAmount: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' },
+  // Devise
+  currencyRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  currencyChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10,
+    borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
   },
-  summaryCard: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+  currencyChipActive: { borderColor: '#7c3aed', backgroundColor: isDark ? '#1e1b4b' : '#ede9fe' },
+  currencyFlag: { fontSize: 18 },
+  currencyLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' },
+  currencyLabelActive: { color: '#7c3aed' },
+  // Modals
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
   },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 8,
+  modalContent: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    padding: 20, maxHeight: '90%',
   },
-  summaryAmount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
+  modalTitle: { fontSize: 18, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginBottom: 16, textAlign: 'center' },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 6, marginTop: 10 },
+  input: {
+    backgroundColor: isDark ? '#111827' : '#f3f4f6',
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: 15, color: isDark ? '#fff' : '#111827',
+    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent',
   },
-  section: {
-    padding: 16,
+  catScroll: { marginBottom: 4 },
+  catChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16, marginRight: 6,
+    borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16,
+  catChipActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
+  catChipEmoji: { fontSize: 16 },
+  catChipText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151' },
+  catChipTextActive: { color: '#fff', fontWeight: '700' },
+  dateButton: {
+    backgroundColor: isDark ? '#111827' : '#f3f4f6', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10, marginTop: 10,
+    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent',
   },
-  budgetItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  dateButtonText: { fontSize: 14, color: isDark ? '#d1d5db' : '#374151' },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
+  switchLabel: { fontSize: 14, color: isDark ? '#d1d5db' : '#374151' },
+  typeToggle: { flexDirection: 'row', gap: 8, marginBottom: 4 },
+  typeBtn: {
+    flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+    borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
   },
-  budgetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  typeBtnActive: { borderColor: '#ef4444', backgroundColor: '#ef444422' },
+  typeBtnActiveIncome: { borderColor: '#10b981', backgroundColor: '#10b98122' },
+  typeBtnText: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' },
+  typeBtnTextActive: { color: isDark ? '#fff' : '#111827' },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  cancelBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+    borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
   },
-  budgetInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  categoryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  budgetCategory: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  budgetAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  transactionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  transactionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  transactionInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  transactionCategory: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  transactionDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  transactionAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  incomeAmount: {
-    color: '#10b981',
-  },
-  expenseAmount: {
-    color: '#ef4444',
-  },
-  transactionDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#9ca3af',
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-
-  pageTitleContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center',
-  },
+  cancelBtnText: { fontSize: 15, color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' },
+  saveBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: '#7c3aed' },
+  saveBtnText: { fontSize: 15, color: '#fff', fontWeight: '700' },
+  emptyContainer: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 16, fontWeight: '600', color: isDark ? '#d1d5db' : '#1f2937', marginBottom: 6 },
+  emptySubtext: { fontSize: 13, color: isDark ? '#6b7280' : '#9ca3af', textAlign: 'center' },
 });

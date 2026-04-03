@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,6 +64,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const [reviewComment, setReviewComment] = useState('');
   const [newComment, setNewComment] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
 
   // Récupérer la famille
   const { data: families = [] } = trpc.family.list.useQuery();
@@ -271,44 +272,58 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
         </TouchableOpacity>
       </View>
 
-      {/* Filtres de statut */}
-      <View style={styles.filterContainer}>
-        {(['pending', 'approved', 'rejected', 'all'] as FilterStatus[]).map(status => (
-          <TouchableOpacity
-            key={status}
-            style={[styles.filterTab, filterStatus === status && styles.filterTabActive]}
-            onPress={() => setFilterStatus(status)}
-          >
-            <Text style={[styles.filterTabText, filterStatus === status && styles.filterTabTextActive]}>
-              {status === 'pending' ? '⏳' : status === 'approved' ? '✅' : status === 'rejected' ? '❌' : '📋'}
-              {' '}{t(`requests.filter${status.charAt(0).toUpperCase() + status.slice(1)}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Filtres de statut (icônes seules) + menu 3 points pour les types */}
+      <View style={styles.filterRow}>
+        <View style={styles.filterContainer}>
+          {(['pending', 'approved', 'rejected'] as FilterStatus[]).map(status => (
+            <TouchableOpacity
+              key={status}
+              style={[styles.filterTab, filterStatus === status && styles.filterTabActive]}
+              onPress={() => setFilterStatus(status === filterStatus ? 'all' : status)}
+            >
+              <Text style={styles.filterTabEmoji}>
+                {status === 'pending' ? '⏳' : status === 'approved' ? '✅' : '❌'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      {/* Filtres de type */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeFilterRow} contentContainerStyle={styles.typeFilterContent}>
-        <TouchableOpacity
-          style={[styles.typeFilterChip, filterType === 'all' && styles.typeFilterChipActive]}
-          onPress={() => setFilterType('all')}
-        >
-          <Text style={[styles.typeFilterChipText, filterType === 'all' && styles.typeFilterChipTextActive]}>
-            {t('requests.allTypes')}
-          </Text>
-        </TouchableOpacity>
-        {REQUEST_TYPES.map(type => (
+        {/* Menu 3 points pour les types */}
+        <View style={styles.typeMenuWrapper}>
           <TouchableOpacity
-            key={type.value}
-            style={[styles.typeFilterChip, filterType === type.value && styles.typeFilterChipActive]}
-            onPress={() => setFilterType(type.value)}
+            style={[styles.typeMenuButton, filterType !== 'all' && styles.typeMenuButtonActive]}
+            onPress={() => setTypeMenuOpen(!typeMenuOpen)}
           >
-            <Text style={[styles.typeFilterChipText, filterType === type.value && styles.typeFilterChipTextActive]}>
-              {type.emoji} {t(type.labelKey)}
-            </Text>
+            <Text style={styles.typeMenuDots}>⋮</Text>
+            {filterType !== 'all' && (
+              <Text style={styles.typeMenuActiveIndicator}>
+                {REQUEST_TYPES.find(t => t.value === filterType)?.emoji}
+              </Text>
+            )}
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          {typeMenuOpen && (
+            <Pressable style={styles.typeMenuOverlay} onPress={() => setTypeMenuOpen(false)}>
+              <View style={styles.typeMenuDropdown}>
+                <TouchableOpacity
+                  style={[styles.typeMenuItem, filterType === 'all' && styles.typeMenuItemActive]}
+                  onPress={() => { setFilterType('all'); setTypeMenuOpen(false); }}
+                >
+                  <Text style={styles.typeMenuItemText}>📋 {t('requests.allTypes')}</Text>
+                </TouchableOpacity>
+                {REQUEST_TYPES.map(type => (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[styles.typeMenuItem, filterType === type.value && styles.typeMenuItemActive]}
+                    onPress={() => { setFilterType(type.value); setTypeMenuOpen(false); }}
+                  >
+                    <Text style={styles.typeMenuItemText}>{type.emoji} {t(type.labelKey)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Pressable>
+          )}
+        </View>
+      </View>
 
       {/* Liste */}
       <ScrollView
@@ -600,27 +615,34 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontWeight: '700',
     lineHeight: 32,
   },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    gap: 8,
+  },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
     gap: 6,
-    marginBottom: 8,
-    flexWrap: 'wrap',
+    flex: 1,
   },
   filterTab: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: isDark ? '#4b5563' : '#d1d5db',
     backgroundColor: isDark ? '#1f2937' : '#fff',
     alignItems: 'center',
-    minWidth: 70,
+    justifyContent: 'center',
   },
   filterTabActive: {
     borderColor: '#7c3aed',
     backgroundColor: '#7c3aed',
+  },
+  filterTabEmoji: {
+    fontSize: 20,
   },
   filterTabText: {
     fontSize: 11,
@@ -630,6 +652,66 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   filterTabTextActive: {
     color: '#fff',
+  },
+  typeMenuWrapper: {
+    position: 'relative',
+  },
+  typeMenuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: isDark ? '#4b5563' : '#d1d5db',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  typeMenuButtonActive: {
+    borderColor: '#7c3aed',
+    backgroundColor: isDark ? '#1e1b4b' : '#ede9fe',
+  },
+  typeMenuDots: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: isDark ? '#d1d5db' : '#374151',
+    lineHeight: 26,
+  },
+  typeMenuActiveIndicator: {
+    fontSize: 14,
+  },
+  typeMenuOverlay: {
+    position: 'absolute',
+    top: 50,
+    right: 0,
+    zIndex: 999,
+  },
+  typeMenuDropdown: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    padding: 6,
+    minWidth: 160,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  typeMenuItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+  typeMenuItemActive: {
+    backgroundColor: isDark ? '#312e81' : '#ede9fe',
+  },
+  typeMenuItemText: {
+    fontSize: 14,
+    color: isDark ? '#e5e7eb' : '#111827',
+    fontWeight: '500',
   },
   typeFilterRow: {
     marginBottom: 8,

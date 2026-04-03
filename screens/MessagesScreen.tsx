@@ -1,7 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,124 +21,170 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const styles = getStyles(isDark);
-  
-  // États
+
   const [activeTab, setActiveTab] = useState<'general' | 'groups'>('general');
   const [newMessage, setNewMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
-  
-  // Récupérer la locale date-fns selon la langue
+  const flatListRef = useRef<FlatList>(null);
+
   const getLocale = () => {
     switch (i18n.language) {
       case 'fr': return fr;
       case 'de': return de;
-      case 'en': return enUS;
-      default: return fr;
+      default: return enUS;
     }
   };
-  
-  // Récupérer l'ID de la famille active (à adapter selon votre contexte)
+
+  // Récupérer la famille active
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamilyId = families[0]?.id || 0;
-  
-  // Fetch messages - utiliser l'ancien endpoint simple pour l'instant
-  const { data: messagesSimple, isLoading, refetch } = trpc.messages.list.useQuery();
-  
-  // Adapter le format des messages simples
-  const messages = messagesSimple || [];
-  
-  // Mutation pour envoyer un message
-  const sendMutation = trpc.messages.send.useMutation({
+  const activeFamilyId = (families as any[])[0]?.id || 1;
+
+  // Fetch messages — endpoint enrichi qui retourne { messages, hasMore }
+  const { data: messagesData, isLoading, refetch } = trpc.messages.list.useQuery(
+    { familyId: activeFamilyId, limit: 50, offset: 0 },
+    { enabled: !!activeFamilyId }
+  );
+
+  const messages: any[] = (messagesData as any)?.messages || [];
+
+  // Marquer comme lus
+  const markAsRead = trpc.messages.markAsRead.useMutation();
+
+  // Réactions
+  const addReaction = trpc.messages.addReaction.useMutation({
+    onSuccess: () => refetch(),
+  });
+
+  // Mutation pour envoyer un message (endpoint create)
+  const sendMutation = trpc.messages.create.useMutation({
     onSuccess: () => {
       setNewMessage('');
       refetch();
-      // Scroll vers le bas après envoi
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 200);
     },
-    onError: (error) => {
+    onError: () => {
       Alert.alert(t('common.error'), t('messages.sendError'));
-    }
+    },
   });
-  
-  const onRefresh = async () => {
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
-  };
-  
+  }, [refetch]);
+
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      sendMutation.mutate({ content: newMessage.trim() });
-    }
+    const content = newMessage.trim();
+    if (!content || sendMutation.isPending) return;
+    sendMutation.mutate({ content });
   };
-  
+
   const handleEmojiSelected = (emoji: any) => {
     if (reactingToMessageId) {
-      // Mode réaction : pour l'instant, juste fermer le picker (backend pas prêt)
+      addReaction.mutate({ messageId: reactingToMessageId, emoji: emoji.emoji });
       setReactingToMessageId(null);
     } else {
-      // Mode saisie : ajouter l'emoji au message
       setNewMessage(prev => prev + emoji.emoji);
     }
     setIsEmojiPickerOpen(false);
   };
-  
-  const renderMessage = (message: any) => {
-    const isOwnMessage = message.senderId === user?.id;
-    
+
+  const getSenderName = (msg: any): string => {
+    if (msg.userName) return msg.userName;
+    if (msg.userId === user?.id || msg.senderId === user?.id) return t('messages.you');
+    return `#${msg.userId || msg.senderId || '?'}`;
+  };
+
+  const isOwnMessage = (msg: any): boolean => {
+    return msg.userId === user?.id || msg.senderId === user?.id;
+  };
+
+  const getInitials = (name: string) => name.charAt(0).toUpperCase();
+
+  const renderMessage = ({ item: message }: { item: any }) => {
+    const own = isOwnMessage(message);
+    const senderName = getSenderName(message);
+    const reactions = message.reactions || {};
+
     return (
-      <View key={message.id} style={[styles.messageCard, isOwnMessage && styles.ownMessageCard]}>
-        {/* Avatar et nom */}
-        <View style={styles.messageHeader}>
+      <View style={[styles.messageBubbleWrapper, own ? styles.ownWrapper : styles.otherWrapper]}>
+        {/* Avatar (autres seulement) */}
+        {!own && (
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {isOwnMessage ? user?.name?.charAt(0).toUpperCase() : message.senderId?.toString().charAt(0) || '?'}
-            </Text>
+            <Text style={styles.avatarText}>{getInitials(senderName)}</Text>
           </View>
-          <View style={styles.messageHeaderInfo}>
-            <Text style={styles.messageSender}>
-              {isOwnMessage ? t('messages.you') : `${t('messages.user')} #${message.senderId}`}
-            </Text>
-            <Text style={styles.messageTime}>
-              {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
-            </Text>
-          </View>
-        </View>
-        
-        {/* Contenu */}
-        <Text style={styles.messageContent}>{message.content}</Text>
-        
-        {/* Actions */}
-        <View style={styles.messageActions}>
+        )}
+
+        <View style={[styles.bubble, own ? styles.ownBubble : styles.otherBubble]}>
+          {/* Nom de l'expéditeur (autres seulement) */}
+          {!own && (
+            <Text style={styles.senderName}>{senderName}</Text>
+          )}
+
+          {/* Contenu texte */}
+          <Text style={[styles.bubbleText, own && styles.ownBubbleText]}>{message.content}</Text>
+
+          {/* Pièce jointe image */}
+          {message.attachmentUrl && message.attachmentType?.startsWith('image') && (
+            <Image
+              source={{ uri: message.attachmentUrl }}
+              style={styles.attachmentImage}
+              resizeMode="cover"
+            />
+          )}
+
+          {/* Timestamp */}
+          <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
+            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
+          </Text>
+
+          {/* Réactions existantes */}
+          {Object.keys(reactions).length > 0 && (
+            <View style={styles.reactionsRow}>
+              {Object.entries(reactions).map(([emoji, users]: [string, any]) => (
+                <View key={emoji} style={styles.reactionBadge}>
+                  <Text style={styles.reactionEmoji}>{emoji}</Text>
+                  <Text style={styles.reactionCount}>{(users as any[]).length}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Bouton Réagir */}
           <TouchableOpacity
-            style={styles.actionButton}
+            style={styles.reactButton}
             onPress={() => {
               setReactingToMessageId(message.id);
               setIsEmojiPickerOpen(true);
             }}
           >
-            <Text style={styles.actionButtonText}>😊 {t('messages.react')}</Text>
+            <Text style={styles.reactButtonText}>😊 {t('messages.react')}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Avatar (soi-même à droite) */}
+        {own && (
+          <View style={[styles.avatar, styles.ownAvatar]}>
+            <Text style={styles.avatarText}>{getInitials(user?.name || 'M')}</Text>
+          </View>
+        )}
       </View>
     );
   };
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
-      {/* Header avec titre */}
+
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>{t('messages.title')}</Text>
       </View>
-      
+
       {/* Onglets */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
@@ -149,7 +195,6 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             💬 {t('messages.general')}
           </Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={[styles.tab, activeTab === 'groups' && styles.activeTab]}
           onPress={() => setActiveTab('groups')}
@@ -159,36 +204,36 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           </Text>
         </TouchableOpacity>
       </View>
-      
-      {/* Contenu selon l'onglet */}
+
+      {/* Contenu */}
       {activeTab === 'general' ? (
         <KeyboardAvoidingView
           style={styles.contentContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={100}
+          keyboardVerticalOffset={90}
         >
-          {/* Liste des messages */}
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.messagesList}
-            contentContainerStyle={styles.messagesListContent}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-          >
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7c3aed" />
-              </View>
-            ) : messages.length > 0 ? (
-              messages.map(renderMessage)
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>{t('messages.noMessages')}</Text>
-                <Text style={styles.emptySubtext}>{t('messages.sendFirst')}</Text>
-              </View>
-            )}
-          </ScrollView>
-          
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#7c3aed" />
+            </View>
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.listContent}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>{t('messages.noMessages')}</Text>
+                  <Text style={styles.emptySubtext}>{t('messages.sendFirst')}</Text>
+                </View>
+              }
+            />
+          )}
+
           {/* Zone de saisie */}
           <View style={styles.inputContainer}>
             <TouchableOpacity
@@ -200,7 +245,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             >
               <Text style={styles.emojiButtonText}>😊</Text>
             </TouchableOpacity>
-            
+
             <TextInput
               style={styles.input}
               value={newMessage}
@@ -209,10 +254,11 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
               placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
               multiline
               maxLength={500}
+              onSubmitEditing={handleSendMessage}
             />
-            
+
             <TouchableOpacity
-              style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
+              style={[styles.sendButton, (!newMessage.trim() || sendMutation.isPending) && styles.sendButtonDisabled]}
               onPress={handleSendMessage}
               disabled={!newMessage.trim() || sendMutation.isPending}
             >
@@ -227,12 +273,15 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       ) : (
         <DiscussionGroupsTab activeFamilyId={activeFamilyId} />
       )}
-      
+
       {/* Emoji Picker */}
       <EmojiPicker
         onEmojiSelected={handleEmojiSelected}
         open={isEmojiPickerOpen}
-        onClose={() => setIsEmojiPickerOpen(false)}
+        onClose={() => {
+          setIsEmojiPickerOpen(false);
+          setReactingToMessageId(null);
+        }}
         enableSearchBar
         enableRecentlyUsed
       />
@@ -243,7 +292,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
   },
   header: {
     paddingHorizontal: 16,
@@ -263,13 +312,15 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     padding: 12,
     gap: 8,
     backgroundColor: isDark ? '#111827' : '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: isDark ? '#374151' : '#e5e7eb',
+    borderRadius: 10,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     alignItems: 'center',
   },
   activeTab: {
@@ -286,17 +337,14 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
-  messagesList: {
-    flex: 1,
-  },
-  messagesListContent: {
-    padding: 16,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+  },
+  listContent: {
+    padding: 12,
+    paddingBottom: 8,
   },
   emptyContainer: {
     flex: 1,
@@ -314,25 +362,19 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 14,
     color: isDark ? '#9ca3af' : '#6b7280',
   },
-  messageCard: {
-    backgroundColor: isDark ? '#374151' : '#fff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: isDark ? '#4b5563' : '#e5e7eb',
-    maxWidth: '85%',
-    alignSelf: 'flex-start',
-  },
-  ownMessageCard: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe',
-    borderColor: isDark ? '#4c1d95' : '#c4b5fd',
-    alignSelf: 'flex-end',
-  },
-  messageHeader: {
+  // Bulles de messages
+  messageBubbleWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    alignItems: 'flex-end',
+    maxWidth: '88%',
+  },
+  ownWrapper: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row-reverse',
+  },
+  otherWrapper: {
+    alignSelf: 'flex-start',
   },
   avatar: {
     width: 32,
@@ -341,51 +383,99 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginHorizontal: 6,
+    flexShrink: 0,
+  },
+  ownAvatar: {
+    backgroundColor: '#5b21b6',
   },
   avatarText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
-  messageHeaderInfo: {
-    flex: 1,
+  bubble: {
+    borderRadius: 16,
+    padding: 10,
+    maxWidth: '100%',
+    flexShrink: 1,
   },
-  messageSender: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#fff' : '#111827',
+  otherBubble: {
+    backgroundColor: isDark ? '#374151' : '#fff',
+    borderTopLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
   },
-  messageTime: {
+  ownBubble: {
+    backgroundColor: '#7c3aed',
+    borderTopRightRadius: 4,
+  },
+  senderName: {
     fontSize: 12,
-    color: isDark ? '#9ca3af' : '#6b7280',
-  },
-  messageContent: {
-    fontSize: 15,
-    color: isDark ? '#e5e7eb' : '#374151',
-    lineHeight: 22,
-  },
-  messageActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: isDark ? '#4b5563' : '#e5e7eb',
-  },
-  actionButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  actionButtonText: {
-    fontSize: 13,
+    fontWeight: '700',
     color: '#7c3aed',
+    marginBottom: 4,
+  },
+  bubbleText: {
+    fontSize: 15,
+    color: isDark ? '#e5e7eb' : '#111827',
+    lineHeight: 21,
+  },
+  ownBubbleText: {
+    color: '#fff',
+  },
+  bubbleTime: {
+    fontSize: 11,
+    color: isDark ? '#9ca3af' : '#6b7280',
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  ownBubbleTime: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  attachmentImage: {
+    width: 200,
+    height: 140,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  reactionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 6,
+  },
+  reactionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#4b5563' : '#f3f4f6',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 2,
+  },
+  reactionEmoji: {
+    fontSize: 14,
+  },
+  reactionCount: {
+    fontSize: 12,
+    color: isDark ? '#d1d5db' : '#374151',
     fontWeight: '600',
   },
+  reactButton: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  reactButtonText: {
+    fontSize: 12,
+    color: isDark ? 'rgba(255,255,255,0.6)' : '#7c3aed',
+    fontWeight: '500',
+  },
+  // Zone de saisie
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 12,
+    padding: 10,
     backgroundColor: isDark ? '#111827' : '#fff',
     borderTopWidth: 1,
     borderTopColor: isDark ? '#374151' : '#e5e7eb',
@@ -400,18 +490,20 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
   },
   emojiButtonText: {
-    fontSize: 24,
+    fontSize: 22,
   },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    backgroundColor: isDark ? '#1f2937' : '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
     color: isDark ? '#fff' : '#111827',
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? '#374151' : 'transparent',
   },
   sendButton: {
     width: 40,
@@ -426,25 +518,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   sendButtonText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  comingSoonContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  comingSoonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: isDark ? '#d1d5db' : '#1f2937',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  comingSoonSubtext: {
-    fontSize: 14,
-    color: isDark ? '#9ca3af' : '#6b7280',
-    textAlign: 'center',
+    fontWeight: '700',
   },
 });

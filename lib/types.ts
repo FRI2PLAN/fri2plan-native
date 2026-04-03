@@ -124,12 +124,60 @@ export interface Budget {
 
 export interface Transaction {
   id: number;
-  amount: number;
+  amount: number; // en centimes
   category: string;
   description?: string;
   date: string;
   type: 'income' | 'expense';
   familyId: number;
+  userId?: number;
+  userName?: string;
+  isPrivate?: number;
+  projectId?: number;
+  currency?: string;
+  createdAt?: string;
+}
+
+export interface BudgetCategory {
+  id: number;
+  name: string;
+  icon?: string;
+  color?: string;
+  familyId: number;
+  isDefault?: number;
+}
+
+export interface CategoryBudget {
+  id: number;
+  familyId: number;
+  categoryId: number;
+  categoryName?: string;
+  budgetAmount: number; // en centimes
+  period: 'weekly' | 'monthly' | 'yearly';
+  alertThreshold: number;
+  spent?: number;
+}
+
+export interface SavingsProject {
+  id: number;
+  familyId: number;
+  name: string;
+  targetAmount: number; // en centimes
+  currentAmount: number; // en centimes
+  deadline?: string;
+  isCompleted: number;
+  period?: string;
+  alertThreshold?: number;
+  createdAt: string;
+  currency?: string; // CHF, EUR, USD — stocké dans le nom ou description
+}
+
+export interface BudgetBalance {
+  balance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  initialBalance?: number;
+  regularIncome?: number;
 }
 
 export interface Reward {
@@ -475,14 +523,113 @@ export type AppRouter = {
     };
   };
   budget: {
+    // Ancien endpoint simple (compatibilité)
     get: {
       query: (input: { month: string }) => Promise<Budget>;
+      useQuery: (input: { month: string }, opts?: any) => any;
     };
     transactions: {
       query: () => Promise<Transaction[]>;
+      useQuery: (opts?: any) => any;
     };
     addTransaction: {
       mutate: (input: Partial<Transaction>) => Promise<Transaction>;
+      useMutation: (opts?: any) => any;
+    };
+    // Endpoints enrichis
+    listTransactions: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<Transaction[]>;
+    };
+    createTransaction: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: {
+        familyId: number;
+        type: 'income' | 'expense';
+        amount: number;
+        category: string;
+        description?: string;
+        date: Date;
+        isPrivate?: number;
+        projectId?: number;
+      }) => Promise<{ transactionId: number }>;
+    };
+    updateTransaction: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: {
+        transactionId: number;
+        type?: 'income' | 'expense';
+        amount?: number;
+        category?: string;
+        description?: string;
+        date?: Date;
+        isPrivate?: number;
+        projectId?: number;
+      }) => Promise<void>;
+    };
+    deleteTransaction: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { transactionId: number }) => Promise<void>;
+    };
+    getBudgetBalance: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<BudgetBalance>;
+    };
+    getBalanceHistory: {
+      useQuery: (input: { familyId: number; days: number }, opts?: any) => any;
+      query: (input: { familyId: number; days: number }) => Promise<{ date: string; balance: number }[]>;
+    };
+    listCategories: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<BudgetCategory[]>;
+    };
+    createCategory: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { familyId: number; name: string; icon?: string; color?: string }) => Promise<{ categoryId: number }>;
+    };
+    updateCategory: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { categoryId: number; name?: string; icon?: string; color?: string }) => Promise<void>;
+    };
+    deleteCategory: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { categoryId: number }) => Promise<void>;
+    };
+    listCategoryBudgets: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<CategoryBudget[]>;
+    };
+    createCategoryBudget: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { familyId: number; categoryId: number; budgetAmount: number; period: 'weekly' | 'monthly' | 'yearly'; alertThreshold: number }) => Promise<void>;
+    };
+    updateCategoryBudget: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { budgetId: number; budgetAmount?: number; period?: string; alertThreshold?: number }) => Promise<void>;
+    };
+    deleteCategoryBudget: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { budgetId: number }) => Promise<void>;
+    };
+    getCategoryBudgetAlerts: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<any[]>;
+    };
+    listSavingsProjects: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<SavingsProject[]>;
+    };
+    createSavingsProject: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { familyId: number; name: string; targetAmount: number; deadline?: Date }) => Promise<{ projectId: number }>;
+    };
+    updateSavingsProject: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { budgetConfigId: number; name?: string; targetAmount?: number; deadline?: Date; isCompleted?: number }) => Promise<void>;
+    };
+    deleteSavingsProject: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { budgetConfigId: number }) => Promise<void>;
     };
   };
   rewards: {
