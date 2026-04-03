@@ -88,12 +88,7 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Parrainer un ami</Text>
-      </View>
-
-            {/* Page Title */}
+      {/* Page Title */}
       <View style={styles.pageTitleContainer}>
         <Text style={styles.pageTitle}>Parrainer un ami</Text>
       </View>

@@ -636,12 +636,95 @@ export type AppRouter = {
   rewards: {
     list: {
       query: () => Promise<Reward[]>;
+      useQuery: (opts?: any) => any;
     };
     myPoints: {
       query: () => Promise<{ points: number }>;
+      useQuery: (opts?: any) => any;
+    };
+    familyPoints: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<Array<{ userId: number; name: string; totalPoints: number }>>;
+    };
+    myEarnedRewards: {
+      useQuery: (opts?: any) => any;
+      query: () => Promise<Array<{ id: number; rewardId: number; rewardName: string; pointsCost: number; status: string; claimedAt: string }>>;
+    };
+    create: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { name: string; description?: string; pointsCost: number; emoji?: string; familyId: number }) => Promise<{ id: number }>;
+    };
+    update: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { rewardId: number; name?: string; description?: string; pointsCost?: number; emoji?: string; isActive?: number }) => Promise<void>;
+    };
+    delete: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { rewardId: number }) => Promise<void>;
     };
     redeem: {
       mutate: (input: { id: number }) => Promise<void>;
+      useMutation: (opts?: any) => any;
+    };
+    claimReward: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { rewardId: number }) => Promise<{ claimId: number }>;
+    };
+    pendingClaims: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<Array<{ id: number; userId: number; userName: string; rewardId: number; rewardName: string; pointsCost: number; status: string; claimedAt: string }>>;
+    };
+    approveClaim: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { claimId: number }) => Promise<void>;
+    };
+    rejectClaim: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { claimId: number }) => Promise<void>;
+    };
+    statistics: {
+      useQuery: (opts?: any) => any;
+      query: () => Promise<{ totalPoints: number; rank: number; totalMembers: number; badgesEarned: number }>;
+    };
+  };
+  members: {
+    invite: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { email: string; familyId: number; role?: 'admin' | 'member' }) => Promise<{ success: boolean; invitationCode: string; expiresAt: string }>;
+    };
+    updateColor: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { userId: number; color: string }) => Promise<{ success: boolean }>;
+    };
+    updateRole: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { userId: number; familyId: number; role: 'admin' | 'member' }) => Promise<{ success: boolean }>;
+    };
+    remove: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { userId: number }) => Promise<{ success: boolean }>;
+    };
+    updateName: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { userId: number; name: string }) => Promise<{ success: boolean }>;
+    };
+    transferAdminRole: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { newAdminUserId: number; familyId: number }) => Promise<{ success: boolean }>;
+    };
+  };
+  invitations: {
+    list: {
+      useQuery: (opts?: any) => any;
+      query: () => Promise<Array<{ id: number; email: string; role: string; status: string; invitationCode: string; expiresAt: string }>>;
+    };
+    delete: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { invitationId: number }) => Promise<{ success: boolean }>;
+    };
+    update: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { invitationId: number; email: string; role?: 'admin' | 'member' }) => Promise<{ success: boolean }>;
     };
   };
   requests: {

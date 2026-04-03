@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,59 @@ export default function RichHeader({
   // Récupérer le nombre de notifications non lues
   const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery();
 
+  // Récupérer les points de la famille pour le classement
+  const { data: families } = trpc.family.list.useQuery();
+  const activeFamily = families?.[0];
+  const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
+
+  // Calculer points et classement de l'utilisateur
+  const { currentUserPoints, currentUserRank, totalMembers } = useMemo(() => {
+    if (!user || !familyPoints.length) return { currentUserPoints: 0, currentUserRank: 0, totalMembers: 0 };
+    const sorted = [...familyPoints].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
+    const rank = sorted.findIndex((m: any) => m.userId === user.id) + 1;
+    const myPoints = sorted.find((m: any) => m.userId === user.id)?.totalPoints || 0;
+    return { currentUserPoints: myPoints, currentUserRank: rank, totalMembers: sorted.length };
+  }, [user, familyPoints]);
+
+  // Calcul progression vers prochain palier
+  const progressPercent = useMemo(() => {
+    const milestones = [0, 50, 100, 200, 500, 1000, 2000, 5000];
+    const idx = milestones.findIndex(m => currentUserPoints < m);
+    if (idx <= 0) return 100;
+    const prev = milestones[idx - 1];
+    const next = milestones[idx];
+    return Math.min(((currentUserPoints - prev) / (next - prev)) * 100, 100);
+  }, [currentUserPoints]);
+
+  // Rendu de l'avatar selon le type (upload, emoji, icon, initials)
+  const renderAvatar = () => {
+    const avatarType = (user as any)?.avatarType;
+    const avatarValue = (user as any)?.avatarValue;
+    const avatarUrl = (user as any)?.avatarUrl;
+    const userColor = (user as any)?.userColor || '#ec4899';
+
+    if (avatarType === 'upload' && avatarUrl) {
+      return <Image source={{ uri: avatarUrl }} style={styles.avatar} />;
+    }
+    if ((avatarType === 'emoji' || avatarType === 'icon') && avatarValue) {
+      return (
+        <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: userColor }]}>
+          <Text style={styles.avatarEmoji}>{avatarValue}</Text>
+        </View>
+      );
+    }
+    // initials or fallback
+    const initials = user?.name?.charAt(0).toUpperCase() || '?';
+    return (
+      <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: userColor }]}>
+        <Text style={styles.avatarText}>{initials}</Text>
+      </View>
+    );
+  };
+
   const openDrawer = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
@@ -42,24 +95,29 @@ export default function RichHeader({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {/* Left: Avatar + Name - Clickable to go Home */}
-        <TouchableOpacity 
+        {/* Left: Avatar + Name + Points - Clickable to go Home */}
+        <TouchableOpacity
           style={styles.leftSection}
           onPress={onNavigateHome}
           activeOpacity={0.7}
         >
-          {user?.avatarUrl ? (
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0).toUpperCase() || '?'}
-              </Text>
-            </View>
-          )}
-          <Text style={styles.userName} numberOfLines={1}>
-            {user?.name || 'Utilisateur'}
-          </Text>
+          {renderAvatar()}
+          <View style={styles.userInfo}>
+            <Text style={styles.userName} numberOfLines={1}>
+              {user?.name || 'Utilisateur'}
+            </Text>
+            {totalMembers > 0 && (
+              <View style={styles.pointsRow}>
+                <Text style={styles.pointsText}>🏆 {currentUserPoints} pts</Text>
+                <Text style={styles.rankText}>{currentUserRank}/{totalMembers}</Text>
+              </View>
+            )}
+            {totalMembers > 0 && (
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
         {/* Right: Actions */}
@@ -130,13 +188,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
   },
   avatarPlaceholder: {
-    backgroundColor: '#ec4899', // Rose/magenta
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -145,11 +202,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  avatarEmoji: {
+    fontSize: 18,
+  },
+  userInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   userName: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
-    flex: 1,
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 1,
+  },
+  pointsText: {
+    color: '#fde68a',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  rankText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+    opacity: 0.9,
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2,
+    marginTop: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 3,
+    backgroundColor: '#fbbf24',
+    borderRadius: 2,
   },
   rightSection: {
     flexDirection: 'row',
@@ -168,7 +260,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#ef4444', // Rouge
+    backgroundColor: '#ef4444',
     borderRadius: 10,
     minWidth: 18,
     height: 18,
