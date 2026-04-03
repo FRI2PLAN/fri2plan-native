@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { FlatList, View, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import React, { useRef, useEffect, useCallback } from 'react';
+import { View, Dimensions } from 'react-native';
+import PagerView from 'react-native-pager-view';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -11,8 +12,10 @@ interface CircularPagerProps {
 }
 
 /**
- * Circular horizontal pager using FlatList
- * Uses onMomentumScrollEnd for reliable page detection without flash/freeze
+ * Circular horizontal pager using react-native-pager-view (100% native)
+ * Layout: [last, page0, page1, ..., pageN, first]
+ * When user lands on index 0 (clone of last) -> jump to real last (data.length)
+ * When user lands on index N+1 (clone of first) -> jump to real first (1)
  */
 export default function CircularPager({
   data,
@@ -20,110 +23,83 @@ export default function CircularPager({
   initialIndex = 0,
   onPageChange,
 }: CircularPagerProps) {
-  const flatListRef = useRef<FlatList>(null);
-  const currentIndexRef = useRef(initialIndex);
+  const pagerRef = useRef<PagerView>(null);
+  const currentRealIndex = useRef(initialIndex);
   const isJumping = useRef(false);
 
-  // Duplicate data for circular effect: [last, ...data, first]
-  const circularData = [
-    data[data.length - 1], // Last item at the beginning (index 0)
-    ...data,               // Original data (index 1..N)
-    data[0],               // First item at the end (index N+1)
+  // Build circular pages: [clone_last, ...data, clone_first]
+  const circularPages = [
+    data[data.length - 1], // index 0 — clone of last
+    ...data,               // index 1..N — real pages
+    data[0],               // index N+1 — clone of first
   ];
 
-  // Initial scroll to correct position
+  // Set initial position (real page = initialIndex + 1)
   useEffect(() => {
     const timer = setTimeout(() => {
-      flatListRef.current?.scrollToIndex({
-        index: initialIndex + 1,
-        animated: false,
-      });
-    }, 50);
+      pagerRef.current?.setPageWithoutAnimation(initialIndex + 1);
+    }, 0);
     return () => clearTimeout(timer);
   }, []);
 
-  // Listen to external page changes (from menu, favorites, etc.)
+  // React to external navigation (menu, favorites, shortcuts)
   useEffect(() => {
-    if (currentIndexRef.current !== initialIndex) {
+    if (currentRealIndex.current !== initialIndex) {
       isJumping.current = true;
-      flatListRef.current?.scrollToIndex({
-        index: initialIndex + 1,
-        animated: false,
-      });
-      currentIndexRef.current = initialIndex;
-      setTimeout(() => {
-        isJumping.current = false;
-      }, 100);
+      pagerRef.current?.setPageWithoutAnimation(initialIndex + 1);
+      currentRealIndex.current = initialIndex;
+      setTimeout(() => { isJumping.current = false; }, 100);
     }
   }, [initialIndex]);
 
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handlePageSelected = useCallback((e: any) => {
     if (isJumping.current) return;
 
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / SCREEN_WIDTH);
+    const pos = e.nativeEvent.position;
+    const lastCloneIndex = circularPages.length - 1; // N+1
 
-    if (index === 0) {
-      // Swiped to the duplicated last item -> jump to real last item instantly
+    if (pos === 0) {
+      // Landed on clone of last -> jump to real last
       isJumping.current = true;
-      flatListRef.current?.scrollToIndex({
-        index: data.length,
-        animated: false,
-      });
-      currentIndexRef.current = data.length - 1;
+      const realLast = data.length; // position in circularPages
+      pagerRef.current?.setPageWithoutAnimation(realLast);
+      currentRealIndex.current = data.length - 1;
       onPageChange?.(data.length - 1);
       setTimeout(() => { isJumping.current = false; }, 100);
-    } else if (index === circularData.length - 1) {
-      // Swiped to the duplicated first item -> jump to real first item instantly
+    } else if (pos === lastCloneIndex) {
+      // Landed on clone of first -> jump to real first
       isJumping.current = true;
-      flatListRef.current?.scrollToIndex({
-        index: 1,
-        animated: false,
-      });
-      currentIndexRef.current = 0;
+      pagerRef.current?.setPageWithoutAnimation(1);
+      currentRealIndex.current = 0;
       onPageChange?.(0);
       setTimeout(() => { isJumping.current = false; }, 100);
     } else {
-      const realIndex = index - 1;
-      currentIndexRef.current = realIndex;
+      const realIndex = pos - 1;
+      currentRealIndex.current = realIndex;
       onPageChange?.(realIndex);
     }
-  };
-
-  const renderItemWrapper = ({ item, index }: { item: any; index: number }) => {
-    let realIndex = index - 1;
-    if (index === 0) realIndex = data.length - 1;
-    if (index === circularData.length - 1) realIndex = 0;
-
-    return (
-      <View style={{ width: SCREEN_WIDTH }}>
-        {renderItem(item, realIndex)}
-      </View>
-    );
-  };
+  }, [data.length, onPageChange]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        ref={flatListRef}
-        data={circularData}
-        renderItem={renderItemWrapper}
-        keyExtractor={(_, index) => `circular-${index}`}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
-        scrollEventThrottle={16}
-        getItemLayout={(_, index) => ({
-          length: SCREEN_WIDTH,
-          offset: SCREEN_WIDTH * index,
-          index,
-        })}
-        initialScrollIndex={initialIndex + 1}
-        bounces={false}
-        decelerationRate="fast"
-        disableIntervalMomentum={true}
-      />
-    </View>
+    <PagerView
+      ref={pagerRef}
+      style={{ flex: 1 }}
+      initialPage={initialIndex + 1}
+      onPageSelected={handlePageSelected}
+      overdrag={false}
+    >
+      {circularPages.map((item, index) => {
+        // Compute real data index for rendering
+        let realIndex = index - 1;
+        if (index === 0) realIndex = data.length - 1;
+        if (index === circularPages.length - 1) realIndex = 0;
+
+        return (
+          <View key={`pager-${index}`} style={{ flex: 1, width: SCREEN_WIDTH }}>
+            {renderItem(item, realIndex)}
+          </View>
+        );
+      })}
+    </PagerView>
   );
 }
