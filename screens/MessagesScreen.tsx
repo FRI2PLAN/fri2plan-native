@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useRef, useCallback } from 'react';

@@ -1,5 +1,5 @@
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, RefreshControl, ActivityIndicator, Alert, Modal,
   KeyboardAvoidingView, Platform, Switch, Pressable, FlatList
 } from 'react-native';

@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';

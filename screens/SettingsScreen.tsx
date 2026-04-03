@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Switch, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';

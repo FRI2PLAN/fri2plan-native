@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * MealsScreen — Onglet Repas
  * Connecté à la BD via tRPC (routes meals.*)
@@ -11,7 +12,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, SafeAreaView, Switch,
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
   PanResponder, Animated,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';

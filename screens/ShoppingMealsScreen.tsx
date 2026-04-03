@@ -1,10 +1,11 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * ShoppingMealsScreen — Onglet fusionné "Courses & Repas"
  * Sous-onglets : 🛒 Courses | 🍽️ Repas
  * Reproduit la structure de la webview (Shopping.tsx + Cuisine.tsx dans le même onglet)
  */
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
