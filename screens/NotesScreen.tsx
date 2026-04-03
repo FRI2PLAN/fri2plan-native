@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, RefreshControl, ActivityIndicator, Alert, Modal,
   KeyboardAvoidingView, Platform, Switch, Linking
 } from 'react-native';
