@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,8 +31,7 @@ function AvatarCircle({ name, size = 28, color = '#7c3aed' }: { name: string; si
   return (
     <View style={{
       width: size, height: size, borderRadius: size / 2,
-      backgroundColor: color, alignItems: 'center', justifyContent: 'center',
-    }}>
+      backgroundColor: color, alignItems: 'center', justifyContent: 'center'}}>
       <Text style={{ color: '#fff', fontSize: size * 0.38, fontWeight: '700' }}>{initials}</Text>
     </View>
   );
@@ -78,8 +76,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     assignedTo: undefined as number | undefined,
     dueDate: undefined as Date | undefined,
     recurrence: 'none' as Recurrence,
-    points: 10, priority: 'medium' as Priority, isPrivate: false,
-  };
+    points: 10, priority: 'medium' as Priority, isPrivate: false};
   const [formData, setFormData] = useState(emptyForm);
   const [editFormData, setEditFormData] = useState(emptyForm);
 
@@ -93,18 +90,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const createMutation = trpc.tasks.create.useMutation({
     onSuccess: () => { setCreateModalVisible(false); setFormData(emptyForm); utils.tasks.list.invalidate(); },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+    onError: (e) => Alert.alert('Erreur', e.message)});
 
   const updateMutation = trpc.tasks.update.useMutation({
     onSuccess: () => { setEditModalVisible(false); setQuickActionsVisible(false); utils.tasks.list.invalidate(); },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+    onError: (e) => Alert.alert('Erreur', e.message)});
 
   const deleteMutation = trpc.tasks.delete.useMutation({
     onSuccess: () => { setQuickActionsVisible(false); utils.tasks.list.invalidate(); },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+    onError: (e) => Alert.alert('Erreur', e.message)});
 
   const completeMutation = trpc.tasks.complete.useMutation({
     onSuccess: (data) => {
@@ -112,8 +106,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       setQuickActionsVisible(false);
       utils.tasks.list.invalidate();
     },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+    onError: (e) => Alert.alert('Erreur', e.message)});
 
   const postponeMutation = trpc.tasks.postpone.useMutation({
     onSuccess: (data) => {
@@ -123,8 +116,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       setShowPostponePicker(false);
       utils.tasks.list.invalidate();
     },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+    onError: (e) => Alert.alert('Erreur', e.message)});
 
   // ── Helpers ──
   const getLocale = () => i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
@@ -191,8 +183,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       recurrence: selectedTask.recurrence || 'none',
       points: selectedTask.points || 10,
       priority: selectedTask.priority || 'medium',
-      isPrivate: selectedTask.isPrivate === 1,
-    });
+      isPrivate: selectedTask.isPrivate === 1});
     setQuickActionsVisible(false);
     setEditModalVisible(true);
   };
@@ -210,8 +201,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     const isAlreadyMine = selectedTask.assignedTo === user.id;
     updateMutation.mutate({
       taskId: selectedTask.id,
-      assignedTo: isAlreadyMine ? undefined : user.id,
-    });
+      assignedTo: isAlreadyMine ? undefined : user.id});
     setSelectedTask({ ...selectedTask, assignedTo: isAlreadyMine ? undefined : user.id });
   };
 
@@ -225,8 +215,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       recurrence: formData.recurrence,
       points: formData.points,
       priority: formData.priority,
-      isPrivate: formData.isPrivate ? 1 : 0,
-    });
+      isPrivate: formData.isPrivate ? 1 : 0});
   };
 
   const handleUpdateTask = () => {
@@ -241,8 +230,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       recurrence: editFormData.recurrence,
       points: editFormData.points,
       priority: editFormData.priority,
-      isPrivate: editFormData.isPrivate ? 1 : 0,
-    });
+      isPrivate: editFormData.isPrivate ? 1 : 0});
   };
 
   // ── Composant carte tâche ────────────────────────────────────────────────
@@ -368,7 +356,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Titre */}
@@ -669,7 +657,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -784,6 +772,5 @@ function getStyles(isDark: boolean) {
     pickerModal: { backgroundColor: card, borderRadius: 16, padding: 18, width: '85%', maxHeight: '70%' },
     pickerTitle: { fontSize: 17, fontWeight: 'bold', color: text, marginBottom: 12 },
     pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 6, borderRadius: 8, marginBottom: 2 },
-    pickerOptionText: { fontSize: 16, color: text },
-  });
+    pickerOptionText: { fontSize: 16, color: text }});
 }

@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -44,7 +43,7 @@ export default function MembersScreen({ onNavigate , onPrevious, onNext}: Member
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
       {/* Header */}
@@ -130,15 +129,14 @@ export default function MembersScreen({ onNavigate , onPrevious, onNext}: Member
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+    backgroundColor: '#f9fafb'},
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -146,24 +144,20 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   addButton: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   addButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   familyCard: {
     backgroundColor: '#7c3aed',
     margin: 16,
@@ -173,54 +167,43 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
-  },
+    elevation: 5},
   familyName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   familyInfo: {
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   infoItem: {
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   infoLabel: {
     fontSize: 14,
     color: '#e9d5ff',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   inviteCodeContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   inviteCode: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-    letterSpacing: 2,
-  },
+    letterSpacing: 2},
   familySubtext: {
     fontSize: 14,
     color: '#e9d5ff',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   content: {
-    flex: 1,
-  },
+    flex: 1},
   section: {
-    padding: 16,
-  },
+    padding: 16},
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   memberCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -231,8 +214,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
+    elevation: 3},
   memberAvatar: {
     width: 60,
     height: 60,
@@ -240,47 +222,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
-  },
+    marginRight: 16},
   memberAvatarText: {
-    fontSize: 32,
-  },
+    fontSize: 32},
   memberInfo: {
     flex: 1,
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   memberName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   memberEmail: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   roleBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
-  },
+    borderRadius: 12},
   roleBadgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-  },
+    paddingVertical: 40},
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6b7280',
-  },
+    color: '#6b7280'},
   infoCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -289,30 +262,25 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
+    elevation: 3},
   infoCardText: {
     fontSize: 14,
     color: '#6b7280',
     lineHeight: 20,
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-  },
+    paddingVertical: 60},
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   emptyStateSubtext: {
     fontSize: 14,
     color: '#9ca3af',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
 
   pageTitleContainer: {
     backgroundColor: '#fff',
@@ -320,12 +288,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center'}});

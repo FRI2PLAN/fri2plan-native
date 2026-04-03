@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Switch, Pressable, FlatList, Share, Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets, SafeAreaView} from 'react-native-safe-area-context';
+import { useSafeAreaInsets} from 'react-native-safe-area-context';
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -30,8 +30,7 @@ const CURRENCIES = [
 const LUCIDE_TO_EMOJI: Record<string, string> = {
   ShoppingCart: '🛒', Car: '🚗', Smile: '😊', Heart: '❤️',
   GraduationCap: '🎓', Home: '🏠', Shirt: '👕', Wallet: '💼',
-  DollarSign: '💵', CreditCard: '💳', TrendingUp: '📈', Gift: '🎁',
-};
+  DollarSign: '💵', CreditCard: '💳', TrendingUp: '📈', Gift: '🎁'};
 
 const getCategoryEmoji = (icon?: string): string => {
   if (!icon) return '💼';
@@ -111,8 +110,7 @@ function calculateSplit(
         from: debtors[i].name || `#${debtors[i].id}`,
         to: creditors[j].name || `#${creditors[j].id}`,
         amount: Math.round(amount * 100) / 100,
-        currency,
-      });
+        currency});
     }
     debtAmounts[i] -= amount;
     creditAmounts[j] -= amount;
@@ -187,8 +185,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     description: '',
     date: new Date(),
     isPrivate: false,
-    projectId: undefined as number | undefined,
-  });
+    projectId: undefined as number | undefined});
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // ── Formulaire projet ──
@@ -202,8 +199,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   // ── Formulaire dépense projet ──
   const [projectTxModalOpen, setProjectTxModalOpen] = useState(false);
   const [projectTxForm, setProjectTxForm] = useState({
-    amount: '', category: 'Restaurant', description: '', payerId: user?.id || 0, date: new Date(),
-  });
+    amount: '', category: 'Restaurant', description: '', payerId: user?.id || 0, date: new Date()});
   const [showProjectDatePicker, setShowProjectDatePicker] = useState(false);
   const [showCatDropdown, setShowCatDropdown] = useState(false);
 
@@ -223,44 +219,34 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   // ── Mutations ──
   const createTx = trpc.budget.createTransaction.useMutation({
     onSuccess: () => { setTxModalOpen(false); resetTxForm(); refetchTx(); refetchBalance(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const updateTx = trpc.budget.updateTransaction.useMutation({
     onSuccess: () => { setTxModalOpen(false); setEditingTxId(null); resetTxForm(); refetchTx(); refetchBalance(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const deleteTx = trpc.budget.deleteTransaction.useMutation({
     onSuccess: () => { refetchTx(); refetchBalance(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const createProject = trpc.budget.createSavingsProject.useMutation({
     onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); setEditingProjectId(null); refetchProjects(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const updateProject = trpc.budget.updateSavingsProject.useMutation({
     onSuccess: () => { setProjectModalOpen(false); resetProjectForm(); setEditingProjectId(null); refetchProjects(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const deleteProject = trpc.budget.deleteSavingsProject.useMutation({
     onSuccess: () => { setProjectDetailOpen(false); setSelectedProject(null); refetchProjects(); refetchTx(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const createCat = trpc.budget.createCategory.useMutation({
     onSuccess: () => { setCatModalOpen(false); resetCatForm(); refetchCats(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const deleteCat = trpc.budget.deleteCategory.useMutation({
     onSuccess: () => refetchCats(),
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const createCatBudget = trpc.budget.createCategoryBudget.useMutation({
     onSuccess: () => { setCatBudgetModalOpen(false); resetCatBudgetForm(); refetchCatBudgets(); },
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
   const deleteCatBudget = trpc.budget.deleteCategoryBudget.useMutation({
     onSuccess: () => refetchCatBudgets(),
-    onError: (e: any) => Alert.alert(t('common.error'), e.message),
-  });
+    onError: (e: any) => Alert.alert(t('common.error'), e.message)});
 
   // ── Reset forms ──
   const resetTxForm = () => setTxForm({ type: 'expense', amount: '', category: '', description: '', date: new Date(), isPrivate: false, projectId: undefined });
@@ -303,8 +289,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     const dbCats = (categories as any[]).map((cat: any) => ({
       value: cat.name,
       emoji: getCategoryEmoji(cat.icon),
-      color: cat.color || '#64748b',
-    }));
+      color: cat.color || '#64748b'}));
     // Fusionner avec les catégories par défaut (sans doublons)
     const custom = dbCats.filter(d => !EXPENSE_CATEGORIES.find(e => e.value === d.value));
     return [...EXPENSE_CATEGORIES, ...custom];
@@ -434,7 +419,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   // RENDER
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Header */}
@@ -1200,7 +1185,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -1210,19 +1195,16 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   header: {
     paddingHorizontal: 16, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-    backgroundColor: isDark ? '#111827' : '#fff',
-  },
+    backgroundColor: isDark ? '#111827' : '#fff'},
   pageTitle: { fontSize: 24, fontWeight: '700', color: isDark ? '#fff' : '#111827', textAlign: 'center' },
   tabsContainer: {
     flexDirection: 'row', padding: 10, gap: 6,
     backgroundColor: isDark ? '#111827' : '#fff',
-    borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   tab: {
     flex: 1, paddingVertical: 8, borderRadius: 10,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   activeTab: { backgroundColor: '#7c3aed' },
   tabEmoji: { fontSize: 16 },
   tabText: { fontSize: 11, fontWeight: '600', color: isDark ? '#d1d5db' : '#4b5563', marginTop: 2 },
@@ -1233,8 +1215,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   statCard: {
     flex: 1, backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 10, padding: 10, borderLeftWidth: 3,
-    elevation: 1,
-  },
+    elevation: 1},
   statLabel: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 2 },
   statValue: { fontSize: 16, fontWeight: '700' },
   statCurrency: { fontSize: 10, color: isDark ? '#9ca3af' : '#6b7280' },
@@ -1244,24 +1225,21 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   filterChip: {
     paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, marginRight: 6,
     borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-  },
+    backgroundColor: isDark ? '#1f2937' : '#fff'},
   filterChipActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
   filterChipText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151' },
   filterChipTextActive: { color: '#fff', fontWeight: '700' },
   // Bouton ajouter
   addButton: {
     marginHorizontal: 16, marginVertical: 8, paddingVertical: 12,
-    backgroundColor: '#7c3aed', borderRadius: 10, alignItems: 'center',
-  },
+    backgroundColor: '#7c3aed', borderRadius: 10, alignItems: 'center'},
   addButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   // Transactions
   txCard: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: isDark ? '#1f2937' : '#fff',
     marginHorizontal: 16, marginBottom: 8, borderRadius: 10, padding: 12,
-    elevation: 1, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    elevation: 1, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   txIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   txIconText: { fontSize: 20 },
   txInfo: { flex: 1 },
@@ -1276,13 +1254,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   projectCard: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     marginHorizontal: 16, marginBottom: 12, borderRadius: 12, padding: 16,
-    elevation: 2, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    elevation: 2, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   projectCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   projectName: { fontSize: 16, fontWeight: '700', color: isDark ? '#fff' : '#111827', flex: 1 },
   projectCurrencyBadge: {
-    backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
-  },
+    backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3},
   projectCurrencyText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' },
   projectStats: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
   projectSpent: { fontSize: 20, fontWeight: '700', color: '#7c3aed' },
@@ -1297,28 +1273,24 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-    backgroundColor: isDark ? '#111827' : '#fff',
-  },
+    backgroundColor: isDark ? '#111827' : '#fff'},
   backButton: { fontSize: 14, color: '#7c3aed', fontWeight: '600' },
   projectDetailTitle: { fontSize: 18, fontWeight: '700', color: isDark ? '#fff' : '#111827', flex: 1, textAlign: 'center' },
   projectDetailContent: { flex: 1 },
   projectSummaryCard: {
     margin: 16, backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12, padding: 16, elevation: 2,
-    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   projectSummaryLabel: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 4 },
   projectSummaryAmount: { fontSize: 28, fontWeight: '700', color: '#7c3aed' },
   projectSummaryTarget: { fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 8 },
   splitSection: {
     marginHorizontal: 16, marginBottom: 12, backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12, padding: 14, elevation: 1,
-    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   splitTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginBottom: 10 },
   settlementCard: {
-    backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 8, padding: 10, marginBottom: 6,
-  },
+    backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 8, padding: 10, marginBottom: 6},
   settlementText: { fontSize: 14, color: isDark ? '#e5e7eb' : '#374151' },
   settlementFrom: { fontWeight: '700', color: '#ef4444' },
   settlementAmount: { fontWeight: '700', color: '#7c3aed' },
@@ -1328,14 +1300,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   settingsSection: {
     marginHorizontal: 16, marginBottom: 16, backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12, padding: 14, elevation: 1,
-    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   settingsSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   settingsSectionTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827' },
   settingsAddBtn: {
     width: 28, height: 28, borderRadius: 14, backgroundColor: '#7c3aed',
-    justifyContent: 'center', alignItems: 'center',
-  },
+    justifyContent: 'center', alignItems: 'center'},
   settingsAddBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
   settingsEmpty: { fontSize: 13, color: isDark ? '#6b7280' : '#9ca3af', fontStyle: 'italic' },
   settingsItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
@@ -1367,8 +1337,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10,
     borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-  },
+    backgroundColor: isDark ? '#1f2937' : '#fff'},
   currencyChipActive: { borderColor: '#7c3aed', backgroundColor: isDark ? '#1e1b4b' : '#ede9fe' },
   currencyFlag: { fontSize: 18 },
   currencyLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' },
@@ -1376,28 +1345,24 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   // Modals
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+    justifyContent: 'flex-end'},
   modalContent: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 20, maxHeight: '90%',
-  },
+    padding: 20, maxHeight: '90%'},
   modalTitle: { fontSize: 18, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginBottom: 16, textAlign: 'center' },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 6, marginTop: 10 },
   input: {
     backgroundColor: isDark ? '#111827' : '#f3f4f6',
     borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
     fontSize: 15, color: isDark ? '#fff' : '#111827',
-    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent',
-  },
+    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent'},
   catScroll: { marginBottom: 4 },
   catChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingVertical: 6, paddingHorizontal: 10, borderRadius: 16, marginRight: 6,
     borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#111827' : '#f9fafb',
-  },
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   catChipActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
   catChipEmoji: { fontSize: 16 },
   catChipText: { fontSize: 12, color: isDark ? '#d1d5db' : '#374151' },
@@ -1405,8 +1370,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dateButton: {
     backgroundColor: isDark ? '#111827' : '#f3f4f6', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 10, marginTop: 10,
-    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent',
-  },
+    borderWidth: isDark ? 1 : 0, borderColor: isDark ? '#374151' : 'transparent'},
   dateButtonText: { fontSize: 14, color: isDark ? '#d1d5db' : '#374151' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   switchLabel: { fontSize: 14, color: isDark ? '#d1d5db' : '#374151' },
@@ -1414,8 +1378,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   typeBtn: {
     flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
     borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#111827' : '#f9fafb',
-  },
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   typeBtnActive: { borderColor: '#ef4444', backgroundColor: '#ef444422' },
   typeBtnActiveIncome: { borderColor: '#10b981', backgroundColor: '#10b98122' },
   typeBtnText: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' },
@@ -1423,8 +1386,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
   cancelBtn: {
     flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
-    borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db',
-  },
+    borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db'},
   cancelBtnText: { fontSize: 15, color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' },
   saveBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', backgroundColor: '#7c3aed' },
   saveBtnText: { fontSize: 15, color: '#fff', fontWeight: '700' },
@@ -1437,8 +1399,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20,
     borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#111827' : '#f9fafb',
-  },
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   memberChipActive: { borderColor: '#7c3aed', backgroundColor: isDark ? '#1e1b4b' : '#ede9fe' },
   memberChipEmoji: { fontSize: 16 },
   memberChipText: { fontSize: 13, color: isDark ? '#d1d5db' : '#374151', fontWeight: '500' },
@@ -1449,13 +1410,10 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     marginHorizontal: 16, marginBottom: 10,
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12, padding: 12, elevation: 1,
-    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb'},
   projectMembersLabel: { fontSize: 13, fontWeight: '700', color: isDark ? '#d1d5db' : '#374151', marginBottom: 8 },
   projectMembersRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   projectMemberBadge: {
     backgroundColor: isDark ? '#374151' : '#ede9fe',
-    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4,
-  },
-  projectMemberBadgeText: { fontSize: 12, color: isDark ? '#d1d5db' : '#7c3aed', fontWeight: '600' },
-});
+    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4},
+  projectMemberBadgeText: { fontSize: 12, color: isDark ? '#d1d5db' : '#7c3aed', fontWeight: '600' }});

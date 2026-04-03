@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -26,8 +25,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     },
     onError: (error) => {
       Alert.alert('Erreur', error.message || 'Impossible d\'échanger cette récompense');
-    },
-  });
+    }});
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -43,8 +41,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Confirmer',
-          onPress: () => redeemMutation.mutate({ id: rewardId }),
-        },
+          onPress: () => redeemMutation.mutate({ id: rewardId })},
       ]
     );
   };
@@ -58,8 +55,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
       'Parc d\'attractions': '🎡',
       'Restaurant': '🍽️',
       'Livre': '📚',
-      'Sport': '⚽',
-    };
+      'Sport': '⚽'};
     
     for (const [key, icon] of Object.entries(icons)) {
       if (title.toLowerCase().includes(key.toLowerCase())) {
@@ -70,7 +66,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
       {/* Header */}
@@ -149,15 +145,14 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+    backgroundColor: '#f9fafb'},
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -165,24 +160,20 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   addButton: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   addButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   pointsCard: {
     backgroundColor: '#7c3aed',
     margin: 16,
@@ -192,49 +183,40 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
-  },
+    elevation: 5},
   pointsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   pointsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
-  },
+    color: '#fff'},
   pointsBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-  },
+    borderRadius: 20},
   pointsValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
-  },
+    color: '#fff'},
   pointsSubtext: {
     fontSize: 14,
     color: '#e9d5ff',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   content: {
     flex: 1,
-    padding: 16,
-  },
+    padding: 16},
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-  },
+    paddingVertical: 40},
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6b7280',
-  },
+    color: '#6b7280'},
   rewardCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -245,8 +227,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
+    elevation: 3},
   rewardIcon: {
     width: 60,
     height: 60,
@@ -254,72 +235,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
-  },
+    marginRight: 16},
   rewardIconText: {
-    fontSize: 32,
-  },
+    fontSize: 32},
   rewardContent: {
-    flex: 1,
-  },
+    flex: 1},
   rewardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   rewardDescription: {
     fontSize: 14,
     color: '#6b7280',
     marginBottom: 12,
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   rewardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   rewardPoints: {
     backgroundColor: '#fef3c7',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   rewardPointsText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400e',
-  },
+    color: '#92400e'},
   redeemButton: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 20,
     paddingVertical: 8,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   redeemButtonDisabled: {
-    backgroundColor: '#d1d5db',
-  },
+    backgroundColor: '#d1d5db'},
   redeemButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-  },
+    paddingVertical: 60},
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   emptyStateSubtext: {
     fontSize: 14,
     color: '#9ca3af',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
 
   pageTitleContainer: {
     backgroundColor: '#fff',
@@ -327,12 +294,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center'}});

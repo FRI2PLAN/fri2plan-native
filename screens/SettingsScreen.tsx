@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
@@ -36,7 +35,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
       {/* Language Selection Modal */}
@@ -239,35 +238,30 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+    backgroundColor: '#f9fafb'},
   header: {
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   content: {
-    flex: 1,
-  },
+    flex: 1},
   section: {
     marginTop: 24,
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
+    paddingVertical: 8},
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -275,74 +269,61 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
-    marginTop: 8,
-  },
+    marginTop: 8},
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
+    borderBottomColor: '#f3f4f6'},
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
+    flex: 1},
   settingIcon: {
     fontSize: 20,
-    marginRight: 12,
-  },
+    marginRight: 12},
   settingLabel: {
     fontSize: 16,
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   settingRight: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   settingValue: {
     fontSize: 15,
     color: '#6b7280',
-    marginRight: 8,
-  },
+    marginRight: 8},
   settingArrow: {
     fontSize: 20,
-    color: '#9ca3af',
-  },
+    color: '#9ca3af'},
   logoutButton: {
     backgroundColor: '#ef4444',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    marginVertical: 16,
-  },
+    marginVertical: 16},
   logoutText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 24,
     width: '80%',
-    maxWidth: 400,
-  },
+    maxWidth: 400},
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 20,
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   languageOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -351,34 +332,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#e5e7eb',
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   languageOptionSelected: {
     borderColor: '#7c3aed',
-    backgroundColor: '#f3f4f6',
-  },
+    backgroundColor: '#f3f4f6'},
   languageOptionText: {
     fontSize: 16,
     color: '#1f2937',
-    fontWeight: '500',
-  },
+    fontWeight: '500'},
   checkmark: {
     fontSize: 20,
     color: '#7c3aed',
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'},
   modalCloseButton: {
     backgroundColor: '#f3f4f6',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
-    marginTop: 8,
-  },
+    marginTop: 8},
   modalCloseButtonText: {
     color: '#6b7280',
     fontSize: 16,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
 
   pageTitleContainer: {
     backgroundColor: '#fff',
@@ -386,12 +361,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center'}});

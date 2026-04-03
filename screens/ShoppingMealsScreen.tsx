@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * ShoppingMealsScreen — Onglet fusionné "Courses & Repas"
  * Sous-onglets : 🛒 Courses | 🍽️ Repas
@@ -21,7 +20,7 @@ export default function ShoppingMealsScreen() {
   const s = getStyles(isDark);
 
   return (
-    <SafeAreaView style={s.container}>
+    <View style={s.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Sélecteur principal Courses / Repas */}
@@ -51,7 +50,7 @@ export default function ShoppingMealsScreen() {
       <View style={[s.content, activeTab !== 'meals' && s.hidden]}>
         <MealsScreen embedded />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -69,27 +68,21 @@ function getStyles(isDark: boolean) {
       borderBottomColor: '#7c3aed',
       paddingHorizontal: 12,
       paddingVertical: 6,
-      gap: 8,
-    },
+      gap: 8},
     mainTab: {
       flex: 1,
       paddingVertical: 10,
       borderRadius: 10,
       alignItems: 'center',
-      backgroundColor: isDark ? '#374151' : '#f3f4f6',
-    },
+      backgroundColor: isDark ? '#374151' : '#f3f4f6'},
     mainTabActive: {
-      backgroundColor: '#7c3aed',
-    },
+      backgroundColor: '#7c3aed'},
     mainTabText: {
       fontSize: 15,
       fontWeight: '600',
-      color: isDark ? '#9ca3af' : '#6b7280',
-    },
+      color: isDark ? '#9ca3af' : '#6b7280'},
     mainTabTextActive: {
-      color: '#ffffff',
-    },
+      color: '#ffffff'},
     content: { flex: 1 },
-    hidden: { display: 'none' },
-  });
+    hidden: { display: 'none' }});
 }

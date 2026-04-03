@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -38,8 +37,7 @@ const ModalIconButton = ({
   onPress,
   color,
   size = 44,
-  disabled = false,
-}: {
+  disabled = false}: {
   icon: string;
   onPress: () => void;
   color: string;
@@ -56,8 +54,7 @@ const ModalIconButton = ({
       backgroundColor: color,
       alignItems: 'center',
       justifyContent: 'center',
-      opacity: disabled ? 0.5 : 1,
-    }}
+      opacity: disabled ? 0.5 : 1}}
   >
     <Text style={{ fontSize: 20 }}>{icon}</Text>
   </TouchableOpacity>
@@ -146,8 +143,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'text/calendar',
-        copyToCacheDirectory: true,
-      });
+        copyToCacheDirectory: true});
       if (result.canceled) return;
       setIsImporting(true);
       const file = result.assets[0];
@@ -214,8 +210,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     endTime: '10:00',
     category: 'other',
     reminder: '15',
-    isPrivate: false,
-  });
+    isPrivate: false});
   // Pickers date/heure
   const [eventDate, setEventDate] = useState(new Date());
   const [startTimeDate, setStartTimeDate] = useState(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; });
@@ -254,8 +249,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
     startTime: e.startDate,
-    endTime: e.endDate,
-  }));
+    endTime: e.endDate}));
   const refetch = eventsQuery.refetch;
 
   const createEvent = trpc.events.create.useMutation();
@@ -318,8 +312,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate ? 1 : 0,
-      });
+        isPrivate: formData.isPrivate ? 1 : 0});
       setCreateModalOpen(false);
       resetForm();
       refetch();
@@ -344,8 +337,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate ? 1 : 0,
-      });
+        isPrivate: formData.isPrivate ? 1 : 0});
       setEditModalOpen(false);
       setSelectedEvent(null);
       resetForm();
@@ -391,8 +383,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       endTime: format(endTime, 'HH:mm'),
       category: event.category || 'other',
       reminder: event.reminder?.toString() || '15',
-      isPrivate: event.isPrivate || false,
-    });
+      isPrivate: event.isPrivate || false});
     setEditModalOpen(true);
   };
 
@@ -402,7 +393,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
 
       {/* ── Titre centré ── */}
@@ -668,8 +659,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <View style={styles.weekTimeColumn} />
               {eachDayOfInterval({
                 start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-              }).map(day => (
+                end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => (
                 <View key={day.toString()} style={styles.weekDayHeader}>
                   <Text style={[styles.weekDayName, isToday(day) && styles.weekDayNameToday]}>
                     {format(day, 'EEE', { locale: getLocale() })}
@@ -688,8 +678,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   </View>
                   {eachDayOfInterval({
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-                    end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-                  }).map(day => {
+                    end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => {
                     const hourEvents = (events || []).filter(event => {
                       const eventDate = new Date(event.startTime);
                       return isSameDay(eventDate, day) && eventDate.getHours() === hour;
@@ -1101,7 +1090,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -1117,32 +1106,27 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
 
   // ── Barre d'actions (4 × 25%) ──
   actionsBar: {
     flexDirection: 'row',
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   actionBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    position: 'relative',
-  },
+    position: 'relative'},
   actionBtnActive: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe',
-  },
+    backgroundColor: isDark ? '#312e81' : '#ede9fe'},
   actionIcon: { fontSize: 22 },
   filterBadge: {
     position: 'absolute',
@@ -1153,8 +1137,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     minWidth: 16,
     height: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 
   // ── Barre sélecteur de vue ──
@@ -1165,26 +1148,22 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: isDark ? '#374151' : '#e5e7eb',
-    justifyContent: 'space-around',
-  },
+    justifyContent: 'space-around'},
   calIconWrapper: { alignItems: 'center', justifyContent: 'center', padding: 4, borderRadius: 8 },
   calIconWrapperActive: { backgroundColor: isDark ? '#4c1d95' : '#ede9fe' },
   calIcon: {
     width: 44, height: 44, borderRadius: 8, overflow: 'hidden',
     borderWidth: 1.5, borderColor: isDark ? '#6b7280' : '#d1d5db',
-    backgroundColor: isDark ? '#374151' : '#ffffff',
-  },
+    backgroundColor: isDark ? '#374151' : '#ffffff'},
   calIconActive: { borderColor: '#ef4444' },
   calIconBand: {
     height: 14, backgroundColor: isDark ? '#6b7280' : '#e5e7eb',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-  },
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6},
   calIconBandActive: { backgroundColor: '#ef4444' },
   calIconRing: {
     width: 4, height: 6, borderRadius: 2,
     backgroundColor: isDark ? '#d1d5db' : '#9ca3af',
-    borderWidth: 1, borderColor: isDark ? '#9ca3af' : '#6b7280',
-  },
+    borderWidth: 1, borderColor: isDark ? '#9ca3af' : '#6b7280'},
   calIconBody: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   calIconNumber: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#d1d5db' : '#374151', lineHeight: 20 },
   calIconNumberActive: { color: '#ef4444' },
@@ -1197,33 +1176,28 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 8,
     paddingVertical: 12,
-    backgroundColor: isDark ? '#1f2937' : '#ffffff',
-  },
+    backgroundColor: isDark ? '#1f2937' : '#ffffff'},
   navArrow: {
     width: 40, height: 40,
-    alignItems: 'center', justifyContent: 'center',
-  },
+    alignItems: 'center', justifyContent: 'center'},
   navArrowText: {
     fontSize: 28,
     fontWeight: '300',
     color: isDark ? '#d1d5db' : '#374151',
-    lineHeight: 32,
-  },
+    lineHeight: 32},
   monthTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: isDark ? '#ffffff' : '#1f2937',
     textAlign: 'center',
     textTransform: 'capitalize',
-    flex: 1,
-  },
+    flex: 1},
 
   // ── Grille calendrier ──
   calendar: {
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
     paddingHorizontal: 8,
-    paddingBottom: 8,
-  },
+    paddingBottom: 8},
   weekRow: { flexDirection: 'row', marginBottom: 4 },
   dayHeader: { flex: 1, alignItems: 'center', paddingVertical: 6 },
   dayHeaderText: { fontSize: 13, fontWeight: '600', color: isDark ? '#9ca3af' : '#6b7280' },
@@ -1343,8 +1317,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 12,
-    marginTop: 16,
-  },
+    marginTop: 16},
 
   // ── Dropdown ──
   dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -1383,18 +1356,15 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
+    paddingHorizontal: 14},
   dropdownTriggerText: {
     fontSize: 15,
     color: isDark ? '#ffffff' : '#1f2937',
-    flex: 1,
-  },
+    flex: 1},
   dropdownChevron: {
     fontSize: 12,
     color: isDark ? '#9ca3af' : '#6b7280',
-    marginLeft: 8,
-  },
+    marginLeft: 8},
 
   // ── Picker options (dans les modaux dropdown) ──
   pickerOption: {
@@ -1404,10 +1374,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 16,
     borderRadius: 8,
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   pickerOptionText: {
     fontSize: 16,
-    color: isDark ? '#ffffff' : '#1f2937',
-  },
-});
+    color: isDark ? '#ffffff' : '#1f2937'}});

@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, RefreshControl, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -26,8 +25,7 @@ const REQUEST_TYPES = [
 const STATUS_CONFIG = {
   pending: { emoji: '⏳', color: '#d97706' },
   approved: { emoji: '✅', color: '#16a34a' },
-  rejected: { emoji: '❌', color: '#dc2626' },
-};
+  rejected: { emoji: '❌', color: '#dc2626' }};
 
 type RequestType = 'outing' | 'purchase' | 'permission' | 'other';
 type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
@@ -107,8 +105,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       resetForm();
       Alert.alert(t('common.success'), t('requests.created'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.createError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.createError'))});
 
   const reviewRequest = trpc.requests.review.useMutation({
     onSuccess: () => {
@@ -117,8 +114,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       setReviewComment('');
       Alert.alert(t('common.success'), t('requests.reviewed'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.reviewError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.reviewError'))});
 
   const deleteRequest = trpc.requests.delete.useMutation({
     onSuccess: () => {
@@ -126,16 +122,14 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       setDetailDialogOpen(false);
       Alert.alert(t('common.success'), t('requests.deleted'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.deleteError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.deleteError'))});
 
   const addComment = trpc.requests.addComment.useMutation({
     onSuccess: () => {
       setNewComment('');
       refetchComments();
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.commentError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.commentError'))});
 
   const resetForm = () => {
     setFormType('outing');
@@ -157,8 +151,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       type: formType,
       title: formTitle.trim(),
       description: formDescription.trim() || undefined,
-      requestedDate: formDate,
-    });
+      requestedDate: formDate});
   };
 
   const handleReview = (status: 'approved' | 'rejected') => {
@@ -166,8 +159,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
     reviewRequest.mutate({
       requestId: selectedRequest.id,
       status,
-      reviewComment: reviewComment.trim() || undefined,
-    });
+      reviewComment: reviewComment.trim() || undefined});
   };
 
   const handleDelete = () => {
@@ -262,7 +254,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Header */}
@@ -580,55 +572,48 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? '#111827' : '#f9fafb',
-  },
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
-  },
+    paddingBottom: 12},
   pageTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: isDark ? '#fff' : '#111827',
-  },
+    color: isDark ? '#fff' : '#111827'},
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   addButtonText: {
     color: '#fff',
     fontSize: 28,
     fontWeight: '700',
-    lineHeight: 32,
-  },
+    lineHeight: 32},
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     marginBottom: 8,
-    gap: 8,
-  },
+    gap: 8},
   filterContainer: {
     flexDirection: 'row',
     flex: 1,
     justifyContent: 'space-evenly',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   filterTab: {
     flex: 1,
     height: 44,
@@ -638,27 +623,21 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#1f2937' : '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
-  },
+    marginHorizontal: 4},
   filterTabActive: {
     borderColor: '#7c3aed',
-    backgroundColor: '#7c3aed',
-  },
+    backgroundColor: '#7c3aed'},
   filterTabEmoji: {
-    fontSize: 20,
-  },
+    fontSize: 20},
   filterTabText: {
     fontSize: 11,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#374151',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   filterTabTextActive: {
-    color: '#fff',
-  },
+    color: '#fff'},
   typeMenuWrapper: {
-    position: 'relative',
-  },
+    position: 'relative'},
   typeMenuButton: {
     width: 44,
     height: 44,
@@ -669,27 +648,22 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 2,
-  },
+    gap: 2},
   typeMenuButtonActive: {
     borderColor: '#7c3aed',
-    backgroundColor: isDark ? '#1e1b4b' : '#ede9fe',
-  },
+    backgroundColor: isDark ? '#1e1b4b' : '#ede9fe'},
   typeMenuDots: {
     fontSize: 22,
     fontWeight: '700',
     color: isDark ? '#d1d5db' : '#374151',
-    lineHeight: 26,
-  },
+    lineHeight: 26},
   typeMenuActiveIndicator: {
-    fontSize: 14,
-  },
+    fontSize: 14},
   typeMenuOverlay: {
     position: 'absolute',
     top: 50,
     right: 0,
-    zIndex: 999,
-  },
+    zIndex: 999},
   typeMenuDropdown: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
@@ -701,55 +675,43 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-  },
+    shadowRadius: 8},
   typeMenuItem: {
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   typeMenuItemActive: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe',
-  },
+    backgroundColor: isDark ? '#312e81' : '#ede9fe'},
   typeMenuItemText: {
     fontSize: 14,
     color: isDark ? '#e5e7eb' : '#111827',
-    fontWeight: '500',
-  },
+    fontWeight: '500'},
   typeFilterRow: {
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   typeFilterContent: {
     paddingHorizontal: 12,
-    gap: 6,
-  },
+    gap: 6},
   typeFilterChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#d1d5db',
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-  },
+    backgroundColor: isDark ? '#1f2937' : '#fff'},
   typeFilterChipActive: {
     borderColor: '#7c3aed',
-    backgroundColor: '#7c3aed',
-  },
+    backgroundColor: '#7c3aed'},
   typeFilterChipText: {
     fontSize: 13,
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   typeFilterChipTextActive: {
     color: '#fff',
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   list: {
-    flex: 1,
-  },
+    flex: 1},
   listContent: {
     padding: 16,
-    paddingBottom: 40,
-  },
+    paddingBottom: 40},
   requestCard: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
@@ -761,143 +723,116 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
-  },
+    shadowRadius: 3},
   requestCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    gap: 4,
-  },
+    gap: 4},
   typeEmoji: {
-    fontSize: 14,
-  },
+    fontSize: 14},
   typeLabel: {
     fontSize: 12,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   requestCardRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
+    gap: 8},
   unreadBadge: {
     backgroundColor: '#7c3aed',
     borderRadius: 10,
     paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
+    paddingVertical: 2},
   unreadBadgeText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   statusEmoji: {
-    fontSize: 18,
-  },
+    fontSize: 18},
   requestTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: isDark ? '#fff' : '#111827',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   requestDescription: {
     fontSize: 14,
     color: isDark ? '#9ca3af' : '#6b7280',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   requestMeta: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   requestAuthor: {
     fontSize: 13,
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   requestDate: {
     fontSize: 13,
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   requestTime: {
     fontSize: 12,
     color: isDark ? '#6b7280' : '#9ca3af',
-    marginTop: 4,
-  },
+    marginTop: 4},
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-  },
+    paddingVertical: 60},
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#1f2937',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   emptySubtext: {
     fontSize: 14,
     color: isDark ? '#9ca3af' : '#6b7280',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+    justifyContent: 'flex-end'},
   modalContent: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '90%',
-  },
+    maxHeight: '90%'},
   detailModalContent: {
-    maxHeight: '95%',
-  },
+    maxHeight: '95%'},
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
     color: isDark ? '#fff' : '#111827',
     marginBottom: 16,
-    flex: 1,
-  },
+    flex: 1},
   detailHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   closeButton: {
     fontSize: 22,
     color: isDark ? '#9ca3af' : '#6b7280',
-    padding: 4,
-  },
+    padding: 4},
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#374151',
     marginBottom: 6,
-    marginTop: 12,
-  },
+    marginTop: 12},
   required: {
-    color: '#ef4444',
-  },
+    color: '#ef4444'},
   typeSelector: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-  },
+    gap: 8},
   typeOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -907,15 +842,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderWidth: 2,
     borderColor: isDark ? '#4b5563' : '#d1d5db',
     backgroundColor: isDark ? '#374151' : '#f9fafb',
-    gap: 6,
-  },
+    gap: 6},
   typeOptionEmoji: {
-    fontSize: 16,
-  },
+    fontSize: 16},
   typeOptionText: {
     fontSize: 13,
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   input: {
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 10,
@@ -924,166 +856,133 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 15,
     color: isDark ? '#fff' : '#111827',
     borderWidth: 1,
-    borderColor: isDark ? '#4b5563' : '#e5e7eb',
-  },
+    borderColor: isDark ? '#4b5563' : '#e5e7eb'},
   textArea: {
     minHeight: 80,
-    textAlignVertical: 'top',
-  },
+    textAlignVertical: 'top'},
   dateButton: {
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: isDark ? '#4b5563' : '#e5e7eb',
-  },
+    borderColor: isDark ? '#4b5563' : '#e5e7eb'},
   dateButtonText: {
     fontSize: 15,
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   modalActions: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 20,
-    marginBottom: 20,
-  },
+    marginBottom: 20},
   cancelButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 10,
     backgroundColor: isDark ? '#374151' : '#e5e7eb',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: isDark ? '#fff' : '#374151',
-  },
+    color: isDark ? '#fff' : '#374151'},
   primaryButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 10,
     backgroundColor: '#7c3aed',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
-  },
+    color: '#fff'},
   detailScroll: {
-    maxHeight: 400,
-  },
+    maxHeight: 400},
   detailInfo: {
     backgroundColor: isDark ? '#374151' : '#f9fafb',
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
-    gap: 8,
-  },
+    gap: 8},
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
+    gap: 8},
   detailLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: isDark ? '#9ca3af' : '#6b7280',
-    minWidth: 90,
-  },
+    minWidth: 90},
   detailValue: {
     fontSize: 14,
     color: isDark ? '#fff' : '#111827',
-    flex: 1,
-  },
+    flex: 1},
   detailDescriptionContainer: {
-    gap: 4,
-  },
+    gap: 4},
   detailDescription: {
     fontSize: 14,
     color: isDark ? '#e5e7eb' : '#374151',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   reviewCommentContainer: {
     backgroundColor: isDark ? '#4b5563' : '#fef3c7',
     borderRadius: 8,
     padding: 10,
-    marginTop: 4,
-  },
+    marginTop: 4},
   reviewCommentLabel: {
     fontSize: 12,
     fontWeight: '600',
     color: isDark ? '#fbbf24' : '#92400e',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   reviewCommentText: {
     fontSize: 14,
-    color: isDark ? '#fde68a' : '#78350f',
-  },
+    color: isDark ? '#fde68a' : '#78350f'},
   reviewSection: {
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: isDark ? '#fff' : '#111827',
-    marginBottom: 10,
-  },
+    marginBottom: 10},
   reviewActions: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 10,
-  },
+    marginTop: 10},
   reviewButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   approveButton: {
-    backgroundColor: '#16a34a',
-  },
+    backgroundColor: '#16a34a'},
   rejectButton: {
-    backgroundColor: '#dc2626',
-  },
+    backgroundColor: '#dc2626'},
   reviewButtonText: {
     color: '#fff',
     fontSize: 15,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   commentsSection: {
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   commentCard: {
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 10,
     padding: 12,
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   ownCommentCard: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe',
-  },
+    backgroundColor: isDark ? '#312e81' : '#ede9fe'},
   commentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   commentAuthor: {
     fontSize: 13,
     fontWeight: '700',
-    color: isDark ? '#c4b5fd' : '#7c3aed',
-  },
+    color: isDark ? '#c4b5fd' : '#7c3aed'},
   commentTime: {
     fontSize: 11,
-    color: isDark ? '#9ca3af' : '#6b7280',
-  },
+    color: isDark ? '#9ca3af' : '#6b7280'},
   commentMessage: {
     fontSize: 14,
     color: isDark ? '#e5e7eb' : '#374151',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   commentInputContainer: {
     flexDirection: 'row',
     gap: 8,
@@ -1091,8 +990,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     marginTop: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderTopColor: isDark ? '#374151' : '#e5e7eb'},
   commentInput: {
     flex: 1,
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
@@ -1101,34 +999,27 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     color: isDark ? '#fff' : '#111827',
-    maxHeight: 80,
-  },
+    maxHeight: 80},
   sendCommentButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   sendCommentButtonDisabled: {
-    backgroundColor: isDark ? '#4b5563' : '#d1d5db',
-  },
+    backgroundColor: isDark ? '#4b5563' : '#d1d5db'},
   sendCommentButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   deleteButton: {
     marginTop: 12,
     paddingVertical: 12,
     borderRadius: 10,
     backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   deleteButtonText: {
     color: isDark ? '#fca5a5' : '#dc2626',
     fontSize: 15,
-    fontWeight: '700',
-  },
-});
+    fontWeight: '700'}});

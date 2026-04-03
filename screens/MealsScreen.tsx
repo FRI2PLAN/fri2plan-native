@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * MealsScreen — Onglet Repas
  * Connecté à la BD via tRPC (routes meals.*)
@@ -13,16 +12,14 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
   StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
-  PanResponder, Animated,
-} from 'react-native';
+  PanResponder, Animated} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import {
-  format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks,
-} from 'date-fns';
+  format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -75,22 +72,19 @@ const DEFAULT_TIMES: Record<MealType, string> = {
   breakfast: '08:00',
   lunch: '12:00',
   dinner: '19:00',
-  snack: '16:00',
-};
+  snack: '16:00'};
 
 const DEFAULT_LABELS: Record<MealType, string> = {
   breakfast: 'Petit-déjeuner',
   lunch: 'Déjeuner',
   dinner: 'Dîner',
-  snack: 'Collation',
-};
+  snack: 'Collation'};
 
 const MEAL_EMOJIS: Record<MealType, string> = {
   breakfast: '☀️',
   lunch: '🥗',
   dinner: '🍽️',
-  snack: '🍎',
-};
+  snack: '🍎'};
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function MealsScreen({ embedded = false }: { embedded?: boolean } = {}) {
@@ -213,8 +207,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
     servings: defaultServings,
     notes: '',
     sourceUrl: '',
-    ingredients: [] as string[],
-  });
+    ingredients: [] as string[]});
 
   const openCreate = (day?: Date) => {
     setEditingMeal(null);
@@ -236,8 +229,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
       servings: meal.servings || defaultServings,
       notes: meal.notes || '',
       sourceUrl: meal.sourceUrl || '',
-      ingredients: [],
-    });
+      ingredients: []});
     setShowForm(true);
     setRecipeSearch('');
     setRecipeSuggestions([]);
@@ -258,8 +250,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
         date: dateStr,
         servings: form.servings,
         notes: form.notes || undefined,
-        sourceUrl: form.sourceUrl || undefined,
-      });
+        sourceUrl: form.sourceUrl || undefined});
     } else {
       await createMeal.mutateAsync({
         familyId,
@@ -268,8 +259,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
         date: dateStr,
         servings: form.servings,
         notes: form.notes || undefined,
-        sourceUrl: form.sourceUrl || undefined,
-      });
+        sourceUrl: form.sourceUrl || undefined});
     }
     setShowForm(false);
   };
@@ -331,8 +321,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
         servings: result.servings || p.servings,
         notes: result.notes || p.notes,
         sourceUrl: importUrl.trim(),
-        ingredients: result.ingredients || [],
-      }));
+        ingredients: result.ingredients || []}));
     } catch (e: any) {
       Alert.alert('Erreur', e.message || 'Import impossible');
     } finally {
@@ -397,8 +386,7 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
     if (!ingredientsToAdd.length) return;
     await addItemsMerged.mutateAsync({
       listId,
-      items: ingredientsToAdd.map(name => ({ name })),
-    });
+      items: ingredientsToAdd.map(name => ({ name }))});
     setShowAddToShopping(false);
     Alert.alert('✓', `${ingredientsToAdd.length} ingrédient(s) ajouté(s) à la liste`);
   };
@@ -785,10 +773,10 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
 
   if (embedded) return content;
   return (
-    <SafeAreaView style={s.container}>
+    <View style={s.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {content}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -891,6 +879,5 @@ function getStyles(isDark: boolean) {
     ingredientItem: { fontSize: 13, color: text, marginBottom: 2 },
     // Ajout aux courses
     listChoiceBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 12, marginBottom: 8 },
-    listChoiceBtnText: { fontSize: 15, color: text, fontWeight: '600' },
-  });
+    listChoiceBtnText: { fontSize: 15, color: text, fontWeight: '600' }});
 }

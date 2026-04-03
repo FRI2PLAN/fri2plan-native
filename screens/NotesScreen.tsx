@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, RefreshControl, ActivityIndicator, Alert, Modal,
@@ -73,8 +72,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       resetCreateForm();
       Alert.alert(t('common.success'), t('notes.created'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.createError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.createError'))});
 
   const updateMutation = trpc.notes.update.useMutation({
     onSuccess: () => {
@@ -83,8 +81,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       setSelectedNote(null);
       Alert.alert(t('common.success'), t('notes.updated'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.updateError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.updateError'))});
 
   const deleteMutation = trpc.notes.delete.useMutation({
     onSuccess: () => {
@@ -93,12 +90,10 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       setSelectedNote(null);
       Alert.alert(t('common.success'), t('notes.deleted'));
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.deleteError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.deleteError'))});
 
   const uploadFileMutation = trpc.notes.uploadFile.useMutation({
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.uploadError')),
-  });
+    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.uploadError'))});
 
   const resetCreateForm = () => {
     setNewTitle('');
@@ -129,8 +124,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       title: newTitle.trim(),
       content: newContent.trim() || undefined,
       isPrivate: newIsPrivate,
-      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined,
-    });
+      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined});
   };
 
   const handleUpdate = () => {
@@ -143,8 +137,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       title: editTitle.trim(),
       content: editContent.trim() || undefined,
       isPrivate: editIsPrivate ? 1 : 0,
-      attachments: editAttachments.length > 0 ? JSON.stringify(editAttachments) : undefined,
-    });
+      attachments: editAttachments.length > 0 ? JSON.stringify(editAttachments) : undefined});
   };
 
   const handleDelete = () => {
@@ -173,8 +166,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
-      base64: true,
-    });
+      base64: true});
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       await uploadFileFromBase64(asset.base64 || '', asset.fileName || 'photo.jpg', 'image/jpeg', isEdit);
@@ -306,7 +298,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Header */}
@@ -525,42 +517,37 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: isDark ? '#111827' : '#f9fafb',
-  },
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
-  },
+    paddingBottom: 12},
   pageTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: isDark ? '#fff' : '#111827',
-  },
+    color: isDark ? '#fff' : '#111827'},
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   addButtonText: {
     color: '#fff',
     fontSize: 28,
     fontWeight: '700',
-    lineHeight: 32,
-  },
+    lineHeight: 32},
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -570,29 +557,24 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: isDark ? '#374151' : '#e5e7eb',
-  },
+    borderColor: isDark ? '#374151' : '#e5e7eb'},
   searchIcon: {
     fontSize: 16,
-    marginRight: 8,
-  },
+    marginRight: 8},
   searchInput: {
     flex: 1,
     paddingVertical: 10,
     fontSize: 15,
-    color: isDark ? '#fff' : '#111827',
-  },
+    color: isDark ? '#fff' : '#111827'},
   clearSearch: {
     fontSize: 16,
     color: isDark ? '#9ca3af' : '#6b7280',
-    padding: 4,
-  },
+    padding: 4},
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     gap: 8,
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   filterChip: {
     flex: 1,
     paddingVertical: 7,
@@ -601,27 +583,21 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#d1d5db',
     backgroundColor: isDark ? '#1f2937' : '#fff',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   filterChipActive: {
     borderColor: '#7c3aed',
-    backgroundColor: '#7c3aed',
-  },
+    backgroundColor: '#7c3aed'},
   filterChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: isDark ? '#d1d5db' : '#374151',
-  },
+    color: isDark ? '#d1d5db' : '#374151'},
   filterChipTextActive: {
-    color: '#fff',
-  },
+    color: '#fff'},
   list: {
-    flex: 1,
-  },
+    flex: 1},
   listContent: {
     padding: 16,
-    paddingBottom: 40,
-  },
+    paddingBottom: 40},
   sectionHeader: {
     fontSize: 14,
     fontWeight: '700',
@@ -629,8 +605,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
     marginTop: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    letterSpacing: 0.5},
   noteCard: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
@@ -643,122 +618,98 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
-  },
+    shadowRadius: 3},
   pinnedNoteCard: {
     borderColor: '#7c3aed',
-    backgroundColor: isDark ? '#1e1b4b' : '#faf5ff',
-  },
+    backgroundColor: isDark ? '#1e1b4b' : '#faf5ff'},
   noteCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
-  },
+    marginBottom: 6},
   noteTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 6,
-  },
+    gap: 6},
   pinIcon: {
-    fontSize: 14,
-  },
+    fontSize: 14},
   noteTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: isDark ? '#fff' : '#111827',
-    flex: 1,
-  },
+    flex: 1},
   lockIcon: {
-    fontSize: 13,
-  },
+    fontSize: 13},
   attachIcon: {
-    fontSize: 13,
-  },
+    fontSize: 13},
   pinButton: {
     padding: 4,
-    marginLeft: 8,
-  },
+    marginLeft: 8},
   pinButtonText: {
     fontSize: 16,
-    opacity: 0.5,
-  },
+    opacity: 0.5},
   pinButtonActive: {
-    opacity: 1,
-  },
+    opacity: 1},
   noteContent: {
     fontSize: 13,
     color: isDark ? '#9ca3af' : '#6b7280',
     lineHeight: 18,
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   noteFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   noteAuthor: {
     fontSize: 11,
-    color: isDark ? '#6b7280' : '#9ca3af',
-  },
+    color: isDark ? '#6b7280' : '#9ca3af'},
   noteDate: {
     fontSize: 11,
     color: isDark ? '#6b7280' : '#9ca3af',
-    marginLeft: 'auto',
-  },
+    marginLeft: 'auto'},
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-  },
+    paddingVertical: 60},
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#1f2937',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   emptySubtext: {
     fontSize: 14,
     color: isDark ? '#9ca3af' : '#6b7280',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+    justifyContent: 'flex-end'},
   modalContent: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-  },
+    padding: 20},
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
     color: isDark ? '#fff' : '#111827',
     marginBottom: 16,
-    flex: 1,
-  },
+    flex: 1},
   editHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   closeButton: {
     fontSize: 22,
     color: isDark ? '#9ca3af' : '#6b7280',
-    padding: 4,
-  },
+    padding: 4},
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: isDark ? '#d1d5db' : '#374151',
     marginBottom: 6,
-    marginTop: 12,
-  },
+    marginTop: 12},
   input: {
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 10,
@@ -767,29 +718,24 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 15,
     color: isDark ? '#fff' : '#111827',
     borderWidth: 1,
-    borderColor: isDark ? '#4b5563' : '#e5e7eb',
-  },
+    borderColor: isDark ? '#4b5563' : '#e5e7eb'},
   textArea: {
     minHeight: 120,
-    textAlignVertical: 'top',
-  },
+    textAlignVertical: 'top'},
   privacyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-  },
+    marginTop: 12},
   privacyHint: {
     fontSize: 12,
     color: isDark ? '#9ca3af' : '#6b7280',
     marginTop: 4,
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   attachButtons: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 4,
-  },
+    marginTop: 4},
   attachButton: {
     flex: 1,
     paddingVertical: 10,
@@ -798,84 +744,67 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#d1d5db',
     backgroundColor: isDark ? '#374151' : '#f9fafb',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   attachButtonText: {
     fontSize: 13,
     color: isDark ? '#d1d5db' : '#374151',
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   attachmentList: {
     marginTop: 8,
-    gap: 6,
-  },
+    gap: 6},
   attachmentItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
+    paddingVertical: 8},
   attachmentName: {
-    flex: 1,
-  },
+    flex: 1},
   attachmentNameText: {
     fontSize: 13,
     color: isDark ? '#93c5fd' : '#2563eb',
-    textDecorationLine: 'underline',
-  },
+    textDecorationLine: 'underline'},
   attachmentRemove: {
     padding: 4,
-    marginLeft: 8,
-  },
+    marginLeft: 8},
   attachmentRemoveText: {
     fontSize: 14,
-    color: isDark ? '#9ca3af' : '#6b7280',
-  },
+    color: isDark ? '#9ca3af' : '#6b7280'},
   editActions: {
-    marginTop: 16,
-  },
+    marginTop: 16},
   deleteButton: {
     paddingVertical: 12,
     borderRadius: 10,
     backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
     alignItems: 'center',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   deleteButtonText: {
     color: isDark ? '#fca5a5' : '#dc2626',
     fontSize: 15,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   modalActions: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 16,
-    marginBottom: 20,
-  },
+    marginBottom: 20},
   cancelButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 10,
     backgroundColor: isDark ? '#374151' : '#e5e7eb',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: isDark ? '#fff' : '#374151',
-  },
+    color: isDark ? '#fff' : '#374151'},
   primaryButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 10,
     backgroundColor: '#7c3aed',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
-  },
-});
+    color: '#fff'}});

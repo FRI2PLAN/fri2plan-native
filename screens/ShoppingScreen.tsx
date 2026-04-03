@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * ShoppingScreen — Onglet Courses
  * Connecté à la BD via tRPC (routes shopping.*)
@@ -7,8 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator,
-} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -455,10 +453,10 @@ export default function ShoppingScreen({ embedded = false }: { embedded?: boolea
 
   if (embedded) return content;
   return (
-    <SafeAreaView style={s.container}>
+    <View style={s.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {content}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -534,6 +532,5 @@ function getStyles(isDark: boolean) {
     actionsModal: { backgroundColor: card, borderRadius: 16, padding: 8, width: '80%', maxWidth: 320 },
     actionItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
     actionIcon: { fontSize: 20 },
-    actionText: { fontSize: 15, fontWeight: '500', color: text },
-  });
+    actionText: { fontSize: 15, fontWeight: '500', color: text }});
 }

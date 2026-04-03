@@ -1,4 +1,3 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Share } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -30,24 +29,21 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
       email: 'marie.dupont@example.com',
       status: 'active',
       date: 'Il y a 2 semaines',
-      reward: 10,
-    },
+      reward: 10},
     {
       id: '2',
       name: 'Jean Martin',
       email: 'jean.martin@example.com',
       status: 'premium',
       date: 'Il y a 1 mois',
-      reward: 20,
-    },
+      reward: 20},
     {
       id: '3',
       name: 'Sophie Bernard',
       email: 'sophie.bernard@example.com',
       status: 'pending',
       date: 'Il y a 3 jours',
-      reward: 0,
-    },
+      reward: 0},
   ];
 
   const totalReferrals = referrals.length;
@@ -59,8 +55,7 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
       await Share.share({
         message: `Rejoins-moi sur FRI2PLAN, l'organiseur familial qui simplifie la vie ! 🎉\n\nUtilise mon code de parrainage : ${referralCode}\n\nLien : ${referralLink}`,
         url: referralLink,
-        title: 'Parrainage FRI2PLAN',
-      });
+        title: 'Parrainage FRI2PLAN'});
     } catch (error) {
       console.error('Error sharing:', error);
     }
@@ -90,7 +85,7 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
       {/* Header */}
@@ -263,75 +258,63 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+    backgroundColor: '#f9fafb'},
   header: {
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   content: {
-    flex: 1,
-  },
+    flex: 1},
   heroCard: {
     backgroundColor: '#7c3aed',
     margin: 16,
     padding: 32,
     borderRadius: 16,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   heroEmoji: {
     fontSize: 64,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   heroTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   heroDescription: {
     fontSize: 16,
     color: '#fff',
     textAlign: 'center',
-    opacity: 0.9,
-  },
+    opacity: 0.9},
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     gap: 12,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   statCard: {
     flex: 1,
     padding: 16,
     borderRadius: 12,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
-  },
+    color: '#6b7280'},
   codeCard: {
     backgroundColor: '#fff',
     margin: 16,
@@ -341,90 +324,75 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
+    elevation: 3},
   codeLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6b7280',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   codeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   codeText: {
     flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   copyButton: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-  },
+    borderRadius: 6},
   copyButtonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   divider: {
     height: 1,
     backgroundColor: '#e5e7eb',
-    marginVertical: 16,
-  },
+    marginVertical: 16},
   linkLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6b7280',
-    marginBottom: 8,
-  },
+    marginBottom: 8},
   linkContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   linkText: {
     flex: 1,
     fontSize: 14,
-    color: '#1f2937',
-  },
+    color: '#1f2937'},
   shareButton: {
     backgroundColor: '#10b981',
     paddingVertical: 14,
     borderRadius: 8,
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
   shareButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'},
   howItWorksCard: {
     backgroundColor: '#fff',
     margin: 16,
     padding: 20,
-    borderRadius: 12,
-  },
+    borderRadius: 12},
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   step: {
     flexDirection: 'row',
-    marginBottom: 20,
-  },
+    marginBottom: 20},
   stepNumber: {
     width: 32,
     height: 32,
@@ -432,59 +400,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-  },
+    marginRight: 12},
   stepNumberText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'},
   stepContent: {
-    flex: 1,
-  },
+    flex: 1},
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   stepDescription: {
     fontSize: 14,
     color: '#6b7280',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
   rewardsCard: {
     backgroundColor: '#fff',
     margin: 16,
     padding: 20,
-    borderRadius: 12,
-  },
+    borderRadius: 12},
   rewardItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
+    marginBottom: 16},
   rewardIcon: {
     fontSize: 32,
-    marginRight: 12,
-  },
+    marginRight: 12},
   rewardContent: {
-    flex: 1,
-  },
+    flex: 1},
   rewardTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 2,
-  },
+    marginBottom: 2},
   rewardAmount: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#7c3aed',
-  },
+    color: '#7c3aed'},
   referralsContainer: {
-    padding: 16,
-  },
+    padding: 16},
   referralCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -494,52 +450,42 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
+    elevation: 3},
   referralHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
+    alignItems: 'flex-start'},
   referralInfo: {
-    flex: 1,
-  },
+    flex: 1},
   referralName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   referralEmail: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   referralDate: {
     fontSize: 12,
-    color: '#9ca3af',
-  },
+    color: '#9ca3af'},
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
-  },
+    borderRadius: 12},
   statusText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
-  },
+    fontWeight: '600'},
   referralReward: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
+    borderTopColor: '#e5e7eb'},
   referralRewardText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#10b981',
-  },
+    color: '#10b981'},
 
   pageTitleContainer: {
     backgroundColor: '#fff',
@@ -547,12 +493,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
+    borderBottomColor: '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center'}});
