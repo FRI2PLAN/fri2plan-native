@@ -3,7 +3,7 @@
  * Connecté à la BD via tRPC (routes shopping.*)
  * Pattern familyId : trpc.family.list → families[0].id
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
   StyleSheet, ScrollView, Alert, ActivityIndicator} from 'react-native';
@@ -37,7 +37,17 @@ interface ShoppingItem {
 type ShoppingTab = 'lists' | 'history';
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function ShoppingScreen({ embedded = false }: { embedded?: boolean } = {}) {
+export default function ShoppingScreen({
+  embedded = false,
+  externalTab,
+  onTabChange,
+  triggerCreate = 0,
+}: {
+  embedded?: boolean;
+  externalTab?: 'lists' | 'history';
+  onTabChange?: (tab: 'lists' | 'history') => void;
+  triggerCreate?: number;
+} = {}) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
@@ -49,7 +59,13 @@ export default function ShoppingScreen({ embedded = false }: { embedded?: boolea
   const familyId = activeFamily?.id;
 
   // ─── Onglets ───────────────────────────────────────────────────────────────
-  const [tab, setTab] = useState<ShoppingTab>('lists');
+  const [internalTab, setInternalTab] = useState<ShoppingTab>('lists');
+  const tab = externalTab ?? internalTab;
+  const setTab = (t: ShoppingTab) => {
+    setInternalTab(t);
+    onTabChange?.(t);
+  };
+  const prevTriggerCreate = React.useRef(0);
 
   // ─── Listes ────────────────────────────────────────────────────────────────
   const { data: allLists = [], isLoading: listsLoading } = trpc.shopping.listsByFamily.useQuery(
@@ -105,6 +121,14 @@ export default function ShoppingScreen({ embedded = false }: { embedded?: boolea
     setTargetDate(undefined);
     setShowListForm(true);
   };
+
+  // Trigger create from parent action bar
+  React.useEffect(() => {
+    if (triggerCreate > 0 && triggerCreate !== prevTriggerCreate.current) {
+      prevTriggerCreate.current = triggerCreate;
+      openCreateList();
+    }
+  }, [triggerCreate]);
   const openEditList = (list: ShoppingList) => {
     setEditingList(list);
     setListForm({ name: list.name, description: list.description || '', isPrivate: !!list.isPrivate });
@@ -336,27 +360,6 @@ export default function ShoppingScreen({ embedded = false }: { embedded?: boolea
   // ─── Vue principale (liste des listes) ────────────────────────────────────
   const content = (
     <View style={s.container}>
-      {/* Titre + bouton créer */}
-      <View style={s.titleBar}>
-        <Text style={s.title}>{t('tabs.shopping') || 'Courses'}</Text>
-        <TouchableOpacity style={s.createBtn} onPress={openCreateList}>
-          <Text style={s.createBtnText}>+ {t('shopping.newList') || 'Nouvelle liste'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Onglets Actives / Historique */}
-      <View style={s.tabBar}>
-        <TouchableOpacity style={[s.tabBtn, tab === 'lists' && s.tabBtnActive]} onPress={() => setTab('lists')}>
-          <Text style={[s.tabBtnText, tab === 'lists' && s.tabBtnTextActive]}>
-            {t('shopping.activeLists') || 'Actives'} ({activeLists.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[s.tabBtn, tab === 'history' && s.tabBtnActive]} onPress={() => setTab('history')}>
-          <Text style={[s.tabBtnText, tab === 'history' && s.tabBtnTextActive]}>
-            {t('shopping.history') || 'Historique'} ({archivedLists.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
 
       {listsLoading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color="#7c3aed" />

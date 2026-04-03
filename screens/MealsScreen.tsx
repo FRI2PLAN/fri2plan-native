@@ -87,7 +87,17 @@ const MEAL_EMOJIS: Record<MealType, string> = {
   snack: '🍎'};
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function MealsScreen({ embedded = false }: { embedded?: boolean } = {}) {
+export default function MealsScreen({
+  embedded = false,
+  externalTab,
+  onTabChange,
+  triggerCreate = 0,
+}: {
+  embedded?: boolean;
+  externalTab?: 'week' | 'history' | 'settings';
+  onTabChange?: (tab: 'week' | 'history' | 'settings') => void;
+  triggerCreate?: number;
+} = {}) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
@@ -108,7 +118,13 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
   );
 
   // ─── Onglets ───────────────────────────────────────────────────────────────
-  const [tab, setTab] = useState<MealsTab>('week');
+  const [internalTab, setInternalTab] = useState<MealsTab>('week');
+  const tab = externalTab ?? internalTab;
+  const setTab = (t: MealsTab) => {
+    setInternalTab(t);
+    onTabChange?.(t);
+  };
+  const prevTriggerCreate = React.useRef(0);
 
   // ─── Drag & Drop ──────────────────────────────────────────────────────────
   const [draggingMeal, setDraggingMeal] = useState<Meal | null>(null);
@@ -219,6 +235,14 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
     setImportUrl('');
     setImportResult(null);
   };
+
+  // Trigger create from parent action bar
+  React.useEffect(() => {
+    if (triggerCreate > 0 && triggerCreate !== prevTriggerCreate.current) {
+      prevTriggerCreate.current = triggerCreate;
+      openCreate();
+    }
+  }, [triggerCreate]);
 
   const openEdit = (meal: Meal) => {
     setEditingMeal(meal);
@@ -740,24 +764,6 @@ export default function MealsScreen({ embedded = false }: { embedded?: boolean }
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
-      {/* Titre + bouton */}
-      <View style={s.titleBar}>
-        <Text style={s.title}>{t('tabs.meals') || 'Repas'}</Text>
-        <TouchableOpacity style={s.createBtn} onPress={() => openCreate()}>
-          <Text style={s.createBtnText}>+ {t('meals.newMeal') || 'Nouveau'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Onglets */}
-      <View style={s.tabBar}>
-        {(['week', 'history', 'settings'] as MealsTab[]).map(tb => (
-          <TouchableOpacity key={tb} style={[s.tabBtn, tab === tb && s.tabBtnActive]} onPress={() => setTab(tb)}>
-            <Text style={[s.tabBtnText, tab === tb && s.tabBtnTextActive]}>
-              {tb === 'week' ? (t('meals.week') || 'Semaine') : tb === 'history' ? (t('meals.history') || 'Historique') : '⚙️'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       {/* Contenu selon onglet */}
       <View style={{ flex: 1 }}>

@@ -464,7 +464,8 @@
     "members": "Members",
     "settings": "Settings",
     "dashboard": "Dashboard",
-    "meals": "Meals"
+    "meals": "Meals",
+    "cuisine": "Kitchen"
   },
   "meals": {
     "newMeal": "New meal",

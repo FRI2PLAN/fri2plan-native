@@ -464,7 +464,8 @@
     "members": "Membres",
     "settings": "Paramètres",
     "dashboard": "Tableau de bord",
-    "meals": "Repas"
+    "meals": "Repas",
+    "cuisine": "Cuisine"
   },
   "meals": {
     "newMeal": "Nouveau repas",

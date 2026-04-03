@@ -465,7 +465,8 @@
     "members": "Mitglieder",
     "settings": "Einstellungen",
     "dashboard": "Dashboard",
-    "meals": "Mahlzeiten"
+    "meals": "Mahlzeiten",
+    "cuisine": "Küche"
   },
   "meals": {
     "newMeal": "Neue Mahlzeit",
