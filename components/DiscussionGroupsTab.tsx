@@ -196,22 +196,23 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     const isOwnMessage = message.userId === user?.id;
     
     return (
-      <View key={message.id} style={[styles.messageCard, isOwnMessage && styles.ownMessageCard]}>
+      <View key={message.id} style={[styles.messageWrapper, isOwnMessage ? styles.ownMessageWrapper : styles.otherMessageWrapper]}>
+        <View style={[styles.messageCard, isOwnMessage && styles.ownMessageCard]}>
         <View style={styles.messageHeader}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, isOwnMessage && styles.ownAvatar]}>
             <Text style={styles.avatarText}>
               {message.userName?.charAt(0).toUpperCase() || '?'}
             </Text>
           </View>
           <View style={styles.messageHeaderInfo}>
-            <Text style={styles.messageSender}>{message.userName || t('messages.unknownUser')}</Text>
-            <Text style={styles.messageTime}>
+            <Text style={[styles.messageSender, isOwnMessage && styles.ownMessageSender]}>{message.userName || t('messages.unknownUser')}</Text>
+            <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
               {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
           </View>
         </View>
         
-        <Text style={styles.messageContent}>{message.content}</Text>
+        <Text style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>{message.content}</Text>
         
         {message.attachmentUrl && message.attachmentType === 'image' && (
           <TouchableOpacity onPress={() => setLightboxImage(message.attachmentUrl)}>
@@ -247,6 +248,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
           >
             <Text style={styles.actionButtonText}>😊 {t('messages.react')}</Text>
           </TouchableOpacity>
+        </View>
         </View>
       </View>
     );
@@ -618,20 +620,41 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   messagesListContent: {
     padding: 16,
   },
+  // Wrapper pleine largeur pour aligner les bulles
+  messageWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  ownMessageWrapper: {
+    justifyContent: 'flex-end',
+  },
+  otherMessageWrapper: {
+    justifyContent: 'flex-start',
+  },
   messageCard: {
     backgroundColor: isDark ? '#374151' : '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 12,
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: isDark ? '#4b5563' : '#e5e7eb',
-    maxWidth: '85%',
-    alignSelf: 'flex-start',
+    maxWidth: '75%',
+    borderTopLeftRadius: 4,
   },
   ownMessageCard: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe',
-    borderColor: isDark ? '#4c1d95' : '#c4b5fd',
-    alignSelf: 'flex-end',
+    backgroundColor: '#7c3aed',
+    borderColor: '#7c3aed',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 4,
+  },
+  ownAvatar: {
+    backgroundColor: '#5b21b6',
+  },
+  ownMessageSender: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  ownMessageContent: {
+    color: '#fff',
   },
   messageHeader: {
     flexDirection: 'row',
