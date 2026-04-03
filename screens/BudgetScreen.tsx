@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Switch, Pressable, FlatList, Share, Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView} from 'react-native-safe-area-context';
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
