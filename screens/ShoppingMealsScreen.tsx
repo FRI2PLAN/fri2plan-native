@@ -1,7 +1,6 @@
 /**
- * ShoppingMealsScreen — Onglet fusionné "Courses & Repas"
- * Sous-onglets : 🛒 Courses | 🍽️ Repas
- * Reproduit la structure de la webview (Shopping.tsx + Cuisine.tsx dans le même onglet)
+ * ShoppingMealsScreen - Onglet fusionne "Courses & Repas"
+ * Sous-onglets : Courses | Repas
  */
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
@@ -23,14 +22,23 @@ export default function ShoppingMealsScreen() {
     <View style={s.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Sélecteur principal Courses / Repas */}
+      {/* Titre de page centre */}
+      <View style={s.pageTitleContainer}>
+        <Text style={s.pageTitle}>
+          {activeTab === 'shopping'
+            ? (t('tabs.shopping') || 'Courses')
+            : (t('tabs.meals') || 'Repas')}
+        </Text>
+      </View>
+
+      {/* Selecteur Courses / Repas */}
       <View style={s.mainTabBar}>
         <TouchableOpacity
           style={[s.mainTab, activeTab === 'shopping' && s.mainTabActive]}
           onPress={() => setActiveTab('shopping')}
         >
           <Text style={[s.mainTabText, activeTab === 'shopping' && s.mainTabTextActive]}>
-            🛒 {t('tabs.shopping') || 'Courses'}
+            {t('tabs.shopping') || 'Courses'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -38,12 +46,11 @@ export default function ShoppingMealsScreen() {
           onPress={() => setActiveTab('meals')}
         >
           <Text style={[s.mainTabText, activeTab === 'meals' && s.mainTabTextActive]}>
-            🍽️ {t('tabs.meals') || 'Repas'}
+            {t('tabs.meals') || 'Repas'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Contenu — monté en permanence pour conserver l'état, masqué via display */}
       <View style={[s.content, activeTab !== 'shopping' && s.hidden]}>
         <ShoppingScreen embedded />
       </View>
@@ -61,6 +68,20 @@ function getStyles(isDark: boolean) {
 
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: bg },
+    pageTitleContainer: {
+      backgroundColor: card,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: border,
+    },
+    pageTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: isDark ? '#ffffff' : '#1f2937',
+      textAlign: 'center',
+    },
     mainTabBar: {
       flexDirection: 'row',
       backgroundColor: card,
@@ -68,21 +89,23 @@ function getStyles(isDark: boolean) {
       borderBottomColor: '#7c3aed',
       paddingHorizontal: 12,
       paddingVertical: 6,
-      gap: 8},
+      gap: 8,
+    },
     mainTab: {
       flex: 1,
       paddingVertical: 10,
       borderRadius: 10,
       alignItems: 'center',
-      backgroundColor: isDark ? '#374151' : '#f3f4f6'},
-    mainTabActive: {
-      backgroundColor: '#7c3aed'},
+      backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    },
+    mainTabActive: { backgroundColor: '#7c3aed' },
     mainTabText: {
       fontSize: 15,
       fontWeight: '600',
-      color: isDark ? '#9ca3af' : '#6b7280'},
-    mainTabTextActive: {
-      color: '#ffffff'},
+      color: isDark ? '#9ca3af' : '#6b7280',
+    },
+    mainTabTextActive: { color: '#ffffff' },
     content: { flex: 1 },
-    hidden: { display: 'none' }});
+    hidden: { display: 'none' },
+  });
 }
