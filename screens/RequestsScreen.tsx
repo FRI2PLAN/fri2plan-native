@@ -339,8 +339,9 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       {/* Modal création */}
       <Modal visible={createDialogOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <ScrollView>
-            <View style={styles.modalContent}>
+          <Pressable style={styles.modalBackdrop} onPress={() => { setCreateDialogOpen(false); resetForm(); }} />
+          <View style={styles.modalContent}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>{t('requests.createTitle')}</Text>
 
               {/* Type */}
@@ -431,8 +432,8 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                   )}
                 </TouchableOpacity>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -796,13 +797,17 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     textAlign: 'center'},
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end'},
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)'},
   modalContent: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
     maxHeight: '90%'},
   detailModalContent: {
     maxHeight: '95%'},

@@ -364,19 +364,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         <Text style={styles.pageTitle}>{t('tabs.tasks') || 'Tâches'}</Text>
       </View>
 
-      {/* Bouton Nouvelle tâche */}
-      <View style={styles.newTaskButtonContainer}>
-        <TouchableOpacity style={styles.newTaskButton} onPress={() => setCreateModalVisible(true)}>
-          <Text style={styles.newTaskButtonText}>+ {t('tasks.newTask') || 'Nouvelle tâche'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Filtres */}
+      {/* Filtres + bouton + sur la même ligne */}
       <View style={styles.filterContainer}>
         {([
-          { key: 'inProgress' as FilterType, label: t('tasks.inProgress') || 'En cours', count: (tasks || []).filter(t => t.status === 'inProgress').length },
-          { key: 'completed' as FilterType, label: t('tasks.completed') || 'Terminées', count: (tasks || []).filter(t => t.status === 'completed').length },
           { key: 'myTasks' as FilterType, label: t('tasks.myTasks') || 'Mes tâches', count: (tasks || []).filter(t => t.assignedTo === user?.id).length },
+          { key: 'completed' as FilterType, label: '✓ ' + (t('tasks.completed') || 'Terminé'), count: (tasks || []).filter(t => t.status === 'completed').length },
         ]).map(({ key, label, count }) => (
           <TouchableOpacity
             key={key}
@@ -390,6 +382,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
+          <Text style={styles.filterAddBtnText}>+</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Liste */}
@@ -447,8 +442,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>📋</Text>
                 <Text style={styles.emptyStateText}>{t('tasks.empty') || 'Aucune tâche pour le moment'}</Text>
-                <TouchableOpacity style={styles.newTaskButton} onPress={() => setCreateModalVisible(true)}>
-                  <Text style={styles.newTaskButtonText}>+ {t('tasks.newTask') || 'Nouvelle tâche'}</Text>
+                <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
+                  <Text style={styles.filterAddBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -676,15 +671,13 @@ function getStyles(isDark: boolean) {
     pageTitleContainer: { backgroundColor: card, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: border, alignItems: 'center' },
     pageTitle: { fontSize: 22, fontWeight: 'bold', color: text },
 
-    newTaskButtonContainer: { padding: 10, backgroundColor: card, alignItems: 'center' },
-    newTaskButton: { backgroundColor: '#7c3aed', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-    newTaskButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-
-    filterContainer: { flexDirection: 'row', backgroundColor: card, paddingHorizontal: 10, paddingBottom: 10, gap: 6 },
-    filterTab: { flex: 1, paddingVertical: 7, paddingHorizontal: 4, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' },
+    filterContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: card, paddingHorizontal: 10, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: border },
+    filterTab: { flex: 1, paddingVertical: 8, paddingHorizontal: 4, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' },
     filterTabActive: { backgroundColor: '#7c3aed' },
-    filterText: { fontSize: 11, color: subtext, fontWeight: '500', textAlign: 'center' },
+    filterText: { fontSize: 12, color: subtext, fontWeight: '600', textAlign: 'center' },
     filterTextActive: { color: '#fff', fontWeight: '700' },
+    filterAddBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    filterAddBtnText: { color: '#fff', fontSize: 22, fontWeight: '300', lineHeight: 26 },
 
     content: { flex: 1 },
 
