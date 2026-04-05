@@ -62,6 +62,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   // Formulaire édition profil (tous les users)
   const [profileName, setProfileName] = useState('');
   const [profileColor, setProfileColor] = useState('#8B5CF6');
+  const [profileAvatarType, setProfileAvatarType] = useState<'emoji' | 'initials'>('initials');
+  const [profileAvatarValue, setProfileAvatarValue] = useState('');
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   // Formulaire nouveau cercle
   const [newCircleName, setNewCircleName] = useState('');
@@ -179,6 +182,22 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     onError: (err: any) => Alert.alert('Erreur', err.message),
   });
 
+  const updateAvatarMutation = trpc.avatar.updateAvatar.useMutation({
+    onSuccess: () => {
+      utils.auth.me.invalidate();
+      utils.family.members.invalidate();
+    },
+    onError: (err: any) => Alert.alert('Erreur', err.message),
+  });
+  const leaveFamilyMutation = trpc.members.remove.useMutation({
+    onSuccess: () => {
+      utils.family.list.invalidate();
+      setShowLeaveConfirm(false);
+      setMainView('circles');
+      Alert.alert('✅', 'Vous avez quitté ce cercle.');
+    },
+    onError: (err: any) => Alert.alert('Erreur', err.message),
+  });
   const joinFamilyMutation = trpc.family.join.useMutation({
     onSuccess: () => {
       utils.family.list.invalidate();
@@ -230,6 +249,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     setProfileName(meData?.name || '');
     const me = (members as any[]).find((m: any) => m.id === meData?.id);
     setProfileColor(me?.userColor || meData?.userColor || '#8B5CF6');
+    const avatarType = (meData as any)?.avatarType || 'initials';
+    const avatarValue = (meData as any)?.avatarValue || '';
+    setProfileAvatarType(avatarType === 'emoji' ? 'emoji' : 'initials');
+    setProfileAvatarValue(avatarValue);
     setShowEditProfileModal(true);
   };
 
@@ -241,6 +264,27 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     }
     // Sauvegarder couleur
     updateProfileColorMutation.mutate({ userId: meData.id, color: profileColor });
+    // Sauvegarder avatar si modifié
+    const currentAvatarType = (meData as any)?.avatarType || 'initials';
+    const currentAvatarValue = (meData as any)?.avatarValue || '';
+    if (profileAvatarType !== currentAvatarType || profileAvatarValue !== currentAvatarValue) {
+      updateAvatarMutation.mutate({ type: profileAvatarType, value: profileAvatarValue || undefined });
+    }
+  };
+  const handleLeaveCircle = () => {
+    if (!meData || !activeFamily) return;
+    if (currentUserIsAdmin) {
+      const adminCount = (members as any[]).filter((m: any) => isMemberAdmin(m)).length;
+      if (adminCount <= 1) {
+        Alert.alert(
+          '⚠️ Impossible de quitter',
+          'Vous êtes le seul admin. Transférez d\'abord le rôle admin à un autre membre.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+    setShowLeaveConfirm(true);
   };
 
   const handleRemoveMember = (member: any) => {
@@ -559,6 +603,12 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           </View>
         )}
 
+        {/* Bouton Quitter ce cercle */}
+        <View style={styles.leaveSection}>
+          <TouchableOpacity style={styles.leaveBtn} onPress={handleLeaveCircle}>
+            <Text style={styles.leaveBtnText}>🚪 Quitter ce cercle</Text>
+          </TouchableOpacity>
+        </View>
         <View style={{ height: 40 }} />
       </ScrollView>
 
@@ -633,8 +683,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       {/* ── MODAL ÉDITION PROFIL (tous les users) ── */}
       <Modal visible={showEditProfileModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>Mon profil</Text>
+            {/* Aperçu avatar */}
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <View style={[styles.memberAvatar, { width: 56, height: 56, borderRadius: 28, backgroundColor: profileColor }]}>
+                <Text style={{ fontSize: profileAvatarType === 'emoji' && profileAvatarValue ? 28 : 22, color: '#fff', fontWeight: 'bold' }}>
+                  {profileAvatarType === 'emoji' && profileAvatarValue ? profileAvatarValue : (meData?.name?.charAt(0).toUpperCase() || '?')}
+                </Text>
+              </View>
+            </View>
             <Text style={styles.modalLabel}>Nom affiché</Text>
             <TextInput
               style={styles.input}
@@ -642,6 +700,36 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               onChangeText={setProfileName}
               placeholder="Votre nom"
             />
+            <Text style={styles.modalLabel}>Mon avatar</Text>
+            <View style={styles.avatarTypeRow}>
+              <TouchableOpacity
+                style={[styles.avatarTypeBtn, profileAvatarType === 'initials' && styles.avatarTypeBtnActive]}
+                onPress={() => setProfileAvatarType('initials')}
+              >
+                <Text style={[styles.avatarTypeBtnText, profileAvatarType === 'initials' && styles.avatarTypeBtnTextActive]}>Initiales</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.avatarTypeBtn, profileAvatarType === 'emoji' && styles.avatarTypeBtnActive]}
+                onPress={() => setProfileAvatarType('emoji')}
+              >
+                <Text style={[styles.avatarTypeBtnText, profileAvatarType === 'emoji' && styles.avatarTypeBtnTextActive]}>Emoji</Text>
+              </TouchableOpacity>
+            </View>
+            {profileAvatarType === 'emoji' && (
+              <View>
+                <View style={styles.emojiGrid}>
+                  {['😀','😎','🦁','🐻','🦊','🐼','🦋','🌟','🎯','🏆','💜','🌈','🍀','🦄','🐉','🎭','🚀','⚡','🎸','🌺'].map(emoji => (
+                    <TouchableOpacity
+                      key={emoji}
+                      style={[styles.emojiBtn, profileAvatarValue === emoji && styles.emojiBtnSelected]}
+                      onPress={() => setProfileAvatarValue(emoji)}
+                    >
+                      <Text style={styles.emojiBtnText}>{emoji}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
             <Text style={styles.modalLabel}>Ma couleur</Text>
             <View style={styles.colorGrid}>
               {COLORS.map(color => (
@@ -657,11 +745,34 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 <Text style={styles.cancelBtnText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.confirmBtn, (!profileName.trim() || updateNameMutation.isPending || updateProfileColorMutation.isPending) && styles.confirmBtnDisabled]}
+                style={[styles.confirmBtn, (!profileName.trim() || updateNameMutation.isPending || updateProfileColorMutation.isPending || updateAvatarMutation.isPending) && styles.confirmBtnDisabled]}
                 onPress={handleSaveProfile}
-                disabled={!profileName.trim() || updateNameMutation.isPending || updateProfileColorMutation.isPending}
+                disabled={!profileName.trim() || updateNameMutation.isPending || updateProfileColorMutation.isPending || updateAvatarMutation.isPending}
               >
-                <Text style={styles.confirmBtnText}>{(updateNameMutation.isPending || updateProfileColorMutation.isPending) ? '...' : 'Enregistrer'}</Text>
+                <Text style={styles.confirmBtnText}>{(updateNameMutation.isPending || updateProfileColorMutation.isPending || updateAvatarMutation.isPending) ? '...' : 'Enregistrer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+      {/* ── MODAL CONFIRMATION QUITTER CERCLE ── */}
+      <Modal visible={showLeaveConfirm} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Quitter ce cercle ?</Text>
+            <Text style={styles.modalSubtitle}>
+              Vous allez quitter « {activeFamily?.name} ». Vous ne verrez plus les données de ce cercle.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLeaveConfirm(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, { backgroundColor: '#ef4444' }, leaveFamilyMutation.isPending && styles.confirmBtnDisabled]}
+                onPress={() => meData && leaveFamilyMutation.mutate({ userId: meData.id })}
+                disabled={leaveFamilyMutation.isPending}
+              >
+                <Text style={styles.confirmBtnText}>{leaveFamilyMutation.isPending ? '...' : 'Quitter'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -980,4 +1091,18 @@ const styles = StyleSheet.create({
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginVertical: 16 },
   colorSwatch: { width: 44, height: 44, borderRadius: 22 },
   colorSwatchSelected: { borderWidth: 3, borderColor: '#1f2937' },
+  // Quitter cercle
+  leaveSection: { marginTop: 24, marginHorizontal: 16, marginBottom: 8 },
+  leaveBtn: { borderWidth: 1.5, borderColor: '#ef4444', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  leaveBtnText: { color: '#ef4444', fontWeight: '600', fontSize: 14 },
+  // Avatar sélecteur
+  avatarTypeRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  avatarTypeBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', alignItems: 'center' },
+  avatarTypeBtnActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  avatarTypeBtnText: { color: '#374151', fontSize: 13, fontWeight: '600' },
+  avatarTypeBtnTextActive: { color: '#fff' },
+  emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginVertical: 8 },
+  emojiBtn: { width: 44, height: 44, borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' },
+  emojiBtnSelected: { borderColor: '#7c3aed', borderWidth: 2, backgroundColor: '#ede9fe' },
+  emojiBtnText: { fontSize: 22 },
 });

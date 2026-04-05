@@ -38,6 +38,7 @@ export default function RichHeader({
   // Récupérer les points de la famille pour le classement
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = families?.[0];
+  const activeFamilyName: string | null = activeFamily?.name || null;
   const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
@@ -116,6 +117,9 @@ export default function RichHeader({
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
               </View>
+            )}
+            {activeFamilyName && (
+              <Text style={styles.familyNameText} numberOfLines={1}>👨‍👩‍👧 {activeFamilyName}</Text>
             )}
           </View>
         </TouchableOpacity>
@@ -272,5 +276,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  familyNameText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 9,
+    marginTop: 2,
   },
 });
