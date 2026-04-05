@@ -8,6 +8,12 @@ export interface User {
   role?: string;
   avatar?: string;
   familyId?: number;
+  // Champs avatar enrichis (retournés par user.me)
+  avatarType?: 'upload' | 'emoji' | 'icon' | 'initials';
+  avatarValue?: string;   // emoji ou initiales
+  avatarUrl?: string | null; // URL photo uploadée
+  userColor?: string;     // couleur de fond de l'avatar
+  points?: number;        // points de récompenses
 }
 
 export interface Family {
@@ -15,6 +21,7 @@ export interface Family {
   name: string;
   inviteCode: string;
   createdAt: string;
+  familyColor?: string;
 }
 
 export interface Event {
@@ -228,22 +235,39 @@ export type AppRouter = {
     };
     me: {
       query: () => Promise<User>;
+      useQuery: (opts?: any) => any;
     };
   };
   user: {
     me: {
       query: () => Promise<User>;
+      useQuery: (opts?: any) => any;
     };
   };
   family: {
     list: {
       query: () => Promise<Family[]>;
+      useQuery: (opts?: any) => any;
     };
     create: {
       mutate: (input: { name: string }) => Promise<Family>;
+      useMutation: (opts?: any) => any;
+    };
+    join: {
+      mutate: (input: { inviteCode: string }) => Promise<{ familyId: number }>;
+      useMutation: (opts?: any) => any;
+    };
+    update: {
+      mutate: (input: { familyId: number; name: string; familyColor?: string }) => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
+    };
+    delete: {
+      mutate: (input: { familyId: number }) => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
     };
     members: {
-      query: (input: { familyId: number }) => Promise<Array<{ id: number; name: string; status: string; role?: string }>>;
+      query: (input: { familyId: number }) => Promise<Array<{ id: number; name: string; email?: string; status: string; role?: string; familyRole?: string; userColor?: string; avatarType?: string; avatarValue?: string; avatarUrl?: string | null }>>;
+      useQuery: (input: { familyId: number }, opts?: any) => any;
     };
   };
   events: {
@@ -553,6 +577,7 @@ export type AppRouter = {
         isPrivate?: number;
         projectId?: number;
         payerId?: number; // Pour les dépenses de projet partagé
+        userId?: number;  // Attribuer la dépense à un autre membre
       }) => Promise<{ transactionId: number }>;
     };
     updateTransaction: {
@@ -566,6 +591,7 @@ export type AppRouter = {
         date?: Date;
         isPrivate?: number;
         projectId?: number;
+        userId?: number;  // Changer le membre attribué
       }) => Promise<void>;
     };
     deleteTransaction: {
@@ -757,6 +783,34 @@ export type AppRouter = {
     };
     markCommentsRead: {
       mutate: (input: { requestId: number }) => Promise<{ success: boolean }>;
+    };
+  };
+  user: {
+    me: {
+      query: () => Promise<User>;
+      useQuery: (opts?: any) => any;
+    };
+    updateName: {
+      mutate: (input: { userId: number; name: string }) => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
+    };
+  };
+  avatar: {
+    getMyAvatar: {
+      query: () => Promise<{ avatarType: string; avatarUrl: string | null; avatarValue: string | null }>;
+      useQuery: (opts?: any) => any;
+    };
+    updateAvatar: {
+      mutate: (input: { type: 'emoji' | 'icon' | 'initials'; value?: string }) => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
+    };
+    uploadAvatar: {
+      mutate: (input: { imageData: string; mimeType: string }) => Promise<{ success: boolean; url: string }>;
+      useMutation: (opts?: any) => any;
+    };
+    deleteAvatar: {
+      mutate: () => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
     };
   };
   settings: {

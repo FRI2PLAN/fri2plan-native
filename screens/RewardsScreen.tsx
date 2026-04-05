@@ -48,9 +48,11 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { data: myPoints } = trpc.rewards.myPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
   );
-  const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
+  const { data: familyPointsRaw = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
   );
+  // Toujours trier par points décroissants côté client (sécurité en cas de backend non trié)
+  const familyPoints = [...(familyPointsRaw as any[])].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
   const { data: rewards = [], isLoading: rewardsLoading } = trpc.rewards.list.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
   );
@@ -181,9 +183,10 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
           </View>
           <View style={styles.rankBadge}>
             <Text style={styles.rankText}>
-              #{(familyPoints as any[]).findIndex((m: any) => m.userId === user?.id) >= 0
-                ? (familyPoints as any[]).findIndex((m: any) => m.userId === user?.id) + 1
-                : "—"}
+              #{(() => {
+                const idx = (familyPoints as any[]).findIndex((m: any) => m.userId === user?.id);
+                return idx >= 0 ? idx + 1 : "—";
+              })()}
             </Text>
             <Text style={styles.rankLabel}>classement</Text>
           </View>

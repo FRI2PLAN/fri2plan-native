@@ -10,6 +10,7 @@ import {
   Alert,
   Share,
   Clipboard,
+  Switch,
 } from 'react-native';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,26 +21,48 @@ interface MembersScreenProps {
   onNext?: () => void;
 }
 
-const COLORS = ['#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#14B8A6'];
+const COLORS = ['#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#14B8A6', '#F97316', '#06B6D4'];
+const FAMILY_EMOJIS = ['👨‍👩‍👧‍👦', '🏠', '⭐', '🌟', '🎯', '🌈', '🦁', '🐻', '🦊', '🐺', '🌺', '🎪', '🏆', '🎭', '🎨'];
 
 export default function MembersScreen({ onNavigate, onPrevious, onNext }: MembersScreenProps) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'members' | 'invitations'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'invitations' | 'circles'>('members');
+
+  // Modales membres
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showColorModal, setShowColorModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+
+  // Modales famille
+  const [showEditFamilyModal, setShowEditFamilyModal] = useState(false);
+  const [showNewCircleModal, setShowNewCircleModal] = useState(false);
+  const [showJoinCircleModal, setShowJoinCircleModal] = useState(false);
+
+  // Formulaires
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [selectedColor, setSelectedColor] = useState('#8B5CF6');
 
+  // Formulaire édition famille
+  const [familyName, setFamilyName] = useState('');
+  const [familyColor, setFamilyColor] = useState('#8B5CF6');
+  const [familyEmoji, setFamilyEmoji] = useState('👨‍👩‍👧‍👦');
+
+  // Formulaire nouveau cercle
+  const [newCircleName, setNewCircleName] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+
+  // Cercle actif sélectionné
+  const [activeFamilyIndex, setActiveFamilyIndex] = useState(0);
+
   const utils = trpc.useUtils();
-  const { data: meData } = trpc.user.me.useQuery();
-  const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[0];
+  const { data: meData } = trpc.auth.me.useQuery();
+  const { data: families = [] } = trpc.family.list.useQuery();
+  const activeFamily = (families as any[])[activeFamilyIndex] || (families as any[])[0];
 
   const { data: members = [], isLoading } = trpc.family.members.useQuery(
     { familyId: activeFamily?.id || 0 },
@@ -53,10 +76,11 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
   const currentUserIsAdmin = useMemo(() => {
     if (!meData || !members.length) return false;
-    const me = members.find((m: any) => m.id === meData.id);
+    const me = (members as any[]).find((m: any) => m.id === meData.id);
     return me?.familyRole === 'admin' || me?.role === 'admin' || meData.role === 'admin';
   }, [meData, members]);
 
+  // Mutations
   const inviteMutation = trpc.members.invite.useMutation({
     onSuccess: (data: any) => {
       setGeneratedCode(data.invitationCode);
@@ -106,6 +130,35 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     onError: (err: any) => Alert.alert('Erreur', err.message),
   });
 
+  const updateFamilyMutation = trpc.family.update.useMutation({
+    onSuccess: () => {
+      utils.family.list.invalidate();
+      setShowEditFamilyModal(false);
+    },
+    onError: (err: any) => Alert.alert('Erreur', err.message),
+  });
+
+  const createFamilyMutation = trpc.family.create.useMutation({
+    onSuccess: () => {
+      utils.family.list.invalidate();
+      setShowNewCircleModal(false);
+      setNewCircleName('');
+      Alert.alert('✅', 'Nouveau cercle créé !');
+    },
+    onError: (err: any) => Alert.alert('Erreur', err.message),
+  });
+
+  const joinFamilyMutation = trpc.family.join.useMutation({
+    onSuccess: () => {
+      utils.family.list.invalidate();
+      setShowJoinCircleModal(false);
+      setJoinCode('');
+      Alert.alert('✅', 'Vous avez rejoint le cercle !');
+    },
+    onError: (err: any) => Alert.alert('Erreur', err.message),
+  });
+
+  // Handlers
   const handleInvite = () => {
     if (!inviteEmail.trim() || !activeFamily) return;
     inviteMutation.mutate({ email: inviteEmail.trim(), familyId: activeFamily.id, role: inviteRole });
@@ -134,6 +187,23 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     else if (action === 'transfer') setShowTransferModal(true);
   };
 
+  const handleOpenEditFamily = () => {
+    if (!activeFamily) return;
+    setFamilyName(activeFamily.name || '');
+    setFamilyColor(activeFamily.familyColor || '#8B5CF6');
+    setFamilyEmoji('👨‍👩‍👧‍👦');
+    setShowEditFamilyModal(true);
+  };
+
+  const handleSaveFamily = () => {
+    if (!familyName.trim() || !activeFamily) return;
+    updateFamilyMutation.mutate({
+      familyId: activeFamily.id,
+      name: familyName.trim(),
+      familyColor: familyColor,
+    });
+  };
+
   const getRoleLabel = (member: any) => {
     const role = member.familyRole || member.role;
     return role === 'admin' ? '👑 Admin' : '👤 Membre';
@@ -148,6 +218,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
   const isEmojiAvatar = (member: any) => member.avatarType === 'emoji' || member.avatarType === 'icon';
 
+  const isMemberAdmin = (member: any) => member.familyRole === 'admin' || member.role === 'admin';
+
   return (
     <View style={styles.container}>
       {/* Page Title */}
@@ -155,28 +227,57 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         <Text style={styles.pageTitle}>Cercles</Text>
       </View>
 
-      {/* Family Info */}
-      {activeFamily && (
-        <View style={styles.familyBanner}>
-          <Text style={styles.familyName}>👨‍👩‍👧‍👦 {activeFamily.name}</Text>
-          <View style={styles.familyCodeRow}>
-            <Text style={styles.familyCodeLabel}>Code : </Text>
-            <Text style={styles.familyCode} numberOfLines={1} adjustsFontSizeToFit>{activeFamily.inviteCode}</Text>
-            <TouchableOpacity onPress={() => handleCopyCode(activeFamily.inviteCode)} style={styles.familyCodeCopy}>
-              <Text style={styles.familyCodeCopyText}>📋</Text>
+      {/* Sélecteur de cercle si plusieurs familles */}
+      {(families as any[]).length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.circleSelector}>
+          {(families as any[]).map((fam: any, idx: number) => (
+            <TouchableOpacity
+              key={fam.id}
+              style={[styles.circleSelectorItem, idx === activeFamilyIndex && styles.circleSelectorItemActive]}
+              onPress={() => setActiveFamilyIndex(idx)}
+            >
+              <Text style={[styles.circleSelectorText, idx === activeFamilyIndex && styles.circleSelectorTextActive]}>
+                {fam.name}
+              </Text>
             </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* Family Info Banner */}
+      {activeFamily && (
+        <View style={[styles.familyBanner, { borderLeftColor: activeFamily.familyColor || '#8B5CF6' }]}>
+          <View style={styles.familyBannerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.familyName}>👨‍👩‍👧‍👦 {activeFamily.name}</Text>
+              <View style={styles.familyCodeRow}>
+                <Text style={styles.familyCodeLabel}>Code : </Text>
+                <Text style={styles.familyCode} numberOfLines={1} adjustsFontSizeToFit>{activeFamily.inviteCode}</Text>
+                <TouchableOpacity onPress={() => handleCopyCode(activeFamily.inviteCode)} style={styles.familyCodeCopy}>
+                  <Text style={styles.familyCodeCopyText}>📋</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleShareCode(activeFamily.inviteCode)} style={styles.familyCodeCopy}>
+                  <Text style={styles.familyCodeCopyText}>📤</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {currentUserIsAdmin && (
+              <TouchableOpacity style={styles.editFamilyBtn} onPress={handleOpenEditFamily}>
+                <Text style={styles.editFamilyBtnText}>✏️</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
 
-      {/* Tabs + Add */}
+      {/* Tabs */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'members' && styles.tabActive]}
           onPress={() => setActiveTab('members')}
         >
           <Text style={[styles.tabText, activeTab === 'members' && styles.tabTextActive]}>
-            👥 Membres ({members.length})
+            👥 Membres ({(members as any[]).length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -184,10 +285,18 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           onPress={() => setActiveTab('invitations')}
         >
           <Text style={[styles.tabText, activeTab === 'invitations' && styles.tabTextActive]}>
-            ✉️ Invitations ({invitations.length})
+            ✉️ Invitations ({(invitations as any[]).length})
           </Text>
         </TouchableOpacity>
-        {currentUserIsAdmin && (
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'circles' && styles.tabActive]}
+          onPress={() => setActiveTab('circles')}
+        >
+          <Text style={[styles.tabText, activeTab === 'circles' && styles.tabTextActive]}>
+            🔵 Cercles
+          </Text>
+        </TouchableOpacity>
+        {currentUserIsAdmin && activeTab === 'members' && (
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => { setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true); }}
@@ -197,16 +306,17 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         )}
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator>
-        {/* MEMBRES */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* ── ONGLET MEMBRES ── */}
         {activeTab === 'members' && (
           <View>
             {isLoading ? (
               <Text style={styles.emptyText}>Chargement...</Text>
-            ) : members.length === 0 ? (
+            ) : (members as any[]).length === 0 ? (
               <Text style={styles.emptyText}>Aucun membre</Text>
             ) : (
-              members.map((member: any) => (
+              (members as any[]).map((member: any) => (
                 <View key={member.id} style={styles.memberCard}>
                   <View style={[styles.memberAvatar, { backgroundColor: getMemberColor(member) }]}>
                     <Text style={isEmojiAvatar(member) ? styles.memberEmoji : styles.memberInitial}>
@@ -214,39 +324,44 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                     </Text>
                   </View>
                   <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{member.name}</Text>
+                    <View style={styles.memberNameRow}>
+                      <Text style={styles.memberName}>{member.name}</Text>
+                      {isMemberAdmin(member) && <Text style={styles.adminBadge}>👑</Text>}
+                    </View>
                     <Text style={styles.memberEmail}>{member.email}</Text>
                     <Text style={styles.memberRole}>{getRoleLabel(member)}</Text>
                   </View>
                   {currentUserIsAdmin && member.id !== meData?.id && (
-                    <View style={styles.memberActions}>
-                      <TouchableOpacity
-                        style={styles.actionBtn}
-                        onPress={() => handleMemberAction(member, 'role')}
-                      >
-                        <Text style={styles.actionBtnText}>🔑</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.actionBtn}
-                        onPress={() => handleMemberAction(member, 'color')}
-                      >
-                        <Text style={styles.actionBtnText}>🎨</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.actionBtnDanger]}
-                        onPress={() => handleMemberAction(member, 'remove')}
-                      >
-                        <Text style={styles.actionBtnText}>🗑️</Text>
-                      </TouchableOpacity>
+                    <View style={styles.memberActionsCol}>
+                      <View style={styles.memberActions}>
+                        <TouchableOpacity
+                          style={styles.actionBtn}
+                          onPress={() => handleMemberAction(member, 'role')}
+                        >
+                          <Text style={styles.actionBtnText}>🔑</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionBtn}
+                          onPress={() => handleMemberAction(member, 'color')}
+                        >
+                          <Text style={styles.actionBtnText}>🎨</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, styles.actionBtnDanger]}
+                          onPress={() => handleMemberAction(member, 'remove')}
+                        >
+                          <Text style={styles.actionBtnText}>🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
+                      {!isMemberAdmin(member) && (
+                        <TouchableOpacity
+                          style={styles.transferBtn}
+                          onPress={() => handleMemberAction(member, 'transfer')}
+                        >
+                          <Text style={styles.transferBtnText}>⚡ Transférer admin</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                  )}
-                  {currentUserIsAdmin && member.id !== meData?.id && (member.familyRole === 'member' || member.role === 'member') && (
-                    <TouchableOpacity
-                      style={styles.transferBtn}
-                      onPress={() => handleMemberAction(member, 'transfer')}
-                    >
-                      <Text style={styles.transferBtnText}>Transférer admin</Text>
-                    </TouchableOpacity>
                   )}
                 </View>
               ))
@@ -254,10 +369,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           </View>
         )}
 
-        {/* INVITATIONS */}
+        {/* ── ONGLET INVITATIONS ── */}
         {activeTab === 'invitations' && (
           <View>
-            {invitations.length === 0 ? (
+            {(invitations as any[]).length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyIcon}>✉️</Text>
                 <Text style={styles.emptyText}>Aucune invitation en attente</Text>
@@ -271,7 +386,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 )}
               </View>
             ) : (
-              invitations.map((inv: any) => (
+              (invitations as any[]).map((inv: any) => (
                 <View key={inv.id} style={styles.invitationCard}>
                   <View style={styles.invitationInfo}>
                     <Text style={styles.invitationEmail}>{inv.email}</Text>
@@ -306,9 +421,48 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             )}
           </View>
         )}
+
+        {/* ── ONGLET CERCLES ── */}
+        {activeTab === 'circles' && (
+          <View>
+            <Text style={styles.sectionTitle}>Mes cercles ({(families as any[]).length})</Text>
+
+            {(families as any[]).map((fam: any, idx: number) => (
+              <TouchableOpacity
+                key={fam.id}
+                style={[styles.circleCard, idx === activeFamilyIndex && styles.circleCardActive]}
+                onPress={() => { setActiveFamilyIndex(idx); setActiveTab('members'); }}
+              >
+                <View style={[styles.circleColorDot, { backgroundColor: fam.familyColor || '#8B5CF6' }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.circleName}>{fam.name}</Text>
+                  <Text style={styles.circleCode}>Code : {fam.inviteCode}</Text>
+                </View>
+                {idx === activeFamilyIndex && <Text style={styles.circleActiveBadge}>✓ Actif</Text>}
+              </TouchableOpacity>
+            ))}
+
+            <View style={styles.circleActions}>
+              <TouchableOpacity
+                style={styles.circleActionBtn}
+                onPress={() => { setNewCircleName(''); setShowNewCircleModal(true); }}
+              >
+                <Text style={styles.circleActionBtnText}>➕ Créer un cercle</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.circleActionBtn, styles.circleActionBtnSecondary]}
+                onPress={() => { setJoinCode(''); setShowJoinCircleModal(true); }}
+              >
+                <Text style={styles.circleActionBtnTextSecondary}>🔗 Rejoindre un cercle</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* MODAL INVITATION */}
+      {/* ── MODAL INVITATION ── */}
       <Modal visible={showInviteModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -377,7 +531,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </View>
       </Modal>
 
-      {/* MODAL RÔLE */}
+      {/* ── MODAL RÔLE ── */}
       <Modal visible={showRoleModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -385,16 +539,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             <Text style={styles.modalSubtitle}>{selectedMember?.name}</Text>
             <View style={styles.roleRow}>
               <TouchableOpacity
-                style={[styles.roleBtn, styles.roleBtnActive]}
+                style={[styles.roleBtn, (selectedMember?.familyRole === 'member' || selectedMember?.role === 'member') && styles.roleBtnActive]}
                 onPress={() => selectedMember && activeFamily && updateRoleMutation.mutate({ userId: selectedMember.id, familyId: activeFamily.id, role: 'member' })}
               >
-                <Text style={styles.roleBtnTextActive}>👤 Membre</Text>
+                <Text style={[styles.roleBtnText, (selectedMember?.familyRole === 'member' || selectedMember?.role === 'member') && styles.roleBtnTextActive]}>👤 Membre</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.roleBtn, styles.roleBtnActive]}
+                style={[styles.roleBtn, (selectedMember?.familyRole === 'admin' || selectedMember?.role === 'admin') && styles.roleBtnActive]}
                 onPress={() => selectedMember && activeFamily && updateRoleMutation.mutate({ userId: selectedMember.id, familyId: activeFamily.id, role: 'admin' })}
               >
-                <Text style={styles.roleBtnTextActive}>👑 Admin</Text>
+                <Text style={[styles.roleBtnText, (selectedMember?.familyRole === 'admin' || selectedMember?.role === 'admin') && styles.roleBtnTextActive]}>👑 Admin</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowRoleModal(false)}>
@@ -404,7 +558,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </View>
       </Modal>
 
-      {/* MODAL COULEUR */}
+      {/* ── MODAL COULEUR MEMBRE ── */}
       <Modal visible={showColorModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -433,7 +587,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </View>
       </Modal>
 
-      {/* MODAL SUPPRIMER MEMBRE */}
+      {/* ── MODAL SUPPRIMER MEMBRE ── */}
       <Modal visible={showRemoveModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -454,7 +608,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </View>
       </Modal>
 
-      {/* MODAL TRANSFERT ADMIN */}
+      {/* ── MODAL TRANSFERT ADMIN ── */}
       <Modal visible={showTransferModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -476,6 +630,110 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           </View>
         </View>
       </Modal>
+
+      {/* ── MODAL ÉDITION FAMILLE ── */}
+      <Modal visible={showEditFamilyModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Modifier le cercle</Text>
+
+            <Text style={styles.modalLabel}>Nom du cercle</Text>
+            <TextInput
+              style={styles.input}
+              value={familyName}
+              onChangeText={setFamilyName}
+              placeholder="Nom de la famille"
+            />
+
+            <Text style={styles.modalLabel}>Couleur du cercle</Text>
+            <View style={styles.colorGrid}>
+              {COLORS.map(color => (
+                <TouchableOpacity
+                  key={color}
+                  style={[styles.colorSwatch, { backgroundColor: color }, familyColor === color && styles.colorSwatchSelected]}
+                  onPress={() => setFamilyColor(color)}
+                />
+              ))}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowEditFamilyModal(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, (!familyName.trim() || updateFamilyMutation.isPending) && styles.confirmBtnDisabled]}
+                onPress={handleSaveFamily}
+                disabled={!familyName.trim() || updateFamilyMutation.isPending}
+              >
+                <Text style={styles.confirmBtnText}>{updateFamilyMutation.isPending ? '...' : 'Enregistrer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── MODAL NOUVEAU CERCLE ── */}
+      <Modal visible={showNewCircleModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Créer un nouveau cercle</Text>
+            <Text style={styles.modalSubtitle}>Créez un cercle séparé (ex: travail, amis, club...)</Text>
+
+            <Text style={styles.modalLabel}>Nom du cercle</Text>
+            <TextInput
+              style={styles.input}
+              value={newCircleName}
+              onChangeText={setNewCircleName}
+              placeholder="Ex: Famille, Amis, Travail..."
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowNewCircleModal(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, (!newCircleName.trim() || createFamilyMutation.isPending) && styles.confirmBtnDisabled]}
+                onPress={() => newCircleName.trim() && createFamilyMutation.mutate({ name: newCircleName.trim() })}
+                disabled={!newCircleName.trim() || createFamilyMutation.isPending}
+              >
+                <Text style={styles.confirmBtnText}>{createFamilyMutation.isPending ? '...' : 'Créer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── MODAL REJOINDRE CERCLE ── */}
+      <Modal visible={showJoinCircleModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Rejoindre un cercle</Text>
+            <Text style={styles.modalSubtitle}>Entrez le code d'invitation du cercle</Text>
+
+            <Text style={styles.modalLabel}>Code d'invitation</Text>
+            <TextInput
+              style={styles.input}
+              value={joinCode}
+              onChangeText={setJoinCode}
+              placeholder="Code d'invitation"
+              autoCapitalize="none"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowJoinCircleModal(false)}>
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, (!joinCode.trim() || joinFamilyMutation.isPending) && styles.confirmBtnDisabled]}
+                onPress={() => joinCode.trim() && joinFamilyMutation.mutate({ inviteCode: joinCode.trim() })}
+                disabled={!joinCode.trim() || joinFamilyMutation.isPending}
+              >
+                <Text style={styles.confirmBtnText}>{joinFamilyMutation.isPending ? '...' : 'Rejoindre'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -484,35 +742,58 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   pageTitleContainer: { paddingVertical: 12, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', backgroundColor: '#fff' },
   pageTitle: { fontSize: 22, fontWeight: 'bold', color: '#1f2937' },
-  familyBanner: { backgroundColor: '#ede9fe', paddingHorizontal: 16, paddingVertical: 8 },
-  familyName: { fontSize: 14, fontWeight: '600', color: '#5b21b6', marginBottom: 2 },
+
+  // Sélecteur de cercle
+  circleSelector: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', maxHeight: 44 },
+  circleSelectorItem: { paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 2 },
+  circleSelectorItemActive: { borderBottomWidth: 2, borderBottomColor: '#7c3aed' },
+  circleSelectorText: { fontSize: 13, color: '#6b7280' },
+  circleSelectorTextActive: { color: '#7c3aed', fontWeight: '600' },
+
+  // Banner famille
+  familyBanner: { backgroundColor: '#ede9fe', paddingHorizontal: 16, paddingVertical: 10, borderLeftWidth: 4, borderLeftColor: '#8B5CF6' },
+  familyBannerRow: { flexDirection: 'row', alignItems: 'center' },
+  familyName: { fontSize: 14, fontWeight: '700', color: '#5b21b6', marginBottom: 2 },
   familyCodeRow: { flexDirection: 'row', alignItems: 'center' },
   familyCodeLabel: { fontSize: 12, color: '#7c3aed' },
   familyCode: { fontSize: 12, color: '#7c3aed', fontWeight: '600', flex: 1 },
   familyCodeCopy: { padding: 4 },
   familyCodeCopyText: { fontSize: 14 },
-  tabRow: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', alignItems: 'center', paddingHorizontal: 8 },
+  editFamilyBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+  editFamilyBtnText: { fontSize: 18 },
+
+  // Tabs
+  tabRow: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', alignItems: 'center', paddingHorizontal: 4 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2, borderBottomColor: '#7c3aed' },
-  tabText: { fontSize: 13, color: '#6b7280' },
+  tabText: { fontSize: 11, color: '#6b7280' },
   tabTextActive: { color: '#7c3aed', fontWeight: '600' },
   addBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#7c3aed', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
   addBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold', lineHeight: 22 },
+
+  // Content
   content: { flex: 1, padding: 12 },
-  memberCard: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, flexWrap: 'wrap' },
-  memberAvatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+
+  // Member card
+  memberCard: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  memberAvatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 10, flexShrink: 0 },
   memberInitial: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   memberEmoji: { fontSize: 22 },
   memberInfo: { flex: 1 },
+  memberNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   memberName: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
+  adminBadge: { fontSize: 14 },
   memberEmail: { fontSize: 12, color: '#6b7280', marginTop: 1 },
   memberRole: { fontSize: 12, color: '#7c3aed', marginTop: 2 },
+  memberActionsCol: { alignItems: 'flex-end', gap: 4 },
   memberActions: { flexDirection: 'row', gap: 4 },
   actionBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
   actionBtnDanger: { backgroundColor: '#fee2e2' },
   actionBtnText: { fontSize: 14 },
-  transferBtn: { width: '100%', marginTop: 6, paddingLeft: 54 },
-  transferBtnText: { fontSize: 11, color: '#7c3aed', textDecorationLine: 'underline' },
+  transferBtn: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#ede9fe', borderRadius: 6 },
+  transferBtnText: { fontSize: 10, color: '#7c3aed', fontWeight: '600' },
+
+  // Invitation card
   invitationCard: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   invitationInfo: { flex: 1 },
   invitationEmail: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
@@ -523,11 +804,29 @@ const styles = StyleSheet.create({
   copyBtnText: { fontSize: 16 },
   deleteInvBtn: { padding: 8 },
   deleteInvBtnText: { fontSize: 18 },
+
+  // Circles tab
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#6b7280', marginBottom: 12, marginTop: 4 },
+  circleCard: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  circleCardActive: { borderWidth: 2, borderColor: '#7c3aed' },
+  circleColorDot: { width: 16, height: 16, borderRadius: 8, marginRight: 12 },
+  circleName: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
+  circleCode: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  circleActiveBadge: { fontSize: 12, color: '#7c3aed', fontWeight: '600' },
+  circleActions: { gap: 10, marginTop: 8 },
+  circleActionBtn: { backgroundColor: '#7c3aed', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
+  circleActionBtnSecondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#7c3aed' },
+  circleActionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  circleActionBtnTextSecondary: { color: '#7c3aed', fontWeight: '700', fontSize: 15 },
+
+  // Empty
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyText: { fontSize: 14, color: '#6b7280', textAlign: 'center', padding: 20 },
   emptyBtn: { marginTop: 16, backgroundColor: '#7c3aed', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   emptyBtnText: { color: '#fff', fontWeight: '600' },
+
+  // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', marginBottom: 4, textAlign: 'center' },

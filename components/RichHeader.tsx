@@ -30,7 +30,7 @@ export default function RichHeader({
   const navigation = useNavigation();
 
   // Récupérer les données utilisateur
-  const { data: user } = trpc.user.me.useQuery();
+  const { data: user } = trpc.auth.me.useQuery();
 
   // Récupérer le nombre de notifications non lues
   const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery();

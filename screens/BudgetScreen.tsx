@@ -185,7 +185,8 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     description: '',
     date: new Date(),
     isPrivate: false,
-    projectId: undefined as number | undefined});
+    projectId: undefined as number | undefined,
+    payerId: undefined as number | undefined});  // undefined = utilisateur connecté par défaut
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // ── Formulaire projet ──
@@ -249,7 +250,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     onError: (e: any) => Alert.alert(t('common.error'), e.message)});
 
   // ── Reset forms ──
-  const resetTxForm = () => setTxForm({ type: 'expense', amount: '', category: '', description: '', date: new Date(), isPrivate: false, projectId: undefined });
+  const resetTxForm = () => setTxForm({ type: 'expense', amount: '', category: '', description: '', date: new Date(), isPrivate: false, projectId: undefined, payerId: undefined });
   const resetProjectForm = () => { setProjectForm({ name: '', currency: 'CHF', targetAmount: '' }); setProjectSelectedMembers([]); };
   const resetCatForm = () => { setCatForm({ name: '', color: '#7c3aed', icon: '💼' }); setEditingCatId(null); };
   const resetCatBudgetForm = () => { setCatBudgetForm({ categoryId: '', budgetAmount: '', period: 'monthly', alertThreshold: '80' }); setEditingCatBudgetId(null); };
@@ -315,9 +316,9 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     if (!txForm.category) return Alert.alert(t('common.error'), t('budget.categoryRequired'));
     const amountCents = Math.round(amount * 100);
     if (editingTxId) {
-      updateTx.mutate({ transactionId: editingTxId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0 });
+      updateTx.mutate({ transactionId: editingTxId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0, ...(txForm.payerId ? { userId: txForm.payerId } : {}) });
     } else {
-      createTx.mutate({ familyId: activeFamilyId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0 });
+      createTx.mutate({ familyId: activeFamilyId, type: txForm.type, amount: amountCents, category: txForm.category, description: txForm.description || undefined, date: txForm.date, isPrivate: txForm.isPrivate ? 1 : 0, ...(txForm.payerId ? { userId: txForm.payerId } : {}) });
     }
   };
 
@@ -330,7 +331,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
   const handleEditTx = (tx: any) => {
     setEditingTxId(tx.id);
-    setTxForm({ type: tx.type, amount: (tx.amount / 100).toFixed(2), category: tx.category, description: tx.description || '', date: new Date(tx.date), isPrivate: tx.isPrivate === 1, projectId: tx.projectId });
+    setTxForm({ type: tx.type, amount: (tx.amount / 100).toFixed(2), category: tx.category, description: tx.description || '', date: new Date(tx.date), isPrivate: tx.isPrivate === 1, projectId: tx.projectId, payerId: tx.userId });
     setTxModalOpen(true);
   };
 
@@ -530,7 +531,13 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                   <View style={styles.txInfo}>
                     <Text style={styles.txCategory}>{tx.category}</Text>
                     {tx.description && <Text style={styles.txDesc} numberOfLines={1}>{tx.description}</Text>}
-                    <Text style={styles.txDate}>{format(new Date(tx.date), 'dd/MM/yyyy', { locale: getLocale() })}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={styles.txDate}>{format(new Date(tx.date), 'dd/MM/yyyy', { locale: getLocale() })}</Text>
+                      {tx.userId && tx.userId !== user?.id && (() => {
+                        const payer = (members as any[]).find((m: any) => m.id === tx.userId);
+                        return payer ? <Text style={[styles.txDate, { color: '#7c3aed' }]}>👤 {payer.name}</Text> : null;
+                      })()}
+                    </View>
                   </View>
                   <View style={styles.txRight}>
                     <Text style={[styles.txAmount, { color: tx.type === 'income' ? '#10b981' : '#ef4444' }]}>
@@ -770,6 +777,30 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                 display="default"
                 onChange={(_, d) => { setShowDatePicker(false); if (d) setTxForm(f => ({ ...f, date: d })); }}
               />
+            )}
+
+            {/* Payé par */}
+            {(members as any[]).length > 1 && (
+              <>
+                <Text style={styles.fieldLabel}>👤 Payé par</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+                  {(members as any[]).map((m: any) => {
+                    const isSelected = txForm.payerId === m.id || (!txForm.payerId && m.id === user?.id);
+                    return (
+                      <TouchableOpacity
+                        key={m.id}
+                        style={[styles.catChip, isSelected && styles.catChipActive]}
+                        onPress={() => setTxForm(f => ({ ...f, payerId: m.id }))}
+                      >
+                        <Text style={styles.catChipEmoji}>
+                          {m.avatarType === 'emoji' || m.avatarType === 'icon' ? (m.avatarValue || '👤') : (m.name?.charAt(0) || '?')}
+                        </Text>
+                        <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]}>{m.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </>
             )}
 
             {/* Privé */}
