@@ -40,7 +40,8 @@
     "react-native-screens": "^4.23.0",
     "react-native-svg": "^15.15.3",
     "rn-emoji-keyboard": "^1.7.0",
-    "superjson": "^2.2.6"
+    "superjson": "^2.2.6",
+    "expo-clipboard": "~7.0.0"
   },
   "private": true,
   "devDependencies": {
