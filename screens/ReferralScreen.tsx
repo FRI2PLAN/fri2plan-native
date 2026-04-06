@@ -64,8 +64,6 @@ export default function ReferralScreen({
         url: referralLink,
         title: 'Parrainage FRI2PLAN'});
     } catch (error) {
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); onNavigate , onPrevious, onNext}: ReferralScreenProps) {
       console.error('Error sharing:', error);
     }
   };
