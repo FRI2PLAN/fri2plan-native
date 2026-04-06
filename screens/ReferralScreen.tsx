@@ -20,11 +20,11 @@ interface Referral {
 }
 
 export default function ReferralScreen({
-  const { t } = useTranslation();
   onNavigate,
   onPrevious,
   onNext,
 }: ReferralScreenProps) {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const referralCode = 'FRI2PLAN-ABCD1234';

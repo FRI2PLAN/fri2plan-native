@@ -107,9 +107,9 @@ const TICKET_CATEGORIES = [
 ];
 
 export default function HelpScreen({
-  const { t } = useTranslation();
   onNavigate,
 }: HelpScreenProps) {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const auth = useAuth() as any;
