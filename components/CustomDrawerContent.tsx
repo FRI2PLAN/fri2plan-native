@@ -32,12 +32,12 @@ const PAGES = [
 ];
 
 export default function CustomDrawerContent({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark);
   onPageSelect,
   currentPage,
   navigation,
 }: CustomDrawerContentProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   const handlePagePress = (pageIndex: number) => {
     onPageSelect(pageIndex);
     navigation.closeDrawer();
