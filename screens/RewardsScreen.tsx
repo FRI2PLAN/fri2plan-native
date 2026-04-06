@@ -171,7 +171,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
 
       {/* Titre centré */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Récompenses</Text>
+        <Text style={styles.pageTitle}>🎁 Récompenses</Text>
       </View>
 
       {/* Carte points + classement */}

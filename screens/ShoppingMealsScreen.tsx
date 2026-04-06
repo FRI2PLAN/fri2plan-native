@@ -39,7 +39,7 @@ export default function ShoppingMealsScreen() {
       {/* Titre de page centre */}
       <View style={s.pageTitleContainer}>
         <Text style={s.pageTitle}>
-          {t('tabs.cuisine') || 'Cuisine'}
+          🛒 {t('tabs.cuisine') || 'Cuisine'}
         </Text>
       </View>
 

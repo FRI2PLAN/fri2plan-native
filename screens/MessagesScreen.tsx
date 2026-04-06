@@ -187,7 +187,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>{t('messages.title')}</Text>
+        <Text style={styles.pageTitle}>💬 {t('messages.title')}</Text>
       </View>
 
       {/* Onglets */}

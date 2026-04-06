@@ -303,7 +303,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
 
       {/* Titre centré */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>{t('notes.title')}</Text>
+        <Text style={styles.pageTitle}>📝 {t('notes.title')}</Text>
       </View>
 
       {/* Filtres Toutes + Privées + bouton + sur la même ligne */}

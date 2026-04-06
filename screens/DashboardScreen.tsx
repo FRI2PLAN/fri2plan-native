@@ -213,7 +213,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Accueil</Text>
+        <Text style={styles.pageTitle}>🏠 Accueil</Text>
       </View>
 
       {/* Favorites Bar */}

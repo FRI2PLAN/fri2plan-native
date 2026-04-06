@@ -455,7 +455,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
       {/* ── Titre centré ── */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>{t('calendar.title') || 'Calendrier'}</Text>
+        <Text style={styles.pageTitle}>📅 {t('calendar.title') || 'Calendrier'}</Text>
       </View>
 
       {/* ── Barre d'actions : 4 boutons 25% chacun, sans texte ── */}

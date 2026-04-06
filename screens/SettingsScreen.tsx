@@ -89,7 +89,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
 
             {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Paramètres</Text>
+        <Text style={styles.pageTitle}>⚙️ Paramètres</Text>
       </View>
       
       <ScrollView style={styles.content}>

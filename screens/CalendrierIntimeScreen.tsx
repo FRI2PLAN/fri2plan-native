@@ -193,7 +193,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
 
       {/* Titre */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Calendrier Intime</Text>
+        <Text style={styles.pageTitle}>🌸 Calendrier Intime</Text>
       </View>
 
       {/* Si désactivé : écran d'activation */}

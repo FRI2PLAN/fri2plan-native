@@ -259,7 +259,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
 
       {/* Titre centré */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>{t('requests.title')}</Text>
+        <Text style={styles.pageTitle}>🙏 {t('requests.title')}</Text>
       </View>
       {/* Filtres de statut + menu 3 points + bouton + sur la même ligne */}
       <View style={styles.filterRow}>

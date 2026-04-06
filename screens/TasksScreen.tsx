@@ -362,7 +362,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
       {/* Titre */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>{t('tabs.tasks') || 'Tâches'}</Text>
+        <Text style={styles.pageTitle}>✅ {t('tabs.tasks') || 'Tâches'}</Text>
       </View>
 
       {/* Filtres + bouton + sur la même ligne */}

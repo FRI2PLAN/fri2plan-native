@@ -313,7 +313,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     return (
       <View style={styles.container}>
         <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Cercles</Text>
+          <Text style={styles.pageTitle}>👥 Cercles</Text>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -423,7 +423,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         <TouchableOpacity onPress={() => setMainView('circles')} style={styles.backBtn}>
           <Text style={styles.backBtnText}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.pageTitle} numberOfLines={1}>{activeFamily?.name || 'Cercle'}</Text>
+        <Text style={styles.pageTitle} numberOfLines={1}>👥 {activeFamily?.name || 'Cercle'}</Text>
         {/* Icônes actions — taille uniforme 22 */}
         <View style={styles.headerActions}>
           {/* Modifier profil (tous les users) */}

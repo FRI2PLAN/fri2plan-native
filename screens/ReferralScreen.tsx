@@ -90,7 +90,7 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
       
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Parrainer un ami</Text>
+        <Text style={styles.pageTitle}>🔗 Parrainer un ami</Text>
       </View>
 
 

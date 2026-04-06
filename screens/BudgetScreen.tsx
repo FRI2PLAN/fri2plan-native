@@ -425,7 +425,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>{t('budget.title')}</Text>
+        <Text style={styles.pageTitle}>💰 {t('budget.title')}</Text>
       </View>
 
       {/* Onglets */}
