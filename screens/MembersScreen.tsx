@@ -10,7 +10,6 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -211,8 +210,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   // Handlers
   const handleCopyCode = async (code: string) => {
     try {
-      await Clipboard.setStringAsync(code);
-      Alert.alert('Copié !', 'Le code a été copié dans le presse-papiers.');
+      await Share.share({ message: code, title: "Code d'invitation" });
     } catch {
       Alert.alert('Code', code);
     }
