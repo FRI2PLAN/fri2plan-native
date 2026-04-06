@@ -11,8 +11,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
-  PanResponder, Animated} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
@@ -126,11 +125,8 @@ export default function MealsScreen({
   };
   const prevTriggerCreate = React.useRef(0);
 
-  // ─── Drag & Drop ──────────────────────────────────────────────────────────
-  const [draggingMeal, setDraggingMeal] = useState<Meal | null>(null);
-  const [dragOverDay, setDragOverDay] = useState<Date | null>(null);
-  const dragPosition = useRef(new Animated.ValueXY()).current;
-  const dayBlockRefs = useRef<{ [key: string]: { y: number; height: number } }>({});
+  // ─── Déplacer un repas vers un autre jour ────────────────────────────────
+  const [movingMeal, setMovingMeal] = useState<Meal | null>(null);
   const scrollOffsetRef = useRef(0);
 
   const moveMealToDay = useCallback(async (meal: Meal, targetDay: Date) => {
@@ -138,6 +134,7 @@ export default function MealsScreen({
     const newDate = format(targetDay, "yyyy-MM-dd'T'HH:mm:ss");
     try {
       await updateMeal.mutateAsync({ mealId: meal.id, date: newDate });
+      setMovingMeal(null);
     } catch (e: any) {
       Alert.alert('Erreur', e.message || 'Impossible de déplacer le repas');
     }
@@ -431,7 +428,6 @@ export default function MealsScreen({
             <Text style={s.mealActionBtn}>🛒</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onLongPress={() => setDraggingMeal(meal)}
             onPress={() => openEdit(meal)}
           >
             <Text style={s.mealActionBtn}>✏️</Text>
@@ -444,12 +440,11 @@ export default function MealsScreen({
           </TouchableOpacity>
         </View>
       </View>
-      {/* Bouton déplacer vers un autre jour */}
       <TouchableOpacity
         style={s.moveMealBtn}
-        onPress={() => setDraggingMeal(meal)}
+        onPress={() => setMovingMeal(meal)}
       >
-        <Text style={s.moveMealBtnText}>↕️ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
+        <Text style={s.moveMealBtnText}>⋮ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -476,18 +471,13 @@ export default function MealsScreen({
       >
         {weekDays.map(day => {
           const isToday = isSameDay(day, new Date());
-          const isDragTarget = dragOverDay && isSameDay(day, dragOverDay);
           const dayMeals = (weekMeals as Meal[]).filter(m => {
             try { return isSameDay(parseISO(m.date), day); } catch { return false; }
           });
           return (
             <View
               key={day.toISOString()}
-              style={[s.dayBlock, isToday && s.dayBlockToday, isDragTarget && s.dayBlockDragOver]}
-              onLayout={e => {
-                const { y, height } = e.nativeEvent.layout;
-                dayBlockRefs.current[day.toISOString()] = { y, height };
-              }}
+              style={[s.dayBlock, isToday && s.dayBlockToday]}
             >
               <View style={s.dayHeader}>
                 <Text style={[s.dayName, isToday && s.dayNameToday]}>
@@ -774,6 +764,39 @@ export default function MealsScreen({
 
       {renderForm()}
       {renderAddToShoppingModal()}
+
+      {/* Modal déplacer repas vers un autre jour */}
+      <Modal visible={!!movingMeal} transparent animationType="slide">
+        <View style={s.overlay}>
+          <View style={s.modal}>
+            <Text style={s.modalTitle}>⋮ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
+            {movingMeal && (
+              <Text style={[s.label, { textAlign: 'center', marginBottom: 12 }]}>{movingMeal.name}</Text>
+            )}
+            <ScrollView style={{ maxHeight: 320 }}>
+              {weekDays.map(day => {
+                const isCurrentDay = movingMeal ? isSameDay(parseISO(movingMeal.date), day) : false;
+                return (
+                  <TouchableOpacity
+                    key={day.toISOString()}
+                    style={[s.dayPickerBtn, isCurrentDay && s.dayPickerBtnCurrent]}
+                    onPress={() => movingMeal && moveMealToDay(movingMeal, day)}
+                    disabled={isCurrentDay}
+                  >
+                    <Text style={[s.dayPickerBtnText, isCurrentDay && { color: '#9ca3af' }]}>
+                      {format(day, 'EEEE d MMMM', { locale: dateFnsLocale })}
+                      {isCurrentDay ? '  (✓ actuel)' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity style={[s.cancelBtn, { marginTop: 12, alignSelf: 'center', paddingHorizontal: 24 }]} onPress={() => setMovingMeal(null)}>
+              <Text style={s.cancelBtnText}>✕ {t('common.cancel') || 'Annuler'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 
@@ -885,5 +908,9 @@ function getStyles(isDark: boolean) {
     ingredientItem: { fontSize: 13, color: text, marginBottom: 2 },
     // Ajout aux courses
     listChoiceBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 12, marginBottom: 8 },
-    listChoiceBtnText: { fontSize: 15, color: text, fontWeight: '600' }});
+    listChoiceBtnText: { fontSize: 15, color: text, fontWeight: '600' },
+    // Sélecteur de jour (déplacer repas)
+    dayPickerBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 14, marginBottom: 8 },
+    dayPickerBtnCurrent: { backgroundColor: isDark ? '#1f2937' : '#e5e7eb', opacity: 0.6 },
+    dayPickerBtnText: { fontSize: 15, color: text, fontWeight: '500', textTransform: 'capitalize' }});
 }

@@ -34,6 +34,7 @@ interface HomeScreenProps {
 }
 
 // All pages in order
+// CalendrierIntime est à la position 9 (entre Récompenses=8 et Membres=10)
 const PAGES = [
   { key: '0', component: DashboardScreen, name: 'Dashboard' },
   { key: '1', component: CalendarScreen, name: 'Calendar' },
@@ -44,11 +45,11 @@ const PAGES = [
   { key: '6', component: NotesScreen, name: 'Notes' },
   { key: '7', component: BudgetScreen, name: 'Budget' },
   { key: '8', component: RewardsScreen, name: 'Rewards' },
-  { key: '9', component: MembersScreen, name: 'Members' },
-  { key: '10', component: ReferralScreen, name: 'Referral' },
-  { key: '11', component: SettingsScreen, name: 'Settings' },
-  { key: '12', component: HelpScreen, name: 'Help' },
-  { key: '13', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
+  { key: '9', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
+  { key: '10', component: MembersScreen, name: 'Members' },
+  { key: '11', component: ReferralScreen, name: 'Referral' },
+  { key: '12', component: SettingsScreen, name: 'Settings' },
+  { key: '13', component: HelpScreen, name: 'Help' },
 ];
 
 function HomeScreen({

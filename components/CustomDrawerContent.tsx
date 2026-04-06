@@ -23,11 +23,11 @@ const PAGES = [
   { index: 6, name: 'Notes', label: '📝 Notes' },
   { index: 7, name: 'Budget', label: '💰 Budget' },
   { index: 8, name: 'Rewards', label: '🎁 Récompenses' },
-  { index: 9, name: 'Members', label: '👥 Membres' },
-  { index: 10, name: 'Referral', label: '🔗 Parrainage' },
-  { index: 11, name: 'Settings', label: '⚙️ Paramètres' },
-  { index: 12, name: 'Help', label: '❓ Aide' },
-  { index: 13, name: 'CalendrierIntime', label: '🌸 Calendrier Intime' },
+  { index: 9, name: 'CalendrierIntime', label: '🌸 Calendrier Intime' },
+  { index: 10, name: 'Members', label: '👥 Membres' },
+  { index: 11, name: 'Referral', label: '🔗 Parrainage' },
+  { index: 12, name: 'Settings', label: '⚙️ Paramètres' },
+  { index: 13, name: 'Help', label: '❓ Aide' },
 ];
 
 export default function CustomDrawerContent({

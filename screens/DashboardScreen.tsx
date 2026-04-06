@@ -162,11 +162,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
     { id: 'budget', name: 'Budget', icon: '💰', pageIndex: 7 },
     { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
-    { id: 'circles', name: 'Cercles', icon: '👥', pageIndex: 9 },
-    { id: 'referral', name: 'Parrainer', icon: '🎯', pageIndex: 10 },
-    { id: 'settings', name: 'Paramètres', icon: '⚙️', pageIndex: 11 },
-    { id: 'help', name: 'Aide', icon: '❓', pageIndex: 12 },
-    { id: 'calendrier-intime', name: 'Cal. Intime', icon: '🌸', pageIndex: 13 },
+    { id: 'calendrier-intime', name: 'Cal. Intime', icon: '🌸', pageIndex: 9 },
+    { id: 'circles', name: 'Cercles', icon: '👥', pageIndex: 10 },
+    { id: 'referral', name: 'Parrainer', icon: '🎯', pageIndex: 11 },
+    { id: 'settings', name: 'Paramètres', icon: '⚙️', pageIndex: 12 },
+    { id: 'help', name: 'Aide', icon: '❓', pageIndex: 13 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
