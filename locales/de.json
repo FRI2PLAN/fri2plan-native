@@ -29,7 +29,8 @@
     "saved": "Einstellungen gespeichert",
     "success": "Erfolg",
     "unknown": "Unbekannt",
-    "optional": "optional"
+    "optional": "optional",
+    "notifications": "Benachrichtigungen"
   },
   "auth": {
     "login": "Anmelden",
@@ -134,7 +135,8 @@
       "Fr",
       "Sa",
       "So"
-    ]
+    ],
+    "tapToAdd": "Tippen zum Hinzufügen"
   },
   "tasks": {
     "title": "Aufgaben",
@@ -489,7 +491,8 @@
     "ingredients": "Zutaten",
     "notesPlaceholder": "Zutaten, Anweisungen...",
     "addToShopping": "Zur Einkaufsliste hinzufügen",
-    "noIngredients": "Keine Zutaten in den Notizen gefunden"
+    "noIngredients": "Keine Zutaten in den Notizen gefunden",
+    "moveTo": "Verschieben nach"
   },
   "quickActions": {
     "title": "Schnellaktionen",
@@ -504,5 +507,11 @@
     "editShortcut": "Verknüpfung bearbeiten",
     "remove": "Diese Verknüpfung entfernen",
     "chooseOther": "Andere Seite wählen"
-  }
+  },
+  "notifications": {
+    "markAllAsRead": "Alle als gelesen markieren",
+    "noNotifications": "Keine Benachrichtigungen",
+    "deleteAll": "Alle löschen"
+  },
+  "google_calendars": "Google Kalender"
 }

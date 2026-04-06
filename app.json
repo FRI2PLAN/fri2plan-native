@@ -42,6 +42,12 @@
         "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
       }
     },
-    "owner": "fri2plan"
+    "owner": "fri2plan",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
+    }
   }
 }

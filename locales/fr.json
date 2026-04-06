@@ -29,7 +29,8 @@
     "saved": "Paramètres sauvegardés",
     "success": "Succès",
     "unknown": "Inconnu",
-    "optional": "optionnel"
+    "optional": "optionnel",
+    "notifications": "Notifications"
   },
   "auth": {
     "login": "Connexion",
@@ -134,7 +135,8 @@
       "V",
       "S",
       "D"
-    ]
+    ],
+    "tapToAdd": "Appuyer pour ajouter"
   },
   "tasks": {
     "title": "Tâches",
@@ -488,7 +490,8 @@
     "ingredients": "Ingrédients",
     "notesPlaceholder": "Ingrédients, instructions...",
     "addToShopping": "Ajouter aux courses",
-    "noIngredients": "Aucun ingrédient trouvé dans les notes"
+    "noIngredients": "Aucun ingrédient trouvé dans les notes",
+    "moveTo": "Déplacer vers"
   },
   "quickActions": {
     "title": "Actions rapides",
@@ -503,5 +506,11 @@
     "editShortcut": "Modifier le raccourci",
     "remove": "Supprimer ce raccourci",
     "chooseOther": "Choisir une autre page"
-  }
+  },
+  "notifications": {
+    "markAllAsRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification",
+    "deleteAll": "Tout supprimer"
+  },
+  "google_calendars": "Calendriers Google"
 }

@@ -29,7 +29,8 @@
     "saved": "Settings saved",
     "success": "Success",
     "unknown": "Unknown",
-    "optional": "optional"
+    "optional": "optional",
+    "notifications": "Notifications"
   },
   "auth": {
     "login": "Login",
@@ -134,7 +135,8 @@
       "F",
       "S",
       "S"
-    ]
+    ],
+    "tapToAdd": "Tap to add"
   },
   "tasks": {
     "title": "Tasks",
@@ -488,7 +490,8 @@
     "ingredients": "Ingredients",
     "notesPlaceholder": "Ingredients, instructions...",
     "addToShopping": "Add to shopping list",
-    "noIngredients": "No ingredients found in notes"
+    "noIngredients": "No ingredients found in notes",
+    "moveTo": "Move to"
   },
   "quickActions": {
     "title": "Quick actions",
@@ -503,5 +506,11 @@
     "editShortcut": "Edit shortcut",
     "remove": "Remove this shortcut",
     "chooseOther": "Choose another page"
-  }
+  },
+  "notifications": {
+    "markAllAsRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "deleteAll": "Delete all"
+  },
+  "google_calendars": "Google Calendars"
 }
