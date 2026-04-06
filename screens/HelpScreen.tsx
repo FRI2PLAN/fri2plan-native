@@ -182,8 +182,6 @@ export default function HelpScreen({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); onNavigate }: HelpScreenProps) {
       case 'nouveau': return '#7c3aed';
       case 'en_cours': return '#f59e0b';
       case 'resolu': return '#10b981';
