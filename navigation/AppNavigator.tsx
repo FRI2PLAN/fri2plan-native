@@ -84,8 +84,6 @@ function HomeScreen({
 }
 
 export default function AppNavigator({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); onLogout }: AppNavigatorProps) {
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePageSelect = (pageIndex: number) => {

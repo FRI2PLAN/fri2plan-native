@@ -10,13 +10,13 @@ interface PageHeaderProps {
 }
 
 export default function PageHeader({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark);
   title,
   buttonText,
   onButtonPress,
   buttonIcon = '+',
 }: PageHeaderProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   return (
     <View style={styles.container}>
       {/* Titre centré */}

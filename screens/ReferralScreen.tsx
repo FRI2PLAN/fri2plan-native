@@ -19,8 +19,6 @@ interface Referral {
 }
 
 export default function ReferralScreen({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); onNavigate , onPrevious, onNext}: ReferralScreenProps) {
   const referralCode = 'FRI2PLAN-ABCD1234';
   const referralLink = `https://fri2plan.app/invite/${referralCode}`;
 
@@ -60,6 +58,8 @@ export default function ReferralScreen({
         url: referralLink,
         title: 'Parrainage FRI2PLAN'});
     } catch (error) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); onNavigate , onPrevious, onNext}: ReferralScreenProps) {
       console.error('Error sharing:', error);
     }
   };

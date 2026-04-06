@@ -21,8 +21,6 @@ interface RichHeaderProps {
 }
 
 export default function RichHeader({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark);
   onQuickActionsPress,
   onNotificationsPress,
   onThemeToggle,
@@ -30,6 +28,8 @@ export default function RichHeader({
   isDarkMode = true,
   onNavigateHome,
 }: RichHeaderProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   const navigation = useNavigation();
 
   // Récupérer les données utilisateur

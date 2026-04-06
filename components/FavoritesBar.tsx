@@ -20,13 +20,13 @@ interface FavoritesBarProps {
 }
 
 export default function FavoritesBar({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); 
   favorites, 
   onFavoritePress, 
   onFavoriteSelect,
   allPages = []
 }: FavoritesBarProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); 
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);

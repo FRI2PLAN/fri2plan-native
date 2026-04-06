@@ -13,8 +13,11 @@ interface FixedHeaderLayoutProps {
 }
 
 export default function FixedHeaderLayout({
+  children,
+  onNavigate,
+}: FixedHeaderLayoutProps) {
   const { isDark } = useTheme();
-  const styles = getStyles(isDark); children, onNavigate }: FixedHeaderLayoutProps) {
+  const styles = getStyles(isDark);
   const { logout } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);

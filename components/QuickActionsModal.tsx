@@ -25,9 +25,13 @@ interface QuickAction {
 }
 
 export default function QuickActionsModal({
-  const { isDark } = useTheme();
-  const styles = getStyles(isDark); visible, onClose, onNavigate }: QuickActionsModalProps) {
+  visible,
+  onClose,
+  onNavigate,
+}: QuickActionsModalProps) {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
 
   const quickActions: QuickAction[] = [
     {
