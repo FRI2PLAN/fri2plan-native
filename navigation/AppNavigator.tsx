@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import CircularPager from '../components/CircularPager';
+import GlobalPrefetch from '../components/GlobalPrefetch';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -70,6 +71,7 @@ function HomeScreen({
 
   return (
     <FixedHeaderLayout onNavigate={onPageChange}>
+      <GlobalPrefetch />
       <CircularPager
         data={PAGES}
         renderItem={renderItem}

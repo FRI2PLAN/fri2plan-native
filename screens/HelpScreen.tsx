@@ -1,440 +1,552 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
+import { useAuth } from '../contexts/AuthContext';
+import { trpc } from '../lib/trpc';
 
 interface HelpScreenProps {
-  onNavigate?: (screen: string) => void;
-  onPrevious?: () => void;
-  onNext?: () => void;
+  onNavigate?: (pageIndex: number) => void;
 }
 
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-}
+const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=com.fri2plan.app';
 
-export default function HelpScreen({ onNavigate , onPrevious, onNext}: HelpScreenProps) {
+const FAQ_ITEMS = [
+  {
+    id: 1,
+    category: 'Démarrage',
+    question: 'Comment créer ma famille ?',
+    answer: "Allez dans l'onglet Cercles (👥), puis appuyez sur \"Créer un cercle\". Donnez un nom à votre famille, choisissez une couleur et invitez les membres via leur email ou un code d'invitation.",
+  },
+  {
+    id: 2,
+    category: 'Démarrage',
+    question: 'Comment inviter un membre de ma famille ?',
+    answer: "Dans Cercles → votre famille → onglet Invitations. Copiez le code d'invitation ou partagez-le directement. Le membre invité peut rejoindre depuis son app via \"Rejoindre un cercle\".",
+  },
+  {
+    id: 3,
+    category: 'Calendrier',
+    question: 'Comment ajouter un événement partagé ?',
+    answer: "Appuyez sur le bouton + dans le calendrier. Remplissez le titre, la date et l'heure. L'événement sera visible par tous les membres de votre famille.",
+  },
+  {
+    id: 4,
+    category: 'Calendrier',
+    question: "Qu'est-ce que le Calendrier Intime ?",
+    answer: "Le Calendrier Intime est un espace personnel et privé pour suivre votre cycle menstruel. Il doit être activé dans les Paramètres. Vos données restent strictement privées et ne sont jamais partagées avec les autres membres.",
+  },
+  {
+    id: 5,
+    category: 'Budget',
+    question: 'Comment fonctionne "On Partage" ?',
+    answer: "L'onglet \"On Partage\" vous permet de suivre les dépenses communes de votre famille. Ajoutez une dépense avec le montant, la catégorie et le payeur. Les statistiques vous montrent la répartition des dépenses par membre.",
+  },
+  {
+    id: 6,
+    category: 'Budget',
+    question: "Puis-je attribuer une dépense à un autre membre ?",
+    answer: "Oui ! Lors de la création ou modification d'une dépense, utilisez le champ \"Payé par\" pour sélectionner n'importe quel membre de la famille. Pratique si quelqu'un n'a pas son téléphone.",
+  },
+  {
+    id: 7,
+    category: 'Récompenses',
+    question: 'Comment fonctionnent les points ?',
+    answer: "Chaque tâche complétée rapporte des points. L'administrateur peut aussi attribuer des points manuellement. Les points s'accumulent et permettent de débloquer des récompenses définies par la famille.",
+  },
+  {
+    id: 8,
+    category: 'Récompenses',
+    question: 'Comment créer une récompense ?',
+    answer: 'Dans l\'onglet Récompenses → Catalogue → bouton "+ Nouvelle récompense". Définissez un nom, une description et un coût en points. Les membres peuvent ensuite échanger leurs points contre ces récompenses.',
+  },
+  {
+    id: 9,
+    category: 'Compte',
+    question: 'Comment modifier mon avatar ?',
+    answer: "Allez dans Cercles → votre famille → bouton \"👤 Mon profil\". Vous pouvez modifier votre nom, choisir une couleur et sélectionner un emoji comme avatar.",
+  },
+  {
+    id: 10,
+    category: 'Compte',
+    question: "Comment changer le rôle d'un membre ?",
+    answer: "Seul l'administrateur peut modifier les rôles. Dans Cercles → votre famille → appuyez sur un membre → \"Modifier le rôle\". Pour transférer le rôle admin, utilisez l'option \"Transférer l'administration\".",
+  },
+  {
+    id: 11,
+    category: 'Abonnement',
+    question: "Qu'est-ce que le plan Premium ?",
+    answer: "Le plan Premium débloque toutes les fonctionnalités : budget illimité, calendrier intime, statistiques avancées, badges, et plus. Gérez votre abonnement dans Paramètres → Abonnement.",
+  },
+  {
+    id: 12,
+    category: 'Abonnement',
+    question: "Mon abonnement n'apparaît pas après paiement ?",
+    answer: "Si votre paiement a été effectué mais que l'abonnement n'apparaît pas, allez dans Paramètres → Abonnement → \"Synchroniser l'abonnement\". Si le problème persiste, créez un ticket de support.",
+  },
+];
+
+const CATEGORIES = ['Tous', 'Démarrage', 'Calendrier', 'Budget', 'Récompenses', 'Compte', 'Abonnement'];
+
+const TICKET_CATEGORIES = [
+  { value: 'technique', label: '🔧 Problème technique' },
+  { value: 'facturation', label: '💳 Facturation' },
+  { value: 'fonctionnalite', label: '💡 Suggestion' },
+  { value: 'autre', label: '📋 Autre' },
+];
+
+export default function HelpScreen({ onNavigate }: HelpScreenProps) {
+  const auth = useAuth() as any;
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [showMyTickets, setShowMyTickets] = useState(false);
+  const [ticketForm, setTicketForm] = useState({
+    category: 'technique' as 'technique' | 'facturation' | 'fonctionnalite' | 'autre',
+    subject: '',
+    message: '',
+  });
 
-  // Mock FAQ data
-  const faqs: FAQ[] = [
-    {
-      id: '1',
-      question: 'Comment ajouter un nouveau membre à ma famille ?',
-      answer: 'Allez dans l\'onglet "Membres", cliquez sur "+ Inviter", entrez l\'email du membre et envoyez l\'invitation. Il recevra un email pour rejoindre votre famille.',
-      category: 'Membres'},
-    {
-      id: '2',
-      question: 'Comment créer une nouvelle tâche ?',
-      answer: 'Dans l\'onglet "Tâches", cliquez sur le bouton "+", remplissez les détails de la tâche (titre, description, assignation, date limite) et sauvegardez.',
-      category: 'Tâches'},
-    {
-      id: '3',
-      question: 'Comment fonctionne le système de récompenses ?',
-      answer: 'Les enfants gagnent des points en complétant des tâches. Ces points peuvent être échangés contre des récompenses définies par les parents (sorties, cadeaux, etc.).',
-      category: 'Récompenses'},
-    {
-      id: '4',
-      question: 'Puis-je synchroniser le calendrier avec Google Calendar ?',
-      answer: 'Oui ! Allez dans Paramètres > Intégrations > Google Calendar et autorisez la synchronisation. Les événements seront synchronisés automatiquement.',
-      category: 'Calendrier'},
-    {
-      id: '5',
-      question: 'Comment gérer les permissions des membres ?',
-      answer: 'Dans Paramètres > Famille > Permissions, vous pouvez définir les droits de chaque membre : lecture seule, modification, ou administration complète.',
-      category: 'Sécurité'},
-    {
-      id: '6',
-      question: 'Comment créer une liste de courses partagée ?',
-      answer: 'Dans l\'onglet "Courses", créez une nouvelle liste, ajoutez des articles, et tous les membres de la famille pourront la voir et la modifier en temps réel.',
-      category: 'Courses'},
-    {
-      id: '7',
-      question: 'Que faire si j\'ai oublié mon mot de passe ?',
-      answer: 'Sur l\'écran de connexion, cliquez sur "Mot de passe oublié ?", entrez votre email, et suivez les instructions reçues par email pour réinitialiser votre mot de passe.',
-      category: 'Compte'},
-    {
-      id: '8',
-      question: 'Comment supprimer mon compte ?',
-      answer: 'Allez dans Paramètres > À propos > Supprimer mon compte. Attention : cette action est irréversible et supprimera toutes vos données.',
-      category: 'Compte'},
-  ];
+  const { data: myTickets = [], isLoading: ticketsLoading, refetch: refetchTickets } =
+    trpc.supportTickets.listMyTickets.useQuery(undefined, { enabled: showMyTickets });
 
-  const filteredFAQs = faqs.filter(faq =>
-    searchQuery === '' ||
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const createTicketMutation = trpc.supportTickets.createTicket.useMutation({
+    onSuccess: (data: any) => {
+      Alert.alert(
+        '✅ Ticket créé',
+        `Votre ticket ${data.ticketNumber} a été créé. Vous recevrez une réponse par email.`,
+        [{ text: 'OK', onPress: () => { setShowTicketModal(false); resetTicketForm(); refetchTickets(); } }]
+      );
+    },
+    onError: (err: any) => {
+      Alert.alert('Erreur', err.message || 'Impossible de créer le ticket.');
+    },
+  });
 
-  const toggleFAQ = (id: string) => {
-    setExpandedFAQ(expandedFAQ === id ? null : id);
+  const resetTicketForm = () => setTicketForm({ category: 'technique', subject: '', message: '' });
+
+  const handleCreateTicket = () => {
+    if (!ticketForm.subject.trim()) { Alert.alert('Champ requis', 'Veuillez saisir un sujet.'); return; }
+    if (!ticketForm.message.trim()) { Alert.alert('Champ requis', 'Veuillez décrire votre problème.'); return; }
+    createTicketMutation.mutate(ticketForm);
+  };
+
+  const handleRateApp = () => {
+    Linking.openURL(GOOGLE_PLAY_URL).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le Google Play Store."));
+  };
+
+  const handleRestartOnboarding = () => {
+    Alert.alert(
+      '🚀 Guide de démarrage',
+      'Voulez-vous revoir le guide de démarrage ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Oui, relancer',
+          onPress: async () => {
+            try {
+              const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+              await AsyncStorage.removeItem('hasSeenOnboarding');
+              Alert.alert('✅', 'Fermez et rouvrez l\'app pour voir le guide de démarrage.');
+            } catch {
+              Alert.alert('Info', "Fermez et rouvrez l'app pour voir le guide de démarrage.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const filteredFaq = FAQ_ITEMS.filter((item) => {
+    const matchCat = selectedCategory === 'Tous' || item.category === selectedCategory;
+    const matchSearch = !searchQuery ||
+      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'nouveau': return '#7c3aed';
+      case 'en_cours': return '#f59e0b';
+      case 'resolu': return '#10b981';
+      case 'ferme': return '#6b7280';
+      default: return '#6b7280';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'nouveau': return 'Nouveau';
+      case 'en_cours': return 'En cours';
+      case 'resolu': return 'Résolu';
+      case 'ferme': return 'Fermé';
+      default: return status;
+    }
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Centre d'aide</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher une question..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-            {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>Centre d'aide</Text>
+        <Text style={styles.pageTitle}>❓ Aide</Text>
       </View>
 
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 
-      
-
-
-      <ScrollView style={styles.content}>
         {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>💬</Text>
-            <Text style={styles.actionTitle}>Chat en direct</Text>
-            <Text style={styles.actionDescription}>Discutez avec notre équipe</Text>
+        <View style={styles.quickActionsRow}>
+          <TouchableOpacity style={styles.quickCard} onPress={handleRestartOnboarding}>
+            <Text style={styles.quickIcon}>🚀</Text>
+            <Text style={styles.quickTitle}>Guide{'\n'}démarrage</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>📧</Text>
-            <Text style={styles.actionTitle}>Email</Text>
-            <Text style={styles.actionDescription}>support@fri2plan.app</Text>
+          <TouchableOpacity style={styles.quickCard} onPress={() => setShowMyTickets(!showMyTickets)}>
+            <Text style={styles.quickIcon}>🎫</Text>
+            <Text style={styles.quickTitle}>Mes{'\n'}tickets</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard}>
-            <Text style={styles.actionIcon}>📱</Text>
-            <Text style={styles.actionTitle}>Téléphone</Text>
-            <Text style={styles.actionDescription}>01 23 45 67 89</Text>
+          <TouchableOpacity style={[styles.quickCard, styles.quickCardPurple]} onPress={() => setShowTicketModal(true)}>
+            <Text style={styles.quickIcon}>✉️</Text>
+            <Text style={[styles.quickTitle, { color: '#fff' }]}>Contacter{'\n'}support</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.quickCard, styles.quickCardGold]} onPress={handleRateApp}>
+            <Text style={styles.quickIcon}>⭐</Text>
+            <Text style={[styles.quickTitle, { color: '#92400e' }]}>Noter{'\n'}l'app</Text>
           </TouchableOpacity>
         </View>
 
-        {/* FAQ Section */}
-        <View style={styles.faqSection}>
-          <Text style={styles.sectionTitle}>Questions fréquentes</Text>
-          
-          {filteredFAQs.length > 0 ? (
-            filteredFAQs.map(faq => (
-              <TouchableOpacity
-                key={faq.id}
-                style={styles.faqCard}
-                onPress={() => toggleFAQ(faq.id)}
-              >
-                <View style={styles.faqHeader}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{faq.category}</Text>
+        {/* My Tickets */}
+        {showMyTickets && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>🎫 Mes tickets</Text>
+              <TouchableOpacity onPress={() => setShowMyTickets(false)}>
+                <Text style={styles.closeLink}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+            {ticketsLoading ? (
+              <ActivityIndicator color="#7c3aed" style={{ marginVertical: 20 }} />
+            ) : (myTickets as any[]).length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>Aucun ticket pour le moment.</Text>
+                <TouchableOpacity style={styles.createTicketBtn} onPress={() => setShowTicketModal(true)}>
+                  <Text style={styles.createTicketBtnText}>+ Créer un ticket</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              (myTickets as any[]).map((ticket) => (
+                <View key={ticket.id} style={styles.ticketCard}>
+                  <View style={styles.ticketHeaderRow}>
+                    <Text style={styles.ticketNumber}>{ticket.ticketNumber}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(ticket.status) + '20' }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(ticket.status) }]}>
+                        {getStatusLabel(ticket.status)}
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={styles.expandIcon}>
-                    {expandedFAQ === faq.id ? '−' : '+'}
+                  <Text style={styles.ticketSubject}>{ticket.subject}</Text>
+                  <Text style={styles.ticketDate}>
+                    {new Date(ticket.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </Text>
                 </View>
-                <Text style={styles.faqQuestion}>{faq.question}</Text>
-                {expandedFAQ === faq.id && (
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+              ))
+            )}
+          </View>
+        )}
+
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="🔍 Rechercher dans la FAQ..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#9ca3af"
+          />
+        </View>
+
+        {/* Category Filter */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
+              onPress={() => setSelectedCategory(cat)}
+            >
+              <Text style={[styles.categoryChipText, selectedCategory === cat && styles.categoryChipTextActive]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* FAQ */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📚 Questions fréquentes</Text>
+          {filteredFaq.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>Aucun résultat pour "{searchQuery}"</Text>
+            </View>
+          ) : (
+            filteredFaq.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.faqCard}
+                onPress={() => setExpandedFaq(expandedFaq === item.id ? null : item.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.faqHeaderRow}>
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                  </View>
+                  <Text style={styles.expandIcon}>{expandedFaq === item.id ? '−' : '+'}</Text>
+                </View>
+                <Text style={styles.faqQuestion}>{item.question}</Text>
+                {expandedFaq === item.id && (
+                  <Text style={styles.faqAnswer}>{item.answer}</Text>
                 )}
               </TouchableOpacity>
             ))
-          ) : (
-            <View style={styles.noResults}>
-              <Text style={styles.noResultsText}>Aucune question trouvée</Text>
-            </View>
           )}
         </View>
 
-        {/* Guides Section */}
-        <View style={styles.guidesSection}>
-          <Text style={styles.sectionTitle}>Guides et tutoriels</Text>
-          
-          <TouchableOpacity style={styles.guideCard}>
-            <Text style={styles.guideIcon}>📚</Text>
-            <View style={styles.guideContent}>
-              <Text style={styles.guideTitle}>Guide de démarrage</Text>
-              <Text style={styles.guideDescription}>
-                Découvrez comment configurer votre famille et commencer à utiliser FRI2PLAN
-              </Text>
-            </View>
-            <Text style={styles.guideArrow}>›</Text>
+        {/* Rate Banner */}
+        <View style={styles.rateBanner}>
+          <Text style={styles.rateBannerTitle}>⭐ Vous aimez FRI2PLAN ?</Text>
+          <Text style={styles.rateBannerText}>
+            Votre avis sur le Google Play Store nous aide énormément à nous améliorer et à atteindre d'autres familles !
+          </Text>
+          <TouchableOpacity style={styles.rateButton} onPress={handleRateApp}>
+            <Text style={styles.rateButtonText}>⭐ Laisser un avis sur Google Play</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.guideCard}>
-            <Text style={styles.guideIcon}>🎥</Text>
-            <View style={styles.guideContent}>
-              <Text style={styles.guideTitle}>Tutoriels vidéo</Text>
-              <Text style={styles.guideDescription}>
-                Regardez nos vidéos pour maîtriser toutes les fonctionnalités
-              </Text>
-            </View>
-            <Text style={styles.guideArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.guideCard}>
-            <Text style={styles.guideIcon}>💡</Text>
-            <View style={styles.guideContent}>
-              <Text style={styles.guideTitle}>Astuces et conseils</Text>
-              <Text style={styles.guideDescription}>
-                Optimisez votre organisation familiale avec nos meilleures pratiques
-              </Text>
-            </View>
-            <Text style={styles.guideArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Contact Section */}
-        <View style={styles.contactSection}>
-          <Text style={styles.sectionTitle}>Besoin d'aide supplémentaire ?</Text>
-          
-          <View style={styles.contactCard}>
-            <Text style={styles.contactTitle}>Contactez notre équipe</Text>
-            <Text style={styles.contactDescription}>
-              Notre équipe de support est disponible du lundi au vendredi de 9h à 18h
-            </Text>
-            <TouchableOpacity style={styles.contactButton}>
-              <Text style={styles.contactButtonText}>Envoyer un message</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Feedback Section */}
-        <View style={styles.feedbackSection}>
-          <Text style={styles.sectionTitle}>Votre avis compte !</Text>
-          
-          <View style={styles.feedbackCard}>
-            <Text style={styles.feedbackTitle}>💬 Partagez votre expérience</Text>
-            <Text style={styles.feedbackDescription}>
-              Aidez-nous à améliorer FRI2PLAN en partageant vos suggestions et commentaires
-            </Text>
-            <TouchableOpacity style={styles.feedbackButton}>
-              <Text style={styles.feedbackButtonText}>Envoyer un feedback</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Ticket Modal */}
+      <Modal visible={showTicketModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>✉️ Contacter le support</Text>
+              <TouchableOpacity onPress={() => { setShowTicketModal(false); resetTicketForm(); }}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.fieldLabel}>Catégorie</Text>
+              <View style={styles.categoryButtons}>
+                {TICKET_CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.value}
+                    style={[styles.catBtn, ticketForm.category === cat.value && styles.catBtnActive]}
+                    onPress={() => setTicketForm({ ...ticketForm, category: cat.value as any })}
+                  >
+                    <Text style={[styles.catBtnText, ticketForm.category === cat.value && styles.catBtnTextActive]}>
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.fieldLabel}>Sujet *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ex: Problème de connexion..."
+                value={ticketForm.subject}
+                onChangeText={(v) => setTicketForm({ ...ticketForm, subject: v })}
+                placeholderTextColor="#9ca3af"
+              />
+              <Text style={styles.fieldLabel}>Description *</Text>
+              <TextInput
+                style={[styles.input, styles.inputMultiline]}
+                placeholder="Décrivez votre problème en détail..."
+                value={ticketForm.message}
+                onChangeText={(v) => setTicketForm({ ...ticketForm, message: v })}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+                placeholderTextColor="#9ca3af"
+              />
+              <Text style={styles.fieldHint}>
+                📧 Vous recevrez une confirmation par email et serez notifié des réponses.
+              </Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, createTicketMutation.isPending && styles.submitBtnDisabled]}
+                onPress={handleCreateTicket}
+                disabled={createTicketMutation.isPending}
+              >
+                {createTicketMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Envoyer le ticket</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb'},
-  header: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center'},
-  searchContainer: {
-    padding: 16,
-    backgroundColor: '#fff'},
-  searchInput: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb'},
-  content: {
-    flex: 1},
-  quickActions: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12},
-  actionCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3},
-  actionIcon: {
-    fontSize: 32,
-    marginBottom: 8},
-  actionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4},
-  actionDescription: {
-    fontSize: 11,
-    color: '#6b7280',
-    textAlign: 'center'},
-  faqSection: {
-    padding: 16},
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16},
-  faqCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3},
-  faqHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8},
-  categoryBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12},
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280'},
-  expandIcon: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#7c3aed'},
-  faqQuestion: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8},
-  faqAnswer: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb'},
-  noResults: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 40,
-    alignItems: 'center'},
-  noResultsText: {
-    fontSize: 16,
-    color: '#9ca3af'},
-  guidesSection: {
-    padding: 16},
-  guideCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3},
-  guideIcon: {
-    fontSize: 32,
-    marginRight: 12},
-  guideContent: {
-    flex: 1},
-  guideTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4},
-  guideDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 18},
-  guideArrow: {
-    fontSize: 24,
-    color: '#9ca3af'},
-  contactSection: {
-    padding: 16},
-  contactCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3},
-  contactTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8},
-  contactDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    marginBottom: 16},
-  contactButton: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'},
-  contactButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold'},
-  feedbackSection: {
-    padding: 16},
-  feedbackCard: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    padding: 20},
-  feedbackTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8},
-  feedbackDescription: {
-    fontSize: 14,
-    color: '#78350f',
-    lineHeight: 20,
-    marginBottom: 16},
-  feedbackButton: {
-    backgroundColor: '#f59e0b',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'},
-  feedbackButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold'},
-
+  container: { flex: 1, backgroundColor: '#f9fafb' },
   pageTitleContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    borderBottomColor: '#e5e7eb',
+  },
+  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' },
+  content: { flex: 1 },
+  quickActionsRow: { flexDirection: 'row', padding: 16, gap: 10 },
+  quickCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  quickCardPurple: { backgroundColor: '#7c3aed' },
+  quickCardGold: { backgroundColor: '#fef3c7' },
+  quickIcon: { fontSize: 22, marginBottom: 5 },
+  quickTitle: { fontSize: 11, fontWeight: '600', color: '#374151', textAlign: 'center', lineHeight: 15 },
+  section: { paddingHorizontal: 16, marginBottom: 8 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', marginBottom: 12 },
+  closeLink: { fontSize: 14, color: '#7c3aed', fontWeight: '600' },
+  emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', elevation: 2 },
+  emptyText: { fontSize: 14, color: '#9ca3af', marginBottom: 12 },
+  createTicketBtn: { backgroundColor: '#7c3aed', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  createTicketBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  ticketCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  ticketHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  ticketNumber: { fontSize: 13, fontWeight: '700', color: '#7c3aed' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
+  statusText: { fontSize: 12, fontWeight: '600' },
+  ticketSubject: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 4 },
+  ticketDate: { fontSize: 12, color: '#9ca3af' },
+  searchContainer: { paddingHorizontal: 16, paddingBottom: 8 },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     color: '#1f2937',
-    textAlign: 'center'}});
+  },
+  categoryScroll: { marginBottom: 12 },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  categoryChipActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+  categoryChipText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
+  categoryChipTextActive: { color: '#fff' },
+  faqCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  faqHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  categoryBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  categoryBadgeText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
+  expandIcon: { fontSize: 22, fontWeight: 'bold', color: '#7c3aed' },
+  faqQuestion: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
+  faqAnswer: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 21,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  rateBanner: { margin: 16, backgroundColor: '#fef3c7', borderRadius: 16, padding: 20 },
+  rateBannerTitle: { fontSize: 17, fontWeight: 'bold', color: '#92400e', marginBottom: 8 },
+  rateBannerText: { fontSize: 14, color: '#78350f', lineHeight: 20, marginBottom: 16 },
+  rateButton: { backgroundColor: '#f59e0b', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  rateButtonText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937' },
+  modalClose: { fontSize: 20, color: '#6b7280', fontWeight: 'bold' },
+  fieldLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8, marginTop: 12 },
+  fieldHint: { fontSize: 13, color: '#6b7280', marginTop: 12, marginBottom: 8, lineHeight: 18 },
+  input: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    color: '#1f2937',
+  },
+  inputMultiline: { minHeight: 120 },
+  categoryButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  catBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  catBtnActive: { backgroundColor: '#ede9fe', borderColor: '#7c3aed' },
+  catBtnText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  catBtnTextActive: { color: '#7c3aed', fontWeight: '700' },
+  submitBtn: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  submitBtnDisabled: { opacity: 0.6 },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+});

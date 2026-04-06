@@ -287,6 +287,7 @@ export type AppRouter = {
   tasks: {
     list: {
       query: () => Promise<Task[]>;
+      useQuery: (input?: any, opts?: any) => { data: Task[]; isLoading: boolean; refetch: () => void };
     };
     create: {
       mutate: (input: {
@@ -520,6 +521,7 @@ export type AppRouter = {
   notes: {
     list: {
       query: () => Promise<Note[]>;
+      useQuery: (input?: any, opts?: any) => { data: Note[]; isLoading: boolean; refetch: () => void };
     };
     create: {
       mutate: (input: {
@@ -756,6 +758,7 @@ export type AppRouter = {
   requests: {
     list: {
       query: (input: { familyId: number }) => Promise<Request[]>;
+      useQuery: (input?: any, opts?: any) => { data: Request[]; isLoading: boolean; refetch: () => void };
     };
     create: {
       mutate: (input: {
@@ -864,6 +867,31 @@ export type AppRouter = {
     deleteCycle: {
       useMutation: (opts?: any) => any;
       mutate: (input: { cycleId: number }) => Promise<void>;
+    };
+  };
+  supportTickets: {
+    createTicket: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: {
+        category: 'technique' | 'facturation' | 'fonctionnalite' | 'autre';
+        subject: string;
+        message: string;
+      }) => Promise<{ id: number; ticketNumber: string }>;
+      isPending: boolean;
+    };
+    listMyTickets: {
+      useQuery: (input?: undefined, opts?: any) => {
+        data: Array<{
+          id: number;
+          ticketNumber: string;
+          subject: string;
+          category: string;
+          status: 'nouveau' | 'en_cours' | 'resolu' | 'ferme';
+          createdAt: string;
+        }>;
+        isLoading: boolean;
+        refetch: () => void;
+      };
     };
   };
 };
