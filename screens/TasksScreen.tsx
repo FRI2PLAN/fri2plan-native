@@ -310,7 +310,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <AvatarCircle name={getMemberName(data.assignedTo)} size={24} />
               <Text style={styles.pickerButtonText}>{getMemberName(data.assignedTo)}</Text>
             </View>
-          ) : <Text style={styles.pickerButtonText}>👤 Choisir un membre</Text>}
+          ) : <Text style={styles.pickerButtonText}>{t('tasks.chooseMember')}</Text>}
           <Text style={styles.pickerArrow}>▼</Text>
         </TouchableOpacity>
       </View>
@@ -464,14 +464,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
                 {/* Assigné à */}
                 <View style={styles.quickAssignRow}>
-                  <Text style={styles.quickAssignLabel}>Assigné à :</Text>
+                  <Text style={styles.quickAssignLabel}>{t('tasks.assignedTo')}</Text>
                   {selectedTask.assignedTo ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <AvatarCircle name={getMemberName(selectedTask.assignedTo)} size={24} color={selectedTask.assignedTo === user?.id ? '#7c3aed' : '#6b7280'} />
                       <Text style={styles.quickAssignName}>{getMemberName(selectedTask.assignedTo)}</Text>
                     </View>
                   ) : (
-                    <Text style={[styles.quickAssignName, { color: '#9ca3af' }]}>Non assigné</Text>
+                    <Text style={[styles.quickAssignName, { color: '#9ca3af' }]}>{t('tasks.unassigned')}</Text>
                   )}
                 </View>
 
@@ -483,13 +483,13 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#10b981' }]}
                     onPress={() => completeMutation.mutate({ taskId: selectedTask.id })}>
                     <Text style={styles.quickBtnIcon}>✅</Text>
-                    <Text style={styles.quickBtnLabel}>Valider</Text>
+                    <Text style={styles.quickBtnLabel}>{t('common.validate')}</Text>
                   </TouchableOpacity>
 
                   {/* ✏️ Modifier */}
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#3b82f6' }]} onPress={handleEditClick}>
                     <Text style={styles.quickBtnIcon}>✏️</Text>
-                    <Text style={styles.quickBtnLabel}>Modifier</Text>
+                    <Text style={styles.quickBtnLabel}>{t('common.edit')}</Text>
                   </TouchableOpacity>
 
                   {/* ⏰ Reporter */}
@@ -511,7 +511,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   {/* 🗑 Supprimer */}
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#ef4444' }]} onPress={handleDeleteTask}>
                     <Text style={styles.quickBtnIcon}>🗑</Text>
-                    <Text style={styles.quickBtnLabel}>Supprimer</Text>
+                    <Text style={styles.quickBtnLabel}>{t('common.delete')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -594,7 +594,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <View style={styles.pickerModal} onStartShouldSetResponder={() => true}>
             <Text style={styles.pickerTitle}>{t('tasks.assignTo') || 'Assigner à'}</Text>
             <TouchableOpacity style={styles.pickerOption} onPress={() => { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, assignedTo: undefined })); else setFormData(p => ({ ...p, assignedTo: undefined })); setShowAssignPicker(false); }}>
-              <Text style={styles.pickerOptionText}>👤 Aucun</Text>
+              <Text style={styles.pickerOptionText}>{t('tasks.noOne')}</Text>
             </TouchableOpacity>
             {members?.filter(m => m.status === 'active').map(m => (
               <TouchableOpacity key={m.id} style={styles.pickerOption} onPress={() => { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, assignedTo: m.id })); else setFormData(p => ({ ...p, assignedTo: m.id })); setShowAssignPicker(false); }}>

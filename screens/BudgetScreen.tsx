@@ -782,7 +782,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
             {/* Payé par */}
             {(members as any[]).length > 1 && (
               <>
-                <Text style={styles.fieldLabel}>👤 Payé par</Text>
+                <Text style={styles.fieldLabel}>{t('budget.paidBy')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
                   {(members as any[]).map((m: any) => {
                     const isSelected = txForm.payerId === m.id || (!txForm.payerId && m.id === user?.id);

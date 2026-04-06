@@ -17,12 +17,14 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
+import { useTranslation } from '../i18n';
 
 interface ForgotPasswordScreenProps {
   onBackToLogin: () => void;
 }
 
 export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -71,7 +73,7 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
               resizeMode="contain"
             />
 
-            <Text style={styles.title}>Mot de passe oublié</Text>
+            <Text style={styles.title}>{t('auth.forgotPasswordTitle')}</Text>
 
             {!emailSent ? (
               <>
@@ -105,14 +107,14 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
                   {loading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.buttonText}>Envoyer le lien de réinitialisation</Text>
+                    <Text style={styles.buttonText}>{t('auth.sendResetLink')}</Text>
                   )}
                 </TouchableOpacity>
               </>
             ) : (
               <View style={styles.successContainer}>
                 <Text style={styles.successIcon}>✉️</Text>
-                <Text style={styles.successTitle}>Email envoyé !</Text>
+                <Text style={styles.successTitle}>{t('auth.emailSent')}</Text>
                 <Text style={styles.successText}>
                   Vérifiez votre boîte de réception et cliquez sur le lien pour réinitialiser votre mot de passe.
                 </Text>
@@ -125,7 +127,7 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
             {/* Retour à la connexion */}
             <TouchableOpacity onPress={onBackToLogin} disabled={loading} style={styles.backButton}>
               <Ionicons name="arrow-back" size={18} color="#c084fc" style={styles.backIcon} />
-              <Text style={styles.backLink}>Retour à la connexion</Text>
+              <Text style={styles.backLink}>{t('auth.backToLogin')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

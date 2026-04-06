@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../i18n';
 
 interface HelpScreenProps {
   onNavigate?: (pageIndex: number) => void;
@@ -106,6 +107,7 @@ const TICKET_CATEGORIES = [
 ];
 
 export default function HelpScreen({
+  const { t } = useTranslation();
   onNavigate,
 }: HelpScreenProps) {
   const { isDark } = useTheme();
@@ -203,7 +205,7 @@ export default function HelpScreen({
   return (
     <View style={styles.container}>
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>❓ Aide</Text>
+        <Text style={styles.pageTitle}>{t('help.title')}</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -232,18 +234,18 @@ export default function HelpScreen({
         {showMyTickets && (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>🎫 Mes tickets</Text>
+              <Text style={styles.sectionTitle}>{t('help.myTickets')}</Text>
               <TouchableOpacity onPress={() => setShowMyTickets(false)}>
-                <Text style={styles.closeLink}>Fermer</Text>
+                <Text style={styles.closeLink}>{t('common.close')}</Text>
               </TouchableOpacity>
             </View>
             {ticketsLoading ? (
               <ActivityIndicator color="#7c3aed" style={{ marginVertical: 20 }} />
             ) : (myTickets as any[]).length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>Aucun ticket pour le moment.</Text>
+                <Text style={styles.emptyText}>{t('help.noTickets')}</Text>
                 <TouchableOpacity style={styles.createTicketBtn} onPress={() => setShowTicketModal(true)}>
-                  <Text style={styles.createTicketBtnText}>+ Créer un ticket</Text>
+                  <Text style={styles.createTicketBtnText}>{t('help.createTicket')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -295,7 +297,7 @@ export default function HelpScreen({
 
         {/* FAQ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📚 Questions fréquentes</Text>
+          <Text style={styles.sectionTitle}>{t('help.faq')}</Text>
           {filteredFaq.length === 0 ? (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyText}>Aucun résultat pour "{searchQuery}"</Text>
@@ -330,7 +332,7 @@ export default function HelpScreen({
             Votre avis sur le Google Play Store nous aide énormément à nous améliorer et à atteindre d'autres familles !
           </Text>
           <TouchableOpacity style={styles.rateButton} onPress={handleRateApp}>
-            <Text style={styles.rateButtonText}>⭐ Laisser un avis sur Google Play</Text>
+            <Text style={styles.rateButtonText}>{t('help.rateApp')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -342,13 +344,13 @@ export default function HelpScreen({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>✉️ Contacter le support</Text>
+              <Text style={styles.modalTitle}>{t('help.contactSupport')}</Text>
               <TouchableOpacity onPress={() => { setShowTicketModal(false); resetTicketForm(); }}>
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.fieldLabel}>Catégorie</Text>
+              <Text style={styles.fieldLabel}>{t('help.category')}</Text>
               <View style={styles.categoryButtons}>
                 {TICKET_CATEGORIES.map((cat) => (
                   <TouchableOpacity
@@ -392,7 +394,7 @@ export default function HelpScreen({
                 {createTicketMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.submitBtnText}>Envoyer le ticket</Text>
+                  <Text style={styles.submitBtnText}>{t('help.sendTicket')}</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>

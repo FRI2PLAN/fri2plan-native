@@ -30,7 +30,8 @@
     "success": "Erfolg",
     "unknown": "Unbekannt",
     "optional": "optional",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "validate": "Bestätigen"
   },
   "auth": {
     "login": "Anmelden",
@@ -58,7 +59,12 @@
     "backToLogin": "← Zurück zur Anmeldung",
     "emailSent": "E-Mail gesendet!",
     "checkYourEmail": "Überprüfen Sie Ihren Posteingang",
-    "minCharacters": "Mindestens 8 Zeichen"
+    "minCharacters": "Mindestens 8 Zeichen",
+    "continueWithManus": "Mit Manus fortfahren",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "continueWithApple": "Mit Apple fortfahren",
+    "continueWithMicrosoft": "Mit Microsoft fortfahren",
+    "minChars": "Mindestens 8 Zeichen"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -98,7 +104,17 @@
     "todayEvents": "Heutige Ereignisse",
     "completed": "Abgeschlossen",
     "inProgress": "In Bearbeitung",
-    "addFavorite": "Hinzufügen"
+    "addFavorite": "Hinzufügen",
+    "summary": "Zusammenfassung",
+    "day": "Tag",
+    "week": "Woche",
+    "tasksTodo": "Aufgaben",
+    "unreadMessages": "Ungelesene Nachrichten",
+    "noEvents": "Keine Ereignisse",
+    "eventsToday": "Ereignisse heute",
+    "eventsThisWeek": "Ereignisse diese Woche",
+    "noBirthdays": "Keine Geburtstage diesen Monat",
+    "noFamilyText": "Um zu beginnen, erstellen Sie eine Familie oder treten Sie einer bestehenden bei."
   },
   "calendar": {
     "title": "Kalender",
@@ -136,7 +152,8 @@
       "Sa",
       "So"
     ],
-    "tapToAdd": "Tippen zum Hinzufügen"
+    "tapToAdd": "Tippen zum Hinzufügen",
+    "noCalendarsFound": "Keine Kalender gefunden."
   },
   "tasks": {
     "title": "Aufgaben",
@@ -168,7 +185,10 @@
     "details": "Aufgabendetails",
     "editTask": "Aufgabe bearbeiten",
     "deleteConfirm": "Diese Aufgabe löschen?",
-    "noTask": "Keine Aufgabe"
+    "noTask": "Keine Aufgabe",
+    "chooseMember": "Mitglied wählen",
+    "unassigned": "Nicht zugewiesen",
+    "noOne": "Keiner"
   },
   "shopping": {
     "title": "Einkaufen",
@@ -409,7 +429,15 @@
     "addReward": "Neue Belohnung",
     "noRewards": "Keine Belohnungen",
     "points": "Punkte",
-    "redeem": "Einlösen"
+    "redeem": "Einlösen",
+    "myPoints": "Meine Punkte",
+    "newReward": "Neue Belohnung",
+    "createdByParents": "Belohnungen werden von Eltern erstellt",
+    "obtained": "Meine erhaltenen Belohnungen",
+    "noneObtained": "Keine Belohnungen erhalten",
+    "noClaims": "Keine ausstehenden Ansprüche",
+    "pointsCost": "Punktekosten *",
+    "icon": "Symbol"
   },
   "members": {
     "title": "Mitglieder",
@@ -418,14 +446,34 @@
     "role": "Rolle",
     "admin": "Administrator",
     "member": "Mitglied",
-    "joined": "Beigetreten am"
+    "joined": "Beigetreten am",
+    "createCircle": "Kreis erstellen",
+    "joinCircle": "Kreis beitreten",
+    "createNewCircle": "Neuen Kreis erstellen",
+    "createCircleDesc": "Erstellen Sie einen separaten Kreis (z.B. Arbeit, Freunde, Verein...)",
+    "circleName": "Kreisname",
+    "enterInviteCode": "Geben Sie den Einladungscode des Kreises ein",
+    "noPendingInvites": "Keine ausstehenden Einladungen",
+    "inviteMember": "Mitglied einladen"
   },
   "referral": {
     "title": "Empfehlen",
     "inviteCode": "Einladungscode",
     "shareCode": "Code teilen",
     "copyCode": "Code kopieren",
-    "inviteFriends": "Freunde einladen"
+    "inviteFriends": "Freunde einladen",
+    "tagline": "Empfehlen und verdienen!",
+    "rewards": "Belohnungen",
+    "yourCode": "Ihr Empfehlungscode",
+    "yourLink": "Empfehlungslink",
+    "shareLink": "Link teilen",
+    "howItWorks": "Wie funktioniert es?",
+    "bothEarn": "Ihr beide verdient",
+    "rewardsTitle": "Belohnungen",
+    "registrationValidated": "Registrierung bestätigt",
+    "credit10": "+10€ Guthaben",
+    "extraCredit10": "+10€ zusätzliches Guthaben",
+    "freePremium": "+1 Monat Premium kostenlos"
   },
   "settings": {
     "title": "Einstellungen",
@@ -445,14 +493,25 @@
     "darkMode": "Dunkler Modus",
     "lightMode": "Heller Modus",
     "pushNotifications": "Push-Benachrichtigungen",
-    "emailNotifications": "E-Mail-Benachrichtigungen"
+    "emailNotifications": "E-Mail-Benachrichtigungen",
+    "passwordSecurity": "Passwort & Sicherheit",
+    "privacyItem": "Datenschutz",
+    "securityItem": "Sicherheit",
+    "privacyPolicy": "Datenschutzrichtlinie"
   },
   "help": {
     "title": "Hilfezentrum",
     "faq": "Häufig gestellte Fragen",
     "contact": "Kontaktieren Sie uns",
     "documentation": "Dokumentation",
-    "tutorials": "Anleitungen"
+    "tutorials": "Anleitungen",
+    "myTickets": "Meine Tickets",
+    "noTickets": "Noch keine Tickets.",
+    "createTicket": "Ticket erstellen",
+    "rateApp": "Auf Google Play bewerten",
+    "contactSupport": "Support kontaktieren",
+    "category": "Kategorie",
+    "sendTicket": "Ticket senden"
   },
   "tabs": {
     "home": "Startseite",

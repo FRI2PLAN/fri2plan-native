@@ -10,6 +10,7 @@ import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import FavoritesBar from '../components/FavoritesBar';
+import { useTranslation } from '../i18n';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -19,6 +20,7 @@ interface DashboardScreenProps {
 }
 
 export default function DashboardScreen({ onLogout, onPrevious, onNext, onNavigate }: DashboardScreenProps) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
@@ -192,7 +194,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>🏠 Accueil</Text>
+        <Text style={styles.pageTitle}>{t('dashboard.title')}</Text>
       </View>
 
       {/* Favorites Bar */}
@@ -213,12 +215,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
         {!activeFamily ? (
           <View style={styles.noFamilyCard}>
-            <Text style={styles.noFamilyTitle}>Bienvenue sur FRI2PLAN ! 🎉</Text>
+            <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>
             <Text style={styles.noFamilyText}>
-              Pour commencer à utiliser l'application, vous devez créer une famille ou rejoindre une famille existante.
+              {t('dashboard.noFamilyText')}
             </Text>
             <TouchableOpacity style={styles.createFamilyButton}>
-              <Text style={styles.createFamilyButtonText}>Créer une famille</Text>
+              <Text style={styles.createFamilyButtonText}>{t('dashboard.createFamily')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -230,7 +232,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
-                    <Text style={styles.widgetTitle}>📊 Résumé</Text>
+                    <Text style={styles.widgetTitle}>{t('dashboard.summary')}</Text>
                   </View>
 
                   {/* Day/Week Tabs */}
@@ -240,7 +242,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => setViewMode('day')}
                     >
                       <Text style={[styles.tabText, viewMode === 'day' && styles.tabTextActive]}>
-                        Jour
+                        {t('dashboard.day')}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -248,7 +250,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => setViewMode('week')}
                     >
                       <Text style={[styles.tabText, viewMode === 'week' && styles.tabTextActive]}>
-                        Semaine
+                        {t('dashboard.week')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -262,7 +264,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     >
                       <Text style={{ fontSize: 28 }}>✅</Text>
                       <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
-                      <Text style={styles.compactWidgetTitle}>Tâches à faire</Text>
+                      <Text style={styles.compactWidgetTitle}>{t('dashboard.tasksTodo')}</Text>
                     </TouchableOpacity>
 
                     {/* Widget Messages */}
@@ -272,7 +274,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     >
                       <Text style={{ fontSize: 28 }}>💬</Text>
                       <Text style={styles.compactWidgetCount}>{unreadMessages}</Text>
-                      <Text style={styles.compactWidgetTitle}>Messages non lus</Text>
+                      <Text style={styles.compactWidgetTitle}>{t('dashboard.unreadMessages')}</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -281,11 +283,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     <View style={styles.eventsSectionHeader}>
                       <Text style={{ fontSize: 16 }}>📅</Text>
                       <Text style={styles.eventsSectionTitle}>
-                        {viewMode === 'day' ? "Événements aujourd'hui" : "Événements cette semaine"}
+                        {viewMode === 'day' ? "{t('dashboard.eventsToday')}" : "{t('dashboard.eventsThisWeek')}"}
                       </Text>
                     </View>
                     {filteredEvents.length === 0 ? (
-                      <Text style={styles.noEventsText}>Aucun événement</Text>
+                      <Text style={styles.noEventsText}>{t('dashboard.noEvents')}</Text>
                     ) : (
                       filteredEvents.map(event => (
                         <TouchableOpacity key={event.id} style={styles.eventItem} onPress={() => handleEventPress(event)}>
@@ -305,7 +307,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 {/* Anniversaires */}
                 {upcomingBirthdays.length > 0 && (
                   <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>🎂 Anniversaires à venir</Text>
+                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
                     {upcomingBirthdays.map(member => (
                       <TouchableOpacity key={member.id} style={styles.birthdayItem} onPress={() => handleBirthdayPress(member)}>
                         <View style={[styles.birthdayAvatar, { backgroundColor: member.userColor || '#7c3aed' }]}>
@@ -317,10 +319,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                           <Text style={styles.birthdayName}>{member.name}</Text>
                           <Text style={styles.birthdayDate}>
                             {member.daysUntil === 0
-                              ? "Aujourd'hui ! 🎉"
+                              ? t('dashboard.today')
                               : member.daysUntil === 1
-                              ? "Demain 🎁"
-                              : `Dans ${member.daysUntil} jours`}
+                              ? t('dashboard.tomorrow')
+                              : `${t('dashboard.inDays', { count: member.daysUntil })}`}
                           </Text>
                         </View>
                         <Text style={{ fontSize: 20 }}>🎂</Text>
@@ -331,8 +333,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
                 {upcomingBirthdays.length === 0 && (
                   <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>🎂 Anniversaires à venir</Text>
-                    <Text style={styles.noEventsText}>Aucun anniversaire à venir ce mois-ci</Text>
+                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
+                    <Text style={styles.noEventsText}>{t('dashboard.noBirthdays')}</Text>
                   </View>
                 )}
               </>

@@ -13,6 +13,7 @@ import {
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../i18n';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
@@ -26,6 +27,7 @@ const COLORS = ['#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#3B82F6'
 type MainView = 'circles' | 'circle_detail';
 
 export default function MembersScreen({ onNavigate, onPrevious, onNext }: MembersScreenProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
@@ -316,7 +318,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     return (
       <View style={styles.container}>
         <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>👥 Cercles</Text>
+          <Text style={styles.pageTitle}>{t('members.title')}</Text>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -343,13 +345,13 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               style={styles.circleActionBtn}
               onPress={() => { setNewCircleName(''); setShowNewCircleModal(true); }}
             >
-              <Text style={styles.circleActionBtnText}>➕ Créer un cercle</Text>
+              <Text style={styles.circleActionBtnText}>{t('members.createCircle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.circleActionBtn, styles.circleActionBtnSecondary]}
               onPress={() => { setJoinCode(''); setShowJoinCircleModal(true); }}
             >
-              <Text style={styles.circleActionBtnTextSecondary}>🔗 Rejoindre un cercle</Text>
+              <Text style={styles.circleActionBtnTextSecondary}>{t('members.joinCircle')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -360,9 +362,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         <Modal visible={showNewCircleModal} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Créer un nouveau cercle</Text>
-              <Text style={styles.modalSubtitle}>Créez un cercle séparé (ex: travail, amis, club...)</Text>
-              <Text style={styles.modalLabel}>Nom du cercle</Text>
+              <Text style={styles.modalTitle}>{t('members.createNewCircle')}</Text>
+              <Text style={styles.modalSubtitle}>{t('members.createCircleDesc')}</Text>
+              <Text style={styles.modalLabel}>{t('members.circleName')}</Text>
               <TextInput
                 style={styles.input}
                 value={newCircleName}
@@ -371,7 +373,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowNewCircleModal(false)}>
-                  <Text style={styles.cancelBtnText}>Annuler</Text>
+                  <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.confirmBtn, (!newCircleName.trim() || createFamilyMutation.isPending) && styles.confirmBtnDisabled]}
@@ -389,8 +391,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         <Modal visible={showJoinCircleModal} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Rejoindre un cercle</Text>
-              <Text style={styles.modalSubtitle}>Entrez le code d'invitation du cercle</Text>
+              <Text style={styles.modalTitle}>{t('members.joinCircle')}</Text>
+              <Text style={styles.modalSubtitle}>{t('members.enterInviteCode')}</Text>
               <Text style={styles.modalLabel}>Code d'invitation</Text>
               <TextInput
                 style={styles.input}
@@ -401,7 +403,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowJoinCircleModal(false)}>
-                  <Text style={styles.cancelBtnText}>Annuler</Text>
+                  <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.confirmBtn, (!joinCode.trim() || joinFamilyMutation.isPending) && styles.confirmBtnDisabled]}
@@ -480,9 +482,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         {detailTab === 'members' && (
           <View>
             {isLoading ? (
-              <Text style={styles.emptyText}>Chargement...</Text>
+              <Text style={styles.emptyText}>{t('common.loading')}</Text>
             ) : (members as any[]).length === 0 ? (
-              <Text style={styles.emptyText}>Aucun membre</Text>
+              <Text style={styles.emptyText}>{t('members.noMembers')}</Text>
             ) : (
               (members as any[]).map((member: any) => {
                 const isMe = member.id === meData?.id;
@@ -556,13 +558,13 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             {pendingInvitations.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyIcon}>✉️</Text>
-                <Text style={styles.emptyText}>Aucune invitation en attente</Text>
+                <Text style={styles.emptyText}>{t('members.noPendingInvites')}</Text>
                 {currentUserIsAdmin && (
                   <TouchableOpacity
                     style={styles.emptyBtn}
                     onPress={() => { setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true); }}
                   >
-                    <Text style={styles.emptyBtnText}>Inviter un membre</Text>
+                    <Text style={styles.emptyBtnText}>{t('members.inviteMember')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -617,7 +619,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       <Modal visible={showInviteModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Inviter un membre</Text>
+            <Text style={styles.modalTitle}>{t('members.inviteMember')}</Text>
             {!generatedCode ? (
               <>
                 <Text style={styles.modalLabel}>Email</Text>
@@ -646,7 +648,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 </View>
                 <View style={styles.modalButtons}>
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowInviteModal(false)}>
-                    <Text style={styles.cancelBtnText}>Annuler</Text>
+                    <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmBtn, (!inviteEmail.trim() || inviteMutation.isPending) && styles.confirmBtnDisabled]}
@@ -743,7 +745,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowEditProfileModal(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, (!profileName.trim() || updateNameMutation.isPending || updateProfileColorMutation.isPending || updateAvatarMutation.isPending) && styles.confirmBtnDisabled]}
@@ -766,7 +768,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLeaveConfirm(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, { backgroundColor: '#ef4444' }, leaveFamilyMutation.isPending && styles.confirmBtnDisabled]}
@@ -801,7 +803,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowRoleModal(false)}>
-              <Text style={styles.cancelBtnText}>Annuler</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -823,7 +825,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowColorModal(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmBtn}
@@ -844,7 +846,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             <Text style={styles.modalSubtitle}>Voulez-vous retirer {selectedMember?.name} de la famille ?</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowRemoveModal(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, styles.confirmBtnDanger]}
@@ -867,7 +869,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowTransferModal(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmBtn}
@@ -885,7 +887,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Modifier le cercle</Text>
-            <Text style={styles.modalLabel}>Nom du cercle</Text>
+            <Text style={styles.modalLabel}>{t('members.circleName')}</Text>
             <TextInput
               style={styles.input}
               value={familyName}
@@ -904,7 +906,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowEditFamilyModal(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, (!familyName.trim() || updateFamilyMutation.isPending) && styles.confirmBtnDisabled]}

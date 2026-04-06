@@ -20,10 +20,12 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
+import { useTranslation } from '../i18n';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -124,7 +126,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Mot de passe */}
-            <Text style={styles.label}>Mot de passe</Text>
+            <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -149,11 +151,11 @@ export default function LoginScreen() {
                 <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                   {rememberMe && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-                <Text style={styles.checkboxLabel}>Se souvenir de moi</Text>
+                <Text style={styles.checkboxLabel}>{t('auth.rememberMe')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setScreenMode('forgotPassword')} disabled={loading}>
-                <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
+                <Text style={styles.forgotPassword}>{t('auth.forgotPassword')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -186,15 +188,15 @@ export default function LoginScreen() {
 
             {/* OAuth buttons (disabled for now) */}
             <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>Continuer avec Manus</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithManus')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>Continuer avec Google</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithGoogle')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>Continuer avec Apple</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

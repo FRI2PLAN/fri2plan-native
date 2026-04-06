@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { trpc } from '../lib/trpc';
+import { useTranslation } from '../i18n';
 
 interface RewardsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -29,6 +30,7 @@ const BADGE_METADATA: Record<string, { name: string; description: string; emoji:
 const ICON_EMOJIS: Record<string, string> = { gift: "🎁", trophy: "🏆", star: "⭐", sparkles: "✨" };
 
 export default function RewardsScreen({ onNavigate, onPrevious, onNext }: RewardsScreenProps) {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);
@@ -171,14 +173,14 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
 
       {/* Titre centré */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>🎁 Récompenses</Text>
+        <Text style={styles.pageTitle}>{t('rewards.title')}</Text>
       </View>
 
       {/* Carte points + classement */}
       <View style={styles.pointsCard}>
         <View style={styles.pointsRow}>
           <View>
-            <Text style={styles.pointsLabel}>Mes points</Text>
+            <Text style={styles.pointsLabel}>{t('rewards.myPoints')}</Text>
             <Text style={styles.pointsValue}>⭐ {(myPoints as any)?.totalPoints ?? 0} pts</Text>
           </View>
           <View style={styles.rankBadge}>
@@ -223,7 +225,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
           <>
             {isAdmin && (
               <TouchableOpacity style={styles.createBtn} onPress={() => setCreateOpen(true)}>
-                <Text style={styles.createBtnText}>+ Nouvelle récompense</Text>
+                <Text style={styles.createBtnText}>{t('rewards.newReward')}</Text>
               </TouchableOpacity>
             )}
             {rewardsLoading ? (
@@ -231,8 +233,8 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
             ) : (rewards as any[]).length === 0 ? (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>🎁</Text>
-                <Text style={styles.emptyText}>Aucune récompense disponible</Text>
-                <Text style={styles.emptySubtext}>Les récompenses sont créées par les parents</Text>
+                <Text style={styles.emptyText}>{t('rewards.noRewards')}</Text>
+                <Text style={styles.emptySubtext}>{t('rewards.createdByParents')}</Text>
               </View>
             ) : (
               (rewards as any[]).map((reward: any) => {
@@ -309,11 +311,11 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         {/* HISTORIQUE */}
         {activeTab === "history" && (
           <>
-            <Text style={styles.sectionTitle}>Mes récompenses obtenues</Text>
+            <Text style={styles.sectionTitle}>{t('rewards.obtained')}</Text>
             {(earnedRewards as any[]).filter((er: any) => er.pointsEarned < 0).length === 0 ? (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>📜</Text>
-                <Text style={styles.emptyText}>Aucune récompense obtenue</Text>
+                <Text style={styles.emptyText}>{t('rewards.noneObtained')}</Text>
               </View>
             ) : (
               (earnedRewards as any[]).filter((er: any) => er.pointsEarned < 0).map((earned: any) => (
@@ -342,7 +344,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
             {(pendingClaims as any[]).length === 0 ? (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>✅</Text>
-                <Text style={styles.emptyText}>Aucune réclamation en attente</Text>
+                <Text style={styles.emptyText}>{t('rewards.noClaims')}</Text>
               </View>
             ) : (
               (pendingClaims as any[]).map((claim: any) => (
@@ -372,14 +374,14 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setCreateOpen(false)} />
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nouvelle récompense</Text>
+            <Text style={styles.modalTitle}>{t('rewards.newReward')}</Text>
             <Text style={styles.fieldLabel}>Nom *</Text>
             <TextInput style={styles.input} value={formName} onChangeText={setFormName} placeholder="Ex: Sortie cinéma" placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
             <Text style={styles.fieldLabel}>Description</Text>
             <TextInput style={[styles.input, { height: 80, textAlignVertical: "top" }]} value={formDesc} onChangeText={setFormDesc} placeholder="Détails..." placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} multiline />
-            <Text style={styles.fieldLabel}>Coût en points *</Text>
+            <Text style={styles.fieldLabel}>{t('rewards.pointsCost')}</Text>
             <TextInput style={styles.input} value={formPoints} onChangeText={setFormPoints} keyboardType="numeric" placeholder="10" placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
-            <Text style={styles.fieldLabel}>Icône</Text>
+            <Text style={styles.fieldLabel}>{t('rewards.icon')}</Text>
             <View style={styles.iconRow}>
               {Object.entries(ICON_EMOJIS).map(([key, emoji]) => (
                 <TouchableOpacity key={key} style={[styles.iconBtn, formIcon === key && styles.iconBtnActive]} onPress={() => setFormIcon(key)}>
@@ -389,7 +391,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
             </View>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateOpen(false)}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={handleCreate} disabled={createMutation.isLoading}>
                 <Text style={styles.saveBtnText}>{createMutation.isLoading ? "..." : "Créer"}</Text>

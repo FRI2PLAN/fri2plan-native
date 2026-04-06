@@ -1170,7 +1170,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </Text>
             <ScrollView style={{ maxHeight: 320 }}>
               {googleCalendars.length === 0 ? (
-                <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier trouvé.</Text>
+                <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>{t('calendar.noCalendarsFound')}</Text>
               ) : googleCalendars.map((cal: any) => (
                 <TouchableOpacity
                   key={cal.id}

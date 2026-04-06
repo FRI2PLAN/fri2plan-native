@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Share } from 'rea
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../i18n';
 
 interface ReferralScreenProps {
   onNavigate?: (screen: string) => void;
@@ -19,6 +20,7 @@ interface Referral {
 }
 
 export default function ReferralScreen({
+  const { t } = useTranslation();
   onNavigate,
   onPrevious,
   onNext,
@@ -97,7 +99,7 @@ export default function ReferralScreen({
       
       {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>🔗 Parrainer un ami</Text>
+        <Text style={styles.pageTitle}>{t('referral.title')}</Text>
       </View>
 
 
@@ -108,7 +110,7 @@ export default function ReferralScreen({
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <Text style={styles.heroEmoji}>🎁</Text>
-          <Text style={styles.heroTitle}>Parrainez et gagnez !</Text>
+          <Text style={styles.heroTitle}>{t('referral.tagline')}</Text>
           <Text style={styles.heroDescription}>
             Invitez vos amis à rejoindre FRI2PLAN et recevez des récompenses pour chaque inscription réussie
           </Text>
@@ -126,13 +128,13 @@ export default function ReferralScreen({
           </View>
           <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
             <Text style={styles.statValue}>{totalRewards}€</Text>
-            <Text style={styles.statLabel}>Récompenses</Text>
+            <Text style={styles.statLabel}>{t('referral.rewards')}</Text>
           </View>
         </View>
 
         {/* Referral Code Card */}
         <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>Votre code de parrainage</Text>
+          <Text style={styles.codeLabel}>{t('referral.yourCode')}</Text>
           <View style={styles.codeContainer}>
             <Text style={styles.codeText}>{referralCode}</Text>
             <TouchableOpacity
@@ -145,7 +147,7 @@ export default function ReferralScreen({
 
           <View style={styles.divider} />
 
-          <Text style={styles.linkLabel}>Lien de parrainage</Text>
+          <Text style={styles.linkLabel}>{t('referral.yourLink')}</Text>
           <View style={styles.linkContainer}>
             <Text style={styles.linkText} numberOfLines={1}>{referralLink}</Text>
             <TouchableOpacity
@@ -157,13 +159,13 @@ export default function ReferralScreen({
           </View>
 
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-            <Text style={styles.shareButtonText}>📤 Partager le lien</Text>
+            <Text style={styles.shareButtonText}>{t('referral.shareLink')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* How it Works */}
         <View style={styles.howItWorksCard}>
-          <Text style={styles.sectionTitle}>Comment ça marche ? 🤔</Text>
+          <Text style={styles.sectionTitle}>{t('referral.howItWorks')}</Text>
           
           <View style={styles.step}>
             <View style={styles.stepNumber}>
@@ -194,7 +196,7 @@ export default function ReferralScreen({
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Vous gagnez tous les deux</Text>
+              <Text style={styles.stepTitle}>{t('referral.bothEarn')}</Text>
               <Text style={styles.stepDescription}>
                 Recevez 10€ de crédit et votre ami reçoit 1 mois gratuit
               </Text>
@@ -204,13 +206,13 @@ export default function ReferralScreen({
 
         {/* Rewards Info */}
         <View style={styles.rewardsCard}>
-          <Text style={styles.sectionTitle}>Récompenses 🎁</Text>
+          <Text style={styles.sectionTitle}>{t('referral.rewardsTitle')}</Text>
           
           <View style={styles.rewardItem}>
             <Text style={styles.rewardIcon}>✅</Text>
             <View style={styles.rewardContent}>
-              <Text style={styles.rewardTitle}>Inscription validée</Text>
-              <Text style={styles.rewardAmount}>+10€ de crédit</Text>
+              <Text style={styles.rewardTitle}>{t('referral.registrationValidated')}</Text>
+              <Text style={styles.rewardAmount}>{t('referral.credit10')}</Text>
             </View>
           </View>
 
@@ -218,7 +220,7 @@ export default function ReferralScreen({
             <Text style={styles.rewardIcon}>⭐</Text>
             <View style={styles.rewardContent}>
               <Text style={styles.rewardTitle}>Passage Premium</Text>
-              <Text style={styles.rewardAmount}>+10€ de crédit supplémentaire</Text>
+              <Text style={styles.rewardAmount}>{t('referral.extraCredit10')}</Text>
             </View>
           </View>
 
@@ -226,7 +228,7 @@ export default function ReferralScreen({
             <Text style={styles.rewardIcon}>🏆</Text>
             <View style={styles.rewardContent}>
               <Text style={styles.rewardTitle}>5 parrainages actifs</Text>
-              <Text style={styles.rewardAmount}>+1 mois Premium gratuit</Text>
+              <Text style={styles.rewardAmount}>{t('referral.freePremium')}</Text>
             </View>
           </View>
         </View>

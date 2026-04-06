@@ -17,12 +17,14 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
+import { useTranslation } from '../i18n';
 
 interface RegisterScreenProps {
   onBackToLogin: () => void;
 }
 
 export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -129,7 +131,7 @@ export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
             </View>
 
             {/* Mot de passe */}
-            <Text style={styles.label}>Mot de passe</Text>
+            <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
               <TextInput
@@ -154,10 +156,10 @@ export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.hint}>Minimum 8 caractères</Text>
+            <Text style={styles.hint}>{t('auth.minChars')}</Text>
 
             {/* Confirmer mot de passe */}
-            <Text style={styles.label}>Confirmer le mot de passe</Text>
+            <Text style={styles.label}>{t('auth.confirmPassword')}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
               <TextInput
@@ -212,22 +214,22 @@ export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
 
             {/* Boutons OAuth */}
             <TouchableOpacity style={styles.oauthButton}>
-              <Text style={styles.oauthButtonText}>Continuer avec Manus</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithManus')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton}>
               <Ionicons name="logo-google" size={20} color="#fff" style={styles.oauthIcon} />
-              <Text style={styles.oauthButtonText}>Continuer avec Google</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithGoogle')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton}>
               <Ionicons name="logo-apple" size={20} color="#fff" style={styles.oauthIcon} />
-              <Text style={styles.oauthButtonText}>Continuer avec Apple</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton}>
               <Ionicons name="logo-microsoft" size={20} color="#fff" style={styles.oauthIcon} />
-              <Text style={styles.oauthButtonText}>Continuer avec Microsoft</Text>
+              <Text style={styles.oauthButtonText}>{t('auth.continueWithMicrosoft')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

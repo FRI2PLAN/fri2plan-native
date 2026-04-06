@@ -30,7 +30,8 @@
     "success": "Succès",
     "unknown": "Inconnu",
     "optional": "optionnel",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "validate": "Valider"
   },
   "auth": {
     "login": "Connexion",
@@ -58,7 +59,12 @@
     "backToLogin": "← Retour à la connexion",
     "emailSent": "Email envoyé !",
     "checkYourEmail": "Vérifiez votre boîte de réception",
-    "minCharacters": "Minimum 8 caractères"
+    "minCharacters": "Minimum 8 caractères",
+    "continueWithManus": "Continuer avec Manus",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
+    "continueWithMicrosoft": "Continuer avec Microsoft",
+    "minChars": "Minimum 8 caractères"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -98,7 +104,17 @@
     "todayEvents": "Événements du jour",
     "completed": "Terminée",
     "inProgress": "En cours",
-    "addFavorite": "Ajouter"
+    "addFavorite": "Ajouter",
+    "summary": "Résumé",
+    "day": "Jour",
+    "week": "Semaine",
+    "tasksTodo": "Tâches à faire",
+    "unreadMessages": "Messages non lus",
+    "noEvents": "Aucun événement",
+    "eventsToday": "Événements aujourd'hui",
+    "eventsThisWeek": "Événements cette semaine",
+    "noBirthdays": "Aucun anniversaire à venir ce mois-ci",
+    "noFamilyText": "Pour commencer, créez une famille ou rejoignez une famille existante."
   },
   "calendar": {
     "title": "Calendrier",
@@ -136,7 +152,8 @@
       "S",
       "D"
     ],
-    "tapToAdd": "Appuyer pour ajouter"
+    "tapToAdd": "Appuyer pour ajouter",
+    "noCalendarsFound": "Aucun calendrier trouvé."
   },
   "tasks": {
     "title": "Tâches",
@@ -168,7 +185,10 @@
     "details": "Détails de la tâche",
     "editTask": "Modifier la tâche",
     "deleteConfirm": "Supprimer cette tâche ?",
-    "noTask": "Aucune tâche"
+    "noTask": "Aucune tâche",
+    "chooseMember": "Choisir un membre",
+    "unassigned": "Non assigné",
+    "noOne": "Aucun"
   },
   "shopping": {
     "title": "Courses",
@@ -409,7 +429,15 @@
     "addReward": "Nouvelle récompense",
     "noRewards": "Aucune récompense",
     "points": "Points",
-    "redeem": "Échanger"
+    "redeem": "Échanger",
+    "myPoints": "Mes points",
+    "newReward": "Nouvelle récompense",
+    "createdByParents": "Les récompenses sont créées par les parents",
+    "obtained": "Mes récompenses obtenues",
+    "noneObtained": "Aucune récompense obtenue",
+    "noClaims": "Aucune réclamation en attente",
+    "pointsCost": "Coût en points *",
+    "icon": "Icône"
   },
   "members": {
     "title": "Membres",
@@ -418,14 +446,34 @@
     "role": "Rôle",
     "admin": "Administrateur",
     "member": "Membre",
-    "joined": "Rejoint le"
+    "joined": "Rejoint le",
+    "createCircle": "Créer un cercle",
+    "joinCircle": "Rejoindre un cercle",
+    "createNewCircle": "Créer un nouveau cercle",
+    "createCircleDesc": "Créez un cercle séparé (ex: travail, amis, club...)",
+    "circleName": "Nom du cercle",
+    "enterInviteCode": "Entrez le code d'invitation du cercle",
+    "noPendingInvites": "Aucune invitation en attente",
+    "inviteMember": "Inviter un membre"
   },
   "referral": {
     "title": "Parrainer",
     "inviteCode": "Code d'invitation",
     "shareCode": "Partager le code",
     "copyCode": "Copier le code",
-    "inviteFriends": "Inviter des amis"
+    "inviteFriends": "Inviter des amis",
+    "tagline": "Parrainez et gagnez !",
+    "rewards": "Récompenses",
+    "yourCode": "Votre code de parrainage",
+    "yourLink": "Lien de parrainage",
+    "shareLink": "Partager le lien",
+    "howItWorks": "Comment ça marche ?",
+    "bothEarn": "Vous gagnez tous les deux",
+    "rewardsTitle": "Récompenses",
+    "registrationValidated": "Inscription validée",
+    "credit10": "+10€ de crédit",
+    "extraCredit10": "+10€ de crédit supplémentaire",
+    "freePremium": "+1 mois Premium gratuit"
   },
   "settings": {
     "title": "Paramètres",
@@ -445,14 +493,25 @@
     "lightMode": "Mode clair",
     "pushNotifications": "Notifications push",
     "emailNotifications": "Notifications par email",
-    "german": "Allemand"
+    "german": "Allemand",
+    "passwordSecurity": "Mot de passe et sécurité",
+    "privacyItem": "Confidentialité",
+    "securityItem": "Sécurité",
+    "privacyPolicy": "Politique de confidentialité"
   },
   "help": {
     "title": "Centre d'aide",
     "faq": "Questions fréquentes",
     "contact": "Nous contacter",
     "documentation": "Documentation",
-    "tutorials": "Tutoriels"
+    "tutorials": "Tutoriels",
+    "myTickets": "Mes tickets",
+    "noTickets": "Aucun ticket pour le moment.",
+    "createTicket": "Créer un ticket",
+    "rateApp": "Laisser un avis sur Google Play",
+    "contactSupport": "Contacter le support",
+    "category": "Catégorie",
+    "sendTicket": "Envoyer le ticket"
   },
   "tabs": {
     "home": "Accueil",

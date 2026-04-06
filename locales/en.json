@@ -30,7 +30,8 @@
     "success": "Success",
     "unknown": "Unknown",
     "optional": "optional",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "validate": "Validate"
   },
   "auth": {
     "login": "Login",
@@ -58,7 +59,12 @@
     "backToLogin": "← Back to login",
     "emailSent": "Email sent!",
     "checkYourEmail": "Check your inbox",
-    "minCharacters": "Minimum 8 characters"
+    "minCharacters": "Minimum 8 characters",
+    "continueWithManus": "Continue with Manus",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "continueWithMicrosoft": "Continue with Microsoft",
+    "minChars": "Minimum 8 characters"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -98,7 +104,17 @@
     "todayEvents": "Today's events",
     "completed": "Completed",
     "inProgress": "In progress",
-    "addFavorite": "Add"
+    "addFavorite": "Add",
+    "summary": "Summary",
+    "day": "Day",
+    "week": "Week",
+    "tasksTodo": "Tasks to do",
+    "unreadMessages": "Unread messages",
+    "noEvents": "No events",
+    "eventsToday": "Events today",
+    "eventsThisWeek": "Events this week",
+    "noBirthdays": "No upcoming birthdays this month",
+    "noFamilyText": "To get started, create a family or join an existing one."
   },
   "calendar": {
     "title": "Calendar",
@@ -136,7 +152,8 @@
       "S",
       "S"
     ],
-    "tapToAdd": "Tap to add"
+    "tapToAdd": "Tap to add",
+    "noCalendarsFound": "No calendars found."
   },
   "tasks": {
     "title": "Tasks",
@@ -168,7 +185,10 @@
     "details": "Task details",
     "editTask": "Edit task",
     "deleteConfirm": "Delete this task?",
-    "noTask": "No task"
+    "noTask": "No task",
+    "chooseMember": "Choose a member",
+    "unassigned": "Unassigned",
+    "noOne": "None"
   },
   "shopping": {
     "title": "Shopping",
@@ -409,7 +429,15 @@
     "addReward": "New reward",
     "noRewards": "No rewards",
     "points": "Points",
-    "redeem": "Redeem"
+    "redeem": "Redeem",
+    "myPoints": "My points",
+    "newReward": "New reward",
+    "createdByParents": "Rewards are created by parents",
+    "obtained": "My obtained rewards",
+    "noneObtained": "No rewards obtained",
+    "noClaims": "No pending claims",
+    "pointsCost": "Points cost *",
+    "icon": "Icon"
   },
   "members": {
     "title": "Members",
@@ -418,14 +446,34 @@
     "role": "Role",
     "admin": "Administrator",
     "member": "Member",
-    "joined": "Joined on"
+    "joined": "Joined on",
+    "createCircle": "Create a circle",
+    "joinCircle": "Join a circle",
+    "createNewCircle": "Create a new circle",
+    "createCircleDesc": "Create a separate circle (e.g. work, friends, club...)",
+    "circleName": "Circle name",
+    "enterInviteCode": "Enter the circle invite code",
+    "noPendingInvites": "No pending invitations",
+    "inviteMember": "Invite a member"
   },
   "referral": {
     "title": "Referral",
     "inviteCode": "Invite code",
     "shareCode": "Share code",
     "copyCode": "Copy code",
-    "inviteFriends": "Invite friends"
+    "inviteFriends": "Invite friends",
+    "tagline": "Refer and earn!",
+    "rewards": "Rewards",
+    "yourCode": "Your referral code",
+    "yourLink": "Referral link",
+    "shareLink": "Share the link",
+    "howItWorks": "How does it work?",
+    "bothEarn": "You both earn",
+    "rewardsTitle": "Rewards",
+    "registrationValidated": "Registration validated",
+    "credit10": "+€10 credit",
+    "extraCredit10": "+€10 extra credit",
+    "freePremium": "+1 free Premium month"
   },
   "settings": {
     "title": "Settings",
@@ -445,14 +493,25 @@
     "lightMode": "Light mode",
     "pushNotifications": "Push notifications",
     "emailNotifications": "Email notifications",
-    "german": "German"
+    "german": "German",
+    "passwordSecurity": "Password & security",
+    "privacyItem": "Privacy",
+    "securityItem": "Security",
+    "privacyPolicy": "Privacy policy"
   },
   "help": {
     "title": "Help Center",
     "faq": "FAQ",
     "contact": "Contact us",
     "documentation": "Documentation",
-    "tutorials": "Tutorials"
+    "tutorials": "Tutorials",
+    "myTickets": "My tickets",
+    "noTickets": "No tickets yet.",
+    "createTicket": "Create a ticket",
+    "rateApp": "Rate on Google Play",
+    "contactSupport": "Contact support",
+    "category": "Category",
+    "sendTicket": "Send ticket"
   },
   "tabs": {
     "home": "Home",

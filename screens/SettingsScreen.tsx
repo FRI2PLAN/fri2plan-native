@@ -173,7 +173,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔒</Text>
-              <Text style={styles.settingLabel}>Mot de passe et sécurité</Text>
+              <Text style={styles.settingLabel}>{t('settings.passwordSecurity')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
@@ -186,7 +186,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔒</Text>
-              <Text style={styles.settingLabel}>Confidentialité</Text>
+              <Text style={styles.settingLabel}>{t('settings.privacyItem')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
@@ -194,7 +194,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🛡️</Text>
-              <Text style={styles.settingLabel}>Sécurité</Text>
+              <Text style={styles.settingLabel}>{t('settings.securityItem')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
@@ -223,7 +223,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔐</Text>
-              <Text style={styles.settingLabel}>Politique de confidentialité</Text>
+              <Text style={styles.settingLabel}>{t('settings.privacyPolicy')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
