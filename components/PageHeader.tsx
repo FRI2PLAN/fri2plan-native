@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface PageHeaderProps {
   title: string;
@@ -9,6 +10,8 @@ interface PageHeaderProps {
 }
 
 export default function PageHeader({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   title,
   buttonText,
   onButtonPress,
@@ -31,19 +34,19 @@ export default function PageHeader({
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
     alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -58,4 +61,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-});
+}); }

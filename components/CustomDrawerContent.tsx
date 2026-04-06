@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   onPageSelect: (pageIndex: number) => void;
@@ -31,6 +32,8 @@ const PAGES = [
 ];
 
 export default function CustomDrawerContent({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   onPageSelect,
   currentPage,
   navigation,
@@ -74,10 +77,10 @@ export default function CustomDrawerContent({
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
   },
   header: {
     padding: 20,
@@ -110,9 +113,9 @@ const styles = StyleSheet.create({
   pageLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
   },
   pageLabelActive: {
     color: '#7c3aed',
   },
-});
+}); }

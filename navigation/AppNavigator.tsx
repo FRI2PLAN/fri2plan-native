@@ -20,6 +20,7 @@ import ReferralScreen from '../screens/ReferralScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HelpScreen from '../screens/HelpScreen';
 import CalendrierIntimeScreen from '../screens/CalendrierIntimeScreen';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Drawer = createDrawerNavigator();
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -82,7 +83,9 @@ function HomeScreen({
   );
 }
 
-export default function AppNavigator({ onLogout }: AppNavigatorProps) {
+export default function AppNavigator({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); onLogout }: AppNavigatorProps) {
   const [currentPage, setCurrentPage] = useState(0);
 
   const handlePageSelect = (pageIndex: number) => {
@@ -106,7 +109,7 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
           drawerActiveTintColor: '#7c3aed',
           drawerInactiveTintColor: '#6b7280',
           drawerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: isDark ? '#1f2937' : '#fff',
             width: 280,
           },
         }}
@@ -125,9 +128,9 @@ export default function AppNavigator({ onLogout }: AppNavigatorProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
   },
-});
+}); }

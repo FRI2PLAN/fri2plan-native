@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface HelpScreenProps {
   onNavigate?: (pageIndex: number) => void;
@@ -104,7 +105,9 @@ const TICKET_CATEGORIES = [
   { value: 'autre', label: '📋 Autre' },
 ];
 
-export default function HelpScreen({ onNavigate }: HelpScreenProps) {
+export default function HelpScreen({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); onNavigate }: HelpScreenProps) {
   const auth = useAuth() as any;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
@@ -398,22 +401,22 @@ export default function HelpScreen({ onNavigate }: HelpScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+function getStyles(isDark: boolean) { return StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
   pageTitleContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
-  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' },
+  pageTitle: { fontSize: 24, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', textAlign: 'center' },
   content: { flex: 1 },
   quickActionsRow: { flexDirection: 'row', padding: 16, gap: 10 },
   quickCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -426,17 +429,17 @@ const styles = StyleSheet.create({
   quickCardPurple: { backgroundColor: '#7c3aed' },
   quickCardGold: { backgroundColor: '#fef3c7' },
   quickIcon: { fontSize: 22, marginBottom: 5 },
-  quickTitle: { fontSize: 11, fontWeight: '600', color: '#374151', textAlign: 'center', lineHeight: 15 },
+  quickTitle: { fontSize: 11, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', textAlign: 'center', lineHeight: 15 },
   section: { paddingHorizontal: 16, marginBottom: 8 },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 12 },
   closeLink: { fontSize: 14, color: '#7c3aed', fontWeight: '600' },
-  emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', elevation: 2 },
+  emptyCard: { backgroundColor: isDark ? '#1f2937' : '#fff', borderRadius: 12, padding: 24, alignItems: 'center', elevation: 2 },
   emptyText: { fontSize: 14, color: '#9ca3af', marginBottom: 12 },
   createTicketBtn: { backgroundColor: '#7c3aed', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   createTicketBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   ticketCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -450,32 +453,32 @@ const styles = StyleSheet.create({
   ticketNumber: { fontSize: 13, fontWeight: '700', color: '#7c3aed' },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   statusText: { fontSize: 12, fontWeight: '600' },
-  ticketSubject: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 4 },
+  ticketSubject: { fontSize: 15, fontWeight: '600', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 4 },
   ticketDate: { fontSize: 12, color: '#9ca3af' },
   searchContainer: { paddingHorizontal: 16, paddingBottom: 8 },
   searchInput: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    color: '#1f2937',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    color: isDark ? '#f9fafb' : '#1f2937',
   },
   categoryScroll: { marginBottom: 12 },
   categoryChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
   },
   categoryChipActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  categoryChipText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
+  categoryChipText: { fontSize: 13, fontWeight: '600', color: isDark ? '#9ca3af' : '#6b7280' },
   categoryChipTextActive: { color: '#fff' },
   faqCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
@@ -486,13 +489,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   faqHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  categoryBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  categoryBadgeText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
+  categoryBadge: { backgroundColor: isDark ? '#374151' : '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  categoryBadgeText: { fontSize: 12, fontWeight: '600', color: isDark ? '#9ca3af' : '#6b7280' },
   expandIcon: { fontSize: 22, fontWeight: 'bold', color: '#7c3aed' },
-  faqQuestion: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
+  faqQuestion: { fontSize: 15, fontWeight: '600', color: isDark ? '#f9fafb' : '#1f2937' },
   faqAnswer: {
     fontSize: 14,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     lineHeight: 21,
     marginTop: 10,
     paddingTop: 10,
@@ -506,25 +509,25 @@ const styles = StyleSheet.create({
   rateButtonText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
     maxHeight: '90%',
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937' },
-  modalClose: { fontSize: 20, color: '#6b7280', fontWeight: 'bold' },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8, marginTop: 12 },
-  fieldHint: { fontSize: 13, color: '#6b7280', marginTop: 12, marginBottom: 8, lineHeight: 18 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937' },
+  modalClose: { fontSize: 20, color: isDark ? '#9ca3af' : '#6b7280', fontWeight: 'bold' },
+  fieldLabel: { fontSize: 14, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 8, marginTop: 12 },
+  fieldHint: { fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 12, marginBottom: 8, lineHeight: 18 },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    color: '#1f2937',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    color: isDark ? '#f9fafb' : '#1f2937',
   },
   inputMultiline: { minHeight: 120 },
   categoryButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -532,12 +535,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
   },
   catBtnActive: { backgroundColor: '#ede9fe', borderColor: '#7c3aed' },
-  catBtnText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  catBtnText: { fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280', fontWeight: '500' },
   catBtnTextActive: { color: '#7c3aed', fontWeight: '700' },
   submitBtn: {
     backgroundColor: '#7c3aed',
@@ -549,4 +552,4 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-});
+}); }

@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { trpc } from '../lib/trpc';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -20,6 +21,8 @@ interface RichHeaderProps {
 }
 
 export default function RichHeader({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   onQuickActionsPress,
   onNotificationsPress,
   onThemeToggle,
@@ -173,7 +176,7 @@ export default function RichHeader({
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
     backgroundColor: '#7c3aed', // Violet
     paddingHorizontal: 12,
@@ -282,4 +285,4 @@ const styles = StyleSheet.create({
     fontSize: 9,
     marginTop: 2,
   },
-});
+}); }

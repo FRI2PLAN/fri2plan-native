@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Share } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ReferralScreenProps {
   onNavigate?: (screen: string) => void;
@@ -17,7 +18,9 @@ interface Referral {
   reward: number;
 }
 
-export default function ReferralScreen({ onNavigate , onPrevious, onNext}: ReferralScreenProps) {
+export default function ReferralScreen({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); onNavigate , onPrevious, onNext}: ReferralScreenProps) {
   const referralCode = 'FRI2PLAN-ABCD1234';
   const referralLink = `https://fri2plan.app/invite/${referralCode}`;
 
@@ -257,19 +260,19 @@ export default function ReferralScreen({ onNavigate , onPrevious, onNext}: Refer
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'},
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     textAlign: 'center'},
   content: {
     flex: 1},
@@ -305,13 +308,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 4},
   statLabel: {
     fontSize: 12,
-    color: '#6b7280'},
+    color: isDark ? '#9ca3af' : '#6b7280'},
   codeCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     margin: 16,
     padding: 20,
     borderRadius: 12,
@@ -323,12 +326,12 @@ const styles = StyleSheet.create({
   codeLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     marginBottom: 8},
   codeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16},
@@ -336,7 +339,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1f2937'},
+    color: isDark ? '#f9fafb' : '#1f2937'},
   copyButton: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 12,
@@ -353,19 +356,19 @@ const styles = StyleSheet.create({
   linkLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     marginBottom: 8},
   linkContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16},
   linkText: {
     flex: 1,
     fontSize: 14,
-    color: '#1f2937'},
+    color: isDark ? '#f9fafb' : '#1f2937'},
   shareButton: {
     backgroundColor: '#10b981',
     paddingVertical: 14,
@@ -376,14 +379,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold'},
   howItWorksCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     margin: 16,
     padding: 20,
     borderRadius: 12},
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 16},
   step: {
     flexDirection: 'row',
@@ -405,14 +408,14 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 4},
   stepDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     lineHeight: 20},
   rewardsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     margin: 16,
     padding: 20,
     borderRadius: 12},
@@ -428,7 +431,7 @@ const styles = StyleSheet.create({
   rewardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 2},
   rewardAmount: {
     fontSize: 16,
@@ -437,7 +440,7 @@ const styles = StyleSheet.create({
   referralsContainer: {
     padding: 16},
   referralCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -455,11 +458,11 @@ const styles = StyleSheet.create({
   referralName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 4},
   referralEmail: {
     fontSize: 14,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     marginBottom: 4},
   referralDate: {
     fontSize: 12,
@@ -483,14 +486,14 @@ const styles = StyleSheet.create({
     color: '#10b981'},
 
   pageTitleContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center'}});
+    color: isDark ? '#f9fafb' : '#1f2937',
+    textAlign: 'center'}}); }

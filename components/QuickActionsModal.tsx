@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface QuickActionsModalProps {
   visible: boolean;
@@ -23,7 +24,9 @@ interface QuickAction {
   color: string;
 }
 
-export default function QuickActionsModal({ visible, onClose, onNavigate }: QuickActionsModalProps) {
+export default function QuickActionsModal({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); visible, onClose, onNavigate }: QuickActionsModalProps) {
   const { t } = useTranslation();
 
   const quickActions: QuickAction[] = [
@@ -129,7 +132,7 @@ export default function QuickActionsModal({ visible, onClose, onNavigate }: Quic
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
@@ -139,7 +142,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 32,
@@ -160,12 +163,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: isDark ? '#374151' : '#f3f4f6',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
   },
   closeButton: {
     padding: 4,
@@ -181,7 +184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
     marginVertical: 3,
-    backgroundColor: '#f9fafb',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
   },
   actionIconContainer: {
     width: 44,
@@ -194,7 +197,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     flex: 1,
   },
-});
+}); }

@@ -5,13 +5,16 @@ import RichHeader from './RichHeader';
 import QuickActionsModal from './QuickActionsModal';
 import NotificationsModal from './NotificationsModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface FixedHeaderLayoutProps {
   children: React.ReactNode;
   onNavigate?: (pageIndex: number) => void;
 }
 
-export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderLayoutProps) {
+export default function FixedHeaderLayout({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); children, onNavigate }: FixedHeaderLayoutProps) {
   const { logout } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
@@ -94,16 +97,16 @@ export default function FixedHeaderLayout({ children, onNavigate }: FixedHeaderL
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
   },
   safeArea: {
     backgroundColor: '#7c3aed', // Purple background for status bar
   },
   content: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
   },
-});
+}); }

@@ -24,7 +24,8 @@ interface NotificationsModalProps {
   onClose: () => void;
 }
 
-export default function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
+export default function NotificationsModal({
+  const styles = getStyles(isDark); visible, onClose }: NotificationsModalProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
 
@@ -196,7 +197,7 @@ export default function NotificationsModal({ visible, onClose }: NotificationsMo
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -296,4 +297,4 @@ const styles = StyleSheet.create({
     marginTop: 6,
     flexShrink: 0,
   },
-});
+}); }

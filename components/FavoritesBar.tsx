@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Favorite {
   id: string;
@@ -18,7 +19,9 @@ interface FavoritesBarProps {
   allPages?: Array<{ id: string; name: string; icon: string; pageIndex: number }>;
 }
 
-export default function FavoritesBar({ 
+export default function FavoritesBar({
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark); 
   favorites, 
   onFavoritePress, 
   onFavoriteSelect,
@@ -187,13 +190,13 @@ export default function FavoritesBar({
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
   favoritesRow: {
     flexDirection: 'row',
@@ -209,13 +212,13 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptySlot: {
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
   },
   favoriteLabel: {
     fontSize: 10,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     textAlign: 'center',
     maxWidth: 56,
   },
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '85%',
@@ -257,12 +260,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: isDark ? '#374151' : '#f3f4f6',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
   },
   closeButton: {
     padding: 4,
@@ -305,11 +308,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: isDark ? '#111827' : '#f9fafb',
     marginBottom: 8,
   },
   selectedPage: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     opacity: 0.6,
   },
   pageIcon: {
@@ -318,11 +321,11 @@ const styles = StyleSheet.create({
   },
   pageName: {
     fontSize: 16,
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     flex: 1,
     fontWeight: '500',
   },
   pageNameDisabled: {
     color: '#9ca3af',
   },
-});
+}); }

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
@@ -26,6 +27,8 @@ type MainView = 'circles' | 'circle_detail';
 
 export default function MembersScreen({ onNavigate, onPrevious, onNext }: MembersScreenProps) {
   const { user } = useAuth();
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
 
   // Vue principale : liste des cercles ou détail d'un cercle
   const [mainView, setMainView] = useState<MainView>('circles');
@@ -918,8 +921,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+function getStyles(isDark: boolean) { return StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
 
   // Header
   pageHeader: {
@@ -927,29 +930,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
   },
   backBtn: { padding: 4, marginRight: 4 },
   backBtnText: { fontSize: 28, color: '#7c3aed', lineHeight: 32, fontWeight: '300' },
-  pageTitle: { flex: 1, fontSize: 20, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' },
+  pageTitle: { flex: 1, fontSize: 20, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', textAlign: 'center' },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   headerIconBtn: { padding: 6 },
-  headerIcon: { fontSize: 18 },  // taille uniforme pour tous les icônes du header
+  headerIcon: { fontSize: 18 },
 
   // Tabs
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb',
     alignItems: 'center',
     paddingHorizontal: 4,
   },
   tab: { flex: 1, paddingVertical: 11, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2, borderBottomColor: '#7c3aed' },
-  tabText: { fontSize: 12, color: '#6b7280' },
+  tabText: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' },
   tabTextActive: { color: '#7c3aed', fontWeight: '600' },
   addBtn: {
     width: 30, height: 30, borderRadius: 15,
@@ -964,21 +967,21 @@ const styles = StyleSheet.create({
 
   // Cercle card (vue liste)
   circleCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 14,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.06,
+    shadowOpacity: isDark ? 0.3 : 0.06,
     shadowRadius: 6,
     elevation: 3,
   },
   circleColorBar: { width: 6, alignSelf: 'stretch' },
   circleCardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 16 },
-  circleName: { fontSize: 16, fontWeight: '700', color: '#1f2937' },
-  circleCode: { fontSize: 12, color: '#6b7280', marginTop: 3 },
+  circleName: { fontSize: 16, fontWeight: '700', color: isDark ? '#f9fafb' : '#1f2937' },
+  circleCode: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 3 },
   circleArrow: { fontSize: 26, color: '#9ca3af', paddingRight: 14, fontWeight: '300' },
 
   circleActions: { gap: 10, marginTop: 4 },
@@ -988,20 +991,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  circleActionBtnSecondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#7c3aed' },
+  circleActionBtnSecondary: { backgroundColor: isDark ? '#1f2937' : '#fff', borderWidth: 1, borderColor: '#7c3aed' },
   circleActionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   circleActionBtnTextSecondary: { color: '#7c3aed', fontWeight: '700', fontSize: 15 },
 
   // Member card
   memberCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: isDark ? 0.3 : 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -1014,41 +1017,41 @@ const styles = StyleSheet.create({
   memberEmoji: { fontSize: 22 },
   memberInfo: { flex: 1 },
   memberNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  memberName: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
+  memberName: { fontSize: 15, fontWeight: '600', color: isDark ? '#f9fafb' : '#1f2937' },
   adminBadge: { fontSize: 14 },
   meBadge: {
     fontSize: 10, color: '#7c3aed', fontWeight: '600',
-    backgroundColor: '#ede9fe', paddingHorizontal: 5, paddingVertical: 1,
+    backgroundColor: isDark ? '#3b2f6e' : '#ede9fe', paddingHorizontal: 5, paddingVertical: 1,
     borderRadius: 4,
   },
-  memberEmail: { fontSize: 11, color: '#6b7280', marginTop: 1 },
+  memberEmail: { fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 1 },
   memberRole: { fontSize: 11, color: '#7c3aed', marginTop: 2 },
   memberActionsCol: { alignItems: 'flex-end', gap: 4 },
   memberActions: { flexDirection: 'row', gap: 4 },
   actionBtn: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     justifyContent: 'center', alignItems: 'center',
   },
   actionBtnDisabled: { opacity: 0.35 },
   actionBtnText: { fontSize: 14 },
-  transferBtn: { paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#ede9fe', borderRadius: 6 },
+  transferBtn: { paddingHorizontal: 8, paddingVertical: 3, backgroundColor: isDark ? '#3b2f6e' : '#ede9fe', borderRadius: 6 },
   transferBtnText: { fontSize: 10, color: '#7c3aed', fontWeight: '600' },
 
-  // Invitation card — compacte, tout sur une ligne
+  // Invitation card
   invitationCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0.3 : 0.04,
     shadowRadius: 3,
     elevation: 2,
   },
   invitationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  invitationEmail: { fontSize: 13, fontWeight: '600', color: '#1f2937' },
+  invitationEmail: { fontSize: 13, fontWeight: '600', color: isDark ? '#f9fafb' : '#1f2937' },
   invitationCode: { fontSize: 10, color: '#9ca3af', marginTop: 1 },
   invitationRole: { fontSize: 16 },
   invActionBtn: { padding: 5 },
@@ -1057,24 +1060,24 @@ const styles = StyleSheet.create({
   // Empty
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 14, color: '#6b7280', textAlign: 'center', padding: 20 },
+  emptyText: { fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center', padding: 20 },
   emptyBtn: { marginTop: 16, backgroundColor: '#7c3aed', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
   emptyBtnText: { color: '#fff', fontWeight: '600' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', marginBottom: 4, textAlign: 'center' },
-  modalSubtitle: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 16 },
-  modalLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
-  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 10, fontSize: 14, backgroundColor: '#f9fafb' },
+  modalContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 4, textAlign: 'center' },
+  modalSubtitle: { fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center', marginBottom: 16 },
+  modalLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 6, marginTop: 12 },
+  input: { borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db', borderRadius: 8, padding: 10, fontSize: 14, backgroundColor: isDark ? '#374151' : '#f9fafb', color: isDark ? '#f9fafb' : '#1f2937' },
   roleRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
-  roleBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', alignItems: 'center' },
+  roleBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center' },
   roleBtnActive: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
-  roleBtnText: { color: '#374151', fontSize: 14 },
+  roleBtnText: { color: isDark ? '#d1d5db' : '#374151', fontSize: 14 },
   roleBtnTextActive: { color: '#fff', fontWeight: '600', fontSize: 14 },
   modalButtons: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#f3f4f6', alignItems: 'center', marginTop: 8 },
+  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center', marginTop: 8 },
   cancelBtnText: { color: '#374151', fontWeight: '600' },
   confirmBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#7c3aed', alignItems: 'center' },
   confirmBtnDisabled: { opacity: 0.5 },
@@ -1103,4 +1106,4 @@ const styles = StyleSheet.create({
   emojiBtn: { width: 44, height: 44, borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' },
   emojiBtnSelected: { borderColor: '#7c3aed', borderWidth: 2, backgroundColor: '#ede9fe' },
   emojiBtnText: { fontSize: 22 },
-});
+}); }

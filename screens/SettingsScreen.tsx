@@ -34,9 +34,11 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
     return 'Français';
   };
 
+  const styles = getStyles(isDark);
+
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       
       {/* Language Selection Modal */}
       <Modal
@@ -242,30 +244,30 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
   );
 }
 
-const styles = StyleSheet.create({
+function getStyles(isDark: boolean) { return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'},
+    backgroundColor: isDark ? '#111827' : '#f9fafb'},
   header: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937'},
+    color: isDark ? '#f9fafb' : '#1f2937'},
   content: {
     flex: 1},
   section: {
     marginTop: 24,
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 16,
     paddingVertical: 8},
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
@@ -276,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6'},
+    borderBottomColor: isDark ? '#374151' : '#f3f4f6'},
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,13 +288,13 @@ const styles = StyleSheet.create({
     marginRight: 12},
   settingLabel: {
     fontSize: 16,
-    color: '#1f2937'},
+    color: isDark ? '#f9fafb' : '#1f2937'},
   settingRight: {
     flexDirection: 'row',
     alignItems: 'center'},
   settingValue: {
     fontSize: 15,
-    color: '#6b7280',
+    color: isDark ? '#9ca3af' : '#6b7280',
     marginRight: 8},
   settingArrow: {
     fontSize: 20,
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'},
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     borderRadius: 12,
     padding: 24,
     width: '80%',
@@ -321,7 +323,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     marginBottom: 20,
     textAlign: 'center'},
   languageOption: {
@@ -331,39 +333,39 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
     marginBottom: 12},
   languageOptionSelected: {
     borderColor: '#7c3aed',
-    backgroundColor: '#f3f4f6'},
+    backgroundColor: isDark ? '#3b2f6e' : '#f3f4f6'},
   languageOptionText: {
     fontSize: 16,
-    color: '#1f2937',
+    color: isDark ? '#f9fafb' : '#1f2937',
     fontWeight: '500'},
   checkmark: {
     fontSize: 20,
     color: '#7c3aed',
     fontWeight: 'bold'},
   modalCloseButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginTop: 8},
   modalCloseButtonText: {
-    color: '#6b7280',
+    color: isDark ? '#d1d5db' : '#6b7280',
     fontSize: 16,
     fontWeight: '600'},
 
   pageTitleContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1f2937' : '#fff',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'},
+    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center'}});
+    color: isDark ? '#f9fafb' : '#1f2937',
+    textAlign: 'center'}}); }
