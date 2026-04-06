@@ -19,6 +19,12 @@ interface Referral {
 }
 
 export default function ReferralScreen({
+  onNavigate,
+  onPrevious,
+  onNext,
+}: ReferralScreenProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   const referralCode = 'FRI2PLAN-ABCD1234';
   const referralLink = `https://fri2plan.app/invite/${referralCode}`;
 

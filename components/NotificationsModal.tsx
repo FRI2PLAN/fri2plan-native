@@ -25,9 +25,12 @@ interface NotificationsModalProps {
 }
 
 export default function NotificationsModal({
-  const styles = getStyles(isDark); visible, onClose }: NotificationsModalProps) {
+  visible,
+  onClose,
+}: NotificationsModalProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
+  const styles = getStyles(isDark);
 
   const { data: notifications = [], isLoading, refetch } = trpc.notifications.list.useQuery(
     undefined,

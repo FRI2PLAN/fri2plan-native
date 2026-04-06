@@ -106,6 +106,10 @@ const TICKET_CATEGORIES = [
 ];
 
 export default function HelpScreen({
+  onNavigate,
+}: HelpScreenProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   const auth = useAuth() as any;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
