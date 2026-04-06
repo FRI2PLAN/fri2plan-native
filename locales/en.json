@@ -444,7 +444,8 @@
     "darkMode": "Dark mode",
     "lightMode": "Light mode",
     "pushNotifications": "Push notifications",
-    "emailNotifications": "Email notifications"
+    "emailNotifications": "Email notifications",
+    "german": "German"
   },
   "help": {
     "title": "Help Center",
