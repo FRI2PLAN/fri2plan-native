@@ -18,7 +18,7 @@ interface HelpScreenProps {
   onNavigate?: (pageIndex: number) => void;
 }
 
-const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=com.fri2plan.app';
+const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=space.manus.fri2plan.twa';
 
 const FAQ_ITEMS = [
   {

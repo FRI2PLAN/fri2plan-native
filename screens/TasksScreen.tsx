@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform } from 'react-native';
+import { TasksSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
@@ -390,10 +391,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* Liste */}
       <ScrollView style={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}>
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#7c3aed" />
-            <Text style={styles.loadingText}>{t('common.loading') || 'Chargement...'}</Text>
-          </View>
+          <TasksSkeleton />
         ) : (
           <>
             {/* Section Aujourd'hui */}

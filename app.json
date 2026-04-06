@@ -12,6 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#7c3aed"
     },
+    "scheme": "fri2plan",
     "plugins": [
       "expo-dev-client"
     ],

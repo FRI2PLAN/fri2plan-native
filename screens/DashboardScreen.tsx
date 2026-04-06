@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { DashboardSkeleton } from '../components/SkeletonLoader';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -244,10 +245,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         ) : (
           <>
             {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7c3aed" />
-                <Text style={styles.loadingText}>Chargement...</Text>
-              </View>
+              <DashboardSkeleton />
             ) : (
               <>
                 {/* Daily Summary Widget */}

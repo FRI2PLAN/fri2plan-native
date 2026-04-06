@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking } from 'react-native';
+import { CalendarSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
@@ -89,6 +90,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [subscribeUrl, setSubscribeUrl] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [googleCalendarModal, setGoogleCalendarModal] = useState(false);
+  const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
+  const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -97,6 +101,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   useEffect(() => {
     loadViewMode();
     loadFilters();
+    // Gérer le deep link fri2plan://google-calendar/callback?google_calendars=...
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      if (url && url.startsWith('fri2plan://google-calendar/callback')) {
+        try {
+          const params = new URL(url).searchParams;
+          const encoded = params.get('google_calendars');
+          if (encoded) {
+            const calendars = JSON.parse(decodeURIComponent(encoded));
+            setGoogleCalendars(calendars);
+            setGoogleCalendarModal(true);
+          }
+        } catch {}
+      }
+    };
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    // Vérifier si l'app a été ouverte via un deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+    return () => subscription.remove();
   }, []);
 
   const loadViewMode = async () => {
@@ -246,6 +271,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const eventsQuery = trpc.events.list.useQuery(undefined, { refetchOnWindowFocus: false });
+  const isLoadingEvents = eventsQuery.isLoading;
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
     startTime: e.startDate,
@@ -255,6 +281,37 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
+
+  const subscribeGoogleCalendar = async (cal: any) => {
+    setGoogleCalendarLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch('https://app.fri2plan.ch/api/google-calendar/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({
+          calendarId: cal.id,
+          calendarName: cal.summary,
+          color: cal.backgroundColor || '#4285f4',
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert('Calendrier ajouté', `"${cal.summary}" a été synchronisé avec succès.`);
+        setGoogleCalendarModal(false);
+        refetch();
+      } else {
+        Alert.alert('Erreur', data.error || 'Impossible d\'ajouter ce calendrier.');
+      }
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible de contacter le serveur.');
+    } finally {
+      setGoogleCalendarLoading(false);
+    }
+  };
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -415,6 +472,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <TouchableOpacity style={styles.actionBtn} onPress={() => setExportModalOpen(true)}>
           <Text style={styles.actionIcon}>📤</Text>
         </TouchableOpacity>
+        {/* Google Calendar */}
+        <TouchableOpacity style={styles.actionBtn} onPress={() => {
+          Linking.openURL('https://app.fri2plan.ch/api/google-calendar/connect?source=android').catch(() =>
+            Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
+          );
+        }}>
+          <Text style={styles.actionIcon}>🗓️</Text>
+        </TouchableOpacity>
         {/* Filtres */}
         <TouchableOpacity style={[styles.actionBtn, hasActiveFilters && styles.actionBtnActive]} onPress={() => setFilterModalOpen(true)}>
           <Text style={styles.actionIcon}>⚙️</Text>
@@ -470,6 +535,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#ef4444']} />}
       >
+        {/* Skeleton de chargement */}
+        {isLoadingEvents && !refreshing ? (
+          <CalendarSkeleton />
+        ) : null}
         {/* ── Vue Mois ── */}
         {viewMode === 'month' && (
           <>
@@ -1083,12 +1152,62 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 style={[styles.pickerOption, formData.reminder === option.value && { backgroundColor: isDark ? '#374151' : '#ede9fe' }]}
                 onPress={() => { setFormData(p => ({ ...p, reminder: option.value })); setShowReminderDropdown(false); }}
               >
-                <Text style={styles.pickerOptionText}>🔔 {option.label}</Text>
-                {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>✓</Text>}
+                <Text style={styles.pickerOptionText}>\uD83D\uDD14 {option.label}</Text>
+                {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>\u2713</Text>}
               </TouchableOpacity>
             ))}
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* ── Sélection calendriers Google ── */}
+      <Modal visible={googleCalendarModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>\uD83D\uDDD3\uFE0F Calendriers Google</Text>
+            <Text style={[styles.importInfoText, { marginBottom: 12 }]}>
+              Sélectionnez un calendrier à synchroniser avec FRI2PLAN.
+            </Text>
+            <ScrollView style={{ maxHeight: 320 }}>
+              {googleCalendars.length === 0 ? (
+                <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier trouvé.</Text>
+              ) : googleCalendars.map((cal: any) => (
+                <TouchableOpacity
+                  key={cal.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 14,
+                    marginBottom: 8,
+                    borderRadius: 10,
+                    backgroundColor: isDark ? '#2a2a2a' : '#f9fafb',
+                    borderWidth: 1,
+                    borderColor: isDark ? '#374151' : '#e5e7eb',
+                    opacity: googleCalendarLoading ? 0.6 : 1,
+                  }}
+                  onPress={() => subscribeGoogleCalendar(cal)}
+                  disabled={googleCalendarLoading}
+                >
+                  <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cal.backgroundColor || '#4285f4', marginRight: 12 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }}>
+                      {cal.summary}{cal.primary ? ' \u2605' : ''}
+                    </Text>
+                    {cal.description ? (
+                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }} numberOfLines={1}>
+                        {cal.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Text style={{ fontSize: 18, color: '#4285f4' }}>+</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
+              <ModalIconButton icon="\u2715" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setGoogleCalendarModal(false)} />
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
