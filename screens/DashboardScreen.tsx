@@ -10,7 +10,7 @@ import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import FavoritesBar from '../components/FavoritesBar';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardScreenProps {
   onLogout: () => void;

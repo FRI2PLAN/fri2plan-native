@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 interface HelpScreenProps {
   onNavigate?: (pageIndex: number) => void;

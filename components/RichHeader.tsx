@@ -121,9 +121,7 @@ export default function RichHeader({
                 <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
               </View>
             )}
-            {activeFamilyName && (
-              <Text style={styles.familyNameText} numberOfLines={1}>👨‍👩‍👧 {activeFamilyName}</Text>
-            )}
+
           </View>
         </TouchableOpacity>
 

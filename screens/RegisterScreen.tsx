@@ -17,7 +17,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 interface RegisterScreenProps {
   onBackToLogin: () => void;

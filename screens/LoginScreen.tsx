@@ -20,7 +20,7 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 

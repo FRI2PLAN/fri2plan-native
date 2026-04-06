@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Share } from 'rea
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 interface ReferralScreenProps {
   onNavigate?: (screen: string) => void;

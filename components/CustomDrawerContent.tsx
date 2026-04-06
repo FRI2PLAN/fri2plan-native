@@ -5,9 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { trpc } from '../lib/trpc';
 
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   onPageSelect: (pageIndex: number) => void;
@@ -38,18 +42,57 @@ export default function CustomDrawerContent({
 }: CustomDrawerContentProps) {
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
+  const { logout } = useAuth();
+
+  // Récupérer le nom de la famille active
+  const { data: families } = trpc.family.list.useQuery();
+  const activeFamilyName: string | null = families?.[0]?.name || null;
+
   const handlePagePress = (pageIndex: number) => {
     onPageSelect(pageIndex);
     navigation.closeDrawer();
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            navigation.closeDrawer();
+            await logout();
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
+      {/* Header : FRI2PLAN + icône déconnexion */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>FRI2PLAN</Text>
-        <Text style={styles.headerSubtitle}>Organiseur Familial</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>FRI2PLAN</Text>
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={styles.logoutButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#e9d5ff" />
+          </TouchableOpacity>
+        </View>
+        {activeFamilyName ? (
+          <Text style={styles.familyName}>👨‍👩‍👧 {activeFamilyName}</Text>
+        ) : (
+          <Text style={styles.headerSubtitle}>Organiseur Familial</Text>
+        )}
       </View>
 
+      {/* Liste des pages */}
       <View style={styles.pagesContainer}>
         {PAGES.map((page) => (
           <TouchableOpacity
@@ -77,45 +120,61 @@ export default function CustomDrawerContent({
   );
 }
 
-function getStyles(isDark: boolean) { return StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? '#1f2937' : '#fff',
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#7c3aed',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#e9d5ff',
-    marginTop: 4,
-  },
-  pagesContainer: {
-    paddingVertical: 10,
-  },
-  pageItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: 'transparent',
-  },
-  pageItemActive: {
-    backgroundColor: '#f3e8ff',
-    borderLeftColor: '#7c3aed',
-  },
-  pageLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: isDark ? '#9ca3af' : '#6b7280',
-  },
-  pageLabelActive: {
-    color: '#7c3aed',
-  },
-}); }
+function getStyles(isDark: boolean) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDark ? '#1f2937' : '#fff',
+    },
+    header: {
+      padding: 20,
+      paddingTop: 60,
+      backgroundColor: '#7c3aed',
+    },
+    headerTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
+    logoutButton: {
+      padding: 4,
+    },
+    familyName: {
+      fontSize: 14,
+      color: '#e9d5ff',
+      marginTop: 6,
+      fontWeight: '500',
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: '#e9d5ff',
+      marginTop: 4,
+    },
+    pagesContainer: {
+      paddingVertical: 10,
+    },
+    pageItem: {
+      paddingVertical: 15,
+      paddingHorizontal: 20,
+      borderLeftWidth: 4,
+      borderLeftColor: 'transparent',
+    },
+    pageItemActive: {
+      backgroundColor: isDark ? '#374151' : '#f3e8ff',
+      borderLeftColor: '#7c3aed',
+    },
+    pageLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: isDark ? '#d1d5db' : '#6b7280',
+    },
+    pageLabelActive: {
+      color: '#7c3aed',
+    },
+  });
+}

@@ -16,10 +16,9 @@ export default function FixedHeaderLayout({
   children,
   onNavigate,
 }: FixedHeaderLayoutProps) {
-  const { isDark } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
   const styles = getStyles(isDark);
   const { logout } = useAuth();
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
 
@@ -32,9 +31,7 @@ export default function FixedHeaderLayout({
   };
 
   const handleThemeToggle = () => {
-    // TODO: Implémenter changement de thème
-    setIsDarkMode(!isDarkMode);
-    Alert.alert('Mode', isDarkMode ? 'Mode clair activé' : 'Mode sombre activé');
+    toggleTheme();
   };
 
   const handleLogout = () => {
@@ -75,7 +72,7 @@ export default function FixedHeaderLayout({
         onNotificationsPress={handleNotifications}
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}
-        isDarkMode={isDarkMode}
+        isDarkMode={isDark}
         onNavigateHome={() => onNavigate?.(0)}
       />
 

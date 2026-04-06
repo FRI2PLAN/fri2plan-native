@@ -13,7 +13,7 @@ import {
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { useTranslation } from '../i18n';
+import { useTranslation } from 'react-i18next';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
