@@ -59,6 +59,8 @@ function HomeScreen({
   currentPage,
   onPageChange,
 }: HomeScreenProps) {
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   // Render function for CircularPager
   const renderItem = (page: any, index: number) => {
     const PageComponent = page.component;
