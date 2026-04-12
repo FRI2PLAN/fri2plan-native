@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AppRouter } from './types';
 
 export const trpc = createTRPCReact<AppRouter>();
+export const API_URL = 'https://app.fri2plan.ch/api/trpc';
 
 export const createTRPCClient = () => {
   return trpc.createClient({

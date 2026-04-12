@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,6 +21,8 @@ import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
+import * as Linking from 'expo-linking';
+import { API_URL } from '../lib/trpc';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
@@ -32,6 +34,51 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const googlePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Nettoyage du polling au démontage
+  useEffect(() => {
+    return () => {
+      if (googlePollRef.current) clearInterval(googlePollRef.current);
+    };
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+      // Générer un sessionId unique
+      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      // Ouvrir le navigateur pour la connexion Google
+      const loginUrl = `${API_URL.replace('/trpc', '')}/api/google/login?sessionId=${sessionId}&mode=native`;
+      await Linking.openURL(loginUrl);
+      // Démarrer le polling toutes les 2 secondes (max 3 minutes)
+      let attempts = 0;
+      const maxAttempts = 90;
+      googlePollRef.current = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(googlePollRef.current!);
+          setGoogleLoading(false);
+          Alert.alert('⏱️', 'Délai de connexion dépassé. Veuillez réessayer.');
+          return;
+        }
+        try {
+          const pollUrl = `${API_URL.replace('/trpc', '')}/api/google/poll?sessionId=${sessionId}`;
+          const resp = await fetch(pollUrl);
+          const data = await resp.json();
+          if (data.status === 'success' && data.token && data.user) {
+            clearInterval(googlePollRef.current!);
+            setGoogleLoading(false);
+            await login(data.user, data.token);
+          }
+        } catch { /* ignorer les erreurs réseau temporaires */ }
+      }, 2000);
+    } catch (err) {
+      setGoogleLoading(false);
+      Alert.alert('❌', 'Impossible d\'ouvrir la connexion Google');
+    }
+  };
 
   // tRPC mutation for login
   const loginMutation = trpc.auth.login.useMutation({
@@ -114,7 +161,7 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="ixarialexandre@gmail.com"
+                placeholder="votre@email.com"
                 placeholderTextColor="#6b7280"
                 value={email}
                 onChangeText={setEmail}
@@ -186,13 +233,24 @@ export default function LoginScreen() {
               <View style={styles.dividerLine} />
             </View>
 
-            {/* OAuth buttons (disabled for now) */}
+            {/* OAuth buttons */}
             <TouchableOpacity style={styles.oauthButton} disabled>
               <Text style={styles.oauthButtonText}>{t('auth.continueWithManus')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>{t('auth.continueWithGoogle')}</Text>
+            <TouchableOpacity
+              style={[styles.oauthButton, styles.oauthButtonGoogle]}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading || loading}
+            >
+              {googleLoading ? (
+                <View style={styles.oauthLoadingRow}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
+                </View>
+              ) : (
+                <Text style={styles.oauthButtonText}>🔵 {t('auth.continueWithGoogle')}</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.oauthButton} disabled>
@@ -359,5 +417,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  oauthButtonGoogle: {
+    backgroundColor: '#4285f4',
+    opacity: 1,
+  },
+  oauthLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
