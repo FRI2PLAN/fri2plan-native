@@ -80,7 +80,9 @@
     "referral": "Empfehlen",
     "settings": "Einstellungen",
     "help": "Hilfe",
-    "home": "Startseite"
+    "home": "Startseite",
+    "intimateCalendar": "Int. Kalender",
+    "circles": "Kreise"
   },
   "dashboard": {
     "title": "Startseite",
@@ -160,7 +162,11 @@
       "So"
     ],
     "tapToAdd": "Tippen zum Hinzufügen",
-    "noCalendarsFound": "Keine Kalender gefunden."
+    "noCalendarsFound": "Keine Kalender gefunden.",
+    "importIcs": "Kalender importieren",
+    "subscribeIcs": "Kalender-Abonnement",
+    "exportIcs": "Kalender exportieren",
+    "googleCalendar": "Google Kalender"
   },
   "tasks": {
     "title": "Aufgaben",

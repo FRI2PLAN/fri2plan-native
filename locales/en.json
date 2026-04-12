@@ -80,7 +80,9 @@
     "referral": "Referral",
     "settings": "Settings",
     "help": "Help",
-    "home": "Home"
+    "home": "Home",
+    "intimateCalendar": "Int. Calendar",
+    "circles": "Circles"
   },
   "dashboard": {
     "title": "Home",
@@ -160,7 +162,11 @@
       "S"
     ],
     "tapToAdd": "Tap to add",
-    "noCalendarsFound": "No calendars found."
+    "noCalendarsFound": "No calendars found.",
+    "importIcs": "Import calendar",
+    "subscribeIcs": "Calendar subscription",
+    "exportIcs": "Export calendar",
+    "googleCalendar": "Google Calendar"
   },
   "tasks": {
     "title": "Tasks",

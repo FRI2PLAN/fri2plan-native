@@ -99,6 +99,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [calendarMenuVisible, setCalendarMenuVisible] = useState(false);
 
   useEffect(() => {
     loadViewMode();
@@ -460,40 +461,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         <Text style={styles.pageTitle}>📅 {t('calendar.title') || 'Calendrier'}</Text>
       </View>
 
-      {/* ── Barre d'actions : 4 boutons 25% chacun, sans texte ── */}
-      <View style={styles.actionsBar}>
-        {/* Import */}
-        <TouchableOpacity style={styles.actionBtn} onPress={() => setImportModalOpen(true)}>
-          <Text style={styles.actionIcon}>📥</Text>
-        </TouchableOpacity>
-        {/* Abo (icône lien/chaîne) */}
-        <TouchableOpacity style={styles.actionBtn} onPress={() => setSubscribeModalOpen(true)}>
-          <Text style={styles.actionIcon}>🔗</Text>
-        </TouchableOpacity>
-        {/* Export */}
-        <TouchableOpacity style={styles.actionBtn} onPress={() => setExportModalOpen(true)}>
-          <Text style={styles.actionIcon}>📤</Text>
-        </TouchableOpacity>
-        {/* Google Calendar */}
-        <TouchableOpacity style={styles.actionBtn} onPress={() => {
-          Linking.openURL('https://app.fri2plan.ch/api/google-calendar/connect?source=android').catch(() =>
-            Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
-          );
-        }}>
-          <Text style={styles.actionIcon}>🗓️</Text>
-        </TouchableOpacity>
-        {/* Filtres */}
-        <TouchableOpacity style={[styles.actionBtn, hasActiveFilters && styles.actionBtnActive]} onPress={() => setFilterModalOpen(true)}>
-          <Text style={styles.actionIcon}>⚙️</Text>
-          {hasActiveFilters && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* ── Sélecteur de vue : icônes calendrier (bande rouge) ── */}
+      {/* ── Barre principale : filtres de vue + bouton 3 points ── */}
       <View style={styles.viewBar}>
         {(['month', 'week', 'day', 'agenda'] as const).map((mode) => {
           const isActive = viewMode === mode;
@@ -527,7 +495,58 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </TouchableOpacity>
           );
         })}
+
+        {/* Bouton 3 points verticaux */}
+        <TouchableOpacity
+          style={[styles.calIconWrapper, calendarMenuVisible && styles.calIconWrapperActive]}
+          onPress={() => setCalendarMenuVisible(true)}
+        >
+          <View style={[styles.calIcon, calendarMenuVisible && styles.calIconActive, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ fontSize: 18, color: isDark ? '#d1d5db' : '#374151', lineHeight: 22 }}>⋮</Text>
+            {hasActiveFilters && (
+              <View style={[styles.filterBadge, { top: 2, right: 2 }]}>
+                <Text style={styles.filterBadgeText}>{selectedCategories.length + selectedMembers.length}</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
       </View>
+
+      {/* ── Menu 3 points : Import / Abonnement / Export / Google Calendar / Filtres ── */}
+      <Modal visible={calendarMenuVisible} transparent animationType="fade" onRequestClose={() => setCalendarMenuVisible(false)}>
+        <TouchableOpacity style={styles.calMenuOverlay} activeOpacity={1} onPress={() => setCalendarMenuVisible(false)}>
+          <View style={styles.calMenuContent}>
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setImportModalOpen(true); }}>
+              <Text style={styles.calMenuIcon}>📥</Text>
+              <Text style={styles.calMenuLabel}>{t('calendar.importIcs') || 'Importer un calendrier'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setSubscribeModalOpen(true); }}>
+              <Text style={styles.calMenuIcon}>🔗</Text>
+              <Text style={styles.calMenuLabel}>{t('calendar.subscribeIcs') || 'Abonnement calendrier'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setExportModalOpen(true); }}>
+              <Text style={styles.calMenuIcon}>📤</Text>
+              <Text style={styles.calMenuLabel}>{t('calendar.exportIcs') || 'Exporter le calendrier'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => {
+              setCalendarMenuVisible(false);
+              Linking.openURL('https://app.fri2plan.ch/api/google-calendar/connect?source=android').catch(() =>
+                Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
+              );
+            }}>
+              <Text style={styles.calMenuIcon}>🗓️</Text>
+              <Text style={styles.calMenuLabel}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
+            </TouchableOpacity>
+            <View style={styles.calMenuDivider} />
+            <TouchableOpacity style={[styles.calMenuItem, hasActiveFilters && styles.calMenuItemActive]} onPress={() => { setCalendarMenuVisible(false); setFilterModalOpen(true); }}>
+              <Text style={styles.calMenuIcon}>⚙️</Text>
+              <Text style={[styles.calMenuLabel, hasActiveFilters && styles.calMenuLabelActive]}>
+                {t('calendar.filters') || 'Filtres'}{hasActiveFilters ? ` (${selectedCategories.length + selectedMembers.length})` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* ── Contenu principal scrollable ── */}
       <ScrollView
@@ -1234,25 +1253,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: isDark ? '#ffffff' : '#1f2937',
     textAlign: 'center'},
 
-  // ── Barre d'actions (4 × 25%) ──
-  actionsBar: {
-    flexDirection: 'row',
-    backgroundColor: isDark ? '#1f2937' : '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#374151' : '#e5e7eb'},
-  actionBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    position: 'relative'},
-  actionBtnActive: {
-    backgroundColor: isDark ? '#312e81' : '#ede9fe'},
-  actionIcon: { fontSize: 22 },
+  // ── Badge filtres actifs ──
   filterBadge: {
     position: 'absolute',
     top: 4,
-    right: 8,
+    right: 4,
     backgroundColor: '#ef4444',
     borderRadius: 8,
     minWidth: 16,
@@ -1260,6 +1265,43 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'},
   filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+
+  // ── Menu 3 points ──
+  calMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 130,
+    paddingRight: 12},
+  calMenuContent: {
+    backgroundColor: isDark ? '#1f2937' : '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 8,
+    minWidth: 220,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8},
+  calMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16},
+  calMenuItemActive: {
+    backgroundColor: isDark ? '#312e81' : '#ede9fe'},
+  calMenuIcon: { fontSize: 20, marginRight: 12 },
+  calMenuLabel: {
+    fontSize: 15,
+    color: isDark ? '#f3f4f6' : '#1f2937'},
+  calMenuLabelActive: {
+    color: isDark ? '#a5b4fc' : '#7c3aed',
+    fontWeight: '600'},
+  calMenuDivider: {
+    height: 1,
+    backgroundColor: isDark ? '#374151' : '#e5e7eb',
+    marginVertical: 4},
 
   // ── Barre sélecteur de vue ──
   viewBar: {

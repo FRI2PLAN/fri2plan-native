@@ -142,9 +142,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage
   const DEFAULT_FAVORITES = [
-    { id: 'calendar', name: 'Calendrier', icon: '📅', pageIndex: 1 },
-    { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
-    { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
+    { id: 'calendar', name: t('navigation.calendar'), icon: '📅', pageIndex: 1 },
+    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 6 },
+    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 8 },
   ];
   const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
@@ -173,20 +173,20 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // All available pages for favorites selection
   const allPages = [
-    { id: 'dashboard', name: 'Accueil', icon: '🏠', pageIndex: 0 },
-    { id: 'calendar', name: 'Calendrier', icon: '📅', pageIndex: 1 },
-    { id: 'tasks', name: 'Tâches', icon: '✅', pageIndex: 2 },
-    { id: 'shopping', name: 'Courses', icon: '🛒', pageIndex: 3 },
-    { id: 'messages', name: 'Messages', icon: '💬', pageIndex: 4 },
-    { id: 'requests', name: 'Demandes', icon: '🙏', pageIndex: 5 },
-    { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
-    { id: 'budget', name: 'Budget', icon: '💰', pageIndex: 7 },
-    { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
-    { id: 'calendrier-intime', name: 'Cal. Intime', icon: '🌸', pageIndex: 9 },
-    { id: 'circles', name: 'Cercles', icon: '👥', pageIndex: 10 },
-    { id: 'referral', name: 'Parrainer', icon: '🎯', pageIndex: 11 },
-    { id: 'settings', name: 'Paramètres', icon: '⚙️', pageIndex: 12 },
-    { id: 'help', name: 'Aide', icon: '❓', pageIndex: 13 },
+    { id: 'dashboard', name: t('navigation.home'), icon: '🏠', pageIndex: 0 },
+    { id: 'calendar', name: t('navigation.calendar'), icon: '📅', pageIndex: 1 },
+    { id: 'tasks', name: t('navigation.tasks'), icon: '✅', pageIndex: 2 },
+    { id: 'shopping', name: t('navigation.shopping'), icon: '🛒', pageIndex: 3 },
+    { id: 'messages', name: t('navigation.messages'), icon: '💬', pageIndex: 4 },
+    { id: 'requests', name: t('navigation.requests'), icon: '🙏', pageIndex: 5 },
+    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 6 },
+    { id: 'budget', name: t('navigation.budget'), icon: '💰', pageIndex: 7 },
+    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 8 },
+    { id: 'calendrier-intime', name: t('navigation.intimateCalendar'), icon: '🌸', pageIndex: 9 },
+    { id: 'circles', name: t('navigation.circles'), icon: '👥', pageIndex: 10 },
+    { id: 'referral', name: t('navigation.referral'), icon: '🎯', pageIndex: 11 },
+    { id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 12 },
+    { id: 'help', name: t('navigation.help'), icon: '❓', pageIndex: 13 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {

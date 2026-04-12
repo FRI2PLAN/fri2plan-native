@@ -118,15 +118,15 @@ export default function ReferralScreen({
 
         {/* Stats Cards */}
         <View style={styles.statsContainer}>
-          <View style={[styles.statCard, { backgroundColor: '#dbeafe' }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? '#1e3a5f' : '#dbeafe' }]}>
             <Text style={styles.statValue}>{totalReferrals}</Text>
-            <Text style={styles.statLabel}>Parrainages</Text>
+            <Text style={styles.statLabel}>{t('referral.statReferrals')}</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#d1fae5' }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? '#064e3b' : '#d1fae5' }]}>
             <Text style={styles.statValue}>{activeReferrals}</Text>
-            <Text style={styles.statLabel}>Actifs</Text>
+            <Text style={styles.statLabel}>{t('referral.statActive')}</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? '#78350f' : '#fef3c7' }]}>
             <Text style={styles.statValue}>{totalRewards}€</Text>
             <Text style={styles.statLabel}>{t('referral.rewards')}</Text>
           </View>
@@ -172,10 +172,8 @@ export default function ReferralScreen({
               <Text style={styles.stepNumberText}>1</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Partagez votre code</Text>
-              <Text style={styles.stepDescription}>
-                Envoyez votre code de parrainage à vos amis et votre famille
-              </Text>
+              <Text style={styles.stepTitle}>{t('referral.step1Title')}</Text>
+              <Text style={styles.stepDescription}>{t('referral.step1Desc')}</Text>
             </View>
           </View>
 
@@ -184,10 +182,8 @@ export default function ReferralScreen({
               <Text style={styles.stepNumberText}>2</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Ils s'inscrivent</Text>
-              <Text style={styles.stepDescription}>
-                Vos amis créent un compte avec votre code de parrainage
-              </Text>
+              <Text style={styles.stepTitle}>{t('referral.step2Title')}</Text>
+              <Text style={styles.stepDescription}>{t('referral.step2Desc')}</Text>
             </View>
           </View>
 
@@ -197,9 +193,7 @@ export default function ReferralScreen({
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>{t('referral.bothEarn')}</Text>
-              <Text style={styles.stepDescription}>
-                Recevez 10€ de crédit et votre ami reçoit 1 mois gratuit
-              </Text>
+              <Text style={styles.stepDescription}>{t('referral.step3Desc')}</Text>
             </View>
           </View>
         </View>
@@ -219,7 +213,7 @@ export default function ReferralScreen({
           <View style={styles.rewardItem}>
             <Text style={styles.rewardIcon}>⭐</Text>
             <View style={styles.rewardContent}>
-              <Text style={styles.rewardTitle}>Passage Premium</Text>
+              <Text style={styles.rewardTitle}>{t('referral.passagePremium')}</Text>
               <Text style={styles.rewardAmount}>{t('referral.extraCredit10')}</Text>
             </View>
           </View>
@@ -227,7 +221,7 @@ export default function ReferralScreen({
           <View style={styles.rewardItem}>
             <Text style={styles.rewardIcon}>🏆</Text>
             <View style={styles.rewardContent}>
-              <Text style={styles.rewardTitle}>5 parrainages actifs</Text>
+              <Text style={styles.rewardTitle}>{t('referral.fiveReferrals')}</Text>
               <Text style={styles.rewardAmount}>{t('referral.freePremium')}</Text>
             </View>
           </View>
@@ -236,7 +230,7 @@ export default function ReferralScreen({
         {/* Referrals List */}
         {referrals.length > 0 && (
           <View style={styles.referralsContainer}>
-            <Text style={styles.sectionTitle}>Vos parrainages ({totalReferrals})</Text>
+            <Text style={styles.sectionTitle}>{t('referral.statReferrals')} ({totalReferrals})</Text>
             
             {referrals.map(referral => (
               <View key={referral.id} style={styles.referralCard}>

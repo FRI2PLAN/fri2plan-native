@@ -80,7 +80,9 @@
     "referral": "Parrainer",
     "settings": "Paramètres",
     "help": "Aide",
-    "home": "Accueil"
+    "home": "Accueil",
+    "intimateCalendar": "Cal. Intime",
+    "circles": "Cercles"
   },
   "dashboard": {
     "title": "Accueil",
@@ -160,7 +162,11 @@
       "D"
     ],
     "tapToAdd": "Appuyer pour ajouter",
-    "noCalendarsFound": "Aucun calendrier trouvé."
+    "noCalendarsFound": "Aucun calendrier trouvé.",
+    "importIcs": "Importer un calendrier",
+    "subscribeIcs": "Abonnement calendrier",
+    "exportIcs": "Exporter le calendrier",
+    "googleCalendar": "Google Calendar"
   },
   "tasks": {
     "title": "Tâches",
