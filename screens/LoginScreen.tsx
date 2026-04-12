@@ -21,7 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
-import * as Linking from 'expo-linking';
+import { Linking } from 'react-native';
 import { API_URL } from '../lib/trpc';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
