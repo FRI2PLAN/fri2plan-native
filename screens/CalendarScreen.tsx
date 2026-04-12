@@ -410,7 +410,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
     try {
-      await deleteEvent.mutateAsync({ id: selectedEvent.id });
+      await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
       setEditModalOpen(false);
       setSelectedEvent(null);
       refetch();
