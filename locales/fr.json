@@ -31,7 +31,8 @@
     "unknown": "Inconnu",
     "optional": "optionnel",
     "notifications": "Notifications",
-    "validate": "Valider"
+    "validate": "Valider",
+    "familyOrganizer": "Organiseur Familial"
   },
   "auth": {
     "login": "Connexion",
@@ -64,7 +65,8 @@
     "continueWithGoogle": "Continuer avec Google",
     "continueWithApple": "Continuer avec Apple",
     "continueWithMicrosoft": "Continuer avec Microsoft",
-    "minChars": "Minimum 8 caractères"
+    "minChars": "Minimum 8 caractères",
+    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?"
   },
   "navigation": {
     "dashboard": "Tableau de bord",

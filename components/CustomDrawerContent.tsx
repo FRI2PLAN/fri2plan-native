@@ -12,34 +12,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
+import { useTranslation } from 'react-i18next';
 
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   onPageSelect: (pageIndex: number) => void;
   currentPage: number;
 }
 
-const PAGES = [
-  { index: 0, name: 'Dashboard', label: '🏠 Accueil' },
-  { index: 1, name: 'Calendar', label: '📅 Calendrier' },
-  { index: 2, name: 'Tasks', label: '✅ Tâches' },
-  { index: 3, name: 'Shopping', label: '🛒 Courses' },
-  { index: 4, name: 'Messages', label: '💬 Messages' },
-  { index: 5, name: 'Requests', label: '🙏 Demandes' },
-  { index: 6, name: 'Notes', label: '📝 Notes' },
-  { index: 7, name: 'Budget', label: '💰 Budget' },
-  { index: 8, name: 'Rewards', label: '🎁 Récompenses' },
-  { index: 9, name: 'CalendrierIntime', label: '🌸 Calendrier Intime' },
-  { index: 10, name: 'Members', label: '👥 Membres' },
-  { index: 11, name: 'Referral', label: '🔗 Parrainage' },
-  { index: 12, name: 'Settings', label: '⚙️ Paramètres' },
-  { index: 13, name: 'Help', label: '❓ Aide' },
-];
-
 export default function CustomDrawerContent({
   onPageSelect,
   currentPage,
   navigation,
 }: CustomDrawerContentProps) {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const { logout } = useAuth();
@@ -48,6 +33,23 @@ export default function CustomDrawerContent({
   const { data: families } = trpc.family.list.useQuery();
   const activeFamilyName: string | null = families?.[0]?.name || null;
 
+  const PAGES = [
+    { index: 0, icon: '🏠', label: t('navigation.home') },
+    { index: 1, icon: '📅', label: t('navigation.calendar') },
+    { index: 2, icon: '✅', label: t('navigation.tasks') },
+    { index: 3, icon: '🛒', label: t('navigation.shopping') },
+    { index: 4, icon: '💬', label: t('navigation.messages') },
+    { index: 5, icon: '🙏', label: t('navigation.requests') },
+    { index: 6, icon: '📝', label: t('navigation.notes') },
+    { index: 7, icon: '💰', label: t('navigation.budget') },
+    { index: 8, icon: '🎁', label: t('navigation.rewards') },
+    { index: 9, icon: '🌸', label: t('navigation.intimateCalendar') },
+    { index: 10, icon: '👥', label: t('navigation.circles') },
+    { index: 11, icon: '🔗', label: t('navigation.referral') },
+    { index: 12, icon: '⚙️', label: t('navigation.settings') },
+    { index: 13, icon: '❓', label: t('navigation.help') },
+  ];
+
   const handlePagePress = (pageIndex: number) => {
     onPageSelect(pageIndex);
     navigation.closeDrawer();
@@ -55,12 +57,12 @@ export default function CustomDrawerContent({
 
   const handleLogout = () => {
     Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      t('auth.logout'),
+      t('auth.logoutConfirm') || 'Êtes-vous sûr de vouloir vous déconnecter ?',
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Déconnexion',
+          text: t('auth.logout'),
           style: 'destructive',
           onPress: async () => {
             navigation.closeDrawer();
@@ -88,7 +90,7 @@ export default function CustomDrawerContent({
         {activeFamilyName ? (
           <Text style={styles.familyName}>👨‍👩‍👧 {activeFamilyName}</Text>
         ) : (
-          <Text style={styles.headerSubtitle}>Organiseur Familial</Text>
+          <Text style={styles.headerSubtitle}>{t('common.familyOrganizer') || 'Organiseur Familial'}</Text>
         )}
       </View>
 
@@ -105,6 +107,7 @@ export default function CustomDrawerContent({
             activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
+            <Text style={styles.pageIcon}>{page.icon}</Text>
             <Text
               style={[
                 styles.pageLabel,
@@ -159,7 +162,9 @@ function getStyles(isDark: boolean) {
       paddingVertical: 10,
     },
     pageItem: {
-      paddingVertical: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 13,
       paddingHorizontal: 20,
       borderLeftWidth: 4,
       borderLeftColor: 'transparent',
@@ -167,6 +172,12 @@ function getStyles(isDark: boolean) {
     pageItemActive: {
       backgroundColor: isDark ? '#374151' : '#f3e8ff',
       borderLeftColor: '#7c3aed',
+    },
+    pageIcon: {
+      fontSize: 18,
+      marginRight: 12,
+      width: 24,
+      textAlign: 'center',
     },
     pageLabel: {
       fontSize: 16,
