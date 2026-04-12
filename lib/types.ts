@@ -869,6 +869,33 @@ export type AppRouter = {
       mutate: (input: { cycleId: number }) => Promise<void>;
     };
   };
+  subscription: {
+    checkAccess: {
+      useQuery: (input: { familyId: number }, opts?: any) => {
+        data: { hasPremium: boolean; isTrialActive: boolean; trialDaysRemaining: number; subscriptionType: string } | null | undefined;
+        isLoading: boolean;
+        refetch: () => void;
+      };
+    };
+    createCheckout: {
+      useMutation: (opts?: any) => {
+        mutate: (input: { familyId: number; plan: 'MONTHLY' | 'YEARLY' }) => void;
+        isLoading: boolean;
+      };
+    };
+    createPortal: {
+      useMutation: (opts?: any) => {
+        mutate: (input: { familyId: number }) => void;
+        isLoading: boolean;
+      };
+    };
+    syncSubscription: {
+      useMutation: (opts?: any) => {
+        mutate: (input: { familyId: number }) => void;
+        isLoading: boolean;
+      };
+    };
+  };
   supportTickets: {
     createTicket: {
       useMutation: (opts?: any) => any;

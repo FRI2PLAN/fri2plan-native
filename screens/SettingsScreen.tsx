@@ -47,18 +47,18 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const { data: userSettings, refetch: refetchSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null, refetch: () => {} };
   const { data: families } = (trpc.family as any).list?.useQuery?.() || { data: [] };
   const activeFamily = families?.[0];
-  const { data: subscriptionData, refetch: refetchSub } = (trpc as any).subscription?.checkAccess?.useQuery?.(
+  const { data: subscriptionData, refetch: refetchSub } = trpc.subscription.checkAccess.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
-  ) || { data: null, refetch: () => {} };
+  );
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
   const updateSettingsMutation = (trpc.settings as any).update?.useMutation?.({ onSuccess: () => refetchSettings() });
   const updateNameMutation = (trpc.members as any).updateName?.useMutation?.();
   const updateColorMutation = (trpc.members as any).updateColor?.useMutation?.();
   const deleteAccountMutation = (trpc.user as any).deleteMyAccount?.useMutation?.();
-  const createCheckoutMutation = (trpc as any).subscription?.createCheckout?.useMutation?.();
-  const createPortalMutation = (trpc as any).subscription?.createPortal?.useMutation?.();
+  const createCheckoutMutation = trpc.subscription.createCheckout.useMutation();
+  const createPortalMutation = trpc.subscription.createPortal.useMutation();
   const forgotPasswordMutation = (trpc.auth as any).forgotPassword?.useMutation?.();
 
   // ─── État local notifications ──────────────────────────────────────────────
@@ -205,7 +205,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   // ─── Abonnement ────────────────────────────────────────────────────────────
   const handleSubscribe = (plan: 'MONTHLY' | 'YEARLY') => {
     if (!activeFamily) return;
-    createCheckoutMutation?.mutate({ familyId: activeFamily.id, plan }, {
+    createCheckoutMutation.mutate({ familyId: activeFamily.id, plan }, {
       onSuccess: (data: any) => {
         if (data?.checkoutUrl) Linking.openURL(data.checkoutUrl);
       },
@@ -218,7 +218,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       Alert.alert('❌', t('common.error'));
       return;
     }
-    createPortalMutation?.mutate({ familyId: activeFamily.id }, {
+    createPortalMutation.mutate({ familyId: activeFamily.id }, {
       onSuccess: (data: any) => {
         if (data?.portalUrl) Linking.openURL(data.portalUrl);
         else Alert.alert('❌', t('common.error'));
@@ -522,10 +522,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
 
   // ─── Sous-écran : Abonnement ───────────────────────────────────────────────
   if (subScreen === 'subscription') {
-    const hasPremium = subscriptionData?.hasPremium;
-    const isTrialActive = subscriptionData?.isTrialActive;
-    const trialDaysRemaining = subscriptionData?.trialDaysRemaining || 0;
-    const isPortalLoading = createPortalMutation?.isLoading;
+    const hasPremium = subscriptionData?.hasPremium ?? false;
+    const isTrialActive = subscriptionData?.isTrialActive ?? false;
+    const trialDaysRemaining = subscriptionData?.trialDaysRemaining ?? 0;
+    const isPortalLoading = createPortalMutation.isLoading;
 
     return (
       <View style={styles.container}>
@@ -743,9 +743,9 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <Text style={styles.settingLabel}>{t('settings.subscription')}</Text>
             </View>
             <View style={styles.settingRight}>
-              <View style={[styles.subBadge, subscriptionData?.hasPremium ? styles.subBadgePremium : styles.subBadgeFree]}>
+              <View style={[styles.subBadge, (subscriptionData?.hasPremium ?? false) ? styles.subBadgePremium : styles.subBadgeFree]}>
                 <Text style={styles.subBadgeText}>
-                  {subscriptionData?.hasPremium ? 'Premium' : 'Free'}
+                  {(subscriptionData?.hasPremium ?? false) ? 'Premium' : 'Free'}
                 </Text>
               </View>
               <Text style={styles.settingArrow}>›</Text>
