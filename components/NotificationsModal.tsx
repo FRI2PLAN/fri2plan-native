@@ -32,21 +32,28 @@ export default function NotificationsModal({
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
 
+  const utils = trpc.useUtils();
+
   const { data: notifications = [], isLoading, refetch } = trpc.notifications.list.useQuery(
     undefined,
     { enabled: visible }
   );
 
+  const refreshAll = () => {
+    refetch();
+    utils.notifications.getUnreadCount.invalidate();
+  };
+
   const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: refreshAll,
   });
 
   const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: refreshAll,
   });
 
   const deleteAllMutation = trpc.notifications.deleteAll.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: refreshAll,
   });
 
   const handleMarkAsRead = (notificationId: number) => {
