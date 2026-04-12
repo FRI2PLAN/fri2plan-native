@@ -150,20 +150,6 @@ export default function RichHeader({
             )}
           </TouchableOpacity>
 
-          {/* Theme toggle */}
-          <TouchableOpacity onPress={onThemeToggle} style={styles.iconButton}>
-            <Ionicons
-              name={isDarkMode ? 'sunny' : 'moon'}
-              size={22}
-              color="#fff"
-            />
-          </TouchableOpacity>
-
-          {/* Logout */}
-          <TouchableOpacity onPress={onLogout} style={styles.iconButton}>
-            <Ionicons name="log-out" size={22} color="#fff" />
-          </TouchableOpacity>
-
           {/* Hamburger Menu */}
           <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
             <Ionicons name="menu" size={26} color="#fff" />

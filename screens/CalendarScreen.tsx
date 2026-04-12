@@ -23,14 +23,7 @@ const EVENT_CATEGORIES = [
   { value: 'other', label: 'Autre', labelEn: 'Other', labelDe: 'Andere', icon: '📅', color: '#6b7280' },
 ];
 
-const REMINDER_OPTIONS = [
-  { value: '5', label: '5 min' },
-  { value: '15', label: '15 min' },
-  { value: '30', label: '30 min' },
-  { value: '60', label: '1h' },
-  { value: '120', label: '2h' },
-  { value: '1440', label: '1j' },
-];
+// REMINDER_OPTIONS est généré dynamiquement dans le composant via useTranslation()
 
 // Boutons icônes pour les modaux
 const ModalIconButton = ({
@@ -70,6 +63,15 @@ interface CalendarScreenProps {
 export default function CalendarScreen({ onNavigate, onPrevious, onNext }: CalendarScreenProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
+  const REMINDER_OPTIONS = [
+    { value: '5', label: t('calendar.reminder5min') },
+    { value: '15', label: t('calendar.reminder15min') },
+    { value: '30', label: t('calendar.reminder30min') },
+    { value: '60', label: t('calendar.reminder1h') },
+    { value: '120', label: t('calendar.reminder2h') },
+    { value: '1440', label: t('calendar.reminder1d') },
+    { value: '10080', label: t('calendar.reminder1w') },
+  ];
   const styles = getStyles(isDark);
   const { user } = useAuth();
   const { data: families } = trpc.family.list.useQuery();
