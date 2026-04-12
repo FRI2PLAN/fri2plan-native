@@ -117,7 +117,7 @@ export default function NotificationsModal({
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: bg, maxHeight: SCREEN_HEIGHT * 0.88 }]}>
+        <View style={[styles.sheet, { backgroundColor: bg, minHeight: SCREEN_HEIGHT * 0.55, maxHeight: SCREEN_HEIGHT * 0.88 }]}>
           {/* Poignée */}
           <View style={styles.handle} />
 
@@ -209,11 +209,10 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   dismissArea: {
     flex: 1,
   },
-  sheet: {
+    sheet: {
     width: '100%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    overflow: 'hidden',
   },
   handle: {
     width: 40,
@@ -258,6 +257,7 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   },
   list: {
     flex: 1,
+    minHeight: 200,
   },
   item: {
     flexDirection: 'row',
