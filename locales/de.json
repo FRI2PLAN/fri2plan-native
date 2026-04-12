@@ -456,6 +456,11 @@
     "joined": "Beigetreten am",
     "createCircle": "Kreis erstellen",
     "joinCircle": "Kreis beitreten",
+    "joinCircleAction": "Beitreten",
+    "createCircleAction": "Erstellen",
+    "inviteCodeLabel": "Einladungscode",
+    "circlePlaceholder": "z.B. Familie, Freunde, Arbeit...",
+    "circleCode": "Code",
     "createNewCircle": "Neuen Kreis erstellen",
     "createCircleDesc": "Erstellen Sie einen separaten Kreis (z.B. Arbeit, Freunde, Verein...)",
     "circleName": "Kreisname",
@@ -480,7 +485,18 @@
     "registrationValidated": "Registrierung bestätigt",
     "credit10": "+10€ Guthaben",
     "extraCredit10": "+10€ zusätzliches Guthaben",
-    "freePremium": "+1 Monat Premium kostenlos"
+    "freePremium": "+1 Monat Premium kostenlos",
+    "step1Title": "Teilen Sie Ihren Code",
+    "step1Desc": "Senden Sie Ihren Empfehlungscode an Freunde und Familie",
+    "step2Title": "Sie registrieren sich",
+    "step2Desc": "Ihre Freunde erstellen ein Konto mit Ihrem Empfehlungscode",
+    "step3Desc": "Erhalten Sie 10€ Guthaben und Ihr Freund bekommt 1 Monat kostenlos",
+    "statReferrals": "Empfehlungen",
+    "statActive": "Aktiv",
+    "passagePremium": "Premium-Upgrade",
+    "fiveReferrals": "5 aktive Empfehlungen",
+    "inviteCodeLabel": "Einladungscode",
+    "copy": "Kopieren"
   },
   "settings": {
     "title": "Einstellungen",
@@ -504,7 +520,9 @@
     "passwordSecurity": "Passwort & Sicherheit",
     "privacyItem": "Datenschutz",
     "securityItem": "Sicherheit",
-    "privacyPolicy": "Datenschutzrichtlinie"
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "personalInfo": "Persönliche Informationen",
+    "termsOfUse": "Nutzungsbedingungen"
   },
   "help": {
     "title": "Hilfezentrum",

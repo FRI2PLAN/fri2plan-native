@@ -24,6 +24,7 @@ const queryClient = new QueryClient({
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Recreate tRPC client whenever the auth token changes so requests include the correct Bearer token
   const trpcClient = useMemo(() => createTRPCClient(), [token]);
@@ -32,12 +33,19 @@ function AppContent() {
   const prevTokenRef = useRef<string | null>(null);
   useEffect(() => {
     if (prevTokenRef.current !== token) {
+      const wasNull = prevTokenRef.current === null;
       prevTokenRef.current = token;
       queryClient.clear();
+      // When token appears for the first time (app start or login),
+      // show a brief initializing state so queries have time to fire
+      if (token && wasNull) {
+        setIsInitializing(true);
+        setTimeout(() => setIsInitializing(false), 800);
+      }
     }
   }, [token]);
 
-  if (isLoading) {
+  if (isLoading || isInitializing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#7c3aed" />

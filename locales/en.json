@@ -456,6 +456,11 @@
     "joined": "Joined on",
     "createCircle": "Create a circle",
     "joinCircle": "Join a circle",
+    "joinCircleAction": "Join",
+    "createCircleAction": "Create",
+    "inviteCodeLabel": "Invite code",
+    "circlePlaceholder": "E.g. Family, Friends, Work...",
+    "circleCode": "Code",
     "createNewCircle": "Create a new circle",
     "createCircleDesc": "Create a separate circle (e.g. work, friends, club...)",
     "circleName": "Circle name",
@@ -480,7 +485,18 @@
     "registrationValidated": "Registration validated",
     "credit10": "+€10 credit",
     "extraCredit10": "+€10 extra credit",
-    "freePremium": "+1 free Premium month"
+    "freePremium": "+1 free Premium month",
+    "step1Title": "Share your code",
+    "step1Desc": "Send your referral code to your friends and family",
+    "step2Title": "They sign up",
+    "step2Desc": "Your friends create an account with your referral code",
+    "step3Desc": "Receive €10 credit and your friend gets 1 free month",
+    "statReferrals": "Referrals",
+    "statActive": "Active",
+    "passagePremium": "Premium upgrade",
+    "fiveReferrals": "5 active referrals",
+    "inviteCodeLabel": "Invite code",
+    "copy": "Copy"
   },
   "settings": {
     "title": "Settings",
@@ -504,7 +520,9 @@
     "passwordSecurity": "Password & security",
     "privacyItem": "Privacy",
     "securityItem": "Security",
-    "privacyPolicy": "Privacy policy"
+    "privacyPolicy": "Privacy policy",
+    "personalInfo": "Personal information",
+    "termsOfUse": "Terms of use"
   },
   "help": {
     "title": "Help Center",

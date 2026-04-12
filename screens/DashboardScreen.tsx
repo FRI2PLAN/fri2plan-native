@@ -283,7 +283,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     <View style={styles.eventsSectionHeader}>
                       <Text style={{ fontSize: 16 }}>📅</Text>
                       <Text style={styles.eventsSectionTitle}>
-                        {viewMode === 'day' ? "{t('dashboard.eventsToday')}" : "{t('dashboard.eventsThisWeek')}"}
+                        {viewMode === 'day' ? t('dashboard.eventsToday') : t('dashboard.eventsThisWeek')}
                       </Text>
                     </View>
                     {filteredEvents.length === 0 ? (

@@ -91,7 +91,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
 
             {/* Page Title */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>⚙️ Paramètres</Text>
+        <Text style={styles.pageTitle}>⚙️ {t('settings.title')}</Text>
       </View>
       
       <ScrollView style={styles.content}>
@@ -165,7 +165,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>👤</Text>
-              <Text style={styles.settingLabel}>Informations personnelles</Text>
+              <Text style={styles.settingLabel}>{t('settings.personalInfo')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
@@ -215,7 +215,7 @@ export default function SettingsScreen({ onNavigate, onLogout , onPrevious, onNe
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>📜</Text>
-              <Text style={styles.settingLabel}>Conditions d'utilisation</Text>
+              <Text style={styles.settingLabel}>{t('settings.termsOfUse')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>

@@ -456,6 +456,11 @@
     "joined": "Rejoint le",
     "createCircle": "Créer un cercle",
     "joinCircle": "Rejoindre un cercle",
+    "joinCircleAction": "Rejoindre",
+    "createCircleAction": "Créer",
+    "inviteCodeLabel": "Code d'invitation",
+    "circlePlaceholder": "Ex: Famille, Amis, Travail...",
+    "circleCode": "Code",
     "createNewCircle": "Créer un nouveau cercle",
     "createCircleDesc": "Créez un cercle séparé (ex: travail, amis, club...)",
     "circleName": "Nom du cercle",
@@ -480,7 +485,18 @@
     "registrationValidated": "Inscription validée",
     "credit10": "+10€ de crédit",
     "extraCredit10": "+10€ de crédit supplémentaire",
-    "freePremium": "+1 mois Premium gratuit"
+    "freePremium": "+1 mois Premium gratuit",
+    "step1Title": "Partagez votre code",
+    "step1Desc": "Envoyez votre code de parrainage à vos amis et votre famille",
+    "step2Title": "Ils s'inscrivent",
+    "step2Desc": "Vos amis créent un compte avec votre code de parrainage",
+    "step3Desc": "Recevez 10€ de crédit et votre ami reçoit 1 mois gratuit",
+    "statReferrals": "Parrainages",
+    "statActive": "Actifs",
+    "passagePremium": "Passage Premium",
+    "fiveReferrals": "5 parrainages actifs",
+    "inviteCodeLabel": "Code d'invitation",
+    "copy": "Copier"
   },
   "settings": {
     "title": "Paramètres",
@@ -504,7 +520,9 @@
     "passwordSecurity": "Mot de passe et sécurité",
     "privacyItem": "Confidentialité",
     "securityItem": "Sécurité",
-    "privacyPolicy": "Politique de confidentialité"
+    "privacyPolicy": "Politique de confidentialité",
+    "personalInfo": "Informations personnelles",
+    "termsOfUse": "Conditions d'utilisation"
   },
   "help": {
     "title": "Centre d'aide",

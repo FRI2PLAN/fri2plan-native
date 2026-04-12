@@ -333,7 +333,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               <View style={[styles.circleColorBar, { backgroundColor: fam.familyColor || '#8B5CF6' }]} />
               <View style={styles.circleCardBody}>
                 <Text style={styles.circleName}>{fam.name}</Text>
-                <Text style={styles.circleCode}>Code : {fam.inviteCode}</Text>
+                <Text style={styles.circleCode}>{t('members.circleCode')} : {fam.inviteCode}</Text>
               </View>
               <Text style={styles.circleArrow}>›</Text>
             </TouchableOpacity>
@@ -369,7 +369,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 style={styles.input}
                 value={newCircleName}
                 onChangeText={setNewCircleName}
-                placeholder="Ex: Famille, Amis, Travail..."
+                placeholder={t('members.circlePlaceholder')}
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowNewCircleModal(false)}>
@@ -380,7 +380,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   onPress={() => newCircleName.trim() && createFamilyMutation.mutate({ name: newCircleName.trim() })}
                   disabled={!newCircleName.trim() || createFamilyMutation.isPending}
                 >
-                  <Text style={styles.confirmBtnText}>{createFamilyMutation.isPending ? '...' : 'Créer'}</Text>
+                  <Text style={styles.confirmBtnText}>{createFamilyMutation.isPending ? '...' : t('members.createCircleAction')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -393,12 +393,12 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{t('members.joinCircle')}</Text>
               <Text style={styles.modalSubtitle}>{t('members.enterInviteCode')}</Text>
-              <Text style={styles.modalLabel}>Code d'invitation</Text>
+              <Text style={styles.modalLabel}>{t('members.inviteCodeLabel')}</Text>
               <TextInput
                 style={styles.input}
                 value={joinCode}
                 onChangeText={setJoinCode}
-                placeholder="Code d'invitation"
+                placeholder={t('members.inviteCodeLabel')}
                 autoCapitalize="none"
               />
               <View style={styles.modalButtons}>
@@ -410,7 +410,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   onPress={() => joinCode.trim() && joinFamilyMutation.mutate({ inviteCode: joinCode.trim() })}
                   disabled={!joinCode.trim() || joinFamilyMutation.isPending}
                 >
-                  <Text style={styles.confirmBtnText}>{joinFamilyMutation.isPending ? '...' : 'Rejoindre'}</Text>
+                  <Text style={styles.confirmBtnText}>{joinFamilyMutation.isPending ? '...' : t('members.joinCircleAction')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1080,7 +1080,7 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   roleBtnTextActive: { color: '#fff', fontWeight: '600', fontSize: 14 },
   modalButtons: { flexDirection: 'row', gap: 10, marginTop: 16 },
   cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center', marginTop: 8 },
-  cancelBtnText: { color: '#374151', fontWeight: '600' },
+  cancelBtnText: { color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' },
   confirmBtn: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#7c3aed', alignItems: 'center' },
   confirmBtnDisabled: { opacity: 0.5 },
   confirmBtnDanger: { backgroundColor: '#ef4444' },
