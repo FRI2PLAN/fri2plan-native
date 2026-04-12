@@ -6,11 +6,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { trpc } from '../lib/trpc';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import FavoritesBar from '../components/FavoritesBar';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -139,12 +140,36 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Favorites (5 buttons with icon only)
-  const [favorites, setFavorites] = useState([
+  // Favorites (5 buttons with icon only) - persisted in AsyncStorage
+  const DEFAULT_FAVORITES = [
     { id: 'calendar', name: 'Calendrier', icon: '📅', pageIndex: 1 },
     { id: 'notes', name: 'Notes', icon: '📝', pageIndex: 6 },
     { id: 'rewards', name: 'Récompenses', icon: '🎁', pageIndex: 8 },
-  ]);
+  ];
+  const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+
+  // Load favorites from AsyncStorage on mount
+  useEffect(() => {
+    AsyncStorage.getItem('dashboard_favorites').then((stored) => {
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setFavorites(parsed);
+          }
+        } catch {}
+      }
+      setFavoritesLoaded(true);
+    });
+  }, []);
+
+  // Save favorites to AsyncStorage whenever they change (after initial load)
+  useEffect(() => {
+    if (favoritesLoaded) {
+      AsyncStorage.setItem('dashboard_favorites', JSON.stringify(favorites));
+    }
+  }, [favorites, favoritesLoaded]);
 
   // All available pages for favorites selection
   const allPages = [
