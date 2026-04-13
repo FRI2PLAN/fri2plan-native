@@ -1174,20 +1174,43 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </Text>
                   </View>
                 ) : (
-                  calendarSubscriptions.map((sub: any) => (
-                    <View key={sub.id} style={{ backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb' }}>
+                  calendarSubscriptions.map((sub: any) => {
+                    // Déterminer le statut de l'abonnement
+                    const hasError = !!sub.lastSyncError;
+                    const hasSynced = !!sub.lastSyncAt;
+                    const statusColor = hasError ? '#ef4444' : hasSynced ? '#22c55e' : '#f59e0b';
+                    const statusLabel = hasError
+                      ? (t('calendar.syncError') || 'Erreur de sync')
+                      : hasSynced
+                        ? (t('calendar.lastSync') || 'Dernière sync')
+                        : (t('calendar.neverSynced') || 'Jamais synchronisé');
+                    const statusIcon = hasError ? '⚠️' : hasSynced ? '✅' : '⏳';
+                    return (
+                    <View key={sub.id} style={{ backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: statusColor + '55' }}>
+                      {/* En-tête : icône + nom + badge statut */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                         <Text style={{ fontSize: 18, marginRight: 8 }}>🔗</Text>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }} numberOfLines={1}>{sub.name}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', flex: 1 }} numberOfLines={1}>{sub.name}</Text>
+                            {/* Badge statut */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: statusColor + '22', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 12, borderWidth: 1, borderColor: statusColor + '66' }}>
+                              <Text style={{ fontSize: 10 }}>{statusIcon}</Text>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: statusColor, marginLeft: 4 }} />
+                            </View>
+                          </View>
                           <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }} numberOfLines={1}>{sub.url}</Text>
                         </View>
                       </View>
-                      {sub.lastSyncAt && (
-                        <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 6 }}>
-                          🔄 {t('calendar.lastSync') || 'Dernière sync'} : {new Date(sub.lastSyncAt).toLocaleDateString()}
+                      {/* Ligne de statut */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4, paddingVertical: 5, backgroundColor: statusColor + '11', borderRadius: 6 }}>
+                        <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', flex: 1 }}>
+                          {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
                         </Text>
-                      )}
+                        {hasError && (
+                          <Text style={{ fontSize: 10, color: '#ef4444', flex: 2 }} numberOfLines={1}>{sub.lastSyncError}</Text>
+                        )}
+                      </View>
                       <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                         <TouchableOpacity
                           style={{ flex: 1, minWidth: 80, backgroundColor: '#7c3aed', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
@@ -1225,7 +1248,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         </TouchableOpacity>
                       </View>
                     </View>
-                  ))
+                    );
+                  })}
                 )}
               </ScrollView>
             ) : (
