@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { FamilyProvider, useFamily } from './contexts/FamilyContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -26,8 +27,9 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // Recreate tRPC client whenever the auth token changes so requests include the correct Bearer token
-  const trpcClient = useMemo(() => createTRPCClient(), [token]);
+  const { activeFamilyId } = useFamily();
+  // Recreate tRPC client whenever the auth token or active family changes so requests include the correct headers
+  const trpcClient = useMemo(() => createTRPCClient(), [token, activeFamilyId]);
 
   // Invalidate all queries when the token changes (login / logout)
   const prevTokenRef = useRef<string | null>(null);
@@ -86,7 +88,9 @@ export default function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AppContent />
+          <FamilyProvider>
+            <AppContent />
+          </FamilyProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

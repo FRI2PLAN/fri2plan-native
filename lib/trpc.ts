@@ -15,9 +15,14 @@ export const createTRPCClient = () => {
         transformer: superjson,
         async headers() {
           const token = await AsyncStorage.getItem('authToken');
-          return {
+          const activeFamilyId = await AsyncStorage.getItem('active_family_id');
+          const headers: Record<string, string> = {
             authorization: token ? `Bearer ${token}` : '',
           };
+          if (activeFamilyId) {
+            headers['x-active-family-id'] = activeFamilyId;
+          }
+          return headers;
         },
         fetch(input, init) {
           return fetch(input, {

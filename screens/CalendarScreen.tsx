@@ -633,9 +633,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <View style={styles.daysGrid}>
                 {calendarGrid.map((day) => {
                   const isCurrentMonth = isSameMonth(day, currentDate);
-                  const hasEvents = isCurrentMonth && (events || []).filter(e => isSameDay(new Date(e.startTime), day)).length > 0;
+                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(new Date(e.startTime), day)) : [];
+                  const hasEvents = dayEvts.length > 0;
                   const isSelected = isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
+                  // Couleurs des points : utiliser la couleur de l'abonnement si disponible
+                  const dotColors = dayEvts.slice(0, 3).map((e: any) => {
+                    if (e.calendarSubscriptionId) {
+                      const sub = (calendarSubscriptions as any[]).find((s: any) => s.id === e.calendarSubscriptionId);
+                      return sub?.color || '#7c3aed';
+                    }
+                    return e.color || '#7c3aed';
+                  });
                   return (
                     <TouchableOpacity
                       key={day.toString()}
@@ -663,7 +672,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       ]}>
                         {format(day, 'd')}
                       </Text>
-                      {hasEvents && <View style={styles.eventDot} />}
+                      {hasEvents && (
+                        <View style={{ flexDirection: 'row', gap: 2, position: 'absolute', bottom: 2 }}>
+                          {dotColors.map((col, idx) => (
+                            <View key={idx} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: col }} />
+                          ))}
+                        </View>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -692,9 +707,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   {selectedDateEvents.slice(0, 3).map(event => {
                     const category = getCategoryInfo(event.category);
                     const desc = cleanDescription(event.description);
+                    // Couleur de la barre : abonnement > couleur event > catégorie
+                    const barColor = (() => {
+                      if ((event as any).calendarSubscriptionId) {
+                        const sub = (calendarSubscriptions as any[]).find((s: any) => s.id === (event as any).calendarSubscriptionId);
+                        if (sub?.color) return sub.color;
+                      }
+                      return (event as any).color || category.color;
+                    })();
                     return (
                       <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
-                        <View style={[styles.eventColorBar, { backgroundColor: category.color }]} />
+                        <View style={[styles.eventColorBar, { backgroundColor: barColor }]} />
                         <View style={styles.eventCardContent}>
                           <View style={styles.eventHeader}>
                             <Text style={styles.eventIcon}>{category.icon}</Text>
@@ -1152,19 +1175,19 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           <View style={styles.modalContent}>
             <Text style={[styles.modalTitle, { textAlign: 'center' }]}>🔗 {t('calendar.subscribe') || 'Abonnements'}</Text>
 
-            {/* Onglets Actifs / Ajouter */}
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+            {/* Onglets Actifs (large) / + (petit, violet) */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14, alignItems: 'center' }}>
               <TouchableOpacity
-                style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'list' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
+                style={[{ flex: 1, paddingVertical: 9, borderRadius: 8, alignItems: 'center', backgroundColor: isDark ? '#374151' : '#e5e7eb', borderWidth: subscriptionView === 'list' ? 2 : 0, borderColor: '#7c3aed' }]}
                 onPress={() => setSubscriptionView('list')}
               >
-                <Text style={{ color: subscriptionView === 'list' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>✅ {t('calendar.subscriptionsActive') || 'Actifs'}</Text>
+                <Text style={{ color: isDark ? '#fff' : '#1f2937', fontWeight: subscriptionView === 'list' ? '700' : '500', fontSize: 13 }}>✅ {t('calendar.subscriptionsActive') || 'Actifs'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'add' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
+                style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => setSubscriptionView('add')}
               >
-                <Text style={{ color: subscriptionView === 'add' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>+ {t('calendar.addSubscription') || 'Ajouter'}</Text>
+                <Text style={{ color: '#fff', fontSize: 24, lineHeight: 28, fontWeight: '300' }}>+</Text>
               </TouchableOpacity>
             </View>
 

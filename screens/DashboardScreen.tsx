@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
@@ -28,11 +29,19 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [circlePickerOpen, setCirclePickerOpen] = useState(false);
-  const [activeFamilyIndex, setActiveFamilyIndex] = useState(0);
+  const { activeFamilyId, setActiveFamilyId } = useFamily();
 
   // Fetch active family
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[activeFamilyIndex] || families?.[0];
+  // Trouver la famille active par ID (ou la première par défaut)
+  const activeFamily = useMemo(() => {
+    if (!families || families.length === 0) return undefined;
+    if (activeFamilyId) {
+      const found = families.find((f: any) => f.id === activeFamilyId);
+      if (found) return found;
+    }
+    return families[0];
+  }, [families, activeFamilyId]);
 
   // Fetch family members
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -256,15 +265,15 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
           <View style={{ backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 16, padding: 20, width: '80%', maxHeight: '60%' }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDark ? '#fff' : '#1f2937', textAlign: 'center', marginBottom: 16 }}>👥 {t('dashboard.selectCircle') || 'Choisir un cercle'}</Text>
             <ScrollView>
-              {(families || []).map((fam: any, idx: number) => (
+              {(families || []).map((fam: any) => (
                 <TouchableOpacity
                   key={fam.id}
-                  onPress={() => { setActiveFamilyIndex(idx); setCirclePickerOpen(false); }}
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginBottom: 8, backgroundColor: activeFamilyIndex === idx ? '#7c3aed22' : (isDark ? '#2a2a2a' : '#f9fafb'), borderWidth: 1, borderColor: activeFamilyIndex === idx ? '#7c3aed' : (isDark ? '#374151' : '#e5e7eb') }}
+                  onPress={() => { setActiveFamilyId(fam.id); setCirclePickerOpen(false); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginBottom: 8, backgroundColor: (activeFamilyId === fam.id || (!activeFamilyId && fam === families?.[0])) ? '#7c3aed22' : (isDark ? '#2a2a2a' : '#f9fafb'), borderWidth: 1, borderColor: (activeFamilyId === fam.id || (!activeFamilyId && fam === families?.[0])) ? '#7c3aed' : (isDark ? '#374151' : '#e5e7eb') }}
                 >
                   <Text style={{ fontSize: 20, marginRight: 10 }}>👨‍👩‍👧</Text>
                   <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#fff' : '#1f2937', flex: 1 }}>{fam.name}</Text>
-                  {activeFamilyIndex === idx && <Text style={{ fontSize: 16, color: '#7c3aed' }}>✓</Text>}
+                  {(activeFamilyId === fam.id || (!activeFamilyId && fam === families?.[0])) && <Text style={{ fontSize: 16, color: '#7c3aed' }}>✓</Text>}
                 </TouchableOpacity>
               ))}
             </ScrollView>
