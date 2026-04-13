@@ -316,9 +316,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     },
     onError: (e: any) => Alert.alert('Erreur', e.message || 'Impossible de supprimer les événements'),
   });
+  const updateSubscription = trpc.events.updateSubscription.useMutation({
+    onSuccess: () => { refetchSubscriptions(); refetch(); setColorPickerSubId(null); },
+  });
   const [subscribeName, setSubscribeName] = useState('');
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscriptionView, setSubscriptionView] = useState<'list' | 'add'>('list');
+  const [subscribeColor, setSubscribeColor] = useState('#6366f1');
+  const [colorPickerSubId, setColorPickerSubId] = useState<number | null>(null);
 
   const subscribeGoogleCalendar = async (cal: any) => {
     setGoogleCalendarLoading(true);
@@ -1183,56 +1188,75 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         ? (t('calendar.lastSync') || 'Dernière sync')
                         : (t('calendar.neverSynced') || 'Jamais synchronisé');
                     const statusIcon = hasError ? '⚠️' : hasSynced ? '✅' : '⏳';
+                    const subColor = sub.color || '#6366f1';
+                    const isPickingColor = colorPickerSubId === sub.id;
+                    const PRESET_COLORS = ['#6366f1','#3b82f6','#22c55e','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6','#f97316','#64748b'];
                     return (
                     <View key={sub.id} style={{ backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: statusColor + '55' }}>
-                      {/* En-tête : icône + nom + badge statut */}
+                      {/* En-tête : pastille couleur + nom + badge statut */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                        <Text style={{ fontSize: 18, marginRight: 8 }}>🔗</Text>
+                        <TouchableOpacity
+                          onPress={() => setColorPickerSubId(isPickingColor ? null : sub.id)}
+                          style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: subColor, marginRight: 8, borderWidth: 2, borderColor: isDark ? '#ffffff33' : '#00000022' }}
+                        />
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', flex: 1 }} numberOfLines={1}>{sub.name}</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937', flex: 1, textAlign: 'center' }} numberOfLines={1}>{sub.name}</Text>
                             {/* Badge statut */}
                             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: statusColor + '22', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 12, borderWidth: 1, borderColor: statusColor + '66' }}>
                               <Text style={{ fontSize: 10 }}>{statusIcon}</Text>
                               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: statusColor, marginLeft: 4 }} />
                             </View>
                           </View>
-                          <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }} numberOfLines={1}>{sub.url}</Text>
+                          <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2, textAlign: 'center' }} numberOfLines={1}>{sub.url}</Text>
                         </View>
                       </View>
+                      {/* Sélecteur de couleur (inline) */}
+                      {isPickingColor && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10, paddingVertical: 8, paddingHorizontal: 4, backgroundColor: isDark ? '#1f2937' : '#f3f4f6', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                          {PRESET_COLORS.map(c => (
+                            <TouchableOpacity
+                              key={c}
+                              onPress={() => updateSubscription.mutate({ id: sub.id, color: c })}
+                              style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: subColor === c ? 3 : 1.5, borderColor: subColor === c ? '#fff' : (isDark ? '#ffffff44' : '#00000022') }}
+                            />
+                          ))}
+                        </View>
+                      )}
                       {/* Ligne de statut */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4, paddingVertical: 5, backgroundColor: statusColor + '11', borderRadius: 6 }}>
-                        <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', flex: 1 }}>
+                        <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', flex: 1, textAlign: 'center' }}>
                           {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
                         </Text>
                         {hasError && (
-                          <Text style={{ fontSize: 10, color: '#ef4444', flex: 2 }} numberOfLines={1}>{sub.lastSyncError}</Text>
+                          <Text style={{ fontSize: 10, color: '#ef4444', flex: 2, textAlign: 'center' }} numberOfLines={1}>{sub.lastSyncError}</Text>
                         )}
                       </View>
-                      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                      {/* Boutons icônes seules */}
+                      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
                         <TouchableOpacity
-                          style={{ flex: 1, minWidth: 80, backgroundColor: '#7c3aed', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          style={{ backgroundColor: '#7c3aed', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }}
                           onPress={() => syncSubscription.mutate({ id: sub.id })}
                           disabled={syncSubscription.isPending || deleteSubscriptionEvents.isPending}
                         >
-                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🔄 {t('calendar.syncNow') || 'Sync'}</Text>
+                          <Text style={{ color: '#fff', fontSize: 18 }}>🔄</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={{ flex: 1, minWidth: 80, backgroundColor: '#f59e0b', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          style={{ backgroundColor: '#f59e0b', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }}
                           onPress={() => Alert.alert(
                             t('calendar.deleteImportedEvents') || 'Supprimer et réimporter',
-                            `Supprimer tous les événements importés de "${sub.name}" et les réimporter avec les heures corrigées ?`,
+                            `Supprimer tous les événements importés de "${sub.name}" et les réimporter ?`,
                             [
                               { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                              { text: 'Supprimer et réimporter', style: 'destructive', onPress: () => deleteSubscriptionEvents.mutate({ id: sub.id }) },
+                              { text: 'OK', style: 'destructive', onPress: () => deleteSubscriptionEvents.mutate({ id: sub.id }) },
                             ]
                           )}
                           disabled={deleteSubscriptionEvents.isPending || syncSubscription.isPending}
                         >
-                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🔁 {t('calendar.deleteImportedEvents') || 'Supprimer et réimporter'}</Text>
+                          <Text style={{ color: '#fff', fontSize: 18 }}>🗑️↩</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={{ flex: 1, minWidth: 80, backgroundColor: '#ef4444', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          style={{ backgroundColor: '#ef4444', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }}
                           onPress={() => Alert.alert(
                             t('common.delete') || 'Supprimer',
                             `${t('calendar.deleteSubscriptionConfirm') || 'Supprimer l\'abonnement et tous ses événements importés'} "${sub.name}" ?`,
@@ -1242,7 +1266,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             ]
                           )}
                         >
-                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🗑 {t('common.delete') || 'Supprimer'}</Text>
+                          <Text style={{ color: '#fff', fontSize: 18 }}>🗑️</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
