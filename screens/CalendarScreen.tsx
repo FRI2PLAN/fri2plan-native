@@ -1077,13 +1077,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               {(events || []).filter(e => isSameDay(new Date(e.startTime), selectedDate)).map(event => {
                 const category = getCategoryInfo(event.category);
                 const desc = cleanDescription(event.description);
+                // Couleur barre : abonnement > couleur event > catégorie
+                const dropBarColor = (() => {
+                  if ((event as any).calendarSubscriptionId) {
+                    const sub = (calendarSubscriptions as any[]).find((s: any) => s.id === (event as any).calendarSubscriptionId);
+                    if (sub?.color) return sub.color;
+                  }
+                  return (event as any).color || category.color;
+                })();
+                const isImported = !!(event as any).calendarSubscriptionId;
                 return (
                   <TouchableOpacity key={event.id} style={styles.dropdownEventCard} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
-                    <View style={[styles.dropdownEventColorBar, { backgroundColor: category.color }]} />
+                    <View style={[styles.dropdownEventColorBar, { backgroundColor: dropBarColor }]} />
                     <View style={styles.dropdownEventContent}>
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
                         <Text style={styles.dropdownEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                        {isImported && (
+                          <View style={{ backgroundColor: dropBarColor, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>ICS</Text>
+                          </View>
+                        )}
                         {event.isPrivate ? <Text style={styles.dropdownPrivateIcon}>🔒</Text> : null}
                       </View>
                       <Text style={styles.dropdownEventTitle}>{event.title}</Text>

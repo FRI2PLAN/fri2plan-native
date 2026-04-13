@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -30,6 +31,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [circlePickerOpen, setCirclePickerOpen] = useState(false);
   const { activeFamilyId, setActiveFamilyId } = useFamily();
+  const queryClient = useQueryClient();
 
   // Fetch active family
   const { data: families } = trpc.family.list.useQuery();
@@ -268,7 +270,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
               {(families || []).map((fam: any) => (
                 <TouchableOpacity
                   key={fam.id}
-                  onPress={() => { setActiveFamilyId(fam.id); setCirclePickerOpen(false); }}
+                  onPress={async () => {
+                    await setActiveFamilyId(fam.id);
+                    // Invalider tout le cache React Query pour forcer un rechargement avec le nouveau cercle
+                    queryClient.invalidateQueries();
+                    setCirclePickerOpen(false);
+                  }}
                   style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginBottom: 8, backgroundColor: (activeFamilyId === fam.id || (!activeFamilyId && fam === families?.[0])) ? '#7c3aed22' : (isDark ? '#2a2a2a' : '#f9fafb'), borderWidth: 1, borderColor: (activeFamilyId === fam.id || (!activeFamilyId && fam === families?.[0])) ? '#7c3aed' : (isDark ? '#374151' : '#e5e7eb') }}
                 >
                   <Text style={{ fontSize: 20, marginRight: 10 }}>👨‍👩‍👧</Text>

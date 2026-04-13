@@ -11,6 +11,7 @@ import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useTranslation } from 'react-i18next';
 
@@ -29,9 +30,17 @@ export default function CustomDrawerContent({
   const styles = getStyles(isDark);
   const { logout } = useAuth();
 
-  // Récupérer le nom de la famille active
+  // Récupérer le nom de la famille active depuis le contexte
+  const { activeFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamilyName: string | null = families?.[0]?.name || null;
+  const activeFamilyName: string | null = (() => {
+    if (!families || families.length === 0) return null;
+    if (activeFamilyId) {
+      const found = (families as any[]).find((f: any) => f.id === activeFamilyId);
+      if (found) return found.name;
+    }
+    return (families as any[])[0]?.name || null;
+  })();
 
   const PAGES = [
     { index: 0, icon: '🏠', label: t('navigation.home') },
