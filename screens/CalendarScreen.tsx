@@ -298,17 +298,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   // ─── Abonnements calendrier ────────────────────────────────────────────────
   const calendarUtils = trpc.useUtils();
-  const { data: calendarSubscriptions = [], refetch: refetchSubscriptions } = trpc.calendar.listSubscriptions.useQuery();
-  const createSubscription = trpc.calendar.createSubscription.useMutation({
+  const { data: calendarSubscriptions = [], refetch: refetchSubscriptions } = trpc.events.listSubscriptions.useQuery();
+  const createSubscription = trpc.events.createSubscription.useMutation({
     onSuccess: () => { refetchSubscriptions(); setSubscribeUrl(''); setSubscribeName(''); },
   });
-  const deleteSubscription = trpc.calendar.deleteSubscription.useMutation({
+  const deleteSubscription = trpc.events.deleteSubscription.useMutation({
     onSuccess: () => { refetchSubscriptions(); refetch(); },
   });
-  const syncSubscription = trpc.calendar.syncSubscription.useMutation({
+  const syncSubscription = trpc.events.syncSubscription.useMutation({
     onSuccess: () => { refetch(); Alert.alert('✓', 'Synchronisation terminée'); },
   });
-  const deleteSubscriptionEvents = trpc.calendar.deleteSubscriptionEvents.useMutation({
+  const deleteSubscriptionEvents = trpc.events.deleteSubscriptionEvents.useMutation({
     onSuccess: (result, variables) => {
       // Après suppression des événements, re-synchroniser automatiquement
       syncSubscription.mutate({ id: variables.id });

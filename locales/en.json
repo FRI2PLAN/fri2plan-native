@@ -119,7 +119,9 @@
     "eventsToday": "Events today",
     "eventsThisWeek": "Events this week",
     "noBirthdays": "No upcoming birthdays this month",
-    "noFamilyText": "To get started, create a family or join an existing one."
+    "noFamilyText": "To get started, create a family or join an existing one.",
+    "todayMeals": "Today's Meals",
+    "noMeals": "No meals planned today"
   },
   "calendar": {
     "title": "Calendar",
@@ -643,7 +645,11 @@
     "notesPlaceholder": "Ingredients, instructions...",
     "addToShopping": "Add to shopping list",
     "noIngredients": "No ingredients found in notes",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack"
   },
   "quickActions": {
     "title": "Quick actions",

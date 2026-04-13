@@ -119,7 +119,9 @@
     "eventsToday": "Ereignisse heute",
     "eventsThisWeek": "Ereignisse diese Woche",
     "noBirthdays": "Keine Geburtstage diesen Monat",
-    "noFamilyText": "Um zu beginnen, erstellen Sie eine Familie oder treten Sie einer bestehenden bei."
+    "noFamilyText": "Um zu beginnen, erstellen Sie eine Familie oder treten Sie einer bestehenden bei.",
+    "todayMeals": "Heutige Mahlzeiten",
+    "noMeals": "Keine Mahlzeiten heute geplant"
   },
   "calendar": {
     "title": "Kalender",
@@ -643,7 +645,11 @@
     "notesPlaceholder": "Zutaten, Anweisungen...",
     "addToShopping": "Zur Einkaufsliste hinzufügen",
     "noIngredients": "Keine Zutaten in den Notizen gefunden",
-    "moveTo": "Verschieben nach"
+    "moveTo": "Verschieben nach",
+    "breakfast": "Frühstück",
+    "lunch": "Mittagessen",
+    "dinner": "Abendessen",
+    "snack": "Snack"
   },
   "quickActions": {
     "title": "Schnellaktionen",
