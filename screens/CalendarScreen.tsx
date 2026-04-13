@@ -1174,8 +1174,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     </Text>
                   </View>
                 ) : (
-                  calendarSubscriptions.map((sub: any) => {
-                    // Déterminer le statut de l'abonnement
+                  calendarSubscriptions.map((sub: any) => ((sub => {
                     const hasError = !!sub.lastSyncError;
                     const hasSynced = !!sub.lastSyncAt;
                     const statusColor = hasError ? '#ef4444' : hasSynced ? '#22c55e' : '#f59e0b';
@@ -1249,7 +1248,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       </View>
                     </View>
                     );
-                  })}
+                  })(sub)))
                 )}
               </ScrollView>
             ) : (
