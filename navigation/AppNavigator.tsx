@@ -9,7 +9,8 @@ import CustomDrawerContent from '../components/CustomDrawerContent';
 import DashboardScreen from '../screens/DashboardScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import TasksScreen from '../screens/TasksScreen';
-import ShoppingMealsScreen from '../screens/ShoppingMealsScreen';
+import CoursesScreen from '../screens/CoursesScreen';
+import RepasScreen from '../screens/RepasScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import RequestsScreen from '../screens/RequestsScreen';
 import NotesScreen from '../screens/NotesScreen';
@@ -41,17 +42,18 @@ const PAGES = [
   { key: '0', component: DashboardScreen, name: 'Dashboard' },
   { key: '1', component: CalendarScreen, name: 'Calendar' },
   { key: '2', component: TasksScreen, name: 'Tasks' },
-  { key: '3', component: ShoppingMealsScreen, name: 'Shopping' },
-  { key: '4', component: MessagesScreen, name: 'Messages' },
-  { key: '5', component: RequestsScreen, name: 'Requests' },
-  { key: '6', component: NotesScreen, name: 'Notes' },
-  { key: '7', component: BudgetScreen, name: 'Budget' },
-  { key: '8', component: RewardsScreen, name: 'Rewards' },
-  { key: '9', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
-  { key: '10', component: MembersScreen, name: 'Members' },
-  { key: '11', component: ReferralScreen, name: 'Referral' },
-  { key: '12', component: SettingsScreen, name: 'Settings' },
-  { key: '13', component: HelpScreen, name: 'Help' },
+  { key: '3', component: CoursesScreen, name: 'Courses' },
+  { key: '4', component: RepasScreen, name: 'Repas' },
+  { key: '5', component: MessagesScreen, name: 'Messages' },
+  { key: '6', component: RequestsScreen, name: 'Requests' },
+  { key: '7', component: NotesScreen, name: 'Notes' },
+  { key: '8', component: BudgetScreen, name: 'Budget' },
+  { key: '9', component: RewardsScreen, name: 'Rewards' },
+  { key: '10', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
+  { key: '11', component: MembersScreen, name: 'Members' },
+  { key: '12', component: ReferralScreen, name: 'Referral' },
+  { key: '13', component: SettingsScreen, name: 'Settings' },
+  { key: '14', component: HelpScreen, name: 'Help' },
 ];
 
 function HomeScreen({

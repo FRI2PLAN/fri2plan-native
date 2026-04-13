@@ -202,33 +202,43 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (line === 'BEGIN:VEVENT') {
-        currentEvent = { title: '', description: '', startDate: new Date(), durationMinutes: 60, category: 'other', reminderMinutes: 15, isPrivate: 0 };
+        currentEvent = { title: '', description: '', startDate: '', durationMinutes: 60, category: 'other', reminderMinutes: 15, isPrivate: 0 };
       } else if (line === 'END:VEVENT' && currentEvent) {
-        eventsArr.push(currentEvent);
+        if (currentEvent.startDate) eventsArr.push(currentEvent);
         currentEvent = null;
       } else if (currentEvent) {
         if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8);
         else if (line.startsWith('DESCRIPTION:')) currentEvent.description = cleanDescription(line.substring(12));
         else if (line.startsWith('DTSTART')) {
-          const dateStr = line.split(':')[1];
-          currentEvent.startDate = parseICSDate(dateStr);
+          // Extraire la partie valeur après ':' (peut être DTSTART;TZID=...:20260505T173000)
+          const colonIdx = line.lastIndexOf(':');
+          const dateStr = colonIdx >= 0 ? line.substring(colonIdx + 1) : line.split(':')[1];
+          const startStr = parseICSDateToString(dateStr);
+          currentEvent.startDate = startStr;
         } else if (line.startsWith('DTEND')) {
-          const dateStr = line.split(':')[1];
-          const endDate = parseICSDate(dateStr);
-          currentEvent.durationMinutes = Math.round((endDate.getTime() - currentEvent.startDate.getTime()) / (1000 * 60));
+          const colonIdx = line.lastIndexOf(':');
+          const dateStr = colonIdx >= 0 ? line.substring(colonIdx + 1) : line.split(':')[1];
+          const endStr = parseICSDateToString(dateStr);
+          // Calculer la durée en minutes entre startDate et endDate (en tant que strings locales)
+          if (currentEvent.startDate && endStr) {
+            const startMs = new Date(currentEvent.startDate.replace(' ', 'T')).getTime();
+            const endMs = new Date(endStr.replace(' ', 'T')).getTime();
+            currentEvent.durationMinutes = Math.round((endMs - startMs) / (1000 * 60));
+          }
         }
       }
     }
     return eventsArr;
   };
 
-  const parseICSDate = (dateStr: string): Date => {
-    const year = parseInt(dateStr.substring(0, 4));
-    const month = parseInt(dateStr.substring(4, 6)) - 1;
-    const day = parseInt(dateStr.substring(6, 8));
-    const hour = parseInt(dateStr.substring(9, 11)) || 0;
-    const minute = parseInt(dateStr.substring(11, 13)) || 0;
-    return new Date(year, month, day, hour, minute);
+  // Retourne une string 'yyyy-MM-dd HH:mm:ss' en heure locale (pas de conversion UTC)
+  const parseICSDateToString = (dateStr: string): string => {
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    const hour = dateStr.length >= 13 ? dateStr.substring(9, 11) : '00';
+    const minute = dateStr.length >= 13 ? dateStr.substring(11, 13) : '00';
+    return `${year}-${month}-${day} ${hour}:${minute}:00`;
   };
 
   const [formData, setFormData] = useState({
@@ -284,6 +294,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
+
+  // ─── Abonnements calendrier ────────────────────────────────────────────────
+  const calendarUtils = trpc.useUtils();
+  const { data: calendarSubscriptions = [], refetch: refetchSubscriptions } = trpc.calendar.listSubscriptions.useQuery();
+  const createSubscription = trpc.calendar.createSubscription.useMutation({
+    onSuccess: () => { refetchSubscriptions(); setSubscribeUrl(''); setSubscribeName(''); },
+  });
+  const deleteSubscription = trpc.calendar.deleteSubscription.useMutation({
+    onSuccess: () => { refetchSubscriptions(); refetch(); },
+  });
+  const syncSubscription = trpc.calendar.syncSubscription.useMutation({
+    onSuccess: () => { refetch(); Alert.alert('✓', 'Synchronisation terminée'); },
+  });
+  const [subscribeName, setSubscribeName] = useState('');
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscriptionView, setSubscriptionView] = useState<'list' | 'add'>('list');
 
   const subscribeGoogleCalendar = async (cal: any) => {
     setGoogleCalendarLoading(true);
@@ -520,9 +546,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.calMenuIcon}>📥</Text>
               <Text style={styles.calMenuLabel}>{t('calendar.importIcs') || 'Importer un calendrier'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setSubscribeModalOpen(true); }}>
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setSubscribeModalOpen(true); setSubscriptionView('list'); }}>
               <Text style={styles.calMenuIcon}>🔗</Text>
-              <Text style={styles.calMenuLabel}>{t('calendar.subscribeIcs') || 'Abonnement calendrier'}</Text>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.calMenuLabel}>{t('calendar.subscribeIcs') || 'Abonnement calendrier'}</Text>
+                {calendarSubscriptions.length > 0 && (
+                  <View style={{ marginLeft: 8, backgroundColor: '#7c3aed', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 }}>
+                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{calendarSubscriptions.length}</Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setExportModalOpen(true); }}>
               <Text style={styles.calMenuIcon}>📤</Text>
@@ -1102,25 +1135,123 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       </Modal>
 
       {/* ── Abonnement calendrier ── */}
-      <Modal visible={subscribeModalOpen} animationType="slide" transparent>
+      <Modal visible={subscribeModalOpen} animationType="slide" transparent onRequestClose={() => { setSubscribeModalOpen(false); setSubscriptionView('list'); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.subscribe') || 'Abonnement'}</Text>
-            <Text style={styles.importInfoText}>{t('calendar.subscribeDesc') || "Entrez l'URL d'un calendrier ICS (Google, Apple, etc.)."}</Text>
-            <TextInput
-              style={[styles.input, { marginTop: 12 }]}
-              value={subscribeUrl}
-              onChangeText={setSubscribeUrl}
-              placeholder="https://calendar.google.com/calendar/ical/..."
-              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
-              autoCapitalize="none"
-              keyboardType="url"
-              multiline
-            />
-            {/* Boutons icônes */}
-            <View style={styles.iconBtnRow}>
-              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setSubscribeModalOpen(false); setSubscribeUrl(''); }} />
-              <ModalIconButton icon="🔗" color="#7c3aed" onPress={() => { if (subscribeUrl.trim()) { setSubscribeModalOpen(false); setSubscribeUrl(''); } }} />
+            <Text style={styles.modalTitle}>🔗 {t('calendar.subscribe') || 'Abonnements'}</Text>
+
+            {/* Onglets Liste / Ajouter */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+              <TouchableOpacity
+                style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'list' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
+                onPress={() => setSubscriptionView('list')}
+              >
+                <Text style={{ color: subscriptionView === 'list' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>📋 {t('calendar.subscriptionsList') || 'Abonnements actifs'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'add' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
+                onPress={() => setSubscriptionView('add')}
+              >
+                <Text style={{ color: subscriptionView === 'add' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>+ {t('calendar.addSubscription') || 'Ajouter'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {subscriptionView === 'list' ? (
+              <ScrollView style={{ maxHeight: 320 }}>
+                {calendarSubscriptions.length === 0 ? (
+                  <View style={{ padding: 24, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 32, marginBottom: 8 }}>🔗</Text>
+                    <Text style={{ fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center' }}>
+                      {t('calendar.noSubscriptions') || 'Aucun abonnement actif.\nAjoutez un calendrier ICS pour le synchroniser automatiquement.'}
+                    </Text>
+                  </View>
+                ) : (
+                  calendarSubscriptions.map((sub: any) => (
+                    <View key={sub.id} style={{ backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                        <Text style={{ fontSize: 18, marginRight: 8 }}>🔗</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }} numberOfLines={1}>{sub.name}</Text>
+                          <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }} numberOfLines={1}>{sub.url}</Text>
+                        </View>
+                      </View>
+                      {sub.lastSyncAt && (
+                        <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 6 }}>
+                          🔄 {t('calendar.lastSync') || 'Dernière sync'} : {new Date(sub.lastSyncAt).toLocaleDateString()}
+                        </Text>
+                      )}
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TouchableOpacity
+                          style={{ flex: 1, backgroundColor: '#7c3aed', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          onPress={() => syncSubscription.mutate({ id: sub.id })}
+                          disabled={syncSubscription.isPending}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>🔄 {t('calendar.sync') || 'Sync'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{ flex: 1, backgroundColor: '#ef4444', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          onPress={() => Alert.alert(
+                            t('common.delete') || 'Supprimer',
+                            `${t('calendar.deleteSubscriptionConfirm') || 'Supprimer l\'abonnement'} "${sub.name}" ?`,
+                            [
+                              { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+                              { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => deleteSubscription.mutate({ id: sub.id }) },
+                            ]
+                          )}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>🗑 {t('common.delete') || 'Supprimer'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            ) : (
+              <ScrollView style={{ maxHeight: 320 }}>
+                <Text style={styles.importInfoText}>{t('calendar.subscribeDesc') || "Entrez l'URL d'un calendrier ICS (Google, Apple, etc.)."}</Text>
+                <Text style={[styles.label, { marginTop: 12 }]}>{t('calendar.subscriptionName') || 'Nom'}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={subscribeName}
+                  onChangeText={setSubscribeName}
+                  placeholder={t('calendar.subscriptionNamePlaceholder') || 'Ex: Calendrier travail'}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                />
+                <Text style={[styles.label, { marginTop: 10 }]}>URL</Text>
+                <TextInput
+                  style={[styles.input, { marginTop: 4 }]}
+                  value={subscribeUrl}
+                  onChangeText={setSubscribeUrl}
+                  placeholder="https://calendar.google.com/calendar/ical/..."
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                  multiline
+                />
+                <TouchableOpacity
+                  style={[styles.importSelectButton, { marginTop: 14, opacity: (!subscribeUrl.trim() || !subscribeName.trim() || createSubscription.isPending) ? 0.6 : 1 }]}
+                  disabled={!subscribeUrl.trim() || !subscribeName.trim() || createSubscription.isPending}
+                  onPress={async () => {
+                    if (!subscribeUrl.trim() || !subscribeName.trim()) return;
+                    try {
+                      await createSubscription.mutateAsync({ name: subscribeName.trim(), url: subscribeUrl.trim() });
+                      setSubscriptionView('list');
+                      Alert.alert('✓', t('calendar.subscriptionAdded') || 'Abonnement ajouté avec succès !');
+                    } catch (e: any) {
+                      Alert.alert('Erreur', e.message || 'Impossible d\'ajouter l\'abonnement');
+                    }
+                  }}
+                >
+                  <Text style={styles.importSelectButtonText}>
+                    {createSubscription.isPending ? '🔄 Ajout en cours...' : '🔗 ' + (t('calendar.addSubscription') || 'Ajouter l\'abonnement')}
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+
+            {/* Bouton fermer */}
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 12 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setSubscribeModalOpen(false); setSubscriptionView('list'); }} />
             </View>
           </View>
         </View>

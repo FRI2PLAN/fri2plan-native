@@ -81,7 +81,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     action: {
       label: "Accéder aux messages",
-      pageIndex: 4,
+      pageIndex: 5,
     },
   },
   {
@@ -111,7 +111,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     action: {
       label: "Gérer le budget",
-      pageIndex: 5,
+      pageIndex: 8,
     },
   },
   {
@@ -126,7 +126,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     action: {
       label: "Voir les notes",
-      pageIndex: 6,
+      pageIndex: 7,
     },
   },
   {
@@ -141,7 +141,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     action: {
       label: "Voir les récompenses",
-      pageIndex: 8,
+      pageIndex: 9,
     },
   },
   {

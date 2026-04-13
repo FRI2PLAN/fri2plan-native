@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,6 +47,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   );
   const messages = messagesData?.messages || [];
 
+  // Repas du jour
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const { data: todayMeals = [], refetch: refetchMeals } = trpc.meals.list.useQuery(
+    { familyId: activeFamily?.id || 0, startDate: todayStr, endDate: todayStr },
+    { enabled: !!activeFamily }
+  );
+
   const handleLogout = async () => {
     await logout();
     onLogout();
@@ -58,6 +65,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       refetchTasks(),
       refetchEvents(),
       refetchMessages(),
+      refetchMeals(),
     ]);
     setRefreshing(false);
   };
@@ -143,8 +151,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage
   const DEFAULT_FAVORITES = [
     { id: 'calendar', name: t('navigation.calendar'), icon: '📅', pageIndex: 1 },
-    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 6 },
-    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 8 },
+    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 7 },
+    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 9 },
   ];
   const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
@@ -176,17 +184,18 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { id: 'dashboard', name: t('navigation.home'), icon: '🏠', pageIndex: 0 },
     { id: 'calendar', name: t('navigation.calendar'), icon: '📅', pageIndex: 1 },
     { id: 'tasks', name: t('navigation.tasks'), icon: '✅', pageIndex: 2 },
-    { id: 'shopping', name: t('navigation.shopping'), icon: '🛒', pageIndex: 3 },
-    { id: 'messages', name: t('navigation.messages'), icon: '💬', pageIndex: 4 },
-    { id: 'requests', name: t('navigation.requests'), icon: '🙏', pageIndex: 5 },
-    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 6 },
-    { id: 'budget', name: t('navigation.budget'), icon: '💰', pageIndex: 7 },
-    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 8 },
-    { id: 'calendrier-intime', name: t('navigation.intimateCalendar'), icon: '🌸', pageIndex: 9 },
-    { id: 'circles', name: t('navigation.circles'), icon: '👥', pageIndex: 10 },
-    { id: 'referral', name: t('navigation.referral'), icon: '🎯', pageIndex: 11 },
-    { id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 12 },
-    { id: 'help', name: t('navigation.help'), icon: '❓', pageIndex: 13 },
+    { id: 'shopping', name: t('navigation.shopping') || 'Courses', icon: '🛒', pageIndex: 3 },
+    { id: 'meals', name: t('navigation.meals') || 'Repas', icon: '🍽️', pageIndex: 4 },
+    { id: 'messages', name: t('navigation.messages'), icon: '💬', pageIndex: 5 },
+    { id: 'requests', name: t('navigation.requests'), icon: '🙏', pageIndex: 6 },
+    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 7 },
+    { id: 'budget', name: t('navigation.budget'), icon: '💰', pageIndex: 8 },
+    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 9 },
+    { id: 'calendrier-intime', name: t('navigation.intimateCalendar'), icon: '🌸', pageIndex: 10 },
+    { id: 'circles', name: t('navigation.circles'), icon: '👥', pageIndex: 11 },
+    { id: 'referral', name: t('navigation.referral'), icon: '🎯', pageIndex: 12 },
+    { id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 13 },
+    { id: 'help', name: t('navigation.help'), icon: '❓', pageIndex: 14 },
   ];
 
   const handleFavoritePress = (pageIndex: number) => {
@@ -295,7 +304,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     {/* Widget Messages */}
                     <TouchableOpacity 
                       style={[styles.compactWidget, styles.messageWidget]}
-                      onPress={() => onNavigate && onNavigate(4)}
+                      onPress={() => onNavigate && onNavigate(5)}
                     >
                       <Text style={{ fontSize: 28 }}>💬</Text>
                       <Text style={styles.compactWidgetCount}>{unreadMessages}</Text>
@@ -362,6 +371,45 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     <Text style={styles.noEventsText}>{t('dashboard.noBirthdays')}</Text>
                   </View>
                 )}
+
+                {/* Widget Repas du jour */}
+                <TouchableOpacity
+                  style={styles.widget}
+                  onPress={() => onNavigate && onNavigate(4)}
+                  activeOpacity={0.85}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>🍽️</Text>
+                    <Text style={styles.widgetTitle}>{t('dashboard.todayMeals') || 'Repas du jour'}</Text>
+                  </View>
+                  {todayMeals.length === 0 ? (
+                    <Text style={styles.noEventsText}>{t('dashboard.noMeals') || 'Aucun repas prévu aujourd\'hui'}</Text>
+                  ) : (
+                    todayMeals.map((meal: any) => (
+                      <View key={meal.id} style={{ marginBottom: 8 }}>
+                        {meal.imageUrl ? (
+                          <Image
+                            source={{ uri: meal.imageUrl }}
+                            style={{ width: '100%', height: 100, borderRadius: 8, marginBottom: 6 }}
+                            resizeMode="cover"
+                          />
+                        ) : null}
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={{ fontSize: 16, marginRight: 8 }}>
+                            {meal.mealType === 'breakfast' ? '☀️' : meal.mealType === 'lunch' ? '🥗' : meal.mealType === 'snack' ? '🍎' : '🍽️'}
+                          </Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#f9fafb' : '#1f2937' }} numberOfLines={1}>{meal.name}</Text>
+                            <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' }}>
+                              {meal.mealType === 'breakfast' ? (t('meals.breakfast') || 'Petit-déjeuner') : meal.mealType === 'lunch' ? (t('meals.lunch') || 'Déjeuner') : meal.mealType === 'snack' ? (t('meals.snack') || 'Collation') : (t('meals.dinner') || 'Dîner')}
+                              {meal.servings ? ` · ${meal.servings} pers.` : ''}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </TouchableOpacity>
               </>
             )}
           </>

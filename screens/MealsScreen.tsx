@@ -11,7 +11,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
@@ -220,12 +220,13 @@ export default function MealsScreen({
     servings: defaultServings,
     notes: '',
     sourceUrl: '',
+    imageUrl: '',
     ingredients: [] as string[]});
 
   const openCreate = (day?: Date) => {
     setEditingMeal(null);
     setSelectedDay(day || new Date());
-    setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', sourceUrl: '', ingredients: [] });
+    setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', sourceUrl: '', imageUrl: '', ingredients: [] });
     setShowForm(true);
     setRecipeSearch('');
     setRecipeSuggestions([]);
@@ -250,6 +251,7 @@ export default function MealsScreen({
       servings: meal.servings || defaultServings,
       notes: meal.notes || '',
       sourceUrl: meal.sourceUrl || '',
+      imageUrl: meal.imageUrl || '',
       ingredients: []});
     setShowForm(true);
     setRecipeSearch('');
@@ -271,7 +273,8 @@ export default function MealsScreen({
         date: dateStr,
         servings: form.servings,
         notes: form.notes || undefined,
-        sourceUrl: form.sourceUrl || undefined});
+        sourceUrl: form.sourceUrl || undefined,
+        imageUrl: form.imageUrl || undefined});
     } else {
       await createMeal.mutateAsync({
         familyId,
@@ -280,7 +283,8 @@ export default function MealsScreen({
         date: dateStr,
         servings: form.servings,
         notes: form.notes || undefined,
-        sourceUrl: form.sourceUrl || undefined});
+        sourceUrl: form.sourceUrl || undefined,
+        imageUrl: form.imageUrl || undefined});
     }
     setShowForm(false);
   };
@@ -319,7 +323,7 @@ export default function MealsScreen({
         ingredients.push(msr && msr.trim() ? `${msr.trim()} ${ing.trim()}` : ing.trim());
       }
     }
-    setForm(p => ({ ...p, name: meal.strMeal, ingredients }));
+    setForm(p => ({ ...p, name: meal.strMeal, ingredients, imageUrl: meal.strMealThumb || '' }));
     setRecipeSuggestions([]);
     setRecipeSearch('');
   };
@@ -342,6 +346,7 @@ export default function MealsScreen({
         servings: result.servings || p.servings,
         notes: result.notes || p.notes,
         sourceUrl: importUrl.trim(),
+        imageUrl: result.image || p.imageUrl,
         ingredients: result.ingredients || []}));
     } catch (e: any) {
       Alert.alert('Erreur', e.message || 'Import impossible');
@@ -414,6 +419,13 @@ export default function MealsScreen({
 
   const renderMealCard = (meal: Meal) => (
     <View key={meal.id} style={s.mealCard}>
+      {meal.imageUrl ? (
+        <Image
+          source={{ uri: meal.imageUrl }}
+          style={{ width: '100%', height: 120, borderRadius: 8, marginBottom: 8 }}
+          resizeMode="cover"
+        />
+      ) : null}
       <View style={s.mealCardHeader}>
         <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
         <View style={s.mealCardInfo}>
@@ -636,6 +648,13 @@ export default function MealsScreen({
             </View>
             {importResult && (
               <View style={s.importSuccess}>
+                {form.imageUrl ? (
+                  <Image
+                    source={{ uri: form.imageUrl }}
+                    style={{ width: '100%', height: 140, borderRadius: 8, marginBottom: 8 }}
+                    resizeMode="cover"
+                  />
+                ) : null}
                 <Text style={s.importSuccessText}>✓ {importResult.name} importé ({importResult.ingredients?.length || 0} ingrédients)</Text>
               </View>
             )}
