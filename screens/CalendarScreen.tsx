@@ -1150,15 +1150,15 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       <Modal visible={subscribeModalOpen} animationType="slide" transparent onRequestClose={() => { setSubscribeModalOpen(false); setSubscriptionView('list'); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>🔗 {t('calendar.subscribe') || 'Abonnements'}</Text>
+            <Text style={[styles.modalTitle, { textAlign: 'center' }]}>🔗 {t('calendar.subscribe') || 'Abonnements'}</Text>
 
-            {/* Onglets Liste / Ajouter */}
+            {/* Onglets Actifs / Ajouter */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
               <TouchableOpacity
                 style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'list' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
                 onPress={() => setSubscriptionView('list')}
               >
-                <Text style={{ color: subscriptionView === 'list' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>📋 {t('calendar.subscriptionsList') || 'Abonnements actifs'}</Text>
+                <Text style={{ color: subscriptionView === 'list' ? '#fff' : (isDark ? '#d1d5db' : '#374151'), fontWeight: '600', fontSize: 13 }}>✅ {t('calendar.subscriptionsActive') || 'Actifs'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' }, subscriptionView === 'add' ? { backgroundColor: '#7c3aed' } : { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
@@ -1191,6 +1191,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     const subColor = sub.color || '#6366f1';
                     const isPickingColor = colorPickerSubId === sub.id;
                     const PRESET_COLORS = ['#6366f1','#3b82f6','#22c55e','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6','#f97316','#64748b'];
+                    const FREQ_OPTIONS = [
+                      { label: t('calendar.syncFreq1h') || '1h', value: 3600 },
+                      { label: t('calendar.syncFreq6h') || '6h', value: 21600 },
+                      { label: t('calendar.syncFreq24h') || '24h', value: 86400 },
+                    ];
+                    const currentFreq = sub.syncFrequency || 3600;
                     return (
                     <View key={sub.id} style={{ backgroundColor: isDark ? '#2a2a2a' : '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: statusColor + '55' }}>
                       {/* En-tête : pastille couleur + nom + badge statut */}
@@ -1231,6 +1237,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         {hasError && (
                           <Text style={{ fontSize: 10, color: '#ef4444', flex: 2, textAlign: 'center' }} numberOfLines={1}>{sub.lastSyncError}</Text>
                         )}
+                      </View>
+                      {/* Fréquence de sync */}
+                      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+                        {FREQ_OPTIONS.map(opt => (
+                          <TouchableOpacity
+                            key={opt.value}
+                            onPress={() => updateSubscription.mutate({ id: sub.id, syncFrequency: opt.value })}
+                            style={{ paddingVertical: 4, paddingHorizontal: 12, borderRadius: 20, backgroundColor: currentFreq === opt.value ? '#7c3aed' : (isDark ? '#374151' : '#e5e7eb') }}
+                          >
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: currentFreq === opt.value ? '#fff' : (isDark ? '#d1d5db' : '#374151') }}>{opt.label}</Text>
+                          </TouchableOpacity>
+                        ))}
                       </View>
                       {/* Boutons icônes seules */}
                       <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>

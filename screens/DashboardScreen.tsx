@@ -27,10 +27,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const styles = getStyles(isDark);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [circlePickerOpen, setCirclePickerOpen] = useState(false);
+  const [activeFamilyIndex, setActiveFamilyIndex] = useState(0);
 
   // Fetch active family
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[0];
+  const activeFamily = families?.[activeFamilyIndex] || families?.[0];
 
   // Fetch family members
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -232,10 +234,49 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       
-      {/* Page Title */}
+      {/* Page Title + sélecteur de cercle */}
       <View style={styles.pageTitleContainer}>
-        <Text style={styles.pageTitle}>{t('dashboard.title')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <Text style={styles.pageTitle}>{t('dashboard.title')}</Text>
+          {families && families.length > 1 && (
+            <TouchableOpacity
+              onPress={() => setCirclePickerOpen(true)}
+              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#7c3aed22', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed55' }}
+            >
+              <Text style={{ fontSize: 13, color: '#7c3aed', fontWeight: '600' }}>{activeFamily?.name || '...'}</Text>
+              <Text style={{ fontSize: 12, color: '#7c3aed', marginLeft: 4 }}>▼</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
+      {/* Modal sélecteur de cercle */}
+      {circlePickerOpen && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 16, padding: 20, width: '80%', maxHeight: '60%' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDark ? '#fff' : '#1f2937', textAlign: 'center', marginBottom: 16 }}>👥 {t('dashboard.selectCircle') || 'Choisir un cercle'}</Text>
+            <ScrollView>
+              {(families || []).map((fam: any, idx: number) => (
+                <TouchableOpacity
+                  key={fam.id}
+                  onPress={() => { setActiveFamilyIndex(idx); setCirclePickerOpen(false); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginBottom: 8, backgroundColor: activeFamilyIndex === idx ? '#7c3aed22' : (isDark ? '#2a2a2a' : '#f9fafb'), borderWidth: 1, borderColor: activeFamilyIndex === idx ? '#7c3aed' : (isDark ? '#374151' : '#e5e7eb') }}
+                >
+                  <Text style={{ fontSize: 20, marginRight: 10 }}>👨‍👩‍👧</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#fff' : '#1f2937', flex: 1 }}>{fam.name}</Text>
+                  {activeFamilyIndex === idx && <Text style={{ fontSize: 16, color: '#7c3aed' }}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setCirclePickerOpen(false)}
+              style={{ marginTop: 12, alignItems: 'center', paddingVertical: 10, backgroundColor: isDark ? '#374151' : '#e5e7eb', borderRadius: 10 }}
+            >
+              <Text style={{ color: isDark ? '#fff' : '#374151', fontWeight: '600' }}>{t('common.close') || 'Fermer'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Favorites Bar */}
       <FavoritesBar
@@ -295,26 +336,24 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     </TouchableOpacity>
                   </View>
 
-                  {/* Widgets Tâches et Messages côte à côte */}
-                  <View style={styles.widgetsRow}>
+                  {/* Widgets Tâches et Messages ultra-compacts */}
+                  <View style={[styles.widgetsRow, { marginBottom: 10 }]}>
                     {/* Widget Tâches */}
-                    <TouchableOpacity 
-                      style={[styles.compactWidget, styles.taskWidget]}
+                    <TouchableOpacity
+                      style={[styles.compactWidget, styles.taskWidget, { minHeight: 48, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 14 }]}
                       onPress={() => onNavigate && onNavigate(2)}
                     >
-                      <Text style={{ fontSize: 28 }}>✅</Text>
-                      <Text style={styles.compactWidgetCount}>{pendingTasks}</Text>
-                      <Text style={styles.compactWidgetTitle}>{t('dashboard.tasksTodo')}</Text>
+                      <Text style={{ fontSize: 22 }}>✅</Text>
+                      <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{pendingTasks}</Text>
                     </TouchableOpacity>
 
                     {/* Widget Messages */}
-                    <TouchableOpacity 
-                      style={[styles.compactWidget, styles.messageWidget]}
+                    <TouchableOpacity
+                      style={[styles.compactWidget, styles.messageWidget, { minHeight: 48, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 14 }]}
                       onPress={() => onNavigate && onNavigate(5)}
                     >
-                      <Text style={{ fontSize: 28 }}>💬</Text>
-                      <Text style={styles.compactWidgetCount}>{unreadMessages}</Text>
-                      <Text style={styles.compactWidgetTitle}>{t('dashboard.unreadMessages')}</Text>
+                      <Text style={{ fontSize: 22 }}>💬</Text>
+                      <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{unreadMessages}</Text>
                     </TouchableOpacity>
                   </View>
 

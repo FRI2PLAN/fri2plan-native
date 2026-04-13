@@ -121,7 +121,8 @@
     "noBirthdays": "Aucun anniversaire à venir ce mois-ci",
     "noFamilyText": "Pour commencer, créez une famille ou rejoignez une famille existante.",
     "todayMeals": "Repas du jour",
-    "noMeals": "Aucun repas prévu aujourd'hui"
+    "noMeals": "Aucun repas prévu aujourd'hui",
+    "selectCircle": "Choisir un cercle"
   },
   "calendar": {
     "title": "Calendrier",
@@ -186,7 +187,11 @@
     "deleteImportedEvents": "Supprimer et réimporter",
     "lastSync": "Dernière sync",
     "neverSynced": "Jamais synchronisé",
-    "syncError": "Erreur de sync"
+    "syncError": "Erreur de sync",
+    "subscriptionsActive": "Actifs",
+    "syncFreq1h": "1h",
+    "syncFreq6h": "6h",
+    "syncFreq24h": "24h"
   },
   "tasks": {
     "title": "Tâches",
