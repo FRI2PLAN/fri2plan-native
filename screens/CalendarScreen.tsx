@@ -307,6 +307,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const syncSubscription = trpc.calendar.syncSubscription.useMutation({
     onSuccess: () => { refetch(); Alert.alert('✓', 'Synchronisation terminée'); },
   });
+  const deleteSubscriptionEvents = trpc.calendar.deleteSubscriptionEvents.useMutation({
+    onSuccess: (result, variables) => {
+      // Après suppression des événements, re-synchroniser automatiquement
+      syncSubscription.mutate({ id: variables.id });
+      refetch();
+    },
+    onError: (e: any) => Alert.alert('Erreur', e.message || 'Impossible de supprimer les événements'),
+  });
   const [subscribeName, setSubscribeName] = useState('');
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscriptionView, setSubscriptionView] = useState<'list' | 'add'>('list');
@@ -1180,26 +1188,40 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                           🔄 {t('calendar.lastSync') || 'Dernière sync'} : {new Date(sub.lastSyncAt).toLocaleDateString()}
                         </Text>
                       )}
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                         <TouchableOpacity
-                          style={{ flex: 1, backgroundColor: '#7c3aed', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          style={{ flex: 1, minWidth: 80, backgroundColor: '#7c3aed', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
                           onPress={() => syncSubscription.mutate({ id: sub.id })}
-                          disabled={syncSubscription.isPending}
+                          disabled={syncSubscription.isPending || deleteSubscriptionEvents.isPending}
                         >
-                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>🔄 {t('calendar.sync') || 'Sync'}</Text>
+                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🔄 {t('calendar.syncNow') || 'Sync'}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={{ flex: 1, backgroundColor: '#ef4444', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          style={{ flex: 1, minWidth: 80, backgroundColor: '#f59e0b', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
+                          onPress={() => Alert.alert(
+                            t('calendar.deleteImportedEvents') || 'Supprimer et réimporter',
+                            `Supprimer tous les événements importés de "${sub.name}" et les réimporter avec les heures corrigées ?`,
+                            [
+                              { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+                              { text: 'Supprimer et réimporter', style: 'destructive', onPress: () => deleteSubscriptionEvents.mutate({ id: sub.id }) },
+                            ]
+                          )}
+                          disabled={deleteSubscriptionEvents.isPending || syncSubscription.isPending}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🔁 {t('calendar.deleteImportedEvents') || 'Supprimer et réimporter'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{ flex: 1, minWidth: 80, backgroundColor: '#ef4444', paddingVertical: 7, borderRadius: 7, alignItems: 'center' }}
                           onPress={() => Alert.alert(
                             t('common.delete') || 'Supprimer',
-                            `${t('calendar.deleteSubscriptionConfirm') || 'Supprimer l\'abonnement'} "${sub.name}" ?`,
+                            `${t('calendar.deleteSubscriptionConfirm') || 'Supprimer l\'abonnement et tous ses événements importés'} "${sub.name}" ?`,
                             [
                               { text: t('common.cancel') || 'Annuler', style: 'cancel' },
                               { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => deleteSubscription.mutate({ id: sub.id }) },
                             ]
                           )}
                         >
-                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>🗑 {t('common.delete') || 'Supprimer'}</Text>
+                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>🗑 {t('common.delete') || 'Supprimer'}</Text>
                         </TouchableOpacity>
                       </View>
                     </View>

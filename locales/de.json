@@ -169,7 +169,22 @@
     "importIcs": "Kalender importieren",
     "subscribeIcs": "Kalender-Abonnement",
     "exportIcs": "Kalender exportieren",
-    "googleCalendar": "Google Kalender"
+    "googleCalendar": "Google Kalender",
+    "subscriptionsList": "Aktive Abonnements",
+    "addSubscription": "Abonnement hinzufügen",
+    "noSubscriptions": "Keine aktiven Abonnements.\nFügen Sie einen ICS-Kalender hinzu, um ihn automatisch zu synchronisieren.",
+    "subscriptionName": "Kalendername",
+    "subscriptionUrl": "ICS-Kalender-URL",
+    "subscriptionNamePlaceholder": "z.B. Outlook-Kalender",
+    "subscriptionUrlPlaceholder": "https://...",
+    "syncNow": "Jetzt synchronisieren",
+    "deleteSubscription": "Löschen",
+    "deleteSubscriptionConfirm": "Dieses Abonnement und alle importierten Ereignisse löschen?",
+    "deleteAndReimport": "Importierte Ereignisse löschen",
+    "deleteImportedEvents": "Löschen und neu importieren",
+    "lastSync": "Letzte Synchronisierung",
+    "neverSynced": "Nie synchronisiert",
+    "syncError": "Synchronisierungsfehler"
   },
   "tasks": {
     "title": "Aufgaben",
