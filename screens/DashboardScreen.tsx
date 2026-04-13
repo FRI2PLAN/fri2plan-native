@@ -40,7 +40,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery();
-  const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery();
+  const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery();
+  // Forcer l'interprétation UTC pour la conversion correcte en heure locale
+  const events = (rawEvents as any[]).map((e: any) => ({
+    ...e,
+    startDate: e.startDate ? e.startDate.replace(' ', 'T') + 'Z' : e.startDate,
+    endDate: e.endDate ? e.endDate.replace(' ', 'T') + 'Z' : e.endDate,
+  }));
   const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = trpc.messages.list.useQuery(
     { familyId: activeFamily?.id || 0, limit: 50, offset: 0 },
     { enabled: !!activeFamily }
@@ -338,40 +344,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   </View>
                 </View>
 
-                {/* Anniversaires */}
-                {upcomingBirthdays.length > 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
-                    {upcomingBirthdays.map(member => (
-                      <TouchableOpacity key={member.id} style={styles.birthdayItem} onPress={() => handleBirthdayPress(member)}>
-                        <View style={[styles.birthdayAvatar, { backgroundColor: member.userColor || '#7c3aed' }]}>
-                          <Text style={styles.birthdayAvatarText}>
-                            {(member.name || '?').charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                        <View style={styles.birthdayInfo}>
-                          <Text style={styles.birthdayName}>{member.name}</Text>
-                          <Text style={styles.birthdayDate}>
-                            {member.daysUntil === 0
-                              ? t('dashboard.today')
-                              : member.daysUntil === 1
-                              ? t('dashboard.tomorrow')
-                              : `${t('dashboard.inDays', { count: member.daysUntil })}`}
-                          </Text>
-                        </View>
-                        <Text style={{ fontSize: 20 }}>🎂</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-
-                {upcomingBirthdays.length === 0 && (
-                  <View style={styles.widget}>
-                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
-                    <Text style={styles.noEventsText}>{t('dashboard.noBirthdays')}</Text>
-                  </View>
-                )}
-
                 {/* Widget Repas du jour */}
                 <TouchableOpacity
                   style={styles.widget}
@@ -410,6 +382,41 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     ))
                   )}
                 </TouchableOpacity>
+
+                {/* Anniversaires */}
+                {upcomingBirthdays.length > 0 && (
+                  <View style={styles.widget}>
+                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
+                    {upcomingBirthdays.map(member => (
+                      <TouchableOpacity key={member.id} style={styles.birthdayItem} onPress={() => handleBirthdayPress(member)}>
+                        <View style={[styles.birthdayAvatar, { backgroundColor: member.userColor || '#7c3aed' }]}>
+                          <Text style={styles.birthdayAvatarText}>
+                            {(member.name || '?').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.birthdayInfo}>
+                          <Text style={styles.birthdayName}>{member.name}</Text>
+                          <Text style={styles.birthdayDate}>
+                            {member.daysUntil === 0
+                              ? t('dashboard.today')
+                              : member.daysUntil === 1
+                              ? t('dashboard.tomorrow')
+                              : `${t('dashboard.inDays', { count: member.daysUntil })}`}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 20 }}>🎂</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {upcomingBirthdays.length === 0 && (
+                  <View style={styles.widget}>
+                    <Text style={styles.widgetTitle}>{t('dashboard.upcomingBirthdays')}</Text>
+                    <Text style={styles.noEventsText}>{t('dashboard.noBirthdays')}</Text>
+                  </View>
+                )}
+
               </>
             )}
           </>

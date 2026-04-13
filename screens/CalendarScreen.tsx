@@ -287,8 +287,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const isLoadingEvents = eventsQuery.isLoading;
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
-    startTime: e.startDate,
-    endTime: e.endDate}));
+    // Ajouter 'Z' pour forcer l'interprétation UTC → conversion automatique en heure locale
+    startTime: e.startDate ? e.startDate.replace(' ', 'T') + 'Z' : e.startDate,
+    endTime: e.endDate ? e.endDate.replace(' ', 'T') + 'Z' : e.endDate}));
   const refetch = eventsQuery.refetch;
 
   const createEvent = trpc.events.create.useMutation();
@@ -556,14 +557,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             </TouchableOpacity>
             <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setSubscribeModalOpen(true); setSubscriptionView('list'); }}>
               <Text style={styles.calMenuIcon}>🔗</Text>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.calMenuLabel}>{t('calendar.subscribeIcs') || 'Abonnement calendrier'}</Text>
-                {calendarSubscriptions.length > 0 && (
-                  <View style={{ marginLeft: 8, backgroundColor: '#7c3aed', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 }}>
-                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{calendarSubscriptions.length}</Text>
-                  </View>
-                )}
-              </View>
+              <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.subscribeIcs') || 'Abonnement calendrier'}</Text>
+              {calendarSubscriptions.length > 0 && (
+                <View style={{ backgroundColor: '#7c3aed', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, marginLeft: 4 }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{calendarSubscriptions.length}</Text>
+                </View>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setExportModalOpen(true); }}>
               <Text style={styles.calMenuIcon}>📤</Text>
