@@ -50,7 +50,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Repas du jour
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const { data: todayMeals = [], refetch: refetchMeals } = trpc.meals.list.useQuery(
-    { familyId: activeFamily?.id || 0, startDate: todayStr, endDate: todayStr },
+    { familyId: activeFamily?.id || 0, startDate: todayStr + 'T00:00:00', endDate: todayStr + 'T23:59:59' },
     { enabled: !!activeFamily }
   );
 

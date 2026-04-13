@@ -232,6 +232,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
               onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
+                  <Text style={{ fontSize: 72, marginBottom: 16 }}>💬</Text>
                   <Text style={styles.emptyText}>{t('messages.noMessages')}</Text>
                   <Text style={styles.emptySubtext}>{t('messages.sendFirst')}</Text>
                 </View>

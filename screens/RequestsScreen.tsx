@@ -328,6 +328,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
           filteredRequests.map(renderRequestCard)
         ) : (
           <View style={styles.emptyContainer}>
+            <Text style={{ fontSize: 72, marginBottom: 16 }}>🙏</Text>
             <Text style={styles.emptyText}>{t('requests.empty')}</Text>
             <Text style={styles.emptySubtext}>{t('requests.emptySubtext')}</Text>
           </View>
