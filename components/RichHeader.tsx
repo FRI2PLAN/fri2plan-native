@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFamily } from '../contexts/FamilyContext';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -39,8 +40,11 @@ export default function RichHeader({
   const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery();
 
   // Récupérer les points de la famille pour le classement
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[0];
+  const activeFamily = ctxFamilyId
+    ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0]
+    : families?.[0];
   const activeFamilyName: string | null = activeFamily?.name || null;
   const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamily?.id || 0 },
