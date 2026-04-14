@@ -117,8 +117,10 @@ export default function RichHeader({
               </View>
             )}
             {totalMembers > 0 && (
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
+              <View style={styles.progressBarWrapper}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
+                </View>
               </View>
             )}
 
@@ -222,11 +224,15 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
     fontWeight: '600',
     opacity: 0.9,
   },
+  progressBarWrapper: {
+    alignSelf: 'flex-start',
+    width: 90,
+    marginTop: 2,
+  },
   progressBar: {
     height: 3,
     backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: 2,
-    marginTop: 2,
     overflow: 'hidden',
   },
   progressFill: {

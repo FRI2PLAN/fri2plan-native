@@ -263,10 +263,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const cleanDescription = (desc: string | null | undefined): string => {
     if (!desc) return '';
     return desc
-      .replace(/<[^>]*>/g, '')
-      .replace(/https?:\/\/\S+/g, '')
-      .replace(/\\n/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/<[^>]*>/g, '')           // balises HTML
+      .replace(/https?:\/\/\S+/g, '')   // URLs
+      .replace(/\\n/g, ' ')              // \n ICS
+      .replace(/\\,/g, ',')             // \, ICS
+      .replace(/\\;/g, ';')             // \; ICS
+      .replace(/\\\\/g, '')            // \\ ICS
+      .replace(/\\\s*/g, ' ')           // \ suivi d'espace (ex: "\ \") ICS
+      .replace(/\s+/g, ' ')              // espaces multiples
       .trim();
   };
 

@@ -116,26 +116,27 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     today.setHours(0, 0, 0, 0);
 
     if (viewMode === 'day') {
+      // Vue Jour : événements d'aujourd'hui uniquement (pas les passés)
+      const now = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       return events
         .filter(e => {
           const eventDate = new Date(e.startDate);
-          return eventDate >= today && eventDate < tomorrow;
+          return eventDate >= now && eventDate < tomorrow;
         })
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
         .slice(0, 3);
     } else {
-      const dayOfWeek = today.getDay();
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-      monday.setHours(0, 0, 0, 0);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 7);
+      // Vue Semaine : aujourd'hui + 7 jours (semaine coulante), sans passés, max 3
+      const now = new Date();
+      const in7days = new Date(today);
+      in7days.setDate(today.getDate() + 7);
+      in7days.setHours(23, 59, 59, 999);
       return events
         .filter(e => {
           const eventDate = new Date(e.startDate);
-          return eventDate >= monday && eventDate < sunday;
+          return eventDate >= now && eventDate <= in7days;
         })
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
         .slice(0, 3);
