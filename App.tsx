@@ -5,6 +5,7 @@ import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { FamilyProvider, useFamily } from './contexts/FamilyContext';
+import { PagerProvider } from './contexts/PagerContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -89,7 +90,9 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <FamilyProvider>
-            <AppContent />
+            <PagerProvider>
+              <AppContent />
+            </PagerProvider>
           </FamilyProvider>
         </AuthProvider>
       </QueryClientProvider>

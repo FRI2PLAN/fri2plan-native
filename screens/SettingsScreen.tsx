@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
+import { usePager } from '../contexts/PagerContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { trpc } from '../lib/trpc';
@@ -41,7 +42,19 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const { activeFamilyId } = useFamily();
   const styles = getStyles(isDark);
 
+  const { setSwipeEnabled } = usePager();
+
   const [subScreen, setSubScreen] = useState<SubScreen>(null);
+
+  // Désactiver le swipe du pager quand un sous-écran est ouvert
+  const navigateToSubScreen = (screen: SubScreen) => {
+    setSwipeEnabled(false);
+    setSubScreen(screen);
+  };
+  const navigateBack = () => {
+    setSwipeEnabled(true);
+    setSubScreen(null);
+  };
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
 
@@ -170,6 +183,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   // ─── Couleur ───────────────────────────────────────────────────────────────
   const [showColorModal, setShowColorModal] = useState(false);
   const [selectedColor, setSelectedColor] = useState(user?.userColor || '#8B5CF6');
+  const [pricingTab, setPricingTab] = useState<'mensuel' | 'annuel'>('annuel');
   const handleSaveColor = () => {
     if (!user) return;
     updateColorMutation?.mutate({ userId: user.id, color: selectedColor }, {
@@ -248,7 +262,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   // ─── En-tête sous-écran ────────────────────────────────────────────────────
   const renderSubHeader = (title: string) => (
     <View style={styles.subHeader}>
-      <TouchableOpacity onPress={() => setSubScreen(null)} style={styles.backButton}>
+      <TouchableOpacity onPress={() => navigateBack()} style={styles.backButton}>
         <Ionicons name="chevron-back" size={24} color={isDark ? '#f9fafb' : '#1f2937'} />
       </TouchableOpacity>
       <Text style={styles.subHeaderTitle}>{title}</Text>
@@ -601,33 +615,111 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           {!hasPremium && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t('settings.choosePlan')}</Text>
-              <TouchableOpacity style={styles.planCard} onPress={() => handleSubscribe('MONTHLY')}>
+
+              {/* Toggle Mensuel / Annuel */}
+              <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 12, padding: 3, marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={[{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+                    pricingTab === 'mensuel' ? { backgroundColor: isDark ? '#1f2937' : '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 } : {}]}
+                  onPress={() => setPricingTab('mensuel')}>
+                  <Text style={{ fontWeight: '600', fontSize: 14, color: pricingTab === 'mensuel' ? '#7c3aed' : (isDark ? '#9ca3af' : '#6b7280') }}>{t('settings.monthlyPlan')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+                    pricingTab === 'annuel' ? { backgroundColor: isDark ? '#1f2937' : '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 } : {}]}
+                  onPress={() => setPricingTab('annuel')}>
+                  <Text style={{ fontWeight: '600', fontSize: 14, color: pricingTab === 'annuel' ? '#7c3aed' : (isDark ? '#9ca3af' : '#6b7280') }}>{t('settings.yearlyPlan')}</Text>
+                  {pricingTab !== 'annuel' && <Text style={{ fontSize: 9, color: '#22c55e', fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>}
+                </TouchableOpacity>
+              </View>
+
+              {/* Plan sélectionné */}
+              <TouchableOpacity
+                style={[styles.planCard, pricingTab === 'annuel' ? styles.planCardHighlight : {}]}
+                onPress={() => handleSubscribe(pricingTab === 'mensuel' ? 'MONTHLY' : 'YEARLY')}>
                 <View style={styles.planHeader}>
-                  <Text style={styles.planName}>{t('settings.monthlyPlan')}</Text>
-                  <View style={styles.planBadge}>
-                    <Text style={styles.planBadgeText}>{t('settings.flexible')}</Text>
-                  </View>
+                  <Text style={[styles.planName, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>
+                    {pricingTab === 'mensuel' ? t('settings.monthlyPlan') : t('settings.yearlyPlan')}
+                  </Text>
+                  {pricingTab === 'annuel' && (
+                    <View style={{ flexDirection: 'row', gap: 4 }}>
+                      <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>
+                      </View>
+                      <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
+                        <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
+                      </View>
+                    </View>
+                  )}
+                  {pricingTab === 'mensuel' && (
+                    <View style={styles.planBadge}>
+                      <Text style={styles.planBadgeText}>{t('settings.flexible')}</Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={styles.planPrice}>CHF 4.99 / {t('settings.month')}</Text>
-                <Text style={styles.planCta}>{t('settings.subscribeCta')}</Text>
+                <Text style={[styles.planPrice, pricingTab === 'annuel' ? { color: '#e9d5ff' } : {}]}>
+                  {pricingTab === 'mensuel' ? `CHF 4.99 / ${t('settings.month')}` : `CHF 49.99 / ${t('settings.year')}`}
+                </Text>
+                {pricingTab === 'annuel' && (
+                  <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 4 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
+                )}
+
+                {/* Fonctionnalités Premium */}
+                <View style={{ marginTop: 8, marginBottom: 12, gap: 4 }}>
+                  {[
+                    { icon: '📅', text: t('settings.featureCalendar') },
+                    { icon: '✅', text: t('settings.featureTasks') },
+                    { icon: '💬', text: t('settings.featureMessages') },
+                    { icon: '🍽️', text: t('settings.featureMeals') },
+                    { icon: '🛒', text: t('settings.featureShopping') },
+                    { icon: '📝', text: t('settings.featureNotes') },
+                    { icon: '💰', text: t('settings.featureBudget') },
+                    { icon: '🏆', text: t('settings.featureRewards') },
+                    { icon: '🔔', text: t('settings.featureNotifications') },
+                    { icon: '👥', text: t('settings.featureMembers') },
+                  ].map((f, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
+                      <Text style={{ fontSize: 12, color: pricingTab === 'annuel' ? '#e9d5ff' : (isDark ? '#d1d5db' : '#374151'), flex: 1 }}>{f.text}</Text>
+                      <Text style={{ color: '#22c55e', fontWeight: '700', fontSize: 13 }}>✓</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <Text style={[styles.planCta, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.planCard, styles.planCardHighlight]} onPress={() => handleSubscribe('YEARLY')}>
-                <View style={styles.planHeader}>
-                  <Text style={[styles.planName, { color: '#fff' }]}>{t('settings.yearlyPlan')}</Text>
-                  <View style={{ flexDirection: 'row', gap: 4 }}>
-                    <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>
+              {/* Plan gratuit - ce qui est inclus */}
+              <View style={[styles.planCard, { marginTop: 8, borderStyle: 'dashed' }]}>
+                <Text style={[styles.planName, { marginBottom: 8, fontSize: 15 }]}>{t('settings.freePlan')} 🔓</Text>
+                <View style={{ gap: 4 }}>
+                  {[
+                    { icon: '📅', text: t('settings.featureCalendar') },
+                    { icon: '✅', text: t('settings.featureTasks') },
+                    { icon: '💬', text: t('settings.featureMessages') },
+                    { icon: '👥', text: t('settings.featureMembersLimit') },
+                  ].map((f, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
+                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', flex: 1 }}>{f.text}</Text>
+                      <Text style={{ color: '#9ca3af', fontSize: 13 }}>✓</Text>
                     </View>
-                    <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
-                      <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
+                  ))}
+                  {[
+                    { icon: '🍽️', text: t('settings.featureMeals') },
+                    { icon: '🛒', text: t('settings.featureShopping') },
+                    { icon: '📝', text: t('settings.featureNotes') },
+                    { icon: '💰', text: t('settings.featureBudget') },
+                    { icon: '🏆', text: t('settings.featureRewards') },
+                  ].map((f, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.4 }}>
+                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
+                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', flex: 1, textDecorationLine: 'line-through' }}>{f.text}</Text>
+                      <Text style={{ color: '#ef4444', fontSize: 13 }}>✕</Text>
                     </View>
-                  </View>
+                  ))}
                 </View>
-                <Text style={[styles.planPrice, { color: '#e9d5ff' }]}>CHF 49.99 / {t('settings.year')}</Text>
-                <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 4 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
-                <Text style={[styles.planCta, { color: '#fff' }]}>{t('settings.subscribeCta')}</Text>
-              </TouchableOpacity>
+              </View>
             </View>
           )}
 
@@ -732,14 +824,14 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         {/* Notifications */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={() => setSubScreen('pushNotifications')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigateToSubScreen('pushNotifications')}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔔</Text>
               <Text style={styles.settingLabel}>{t('settings.pushNotifications')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem} onPress={() => setSubScreen('emailNotifications')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigateToSubScreen('emailNotifications')}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>📧</Text>
               <Text style={styles.settingLabel}>{t('settings.emailNotifications')}</Text>
@@ -751,7 +843,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         {/* Compte */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={() => setSubScreen('account')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigateToSubScreen('account')}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>👤</Text>
               <Text style={styles.settingLabel}>{t('settings.account')}</Text>
@@ -766,7 +858,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         {/* Abonnement */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.subscription')}</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={() => setSubScreen('subscription')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigateToSubScreen('subscription')}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>⭐</Text>
               <Text style={styles.settingLabel}>{t('settings.subscription')}</Text>

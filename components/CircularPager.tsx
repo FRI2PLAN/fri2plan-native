@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { View, Dimensions } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { usePager } from '../contexts/PagerContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -80,6 +81,8 @@ export default function CircularPager({
     }
   }, [data.length, onPageChange]);
 
+  const { swipeEnabled } = usePager();
+
   return (
     <PagerView
       ref={pagerRef}
@@ -87,6 +90,7 @@ export default function CircularPager({
       initialPage={initialIndex + 1}
       onPageSelected={handlePageSelected}
       overdrag={false}
+      scrollEnabled={swipeEnabled}
     >
       {circularPages.map((item, index) => {
         // Compute real data index for rendering
