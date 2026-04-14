@@ -615,11 +615,17 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <TouchableOpacity style={[styles.planCard, styles.planCardHighlight]} onPress={() => handleSubscribe('YEARLY')}>
                 <View style={styles.planHeader}>
                   <Text style={[styles.planName, { color: '#fff' }]}>{t('settings.yearlyPlan')}</Text>
-                  <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
-                    <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
+                  <View style={{ flexDirection: 'row', gap: 4 }}>
+                    <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>
+                    </View>
+                    <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
+                      <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
+                    </View>
                   </View>
                 </View>
                 <Text style={[styles.planPrice, { color: '#e9d5ff' }]}>CHF 49.99 / {t('settings.year')}</Text>
+                <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 4 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
                 <Text style={[styles.planCta, { color: '#fff' }]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
             </View>
