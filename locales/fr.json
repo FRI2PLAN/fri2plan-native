@@ -191,7 +191,8 @@
     "subscriptionsActive": "Actifs",
     "syncFreq1h": "1h",
     "syncFreq6h": "6h",
-    "syncFreq24h": "24h"
+    "syncFreq24h": "24h",
+    "past": "Passé"
   },
   "tasks": {
     "title": "Tâches",

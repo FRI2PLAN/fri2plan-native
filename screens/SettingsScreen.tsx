@@ -57,10 +57,18 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
     }
     return (families as any[])[0];
   })();
+  const activeFamilyIdForQuery = activeFamilyId ?? activeFamily?.id ?? 0;
   const { data: subscriptionData, refetch: refetchSub } = trpc.subscription.checkAccess.useQuery(
-    { familyId: activeFamily?.id || 0 },
-    { enabled: !!activeFamily }
+    { familyId: activeFamilyIdForQuery },
+    { enabled: activeFamilyIdForQuery > 0 }
   );
+
+  // Forcer le rechargement du statut Premium quand le cercle actif change
+  useEffect(() => {
+    if (activeFamilyIdForQuery > 0) {
+      refetchSub();
+    }
+  }, [activeFamilyIdForQuery]);
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
   const updateSettingsMutation = (trpc.settings as any).update?.useMutation?.({ onSuccess: () => refetchSettings() });

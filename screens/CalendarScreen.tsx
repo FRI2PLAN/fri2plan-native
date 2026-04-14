@@ -719,17 +719,23 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       }
                       return (event as any).color || category.color;
                     })();
+                    const isEventPast = new Date(event.startTime) < new Date();
                     return (
-                      <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => openEditModal(event)}>
+                      <TouchableOpacity key={event.id} style={[styles.eventCard, isEventPast && { opacity: 0.6 }]} onPress={() => openEditModal(event)}>
                         <View style={[styles.eventColorBar, { backgroundColor: barColor }]} />
                         <View style={styles.eventCardContent}>
                           <View style={styles.eventHeader}>
                             <Text style={styles.eventIcon}>{category.icon}</Text>
                             <Text style={styles.eventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                            {isEventPast && (
+                              <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>
+                              </View>
+                            )}
                             {event.isPrivate ? <Text style={styles.privateIcon}>🔒</Text> : null}
                           </View>
                           <Text style={styles.eventTitle}>{event.title}</Text>
-                          {desc ? <Text style={styles.eventDescription} numberOfLines={1}>{desc}</Text> : null}
+                          {desc && !isEventPast ? <Text style={styles.eventDescription} numberOfLines={1}>{desc}</Text> : null}
                         </View>
                       </TouchableOpacity>
                     );
@@ -1090,14 +1096,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   return (event as any).color || category.color;
                 })();
                 const isImported = !!(event as any).calendarSubscriptionId;
+                const isDropPast = new Date(event.startTime) < new Date();
                 return (
-                  <TouchableOpacity key={event.id} style={styles.dropdownEventCard} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
+                  <TouchableOpacity key={event.id} style={[styles.dropdownEventCard, isDropPast && { opacity: 0.6 }]} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
                     <View style={[styles.dropdownEventColorBar, { backgroundColor: dropBarColor }]} />
                     <View style={styles.dropdownEventContent}>
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
                         <Text style={styles.dropdownEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
-                        {isImported && (
+                        {isDropPast && (
+                          <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>
+                          </View>
+                        )}
+                        {isImported && !isDropPast && (
                           <View style={{ backgroundColor: dropBarColor, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
                             <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>ICS</Text>
                           </View>
@@ -1105,7 +1117,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         {event.isPrivate ? <Text style={styles.dropdownPrivateIcon}>🔒</Text> : null}
                       </View>
                       <Text style={styles.dropdownEventTitle}>{event.title}</Text>
-                      {desc ? <Text style={styles.dropdownEventDescription} numberOfLines={1}>{desc}</Text> : null}
+                      {desc && !isDropPast ? <Text style={styles.dropdownEventDescription} numberOfLines={1}>{desc}</Text> : null}
                     </View>
                   </TouchableOpacity>
                 );
