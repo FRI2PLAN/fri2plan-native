@@ -619,7 +619,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                     <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
                   </View>
                 </View>
-                <Text style={[styles.planPrice, { color: '#e9d5ff' }]}>CHF 39.99 / {t('settings.year')}</Text>
+                <Text style={[styles.planPrice, { color: '#e9d5ff' }]}>CHF 49.99 / {t('settings.year')}</Text>
                 <Text style={[styles.planCta, { color: '#fff' }]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
             </View>
