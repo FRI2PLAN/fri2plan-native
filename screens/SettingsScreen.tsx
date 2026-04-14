@@ -590,30 +590,29 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
           </View>
 
-          {/* Avantages Premium (si pas premium) */}
-          {!hasPremium && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('settings.premiumFeatures')}</Text>
-              {[
-                { icon: '📅', text: t('settings.featureCalendar') },
-                { icon: '👥', text: t('settings.featureMembers') },
-                { icon: '💰', text: t('settings.featureBudget') },
-                { icon: '🔔', text: t('settings.featureNotifications') },
-                { icon: '🌸', text: t('settings.featureIntimate') },
-                { icon: '🎯', text: t('settings.featureReferral') },
-              ].map((f, i) => (
-                <View key={i} style={styles.featureRow}>
-                  <Text style={styles.featureIcon}>{f.icon}</Text>
-                  <Text style={styles.featureText}>{f.text}</Text>
-                  <Text style={styles.featureCheck}>✓</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
           {/* Plans tarifaires (si pas premium) */}
           {!hasPremium && (
             <View style={styles.section}>
+
+              {/* Plan gratuit EN HAUT — uniquement ce qui est inclus */}
+              <View style={[styles.planCard, { marginBottom: 16, borderStyle: 'dashed' }]}>
+                <Text style={[styles.planName, { marginBottom: 8, fontSize: 15 }]}>{t('settings.freePlan')} 🔓</Text>
+                <View style={{ gap: 4 }}>
+                  {[
+                    { icon: '📅', text: t('settings.featureCalendar') },
+                    { icon: '✅', text: t('settings.featureTasks') },
+                    { icon: '💬', text: t('settings.featureMessages') },
+                    { icon: '👥', text: t('settings.featureMembersLimit') },
+                  ].map((f, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
+                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', flex: 1 }}>{f.text}</Text>
+                      <Text style={{ color: '#9ca3af', fontSize: 13 }}>✓</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
               <Text style={styles.sectionTitle}>{t('settings.choosePlan')}</Text>
 
               {/* Toggle Mensuel / Annuel */}
@@ -633,13 +632,13 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 </TouchableOpacity>
               </View>
 
-              {/* Plan sélectionné */}
+              {/* Carte Premium — prix + CTA uniquement, sans description redondante */}
               <TouchableOpacity
                 style={[styles.planCard, pricingTab === 'annuel' ? styles.planCardHighlight : {}]}
                 onPress={() => handleSubscribe(pricingTab === 'mensuel' ? 'MONTHLY' : 'YEARLY')}>
                 <View style={styles.planHeader}>
                   <Text style={[styles.planName, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>
-                    {pricingTab === 'mensuel' ? t('settings.monthlyPlan') : t('settings.yearlyPlan')}
+                    Premium
                   </Text>
                   {pricingTab === 'annuel' && (
                     <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -661,64 +660,32 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   {pricingTab === 'mensuel' ? `CHF 4.99 / ${t('settings.month')}` : `CHF 49.99 / ${t('settings.year')}`}
                 </Text>
                 {pricingTab === 'annuel' && (
-                  <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 4 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
+                  <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 8 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
                 )}
-
-                {/* Fonctionnalités Premium */}
-                <View style={{ marginTop: 8, marginBottom: 12, gap: 4 }}>
-                  {[
-                    { icon: '📅', text: t('settings.featureCalendar') },
-                    { icon: '✅', text: t('settings.featureTasks') },
-                    { icon: '💬', text: t('settings.featureMessages') },
-                    { icon: '🍽️', text: t('settings.featureMeals') },
-                    { icon: '🛒', text: t('settings.featureShopping') },
-                    { icon: '📝', text: t('settings.featureNotes') },
-                    { icon: '💰', text: t('settings.featureBudget') },
-                    { icon: '🏆', text: t('settings.featureRewards') },
-                    { icon: '🔔', text: t('settings.featureNotifications') },
-                    { icon: '👥', text: t('settings.featureMembers') },
-                  ].map((f, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
-                      <Text style={{ fontSize: 12, color: pricingTab === 'annuel' ? '#e9d5ff' : (isDark ? '#d1d5db' : '#374151'), flex: 1 }}>{f.text}</Text>
-                      <Text style={{ color: '#22c55e', fontWeight: '700', fontSize: 13 }}>✓</Text>
-                    </View>
-                  ))}
-                </View>
-
                 <Text style={[styles.planCta, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
 
-              {/* Plan gratuit - ce qui est inclus */}
-              <View style={[styles.planCard, { marginTop: 8, borderStyle: 'dashed' }]}>
-                <Text style={[styles.planName, { marginBottom: 8, fontSize: 15 }]}>{t('settings.freePlan')} 🔓</Text>
-                <View style={{ gap: 4 }}>
-                  {[
-                    { icon: '📅', text: t('settings.featureCalendar') },
-                    { icon: '✅', text: t('settings.featureTasks') },
-                    { icon: '💬', text: t('settings.featureMessages') },
-                    { icon: '👥', text: t('settings.featureMembersLimit') },
-                  ].map((f, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
-                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', flex: 1 }}>{f.text}</Text>
-                      <Text style={{ color: '#9ca3af', fontSize: 13 }}>✓</Text>
-                    </View>
-                  ))}
-                  {[
-                    { icon: '🍽️', text: t('settings.featureMeals') },
-                    { icon: '🛒', text: t('settings.featureShopping') },
-                    { icon: '📝', text: t('settings.featureNotes') },
-                    { icon: '💰', text: t('settings.featureBudget') },
-                    { icon: '🏆', text: t('settings.featureRewards') },
-                  ].map((f, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.4 }}>
-                      <Text style={{ fontSize: 13 }}>{f.icon}</Text>
-                      <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', flex: 1, textDecorationLine: 'line-through' }}>{f.text}</Text>
-                      <Text style={{ color: '#ef4444', fontSize: 13 }}>✕</Text>
-                    </View>
-                  ))}
-                </View>
+              {/* Liste des fonctionnalités Premium — séparée de la carte */}
+              <View style={{ marginTop: 12, gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e5e7eb' : '#374151', marginBottom: 4 }}>✨ {t('settings.premiumFeatures')}</Text>
+                {[
+                  { icon: '📅', text: t('settings.featureCalendar') },
+                  { icon: '✅', text: t('settings.featureTasks') },
+                  { icon: '💬', text: t('settings.featureMessages') },
+                  { icon: '🍽️', text: t('settings.featureMeals') },
+                  { icon: '🛒', text: t('settings.featureShopping') },
+                  { icon: '📝', text: t('settings.featureNotes') },
+                  { icon: '💰', text: t('settings.featureBudget') },
+                  { icon: '🏆', text: t('settings.featureRewards') },
+                  { icon: '🔔', text: t('settings.featureNotifications') },
+                  { icon: '👥', text: t('settings.featureMembers') },
+                ].map((f, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 13 }}>{f.icon}</Text>
+                    <Text style={{ fontSize: 12, color: isDark ? '#d1d5db' : '#374151', flex: 1 }}>{f.text}</Text>
+                    <Text style={{ color: '#22c55e', fontWeight: '700', fontSize: 13 }}>✓</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
