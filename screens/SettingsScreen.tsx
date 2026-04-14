@@ -613,7 +613,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 </View>
               </View>
 
-              <Text style={styles.sectionTitle}>{t('settings.choosePlan')}</Text>
+              <Text style={styles.sectionTitle}>{t('settings.premiumPlan')}</Text>
 
               {/* Toggle Mensuel / Annuel */}
               <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 12, padding: 3, marginBottom: 16 }}>
@@ -637,8 +637,8 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 style={[styles.planCard, pricingTab === 'annuel' ? styles.planCardHighlight : {}]}
                 onPress={() => handleSubscribe(pricingTab === 'mensuel' ? 'MONTHLY' : 'YEARLY')}>
                 <View style={styles.planHeader}>
-                  <Text style={[styles.planName, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>
-                    Premium
+                    <Text style={[styles.planName, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>
+                    {t('settings.premiumPlan')}
                   </Text>
                   {pricingTab === 'annuel' && (
                     <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -679,6 +679,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   { icon: '🏆', text: t('settings.featureRewards') },
                   { icon: '🔔', text: t('settings.featureNotifications') },
                   { icon: '👥', text: t('settings.featureMembers') },
+                  { icon: '💑', text: t('settings.featureIntimate') },
                 ].map((f, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ fontSize: 13 }}>{f.icon}</Text>
