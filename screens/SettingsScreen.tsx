@@ -679,7 +679,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   { icon: '🏆', text: t('settings.featureRewards') },
                   { icon: '🔔', text: t('settings.featureNotifications') },
                   { icon: '👥', text: t('settings.featureMembers') },
-                  { icon: '💑', text: t('settings.featureIntimate') },
+                  { icon: '🌸', text: t('settings.featureIntimate') },
                 ].map((f, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ fontSize: 13 }}>{f.icon}</Text>
