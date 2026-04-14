@@ -9,6 +9,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -141,8 +142,9 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   const [refreshing, setRefreshing] = useState(false);
 
   // ── Famille ──
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamilyId = (families as any[])[0]?.id || 1;
+  const activeFamilyId = ctxFamilyId ?? (families as any[])[0]?.id ?? 1;
   const { data: members = [] } = trpc.family.members.useQuery(
     { familyId: activeFamilyId },
     { enabled: !!activeFamilyId }

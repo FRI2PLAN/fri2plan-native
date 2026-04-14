@@ -7,6 +7,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useTranslation } from 'react-i18next';
 
@@ -44,8 +45,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const [formPoints, setFormPoints] = useState("10");
   const [formIcon, setFormIcon] = useState("gift");
 
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamilyId = (families as any[])?.[0]?.id || 0;
+  const activeFamilyId = ctxFamilyId ?? (families as any[])?.[0]?.id ?? 0;
 
   const { data: myPoints } = trpc.rewards.myPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }

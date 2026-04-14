@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -66,8 +67,9 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
 
   // Récupérer la famille
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamilyId = (families as any[])[0]?.id || 0;
+  const activeFamilyId = ctxFamilyId ?? (families as any[])[0]?.id ?? 0;
 
   const { data: members = [] } = trpc.family.members.useQuery(
     { familyId: activeFamilyId },

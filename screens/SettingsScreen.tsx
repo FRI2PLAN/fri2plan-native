@@ -1013,9 +1013,9 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       {/* Modal CGU */}
       <Modal visible={showTermsModal} transparent animationType="slide" onRequestClose={() => setShowTermsModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%' }]}>
+          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%', flex: 0, flexShrink: 1 }]}>
             <Text style={styles.modalTitle}>{t('settings.termsOfUse')}</Text>
-            <ScrollView style={{ flex: 1, marginVertical: 12 }} showsVerticalScrollIndicator>
+            <ScrollView style={{ flexGrow: 1, minHeight: 200, marginVertical: 12 }} showsVerticalScrollIndicator={true} nestedScrollEnabled={true}>
               <Text style={{ color: isDark ? '#d1d5db' : '#374151', lineHeight: 22, fontSize: 13 }}>
                 {`FRI2PLAN - Conditions Générales d'Utilisation\n\nDernière mise à jour : Avril 2026\n\n1. ACCEPTATION DES CONDITIONS\nEn utilisant l'application FRI2PLAN, vous acceptez les présentes conditions générales d'utilisation.\n\n2. DESCRIPTION DU SERVICE\nFRI2PLAN est une application d'organisation familiale permettant la gestion de calendriers, tâches, repas, budget et communications entre membres d'un cercle familial.\n\n3. COMPTE UTILISATEUR\nVous êtes responsable de la confidentialité de vos identifiants. Vous devez avoir au moins 13 ans pour utiliser ce service.\n\n4. ABONNEMENT PREMIUM\nL'abonnement Premium est disponible à CHF 4.99/mois ou CHF 49.99/an. L'abonnement se renouvelle automatiquement sauf résiliation.\n\n5. DONNÉES PERSONNELLES\nVos données sont traitées conformément à notre politique de confidentialité et au RGPD.\n\n6. PROPRIÉTÉ INTELLECTUELLE\nTous les contenus de l'application sont la propriété de FRI2PLAN. Toute reproduction est interdite sans autorisation.\n\n7. LIMITATION DE RESPONSABILITÉ\nFRI2PLAN ne peut être tenu responsable des pertes de données ou interruptions de service.\n\n8. MODIFICATION DES CONDITIONS\nNous nous réservons le droit de modifier ces conditions. Les utilisateurs seront informés par email.\n\n9. DROIT APPLICABLE\nCes conditions sont régies par le droit suisse. Tout litige relève de la compétence des tribunaux de Fribourg, Suisse.\n\nContact : support@fri2plan.ch`}
               </Text>
@@ -1030,9 +1030,9 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       {/* Modal Politique de confidentialité */}
       <Modal visible={showPrivacyModal} transparent animationType="slide" onRequestClose={() => setShowPrivacyModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%' }]}>
+          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%', flex: 0, flexShrink: 1 }]}>
             <Text style={styles.modalTitle}>{t('settings.privacyPolicy')}</Text>
-            <ScrollView style={{ flex: 1, marginVertical: 12 }} showsVerticalScrollIndicator>
+            <ScrollView style={{ flexGrow: 1, minHeight: 200, marginVertical: 12 }} showsVerticalScrollIndicator={true} nestedScrollEnabled={true}>
               <Text style={{ color: isDark ? '#d1d5db' : '#374151', lineHeight: 22, fontSize: 13 }}>
                 {`FRI2PLAN - Politique de Confidentialité\n\nDernière mise à jour : Avril 2026\n\n1. RESPONSABLE DU TRAITEMENT\nFRI2PLAN, Fribourg, Suisse. Contact : privacy@fri2plan.ch\n\n2. DONNÉES COLLECTÉES\n- Informations de compte : nom, email, photo de profil\n- Données d'utilisation : événements, tâches, repas, messages, budget\n- Données techniques : appareil, version de l'app, adresse IP\n\n3. FINALITÉS DU TRAITEMENT\n- Fourniture du service FRI2PLAN\n- Amélioration de l'application\n- Envoi de notifications et emails de récapitulatif\n- Facturation (via Stripe)\n\n4. BASE LÉGALE\nExécution du contrat (CGU) et intérêt légitime pour l'amélioration du service.\n\n5. CONSERVATION\nVos données sont conservées pendant la durée de votre compte + 2 ans après suppression.\n\n6. PARTAGE DES DONNÉES\nVos données ne sont pas vendues. Elles peuvent être partagées avec :\n- Stripe (paiements)\n- Resend (emails)\n- WonderPush (notifications push)\n\n7. VOS DROITS (RGPD)\nDroit d'accès, rectification, suppression, portabilité, opposition. Exercez vos droits via : privacy@fri2plan.ch\n\n8. COOKIES\nL'application mobile n'utilise pas de cookies. La version web utilise des cookies techniques essentiels uniquement.\n\n9. SÉCURITÉ\nVos données sont chiffrées en transit (HTTPS) et au repos.\n\nContact DPO : privacy@fri2plan.ch`}
               </Text>

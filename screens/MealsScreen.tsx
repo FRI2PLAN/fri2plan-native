@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
+import { useFamily } from '../contexts/FamilyContext';
 import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -106,8 +107,9 @@ export default function MealsScreen({
   const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
 
   // ─── Famille ───────────────────────────────────────────────────────────────
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamily = families[0];
+  const activeFamily = ctxFamilyId ? (families as any[]).find((f: any) => f.id === ctxFamilyId) ?? families[0] : families[0];
   const familyId = activeFamily?.id;
 
   // ─── Membres ───────────────────────────────────────────────────────────────

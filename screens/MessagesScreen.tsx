@@ -5,6 +5,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -45,8 +46,9 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   };
 
   // Récupérer la famille active
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamilyId = (families as any[])[0]?.id || 1;
+  const activeFamilyId = ctxFamilyId ?? (families as any[])[0]?.id ?? 1;
 
   // Fetch messages — endpoint enrichi qui retourne { messages, hasMore }
   const { data: messagesData, isLoading, refetch } = trpc.messages.list.useQuery(

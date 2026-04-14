@@ -11,6 +11,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameM
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -74,8 +75,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   ];
   const styles = getStyles(isDark);
   const { user } = useAuth();
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
-  const activeFamily = families?.[0];
+  const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }

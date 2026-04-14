@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,8 +55,9 @@ export default function ShoppingScreen({
   const utils = trpc.useUtils();
 
   // ─── Famille ───────────────────────────────────────────────────────────────
+  const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamily = families[0];
+  const activeFamily = ctxFamilyId ? (families as any[]).find((f: any) => f.id === ctxFamilyId) ?? families[0] : families[0];
   const familyId = activeFamily?.id;
 
   // ─── Onglets ───────────────────────────────────────────────────────────────
