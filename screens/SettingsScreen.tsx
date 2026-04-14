@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { trpc } from '../lib/trpc';
@@ -37,6 +38,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const { t } = useTranslation();
   const { isDark, setDarkMode: setGlobalDarkMode } = useTheme();
   const { user } = useAuth();
+  const { activeFamilyId } = useFamily();
   const styles = getStyles(isDark);
 
   const [subScreen, setSubScreen] = useState<SubScreen>(null);
@@ -46,7 +48,15 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   // ─── Données serveur ───────────────────────────────────────────────────────
   const { data: userSettings, refetch: refetchSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null, refetch: () => {} };
   const { data: families } = (trpc.family as any).list?.useQuery?.() || { data: [] };
-  const activeFamily = families?.[0];
+  // Utiliser la famille active du contexte (pas toujours la première)
+  const activeFamily = (() => {
+    if (!families || families.length === 0) return undefined;
+    if (activeFamilyId) {
+      const found = (families as any[]).find((f: any) => f.id === activeFamilyId);
+      if (found) return found;
+    }
+    return (families as any[])[0];
+  })();
   const { data: subscriptionData, refetch: refetchSub } = trpc.subscription.checkAccess.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
@@ -536,6 +546,11 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           <View style={[styles.premiumBanner, hasPremium ? styles.premiumBannerActive : styles.premiumBannerFree]}>
             <Text style={styles.premiumBannerIcon}>{hasPremium ? '⭐' : '🔓'}</Text>
             <View style={{ flex: 1 }}>
+              {activeFamily?.name && (
+                <Text style={{ fontSize: 11, color: hasPremium ? '#e9d5ff' : '#6b7280', marginBottom: 2 }}>
+                  👨‍👩‍👧 {activeFamily.name}
+                </Text>
+              )}
               <Text style={styles.premiumBannerTitle}>
                 {hasPremium ? t('settings.premiumActive') : t('settings.freePlan')}
               </Text>
