@@ -607,7 +607,17 @@
     "invoices": "Factures",
     "pushNotificationsDesc": "Choisissez les catégories pour lesquelles vous souhaitez recevoir des notifications push.",
     "emailNotificationsDesc": "Choisissez les catégories pour lesquelles vous souhaitez recevoir des emails.",
-    "emailDigest": "Résumé quotidien"
+    "emailDigest": "Résumé quotidien",
+    "emailDigestTime": "Heure de réception des mails",
+    "digestTime": "Heure du récap",
+    "digestTimeTitle": "Heure de réception",
+    "importPhoto": "Changer la photo de profil",
+    "currency": "Devise",
+    "currencyVisualOnly": "Affichage visuel uniquement",
+    "changePhoto": "Changer la photo",
+    "photoUpdated": "Photo de profil mise à jour",
+    "photoError": "Erreur lors de la mise à jour de la photo",
+    "close": "Fermer"
   },
   "help": {
     "title": "Centre d'aide",

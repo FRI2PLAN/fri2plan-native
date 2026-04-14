@@ -615,10 +615,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           style={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {/* Devise par défaut */}
+          {/* Devise par défaut - gérée dans Paramètres généraux */}
           <View style={styles.settingsSection}>
             <Text style={styles.settingsSectionTitle}>{t('budget.defaultCurrency')}</Text>
-            <View style={styles.currencyRow}>
+            <View style={[styles.currencyRow, { flexWrap: 'wrap' }]}>
               {CURRENCIES.map(c => (
                 <TouchableOpacity
                   key={c.value}
@@ -630,6 +630,9 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                 </TouchableOpacity>
               ))}
             </View>
+            <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 6, fontStyle: 'italic' }}>
+              {t('settings.currencyVisualOnly')}
+            </Text>
           </View>
 
           {/* Catégories personnalisées */}

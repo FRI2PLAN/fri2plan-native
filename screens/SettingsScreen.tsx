@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal,
-  TextInput, Alert, ActivityIndicator, Linking, KeyboardAvoidingView, Platform,
+  TextInput, Alert, ActivityIndicator, Linking, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { usePager } from '../contexts/PagerContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { trpc } from '../lib/trpc';
+import * as ImagePicker from 'expo-image-picker';
 
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -184,6 +185,75 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const [showColorModal, setShowColorModal] = useState(false);
   const [selectedColor, setSelectedColor] = useState(user?.userColor || '#8B5CF6');
   const [pricingTab, setPricingTab] = useState<'mensuel' | 'annuel'>('annuel');
+
+  // ─── Devise globale ────────────────────────────────────────────────────────
+  const [currency, setCurrency] = useState<string>((userSettings as any)?.currency || 'CHF');
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const CURRENCIES = [
+    { value: 'CHF', label: '🇨🇭 CHF - Franc suisse' },
+    { value: 'EUR', label: '🇪🇺 EUR - Euro' },
+    { value: 'USD', label: '🇺🇸 USD - Dollar américain' },
+    { value: 'GBP', label: '🇬🇧 GBP - Livre sterling' },
+    { value: 'CAD', label: '🇨🇦 CAD - Dollar canadien' },
+    { value: 'AUD', label: '🇦🇺 AUD - Dollar australien' },
+    { value: 'JPY', label: '🇯🇵 JPY - Yen japonais' },
+    { value: 'SEK', label: '🇸🇪 SEK - Couronne suédoise' },
+    { value: 'NOK', label: '🇳🇴 NOK - Couronne norvégienne' },
+    { value: 'DKK', label: '🇩🇰 DKK - Couronne danoise' },
+  ];
+  const handleSaveCurrency = (val: string) => {
+    setCurrency(val);
+    setShowCurrencyModal(false);
+    updateSettingsMutation?.mutate({ currency: val as any }, {
+      onError: () => Alert.alert('❌', t('common.error')),
+    });
+  };
+
+  // ─── Heure recap email ─────────────────────────────────────────────────────
+  const [emailDigestTime, setEmailDigestTime] = useState<string>((userSettings as any)?.emailDigestTime || '07:00');
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const TIME_OPTIONS = ['06:00','07:00','08:00','09:00','10:00','12:00','17:00','18:00','19:00','20:00','21:00'];
+  const handleSaveDigestTime = (val: string) => {
+    setEmailDigestTime(val);
+    setShowTimeModal(false);
+    updateSettingsMutation?.mutate({ emailDigestTime: val }, {
+      onError: () => Alert.alert('❌', t('common.error')),
+    });
+  };
+
+  // ─── Modals CGU / Politique ────────────────────────────────────────────────
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  // ─── Avatar photo ──────────────────────────────────────────────────────────
+  const [avatarUri, setAvatarUri] = useState<string | null>((user as any)?.avatarUrl || null);
+  const updateAvatarMutation = (trpc.members as any).updateAvatar?.useMutation?.();
+  const handlePickAvatar = async () => {
+    // Demander la permission si nécessaire
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('common.error'), 'Permission requise pour accéder à la galerie');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      const asset = result.assets[0];
+      // Utiliser l'URI locale comme aperçu immédiat
+      setAvatarUri(asset.uri);
+      // Uploader en base64 data URL
+      const dataUrl = `data:image/jpeg;base64,${asset.base64}`;
+      updateAvatarMutation?.mutate({ userId: user!.id, avatarUrl: dataUrl }, {
+        onSuccess: () => Alert.alert('✅', t('common.success')),
+        onError: () => Alert.alert('❌', t('common.error')),
+      });
+    }
+  };
   const handleSaveColor = () => {
     if (!user) return;
     updateColorMutation?.mutate({ userId: user.id, color: selectedColor }, {
@@ -345,17 +415,56 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
             ))}
           </View>
+          {/* Heure de réception du récap */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.digestTimeTitle')}</Text>
+            <TouchableOpacity style={styles.settingItem} onPress={() => setShowTimeModal(true)}>
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>⏰</Text>
+                <Text style={styles.settingLabel}>{t('settings.digestTime')}</Text>
+              </View>
+              <View style={styles.settingRight}>
+                <Text style={styles.settingValue}>{emailDigestTime}</Text>
+                <Text style={styles.settingArrow}>›</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
           <View style={styles.section}>
             <TouchableOpacity style={styles.saveButton} onPress={saveEmailPrefs}>
               <Text style={styles.saveButtonText}>{t('settings.saveSettings')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Modal heure recap */}
+        <Modal visible={showTimeModal} transparent animationType="fade" onRequestClose={() => setShowTimeModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setShowTimeModal(false)} />
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>{t('settings.digestTime')}</Text>
+              <ScrollView style={{ maxHeight: 300 }}>
+                {TIME_OPTIONS.map(time => (
+                  <TouchableOpacity
+                    key={time}
+                    style={[styles.languageOption, emailDigestTime === time && styles.languageOptionSelected]}
+                    onPress={() => handleSaveDigestTime(time)}
+                  >
+                    <Text style={styles.languageOptionText}>{time}</Text>
+                    {emailDigestTime === time && <Text style={styles.checkmark}>✓</Text>}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowTimeModal(false)}>
+                <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
 
-  // ─── Sous-écran : Compte ───────────────────────────────────────────────────
+  // ─── Sous-écran : Compte ───────────────────────────────────────────────────────────────
   if (subScreen === 'account') {
     return (
       <View style={styles.container}>
@@ -368,12 +477,14 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             {/* Avatar */}
             <View style={styles.avatarRow}>
               <TouchableOpacity
-                style={[styles.avatarCircle, { backgroundColor: user?.userColor || '#7c3aed' }]}
+                style={[styles.avatarCircle, { backgroundColor: user?.userColor || '#7c3aed', overflow: 'hidden' }]}
                 onPress={() => { setSelectedColor(user?.userColor || '#8B5CF6'); setShowColorModal(true); }}
               >
-                <Text style={styles.avatarInitial}>
-                  {(user?.name || '?').charAt(0).toUpperCase()}
-                </Text>
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%', borderRadius: 999 }} />
+                ) : (
+                  <Text style={styles.avatarInitial}>{(user?.name || '?').charAt(0).toUpperCase()}</Text>
+                )}
                 <View style={styles.avatarEditBadge}>
                   <Text style={styles.avatarEditBadgeText}>✏️</Text>
                 </View>
@@ -394,7 +505,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
-            {/* Couleur et avatar */}
+            {/* Couleur */}
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => { setSelectedColor(user?.userColor || '#8B5CF6'); setShowColorModal(true); }}
@@ -404,6 +515,17 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 <Text style={styles.settingLabel}>{t('settings.colorAvatar')}</Text>
               </View>
               <View style={[styles.colorDot, { backgroundColor: user?.userColor || '#7c3aed' }]} />
+              <Text style={styles.settingArrow}>›</Text>
+            </TouchableOpacity>
+            {/* Photo avatar */}
+            <TouchableOpacity style={styles.settingItem} onPress={handlePickAvatar}>
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>📷</Text>
+                <Text style={styles.settingLabel}>{t('settings.importPhoto')}</Text>
+              </View>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
+              ) : null}
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
           </View>
@@ -787,6 +909,16 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <Text style={styles.settingArrow}>›</Text>
             </View>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowCurrencyModal(true)}>
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>💱</Text>
+              <Text style={styles.settingLabel}>{t('settings.currency')}</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{currency}</Text>
+              <Text style={styles.settingArrow}>›</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Notifications */}
@@ -852,14 +984,14 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
             <Text style={styles.settingValue}>1.0.0</Text>
           </View>
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://app.fri2plan.ch/terms')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowTermsModal(true)}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>📜</Text>
               <Text style={styles.settingLabel}>{t('settings.termsOfUse')}</Text>
             </View>
             <Text style={styles.settingArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://app.fri2plan.ch/privacy')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowPrivacyModal(true)}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingIcon}>🔐</Text>
               <Text style={styles.settingLabel}>{t('settings.privacyPolicy')}</Text>
@@ -877,6 +1009,65 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           </View>
         )}
       </ScrollView>
+
+      {/* Modal CGU */}
+      <Modal visible={showTermsModal} transparent animationType="slide" onRequestClose={() => setShowTermsModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%' }]}>
+            <Text style={styles.modalTitle}>{t('settings.termsOfUse')}</Text>
+            <ScrollView style={{ flex: 1, marginVertical: 12 }} showsVerticalScrollIndicator>
+              <Text style={{ color: isDark ? '#d1d5db' : '#374151', lineHeight: 22, fontSize: 13 }}>
+                {`FRI2PLAN - Conditions Générales d'Utilisation\n\nDernière mise à jour : Avril 2026\n\n1. ACCEPTATION DES CONDITIONS\nEn utilisant l'application FRI2PLAN, vous acceptez les présentes conditions générales d'utilisation.\n\n2. DESCRIPTION DU SERVICE\nFRI2PLAN est une application d'organisation familiale permettant la gestion de calendriers, tâches, repas, budget et communications entre membres d'un cercle familial.\n\n3. COMPTE UTILISATEUR\nVous êtes responsable de la confidentialité de vos identifiants. Vous devez avoir au moins 13 ans pour utiliser ce service.\n\n4. ABONNEMENT PREMIUM\nL'abonnement Premium est disponible à CHF 4.99/mois ou CHF 49.99/an. L'abonnement se renouvelle automatiquement sauf résiliation.\n\n5. DONNÉES PERSONNELLES\nVos données sont traitées conformément à notre politique de confidentialité et au RGPD.\n\n6. PROPRIÉTÉ INTELLECTUELLE\nTous les contenus de l'application sont la propriété de FRI2PLAN. Toute reproduction est interdite sans autorisation.\n\n7. LIMITATION DE RESPONSABILITÉ\nFRI2PLAN ne peut être tenu responsable des pertes de données ou interruptions de service.\n\n8. MODIFICATION DES CONDITIONS\nNous nous réservons le droit de modifier ces conditions. Les utilisateurs seront informés par email.\n\n9. DROIT APPLICABLE\nCes conditions sont régies par le droit suisse. Tout litige relève de la compétence des tribunaux de Fribourg, Suisse.\n\nContact : support@fri2plan.ch`}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowTermsModal(false)}>
+              <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Politique de confidentialité */}
+      <Modal visible={showPrivacyModal} transparent animationType="slide" onRequestClose={() => setShowPrivacyModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '85%', width: '95%' }]}>
+            <Text style={styles.modalTitle}>{t('settings.privacyPolicy')}</Text>
+            <ScrollView style={{ flex: 1, marginVertical: 12 }} showsVerticalScrollIndicator>
+              <Text style={{ color: isDark ? '#d1d5db' : '#374151', lineHeight: 22, fontSize: 13 }}>
+                {`FRI2PLAN - Politique de Confidentialité\n\nDernière mise à jour : Avril 2026\n\n1. RESPONSABLE DU TRAITEMENT\nFRI2PLAN, Fribourg, Suisse. Contact : privacy@fri2plan.ch\n\n2. DONNÉES COLLECTÉES\n- Informations de compte : nom, email, photo de profil\n- Données d'utilisation : événements, tâches, repas, messages, budget\n- Données techniques : appareil, version de l'app, adresse IP\n\n3. FINALITÉS DU TRAITEMENT\n- Fourniture du service FRI2PLAN\n- Amélioration de l'application\n- Envoi de notifications et emails de récapitulatif\n- Facturation (via Stripe)\n\n4. BASE LÉGALE\nExécution du contrat (CGU) et intérêt légitime pour l'amélioration du service.\n\n5. CONSERVATION\nVos données sont conservées pendant la durée de votre compte + 2 ans après suppression.\n\n6. PARTAGE DES DONNÉES\nVos données ne sont pas vendues. Elles peuvent être partagées avec :\n- Stripe (paiements)\n- Resend (emails)\n- WonderPush (notifications push)\n\n7. VOS DROITS (RGPD)\nDroit d'accès, rectification, suppression, portabilité, opposition. Exercez vos droits via : privacy@fri2plan.ch\n\n8. COOKIES\nL'application mobile n'utilise pas de cookies. La version web utilise des cookies techniques essentiels uniquement.\n\n9. SÉCURITÉ\nVos données sont chiffrées en transit (HTTPS) et au repos.\n\nContact DPO : privacy@fri2plan.ch`}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowPrivacyModal(false)}>
+              <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal devise */}
+      <Modal visible={showCurrencyModal} transparent animationType="fade" onRequestClose={() => setShowCurrencyModal(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setShowCurrencyModal(false)} />
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.selectCurrency')}</Text>
+            <ScrollView style={{ maxHeight: 320 }}>
+              {CURRENCIES.map(c => (
+                <TouchableOpacity
+                  key={c.value}
+                  style={[styles.languageOption, currency === c.value && styles.languageOptionSelected]}
+                  onPress={() => handleSaveCurrency(c.value)}
+                >
+                  <Text style={styles.languageOptionText}>{c.label}</Text>
+                  {currency === c.value && <Text style={styles.checkmark}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowCurrencyModal(false)}>
+              <Text style={styles.modalCloseButtonText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

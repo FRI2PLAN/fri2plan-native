@@ -607,7 +607,17 @@
     "invoices": "Invoices",
     "pushNotificationsDesc": "Choose the categories for which you want to receive push notifications.",
     "emailNotificationsDesc": "Choose the categories for which you want to receive emails.",
-    "emailDigest": "Daily digest"
+    "emailDigest": "Daily digest",
+    "emailDigestTime": "Email digest time",
+    "digestTime": "Digest time",
+    "digestTimeTitle": "Reception time",
+    "importPhoto": "Change profile photo",
+    "currency": "Currency",
+    "currencyVisualOnly": "Visual display only",
+    "changePhoto": "Change photo",
+    "photoUpdated": "Profile photo updated",
+    "photoError": "Error updating photo",
+    "close": "Close"
   },
   "help": {
     "title": "Help Center",
