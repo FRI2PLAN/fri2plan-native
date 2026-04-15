@@ -14,8 +14,23 @@
     },
     "scheme": "fri2plan",
     "plugins": [
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#7c3aed",
+          "defaultChannel": "fri2plan_notifications",
+          "sounds": []
+        }
+      ]
     ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#7c3aed",
+      "androidMode": "default",
+      "androidCollapsedTitle": "FRI2PLAN"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -32,7 +47,12 @@
         "barStyle": "dark-content",
         "backgroundColor": "#7c3aed"
       },
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

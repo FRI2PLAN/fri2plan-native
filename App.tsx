@@ -12,6 +12,7 @@ import OnboardingScreen from './screens/OnboardingScreen';
 import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
+import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
 
 // Create QueryClient (stable, never recreated)
 const queryClient = new QueryClient({
@@ -47,6 +48,32 @@ function AppContent() {
       }
     }
   }, [token]);
+
+  // ─── Enregistrement du token Expo Push après connexion ────────────────────
+  const pushTokenRegistered = useRef(false);
+  const registerPushMutation = trpc.fcm.registerToken.useMutation();
+  useEffect(() => {
+    if (isAuthenticated && token && !pushTokenRegistered.current) {
+      pushTokenRegistered.current = true;
+      registerForPushNotificationsAsync()
+        .then(expoPushToken => {
+          if (expoPushToken) {
+            registerPushMutation.mutate(
+              { token: expoPushToken, platform: Platform.OS },
+              {
+                onSuccess: () => console.log('[Push] Token Expo enregistré sur le serveur'),
+                onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
+              }
+            );
+          }
+        })
+        .catch(err => console.error('[Push] Erreur obtention token:', err));
+    }
+    // Réinitialiser lors de la déconnexion
+    if (!isAuthenticated) {
+      pushTokenRegistered.current = false;
+    }
+  }, [isAuthenticated, token]);
 
   if (isLoading || isInitializing) {
     return (
