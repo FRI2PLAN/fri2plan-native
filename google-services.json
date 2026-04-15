@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "582461718885",
+    "project_id": "fri2plan-c03f3",
+    "storage_bucket": "fri2plan-c03f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582461718885:android:129a568442fc8fafc9e18c",
+        "android_client_info": {
+          "package_name": "com.fri2plan.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVsKO2QYehGv2AHtG_IUtREjLFNXiU8v8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582461718885:android:89a4f206cf35ca7ac9e18c",
+        "android_client_info": {
+          "package_name": "space.manus.fri2plan.twa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVsKO2QYehGv2AHtG_IUtREjLFNXiU8v8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
