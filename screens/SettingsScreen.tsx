@@ -37,7 +37,9 @@ const COLORS = [
 ];
 
 export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Référencer i18n.language pour forcer le re-rendu du composant lors du changement de langue
+  const _currentLang = i18n.language;
   const { isDark, setDarkMode: setGlobalDarkMode } = useTheme();
   const { user } = useAuth();
   const { activeFamilyId } = useFamily();
