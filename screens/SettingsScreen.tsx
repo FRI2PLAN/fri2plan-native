@@ -750,7 +750,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                     pricingTab === 'annuel' ? { backgroundColor: isDark ? '#1f2937' : '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 } : {}]}
                   onPress={() => setPricingTab('annuel')}>
                   <Text style={{ fontWeight: '600', fontSize: 14, color: pricingTab === 'annuel' ? '#7c3aed' : (isDark ? '#9ca3af' : '#6b7280') }}>{t('settings.yearlyPlan')}</Text>
-                  {pricingTab !== 'annuel' && <Text style={{ fontSize: 9, color: '#22c55e', fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>}
+                  {pricingTab !== 'annuel' && <Text style={{ fontSize: 9, color: '#22c55e', fontWeight: '700' }}>{t('settings.save33') || 'Économisez 33%'}</Text>}
                 </TouchableOpacity>
               </View>
 
@@ -765,7 +765,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   {pricingTab === 'annuel' && (
                     <View style={{ flexDirection: 'row', gap: 4 }}>
                       <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save17') || 'Économisez 17%'}</Text>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save33') || 'Économisez 33%'}</Text>
                       </View>
                       <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
                         <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
@@ -782,7 +782,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   {pricingTab === 'mensuel' ? `CHF 4.99 / ${t('settings.month')}` : `CHF 39.99 / ${t('settings.year')}`}
                 </Text>
                 {pricingTab === 'annuel' && (
-                  <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 8 }}>{t('settings.monthlyEquiv') || '≈ CHF 4.17/mois'}</Text>
+                  <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 8 }}>{t('settings.monthlyEquiv') || '≈ CHF 3.33/mois'}</Text>
                 )}
                 <Text style={[styles.planCta, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
