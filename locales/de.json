@@ -600,8 +600,8 @@
     "year": "Jahr",
     "flexible": "Flexibel",
     "bestValue": "Bestes Preis-Leistungs-Verhältnis",
-    "save33": "33% sparen",
-    "monthlyEquiv": "≈ CHF 3.33/Monat",
+    "save17": "17% sparen",
+    "monthlyEquiv": "≈ CHF 4.17/Monat",
     "subscribeCta": "Jetzt abonnieren",
     "manageSubscription": "Abonnement verwalten",
     "invoices": "Rechnungen",
@@ -617,11 +617,7 @@
     "changePhoto": "Foto ändern",
     "photoUpdated": "Profilfoto aktualisiert",
     "photoError": "Fehler beim Aktualisieren des Fotos",
-    "close": "Schließen",
-    "mySubscription": "Mein Abonnement",
-    "planLabel": "Plan",
-    "amountLabel": "Betrag",
-    "renewalLabel": "Verlängerungsdatum"
+    "close": "Schließen"
   },
   "help": {
     "title": "Hilfezentrum",
