@@ -39,6 +39,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#7c3aed"
       },
+      "googleServicesFile": "./google-services.json",
       "package": "com.fri2plan.app",
       "versionCode": 3,
       "edgeToEdgeEnabled": true,
