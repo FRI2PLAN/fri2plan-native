@@ -1,0 +1,28 @@
+name: i18n Consistency Check
+
+on:
+  push:
+    paths:
+      - 'locales/**'
+      - 'scripts/check-i18n.mjs'
+  pull_request:
+    paths:
+      - 'locales/**'
+      - 'scripts/check-i18n.mjs'
+
+jobs:
+  i18n-check:
+    name: Check i18n key consistency (FR / EN / DE)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run i18n consistency check
+        run: node scripts/check-i18n.mjs
