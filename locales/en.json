@@ -617,7 +617,11 @@
     "changePhoto": "Change photo",
     "photoUpdated": "Profile photo updated",
     "photoError": "Error updating photo",
-    "close": "Close"
+    "close": "Close",
+    "mySubscription": "My subscription",
+    "planLabel": "Plan",
+    "amountLabel": "Amount",
+    "renewalLabel": "Renewal date"
   },
   "help": {
     "title": "Help Center",

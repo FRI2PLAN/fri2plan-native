@@ -91,6 +91,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const deleteAccountMutation = (trpc.user as any).deleteMyAccount?.useMutation?.();
   const createCheckoutMutation = trpc.subscription.createCheckout.useMutation();
   const createPortalMutation = trpc.subscription.createPortal.useMutation();
+  const { data: subDetails, isLoading: subDetailsLoading } = (trpc.subscription as any).getSubscriptionDetails?.useQuery?.(
+    { familyId: activeFamilyIdForQuery },
+    { enabled: activeFamilyIdForQuery > 0 }
+  ) || { data: null, isLoading: false };
   const forgotPasswordMutation = (trpc.auth as any).forgotPassword?.useMutation?.();
 
   // ─── État local notifications ──────────────────────────────────────────────
@@ -813,6 +817,38 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
           )}
 
+          {/* Récapitulatif abonnement actif */}
+          {hasPremium && (
+            <View style={[styles.section, { backgroundColor: isDark ? '#1e1b4b' : '#f5f3ff', borderRadius: 12, marginHorizontal: 0, padding: 16, marginBottom: 12 }]}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#7c3aed', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{'👑 ' + (t('settings.mySubscription') || 'Mon abonnement')}</Text>
+              {subDetailsLoading ? (
+                <ActivityIndicator size="small" color="#7c3aed" />
+              ) : (
+                <>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 13, color: isDark ? '#c4b5fd' : '#6b7280' }}>{t('settings.planLabel') || 'Plan'}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e9d5ff' : '#4c1d95' }}>
+                      {subDetails?.planType === 'yearly' ? (t('settings.yearlyPlan') || 'Annuel') : (t('settings.monthlyPlan') || 'Mensuel')}
+                    </Text>
+                  </View>
+                  {subDetails?.amountCHF && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text style={{ fontSize: 13, color: isDark ? '#c4b5fd' : '#6b7280' }}>{t('settings.amountLabel') || 'Montant'}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e9d5ff' : '#4c1d95' }}>CHF {subDetails.amountCHF}</Text>
+                    </View>
+                  )}
+                  {subDetails?.renewalDate && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, color: isDark ? '#c4b5fd' : '#6b7280' }}>{t('settings.renewalLabel') || 'Renouvellement'}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e9d5ff' : '#4c1d95' }}>
+                        {new Date(subDetails.renewalDate).toLocaleDateString(currentLanguage === 'de' ? 'de-CH' : currentLanguage === 'en' ? 'en-GB' : 'fr-CH', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          )}
           {/* Gérer l'abonnement existant */}
           {hasPremium && (
             <View style={styles.section}>

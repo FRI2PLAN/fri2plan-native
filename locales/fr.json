@@ -617,7 +617,11 @@
     "changePhoto": "Changer la photo",
     "photoUpdated": "Photo de profil mise à jour",
     "photoError": "Erreur lors de la mise à jour de la photo",
-    "close": "Fermer"
+    "close": "Fermer",
+    "mySubscription": "Mon abonnement",
+    "planLabel": "Plan",
+    "amountLabel": "Montant",
+    "renewalLabel": "Renouvellement"
   },
   "help": {
     "title": "Centre d'aide",
