@@ -51,7 +51,8 @@ export default function ShoppingScreen({
 } = {}) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
-  const s = g  const utils = trpc.useUtils();
+  const s = getStyles(isDark);
+  const utils = trpc.useUtils();
 
   // ─── Famille ─────────────────────────────────────────────────────────────────────────────
   const { activeFamilyId: ctxFamilyId } = useFamily();
@@ -59,7 +60,8 @@ export default function ShoppingScreen({
   const activeFamily = ctxFamilyId ? (families as any[]).find((f: any) => f.id === ctxFamilyId) ?? families[0] : families[0];
   const familyId = activeFamily?.id;
 
-  // ─── Onglets ─────────────────────────────────────────────────────────────────────────────nst [internalTab, setInternalTab] = useState<ShoppingTab>('lists');
+  // ─── Onglets ─────────────────────────────────────────────────────────────────────────────
+  const [internalTab, setInternalTab] = useState<ShoppingTab>('lists');
   const tab = externalTab ?? internalTab;
   const setTab = (t: ShoppingTab) => {
     setInternalTab(t);
