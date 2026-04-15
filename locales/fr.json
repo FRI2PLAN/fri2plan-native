@@ -617,7 +617,11 @@
     "changePhoto": "Changer la photo",
     "photoUpdated": "Photo de profil mise à jour",
     "photoError": "Erreur lors de la mise à jour de la photo",
-    "close": "Fermer"
+    "close": "Fermer",
+    "paymentHistory": "Historique des paiements",
+    "paid": "Payé",
+    "noInvoices": "Aucune facture disponible.",
+    "cancellationConfirmed": "Résiliation confirmée"
   },
   "help": {
     "title": "Centre d'aide",

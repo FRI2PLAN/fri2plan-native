@@ -617,7 +617,11 @@
     "changePhoto": "Change photo",
     "photoUpdated": "Profile photo updated",
     "photoError": "Error updating photo",
-    "close": "Close"
+    "close": "Close",
+    "paymentHistory": "Payment history",
+    "paid": "Paid",
+    "noInvoices": "No invoices available.",
+    "cancellationConfirmed": "Cancellation confirmed"
   },
   "help": {
     "title": "Help Center",

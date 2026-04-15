@@ -617,7 +617,11 @@
     "changePhoto": "Foto ändern",
     "photoUpdated": "Profilfoto aktualisiert",
     "photoError": "Fehler beim Aktualisieren des Fotos",
-    "close": "Schließen"
+    "close": "Schließen",
+    "paymentHistory": "Zahlungshistorie",
+    "paid": "Bezahlt",
+    "noInvoices": "Keine Rechnungen verfügbar.",
+    "cancellationConfirmed": "Kündigung bestätigt"
   },
   "help": {
     "title": "Hilfezentrum",

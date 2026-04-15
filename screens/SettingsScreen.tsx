@@ -95,6 +95,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
     { familyId: activeFamilyIdForQuery },
     { enabled: activeFamilyIdForQuery > 0 }
   ) || { data: null, isLoading: false };
+  const { data: paymentHistoryData, isLoading: paymentHistoryLoading } = (trpc.subscription as any).getPaymentHistory?.useQuery?.(
+    { familyId: activeFamilyIdForQuery },
+    { enabled: activeFamilyIdForQuery > 0 }
+  ) || { data: null, isLoading: false };
   const forgotPasswordMutation = (trpc.auth as any).forgotPassword?.useMutation?.();
 
   // ─── État local notifications ──────────────────────────────────────────────
@@ -866,24 +870,42 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   : <Text style={styles.settingArrow}>›</Text>
                 }
               </TouchableOpacity>
-              {/* Factures → même portail Stripe qui inclut les factures */}
-              <TouchableOpacity
-                style={styles.settingItem}
-                onPress={handleManageSubscription}
-                disabled={isPortalLoading}
-              >
-                <View style={styles.settingLeft}>
-                  <Text style={styles.settingIcon}>🧾</Text>
-                  <Text style={styles.settingLabel}>{t('settings.invoices')}</Text>
-                </View>
-                {isPortalLoading
-                  ? <ActivityIndicator size="small" color="#7c3aed" />
-                  : <Text style={styles.settingArrow}>›</Text>
-                }
-              </TouchableOpacity>
-              <Text style={styles.invoicesNote}>
-                {t('settings.invoicesNote') || 'Les factures sont disponibles dans le portail Stripe.'}
-              </Text>
+              {/* Historique des paiements */}
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#7c3aed', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{'🧾 ' + (t('settings.paymentHistory') || 'Historique des paiements')}</Text>
+                {paymentHistoryLoading ? (
+                  <ActivityIndicator size="small" color="#7c3aed" style={{ marginVertical: 8 }} />
+                ) : paymentHistoryData?.invoices && paymentHistoryData.invoices.length > 0 ? (
+                  paymentHistoryData.invoices.map((inv: any) => (
+                    <View key={inv.id} style={{
+                      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                      paddingVertical: 10, paddingHorizontal: 12,
+                      backgroundColor: isDark ? '#1e1b4b' : '#f5f3ff',
+                      borderRadius: 8, marginBottom: 6,
+                      borderLeftWidth: 3, borderLeftColor: inv.status === 'paid' ? '#22c55e' : '#f59e0b',
+                    }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e9d5ff' : '#4c1d95' }}>
+                          {inv.date ? new Date(inv.date).toLocaleDateString(currentLanguage === 'de' ? 'de-CH' : currentLanguage === 'en' ? 'en-GB' : 'fr-CH', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: isDark ? '#c4b5fd' : '#6b7280', marginTop: 2 }}>{inv.description}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#a78bfa' : '#7c3aed' }}>{inv.currency} {inv.amount}</Text>
+                        <View style={{ backgroundColor: inv.status === 'paid' ? '#dcfce7' : '#fef3c7', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginTop: 2 }}>
+                          <Text style={{ fontSize: 10, fontWeight: '600', color: inv.status === 'paid' ? '#166534' : '#92400e' }}>
+                            {inv.status === 'paid' ? (t('settings.paid') || 'Payé') : inv.status}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={{ fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280', fontStyle: 'italic', paddingVertical: 8 }}>
+                    {t('settings.noInvoices') || 'Aucune facture disponible.'}
+                  </Text>
+                )}
+              </View>
             </View>
           )}
         </ScrollView>
