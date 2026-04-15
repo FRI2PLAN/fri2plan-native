@@ -24,6 +24,40 @@ const queryClient = new QueryClient({
   },
 });
 
+// ─── Sous-composant PushRegistrar ─────────────────────────────────────────────
+// Doit être rendu INSIDE <trpc.Provider> pour pouvoir utiliser les hooks tRPC
+function PushRegistrar() {
+  const { isAuthenticated, token } = useAuth();
+  const pushTokenRegistered = useRef(false);
+  const registerPushMutation = trpc.fcm.registerToken.useMutation();
+
+  useEffect(() => {
+    if (isAuthenticated && token && !pushTokenRegistered.current) {
+      pushTokenRegistered.current = true;
+      registerForPushNotificationsAsync()
+        .then(expoPushToken => {
+          if (expoPushToken) {
+            registerPushMutation.mutate(
+              { token: expoPushToken, platform: Platform.OS },
+              {
+                onSuccess: () => console.log('[Push] Token Expo enregistré sur le serveur'),
+                onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
+              }
+            );
+          }
+        })
+        .catch(err => console.error('[Push] Erreur obtention token:', err));
+    }
+    // Réinitialiser lors de la déconnexion
+    if (!isAuthenticated) {
+      pushTokenRegistered.current = false;
+    }
+  }, [isAuthenticated, token]);
+
+  return null; // Composant invisible — effet uniquement
+}
+
+// ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
@@ -49,32 +83,6 @@ function AppContent() {
     }
   }, [token]);
 
-  // ─── Enregistrement du token Expo Push après connexion ────────────────────
-  const pushTokenRegistered = useRef(false);
-  const registerPushMutation = trpc.fcm.registerToken.useMutation();
-  useEffect(() => {
-    if (isAuthenticated && token && !pushTokenRegistered.current) {
-      pushTokenRegistered.current = true;
-      registerForPushNotificationsAsync()
-        .then(expoPushToken => {
-          if (expoPushToken) {
-            registerPushMutation.mutate(
-              { token: expoPushToken, platform: Platform.OS },
-              {
-                onSuccess: () => console.log('[Push] Token Expo enregistré sur le serveur'),
-                onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
-              }
-            );
-          }
-        })
-        .catch(err => console.error('[Push] Erreur obtention token:', err));
-    }
-    // Réinitialiser lors de la déconnexion
-    if (!isAuthenticated) {
-      pushTokenRegistered.current = false;
-    }
-  }, [isAuthenticated, token]);
-
   if (isLoading || isInitializing) {
     return (
       <View style={styles.loadingContainer}>
@@ -85,6 +93,8 @@ function AppContent() {
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      {/* PushRegistrar est INSIDE trpc.Provider — peut utiliser les hooks tRPC */}
+      <PushRegistrar />
       {isAuthenticated ? (
         <>
           <AppNavigator onLogout={logout} />
