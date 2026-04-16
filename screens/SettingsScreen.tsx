@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import * as Updates from 'expo-updates';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal,
   TextInput, Alert, ActivityIndicator, Linking, KeyboardAvoidingView, Platform, Image,
@@ -1042,7 +1043,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <Text style={styles.settingIcon}>ℹ️</Text>
               <Text style={styles.settingLabel}>{t('settings.version')}</Text>
             </View>
-            <Text style={styles.settingValue}>1.0.0</Text>
+            <Text style={styles.settingValue}>{(Updates as any).manifest?.version || (Updates as any).manifest2?.extra?.expoClient?.version || '1.0.1'}</Text>
           </View>
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowTermsModal(true)}>
             <View style={styles.settingLeft}>
