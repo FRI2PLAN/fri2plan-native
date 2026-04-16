@@ -204,26 +204,31 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     const isOwnMessage = message.userId === user?.id;
     
     return (
-      <View key={message.id} style={styles.messageRow}>
-        {/* Spacer gauche pour mes messages */}
-        {isOwnMessage && <View style={styles.messageSpacer} />}
-
-        {/* Avatar (autres seulement) */}
-        {!isOwnMessage && (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {message.userName?.charAt(0).toUpperCase() || '?'}
-            </Text>
-          </View>
-        )}
-
-        {/* Bulle */}
+      <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
+        {/* Bulle avec avatar intégré (style Général) */}
         <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
-          {/* Nom expéditeur (seulement pour les autres) */}
+          {/* En-tête : avatar + nom (seulement pour les autres) */}
           {!isOwnMessage && (
-            <Text style={styles.messageSender}>
-              {message.userName || t('messages.unknownUser')}
-            </Text>
+            <View style={styles.messageHeader}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {message.userName?.charAt(0).toUpperCase() || '?'}
+                </Text>
+              </View>
+              <Text style={styles.messageSender}>
+                {message.userName || t('messages.unknownUser')}
+              </Text>
+            </View>
+          )}
+          {/* En-tête pour mes messages : avatar + nom à droite */}
+          {isOwnMessage && (
+            <View style={[styles.messageHeader, { justifyContent: 'flex-end' }]}>
+              <View style={[styles.avatar, styles.ownAvatar]}>
+                <Text style={styles.avatarText}>
+                  {message.userName?.charAt(0).toUpperCase() || '?'}
+                </Text>
+              </View>
+            </View>
           )}
 
           {/* Contenu */}
@@ -257,33 +262,22 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             </View>
           )}
 
-          {/* Timestamp + bouton réagir */}
+          {/* Timestamp + bouton Réagir amélioré */}
           <View style={styles.bubbleFooter}>
             <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
               {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
             <TouchableOpacity
+              style={[styles.reactButton, isOwnMessage && styles.reactButtonOwn]}
               onPress={() => {
                 setReactingToMessageId(message.id);
                 setIsEmojiPickerOpen(true);
               }}
             >
-              <Text style={[styles.reactButtonText, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>+😊</Text>
+              <Text style={[styles.reactButtonLabel, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>😊 Réagir</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Avatar (moi à droite) */}
-        {isOwnMessage && (
-          <View style={[styles.avatar, styles.ownAvatar]}>
-            <Text style={styles.avatarText}>
-              {message.userName?.charAt(0).toUpperCase() || '?'}
-            </Text>
-          </View>
-        )}
-
-        {/* Spacer droit pour les autres */}
-        {!isOwnMessage && <View style={styles.messageSpacer} />}
       </View>
     );
   };
@@ -665,6 +659,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
+  messageRowOwn: {
+    justifyContent: 'flex-end',
+  },
+  messageRowOther: {
+    justifyContent: 'flex-start',
+  },
   messageSpacer: {
     flex: 1,
     minWidth: 40,
@@ -704,6 +704,23 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   reactButtonText: {
     fontSize: 16,
     color: '#7c3aed',
+  },
+  reactButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(124,58,237,0.3)' : 'rgba(124,58,237,0.2)',
+  },
+  reactButtonOwn: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  reactButtonLabel: {
+    fontSize: 12,
+    color: '#7c3aed',
+    fontWeight: '500',
   },
   messageHeader: {
     flexDirection: 'row',

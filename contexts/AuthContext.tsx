@@ -20,6 +20,8 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const API_URL = 'https://app.fri2plan.ch';
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -40,6 +42,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       ]);
 
       if (storedToken && storedUser) {
+        // Valider le token auprès du serveur avant de restaurer la session
+        let tokenValid = true;
+        try {
+          const response = await fetch(`${API_URL}/api/trpc/user.me`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+          if (!response.ok) {
+            // Token invalide ou expiré → forcer la déconnexion
+            console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
+            tokenValid = false;
+          }
+        } catch (networkError) {
+          // Pas de réseau → utiliser le cache local (fail-open)
+          console.log('[AuthContext] Pas de réseau, utilisation du cache local');
+        }
+
+        if (!tokenValid) {
+          await AsyncStorage.multiRemove(['authToken', 'user', 'hasSeenOnboarding']);
+          return;
+        }
+
         const parsedUser = JSON.parse(storedUser);
         console.log('[AuthContext] Loaded user from storage:', JSON.stringify(parsedUser, null, 2));
         setToken(storedToken);

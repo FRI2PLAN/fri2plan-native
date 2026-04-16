@@ -53,7 +53,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery();
-  const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery();
+  const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery(
+    undefined,
+    { enabled: !!activeFamily }
+  );
   // Normaliser les dates : le serveur peut retourner des objets Date JS ou des strings SQL
   const normalizeDate = (d: any): string => {
     if (!d) return '';
@@ -113,10 +116,14 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   }, [tasks]);
 
   const todayEvents = useMemo(() => {
-    const today = new Date().toDateString();
+    // Inclure TOUS les événements du jour (passés et à venir)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
     return events.filter(e => {
-      const eventDate = new Date(e.startDate).toDateString();
-      return eventDate === today;
+      const eventDate = new Date(e.startDate);
+      return eventDate >= todayStart && eventDate <= todayEnd;
     });
   }, [events]);
 
