@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -228,7 +228,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
 
           {/* Contenu */}
           <Text style={[styles.messageContent, isOwnMessage && styles.ownMessageContent]}>
-            {message.content}
+            {message.message || message.content || ''}
           </Text>
 
           {/* Pièce jointe image */}
@@ -268,7 +268,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
                 setIsEmojiPickerOpen(true);
               }}
             >
-              <Text style={[styles.reactButtonText, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>😊</Text>
+              <Text style={[styles.reactButtonText, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>+😊</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -396,7 +396,11 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const isCreator = currentGroup?.creatorId === user?.id;
   
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'android' ? 90 : 0}
+    >
       {/* Header du groupe */}
       <View style={styles.groupConversationHeader}>
         <TouchableOpacity onPress={() => setSelectedGroup(null)} style={styles.backButton}>
@@ -517,7 +521,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
         enableSearchBar
         enableRecentlyUsed
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -713,7 +717,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: '#7c3aed',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginHorizontal: 6,
+    flexShrink: 0,
   },
   avatarText: {
     color: '#fff',
