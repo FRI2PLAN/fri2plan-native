@@ -699,7 +699,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 6,
-    gap: 8,
+    gap: 6,
+    flexWrap: 'wrap',
   },
   reactButtonText: {
     fontSize: 16,
@@ -712,6 +713,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.08)',
     borderWidth: 1,
     borderColor: isDark ? 'rgba(124,58,237,0.3)' : 'rgba(124,58,237,0.2)',
+    flexShrink: 0,
+    marginRight: 4,
   },
   reactButtonOwn: {
     backgroundColor: 'rgba(255,255,255,0.15)',
@@ -755,6 +758,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   messageTime: {
     fontSize: 12,
     color: isDark ? '#9ca3af' : '#6b7280',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   messageContent: {
     fontSize: 15,

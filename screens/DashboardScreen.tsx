@@ -45,6 +45,14 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     return families[0];
   }, [families, activeFamilyId]);
 
+  // Sauvegarder automatiquement l'ID de la famille active dans AsyncStorage
+  // pour que le header x-active-family-id soit envoyé correctement à chaque requête
+  useEffect(() => {
+    if (activeFamily?.id && !activeFamilyId) {
+      setActiveFamilyId(activeFamily.id);
+    }
+  }, [activeFamily?.id, activeFamilyId]);
+
   // Fetch family members
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
     { familyId: activeFamily?.id || 0 },
