@@ -54,11 +54,21 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery();
   const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery();
-  // Forcer l'interprétation UTC pour la conversion correcte en heure locale
+  // Normaliser les dates : le serveur peut retourner des objets Date JS ou des strings SQL
+  const normalizeDate = (d: any): string => {
+    if (!d) return '';
+    if (typeof d === 'string') {
+      // String SQL "2026-04-16 08:00:00" → ajouter Z pour UTC
+      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.replace(' ', 'T') + (d.includes('Z') || d.includes('+') ? '' : 'Z');
+      return d; // déjà ISO ou autre format
+    }
+    // Objet Date JS ou timestamp
+    return new Date(d).toISOString();
+  };
   const events = (rawEvents as any[]).map((e: any) => ({
     ...e,
-    startDate: e.startDate ? e.startDate.replace(' ', 'T') + 'Z' : e.startDate,
-    endDate: e.endDate ? e.endDate.replace(' ', 'T') + 'Z' : e.endDate,
+    startDate: normalizeDate(e.startDate),
+    endDate: normalizeDate(e.endDate),
   }));
   const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = trpc.messages.list.useQuery(
     { familyId: activeFamily?.id || 0, limit: 50, offset: 0 },
