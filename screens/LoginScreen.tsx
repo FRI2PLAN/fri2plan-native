@@ -6,7 +6,6 @@ import {
   View,
   TextInput,
   TouchableOpacity,
- 
   Alert,
   ActivityIndicator,
   Platform,
@@ -16,6 +15,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
@@ -26,6 +26,9 @@ import { API_URL } from '../lib/trpc';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
+const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
+const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
+
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { login } = useAuth();
@@ -33,9 +36,29 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
   const [googleLoading, setGoogleLoading] = useState(false);
   const googlePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Charger l'email sauvegardé au démarrage si "Se souvenir de moi" était coché
+  useEffect(() => {
+    const loadSavedEmail = async () => {
+      try {
+        const [savedEmail, savedRememberMe] = await Promise.all([
+          AsyncStorage.getItem(REMEMBER_ME_EMAIL_KEY),
+          AsyncStorage.getItem(REMEMBER_ME_ENABLED_KEY),
+        ]);
+        if (savedRememberMe === 'true' && savedEmail) {
+          setEmail(savedEmail);
+          setRememberMe(true);
+        }
+      } catch (e) {
+        // Ignorer les erreurs de lecture
+      }
+    };
+    loadSavedEmail();
+  }, []);
 
   // Nettoyage du polling au démontage
   useEffect(() => {
@@ -85,7 +108,7 @@ export default function LoginScreen() {
     onSuccess: async (data) => {
       try {
         console.log('Login response:', data);
-        
+
         // Validate response data
         if (!data || !data.user || !data.token) {
           console.error('Invalid login response:', data);
@@ -93,7 +116,20 @@ export default function LoginScreen() {
           setLoading(false);
           return;
         }
-        
+
+        // Sauvegarder ou effacer l'email selon l'option "Se souvenir de moi"
+        if (rememberMe) {
+          await Promise.all([
+            AsyncStorage.setItem(REMEMBER_ME_EMAIL_KEY, email),
+            AsyncStorage.setItem(REMEMBER_ME_ENABLED_KEY, 'true'),
+          ]);
+        } else {
+          await Promise.all([
+            AsyncStorage.removeItem(REMEMBER_ME_EMAIL_KEY),
+            AsyncStorage.removeItem(REMEMBER_ME_ENABLED_KEY),
+          ]);
+        }
+
         // Store token and user data using AuthContext
         await login(data.user, data.token);
         setLoading(false);
@@ -118,7 +154,8 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    loginMutation.mutate({ email, password });
+    // Transmettre rememberMe au serveur pour obtenir un token de 30 jours
+    loginMutation.mutate({ email, password, rememberMe });
   };
 
   // Show Register screen
@@ -175,17 +212,26 @@ export default function LoginScreen() {
             {/* Mot de passe */}
             <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#6b7280"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="••••••••"
+                  placeholderTextColor="#6b7280"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Se souvenir de moi + Mot de passe oublié */}
@@ -319,6 +365,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     width: '100%',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    width: '100%',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 14,
+    fontSize: 16,
+    color: '#fff',
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    fontSize: 18,
   },
   optionsRow: {
     flexDirection: 'row',
