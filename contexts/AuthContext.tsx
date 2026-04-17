@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState, AppStateStatus } from 'react-native';
 import { User } from '../lib/types';
 
 interface AuthContextType {
@@ -28,7 +29,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
-  // Load user data on mount
+  // Indique si c'est le premier chargement (démarrage à froid) ou un retour d'arrière-plan
+  const isColdStart = useRef(true);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  // Écouter les changements d'état de l'app (active / background / inactive)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      const prev = appStateRef.current;
+      appStateRef.current = nextAppState;
+
+      // L'app revient au premier plan depuis l'arrière-plan
+      if (
+        (prev === 'background' || prev === 'inactive') &&
+        nextAppState === 'active'
+      ) {
+        // Ne pas revalider le token — la session est déjà en mémoire
+        // On marque qu'on n'est plus en démarrage à froid
+        isColdStart.current = false;
+        console.log('[AuthContext] App revenue au premier plan — pas de revalidation du token');
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Load user data on mount (démarrage à froid uniquement)
   useEffect(() => {
     loadUserData();
   }, []);
@@ -42,20 +68,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       ]);
 
       if (storedToken && storedUser) {
-        // Valider le token auprès du serveur avant de restaurer la session
+        // Valider le token auprès du serveur uniquement au démarrage à froid
+        // Si l'app revient de l'arrière-plan, on utilise directement le cache
         let tokenValid = true;
-        try {
-          const response = await fetch(`${API_URL}/api/trpc/user.me`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-          if (!response.ok) {
-            // Token invalide ou expiré → forcer la déconnexion
-            console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
-            tokenValid = false;
+
+        if (isColdStart.current) {
+          try {
+            const response = await fetch(`${API_URL}/api/trpc/user.me`, {
+              headers: { Authorization: `Bearer ${storedToken}` },
+            });
+            if (!response.ok) {
+              // Token invalide ou expiré → forcer la déconnexion
+              console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
+              tokenValid = false;
+            }
+          } catch (networkError) {
+            // Pas de réseau → utiliser le cache local (fail-open)
+            console.log('[AuthContext] Pas de réseau, utilisation du cache local');
           }
-        } catch (networkError) {
-          // Pas de réseau → utiliser le cache local (fail-open)
-          console.log('[AuthContext] Pas de réseau, utilisation du cache local');
+        } else {
+          console.log('[AuthContext] Retour arrière-plan — token utilisé depuis le cache sans revalidation');
         }
 
         if (!tokenValid) {
@@ -72,6 +104,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
+      isColdStart.current = false;
       setIsLoading(false);
     }
   };
@@ -115,6 +148,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setToken(null);
       setUser(null);
       setHasSeenOnboarding(false);
+      // Réinitialiser pour que le prochain démarrage à froid revalide bien le token
+      isColdStart.current = true;
     } catch (error) {
       console.error('Error clearing user data:', error);
       throw error;

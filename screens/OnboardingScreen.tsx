@@ -185,13 +185,6 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
     }
   };
 
-  const handleAction = () => {
-    if (step.action && onNavigate) {
-      onNavigate(step.action.pageIndex);
-      onComplete();
-    }
-  };
-
   const handleSkip = () => {
     onComplete();
   };
@@ -250,17 +243,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
               ))}
             </View>
 
-            {/* Action Button */}
-            {step.action && (
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={handleAction}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.actionButtonText}>{step.action.label}</Text>
-                <Ionicons name="arrow-forward" size={20} color="#ffffff" />
-              </TouchableOpacity>
-            )}
+            {/* Boutons Explorer supprimés — l'utilisateur doit parcourir tout l'onboarding */}
           </ScrollView>
 
           {/* Navigation */}
