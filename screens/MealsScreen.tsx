@@ -212,6 +212,30 @@ export default function MealsScreen({
   );
   const activeLists = useMemo(() => shoppingLists.filter((l: any) => !l.isArchived), [shoppingLists]);
 
+  // ─── Autocomplétion depuis l'historique ─────────────────────────────────────
+  const [historySuggestions, setHistorySuggestions] = useState<string[]>([]);
+
+  const filterHistorySuggestions = useCallback((query: string) => {
+    if (query.length < 2) { setHistorySuggestions([]); return; }
+    const q = query.toLowerCase();
+    const allMeals = [
+      ...(historyMeals as Meal[]),
+      ...(favoriteMeals as Meal[]),
+      ...(weekMeals as Meal[]),
+    ];
+    const seen = new Set<string>();
+    const matches: string[] = [];
+    for (const m of allMeals) {
+      const name = m.name?.trim();
+      if (name && name.toLowerCase().includes(q) && !seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase());
+        matches.push(name);
+        if (matches.length >= 6) break;
+      }
+    }
+    setHistorySuggestions(matches);
+  }, [historyMeals, favoriteMeals, weekMeals]);
+
   // ─── Formulaire repas ──────────────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
@@ -232,6 +256,7 @@ export default function MealsScreen({
     setShowForm(true);
     setRecipeSearch('');
     setRecipeSuggestions([]);
+    setHistorySuggestions([]);
     setImportUrl('');
     setImportResult(null);
   };
@@ -598,15 +623,35 @@ export default function MealsScreen({
               {editingMeal ? (t('meals.editMeal') || 'Modifier le repas') : (t('meals.newMeal') || 'Nouveau repas')}
             </Text>
 
-            {/* Nom */}
+            {/* Nom avec autocomplétion depuis l'historique */}
             <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
             <TextInput
               style={s.input}
               value={form.name}
-              onChangeText={n => setForm(p => ({ ...p, name: n }))}
+              onChangeText={n => {
+                setForm(p => ({ ...p, name: n }));
+                filterHistorySuggestions(n);
+              }}
               placeholder={t('meals.mealName') || 'Nom du repas'}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
+            {historySuggestions.length > 0 && (
+              <View style={s.historySuggestions}>
+                {historySuggestions.map((name, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={s.historySuggestionItem}
+                    onPress={() => {
+                      setForm(p => ({ ...p, name }));
+                      setHistorySuggestions([]);
+                    }}
+                  >
+                    <Text style={s.historySuggestionEmoji}>🕐</Text>
+                    <Text style={s.historySuggestionText}>{name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             {/* Recherche TheMealDB */}
             <Text style={s.label}>🔍 {t('meals.searchRecipe') || 'Rechercher une recette'}</Text>
@@ -933,5 +978,11 @@ function getStyles(isDark: boolean) {
     // Sélecteur de jour (déplacer repas)
     dayPickerBtn: { backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 14, marginBottom: 8 },
     dayPickerBtnCurrent: { backgroundColor: isDark ? '#1f2937' : '#e5e7eb', opacity: 0.6 },
-    dayPickerBtnText: { fontSize: 15, color: text, fontWeight: '500', textTransform: 'capitalize' }});
+    dayPickerBtnText: { fontSize: 15, color: text, fontWeight: '500', textTransform: 'capitalize' },
+    // Autocomplétion historique
+    historySuggestions: { backgroundColor: card, borderWidth: 1, borderColor: '#7c3aed', borderRadius: 10, marginBottom: 4, overflow: 'hidden' },
+    historySuggestionItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: border, gap: 8 },
+    historySuggestionEmoji: { fontSize: 14, color: '#7c3aed' },
+    historySuggestionText: { fontSize: 14, color: text, flex: 1 },
+  });
 }
