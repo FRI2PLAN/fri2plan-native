@@ -91,7 +91,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         if (!tokenValid) {
-          await AsyncStorage.multiRemove(['authToken', 'user', 'hasSeenOnboarding']);
+          // Ne pas supprimer hasSeenOnboarding — l'onboarding est lié à l'appareil, pas à la session
+          await AsyncStorage.multiRemove(['authToken', 'user']);
           return;
         }
 
@@ -143,11 +144,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await Promise.all([
         AsyncStorage.removeItem('authToken'),
         AsyncStorage.removeItem('user'),
-        AsyncStorage.removeItem('hasSeenOnboarding'),
+        // hasSeenOnboarding n'est PAS supprimé au logout
+        // L'onboarding est lié à l'appareil, pas à la session
       ]);
       setToken(null);
       setUser(null);
-      setHasSeenOnboarding(false);
+      // hasSeenOnboarding reste à true après déconnexion
       // Réinitialiser pour que le prochain démarrage à froid revalide bien le token
       isColdStart.current = true;
     } catch (error) {
