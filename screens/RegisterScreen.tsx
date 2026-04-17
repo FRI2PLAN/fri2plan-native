@@ -18,31 +18,55 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
+const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 
 interface RegisterScreenProps {
   onBackToLogin: () => void;
+  onRegistered?: () => void; // auto-login après inscription
 }
 
-export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
+export default function RegisterScreen({ onBackToLogin, onRegistered }: RegisterScreenProps) {
   const { t } = useTranslation();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [showInviteCode, setShowInviteCode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // tRPC mutation for auto-login after registration
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: async (data) => {
+      if (data?.user && data?.token) {
+        await login(data.user, data.token);
+        // onRegistered sera appelé automatiquement via AuthContext
+      }
+      setLoading(false);
+    },
+    onError: () => {
+      // Si l'auto-login échoue, rediriger vers le login
+      setLoading(false);
+      Alert.alert(
+        'Compte créé !',
+        'Votre compte a été créé. Veuillez vous connecter.',
+        [{ text: 'OK', onPress: onBackToLogin }]
+      );
+    },
+  });
+
   // tRPC mutation for registration
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
-      setLoading(false);
-      Alert.alert(
-        'Inscription réussie',
-        'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.',
-        [{ text: 'OK', onPress: onBackToLogin }]
-      );
+      // Auto-login après inscription réussie
+      loginMutation.mutate({ email, password, rememberMe: false });
     },
     onError: (error) => {
       console.error('Registration error:', error);
@@ -158,6 +182,35 @@ export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
             </View>
             <Text style={styles.hint}>{t('auth.minChars')}</Text>
 
+            {/* Code d'invitation (optionnel) */}
+            <TouchableOpacity
+              style={styles.inviteToggle}
+              onPress={() => setShowInviteCode(!showInviteCode)}
+            >
+              <Ionicons
+                name={showInviteCode ? 'chevron-up-outline' : 'chevron-down-outline'}
+                size={16} color="#7c3aed"
+              />
+              <Text style={styles.inviteToggleText}>
+                {showInviteCode ? 'Masquer le code d\'invitation' : 'J\'ai un code d\'invitation'}
+              </Text>
+            </TouchableOpacity>
+            {showInviteCode && (
+              <View style={styles.inputWrapper}>
+                <Ionicons name="key-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Code d'invitation (optionnel)"
+                  placeholderTextColor="#6b7280"
+                  value={inviteCode}
+                  onChangeText={setInviteCode}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
+            )}
+
             {/* Confirmer mot de passe */}
             <Text style={styles.label}>{t('auth.confirmPassword')}</Text>
             <View style={styles.inputWrapper}>
@@ -183,6 +236,29 @@ export default function RegisterScreen({ onBackToLogin }: RegisterScreenProps) {
                   color="#9ca3af"
                 />
               </TouchableOpacity>
+            </View>
+
+            {/* Règles du mot de passe */}
+            <View style={styles.passwordRules}>
+              <Text style={styles.passwordRulesTitle}>Le mot de passe doit contenir :</Text>
+              {[
+                { label: '8 caractères minimum', ok: password.length >= 8 },
+                { label: 'Une majuscule (A-Z)', ok: /[A-Z]/.test(password) },
+                { label: 'Une minuscule (a-z)', ok: /[a-z]/.test(password) },
+                { label: 'Un chiffre (0-9)', ok: /[0-9]/.test(password) },
+                { label: 'Un caractère spécial (!@#$...)', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) },
+              ].map((rule, i) => (
+                <View key={i} style={styles.passwordRule}>
+                  <Ionicons
+                    name={rule.ok ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={rule.ok ? '#10b981' : '#6b7280'}
+                  />
+                  <Text style={[styles.passwordRuleText, rule.ok && styles.passwordRuleOk]}>
+                    {rule.label}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             {/* Bouton S'inscrire (rose/magenta) */}
@@ -371,5 +447,45 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '500',
+  },
+  inviteToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    marginTop: 4,
+    gap: 6,
+  },
+  inviteToggleText: {
+    color: '#7c3aed',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  passwordRules: {
+    width: '100%',
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  passwordRulesTitle: {
+    color: '#9ca3af',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  passwordRule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 3,
+  },
+  passwordRuleText: {
+    color: '#6b7280',
+    fontSize: 12,
+  },
+  passwordRuleOk: {
+    color: '#10b981',
   },
 });

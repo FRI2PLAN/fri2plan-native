@@ -14,6 +14,8 @@ import { fr } from 'date-fns/locale';
 import FavoritesBar from '../components/FavoritesBar';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Modal } from 'react-native';
+import FamilySetupScreen from './FamilySetupScreen';
 
 interface DashboardScreenProps {
   onLogout: () => void;
@@ -30,6 +32,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [circlePickerOpen, setCirclePickerOpen] = useState(false);
+  const [showFamilySetup, setShowFamilySetup] = useState(false);
   const { activeFamilyId, setActiveFamilyId } = useFamily();
   const queryClient = useQueryClient();
 
@@ -342,7 +345,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
             <Text style={styles.noFamilyText}>
               {t('dashboard.noFamilyText')}
             </Text>
-            <TouchableOpacity style={styles.createFamilyButton}>
+            <TouchableOpacity style={styles.createFamilyButton} onPress={() => setShowFamilySetup(true)}>
               <Text style={styles.createFamilyButtonText}>{t('dashboard.createFamily')}</Text>
             </TouchableOpacity>
           </View>
@@ -504,6 +507,22 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Modal FamilySetup */}
+      <Modal
+        visible={showFamilySetup}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowFamilySetup(false)}
+      >
+        <FamilySetupScreen
+          onComplete={() => {
+            setShowFamilySetup(false);
+            queryClient.invalidateQueries();
+          }}
+          onSkip={() => setShowFamilySetup(false)}
+        />
+      </Modal>
     </View>
   );
 }
