@@ -16,6 +16,12 @@
     "plugins": [
       "expo-dev-client",
       [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.846470017457-b250hpecqp44u8av020p72f87dch0dus"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",

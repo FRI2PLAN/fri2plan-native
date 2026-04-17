@@ -21,7 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
-import { Linking } from 'react-native';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { API_URL } from '../lib/trpc';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
@@ -39,7 +39,14 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const googlePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Initialiser Google Sign-In
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '846470017457-qh90rioca6oujshvm05p23b5do8fbv6t.apps.googleusercontent.com',
+      offlineAccess: true,
+    });
+  }, []);
 
   // Charger l'email sauvegardé au démarrage si "Se souvenir de moi" était coché
   useEffect(() => {
@@ -60,46 +67,38 @@ export default function LoginScreen() {
     loadSavedEmail();
   }, []);
 
-  // Nettoyage du polling au démontage
-  useEffect(() => {
-    return () => {
-      if (googlePollRef.current) clearInterval(googlePollRef.current);
-    };
-  }, []);
-
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      // Générer un sessionId unique
-      const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      // Ouvrir le navigateur pour la connexion Google
-      const loginUrl = `${API_URL.replace('/trpc', '')}/api/google/login?sessionId=${sessionId}&mode=native`;
-      await Linking.openURL(loginUrl);
-      // Démarrer le polling toutes les 2 secondes (max 3 minutes)
-      let attempts = 0;
-      const maxAttempts = 90;
-      googlePollRef.current = setInterval(async () => {
-        attempts++;
-        if (attempts > maxAttempts) {
-          clearInterval(googlePollRef.current!);
-          setGoogleLoading(false);
-          Alert.alert('⏱️', 'Délai de connexion dépassé. Veuillez réessayer.');
-          return;
-        }
-        try {
-          const pollUrl = `${API_URL.replace('/trpc', '')}/api/google/poll?sessionId=${sessionId}`;
-          const resp = await fetch(pollUrl);
-          const data = await resp.json();
-          if (data.status === 'success' && data.token && data.user) {
-            clearInterval(googlePollRef.current!);
-            setGoogleLoading(false);
-            await login(data.user, data.token);
-          }
-        } catch { /* ignorer les erreurs réseau temporaires */ }
-      }, 2000);
-    } catch (err) {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken;
+      if (!idToken) throw new Error('Pas de token Google');
+
+      // Envoyer le token au serveur pour validation et connexion
+      const resp = await fetch(`${API_URL.replace('/trpc', '')}/api/google/native-signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await resp.json();
+      if (data.token && data.user) {
+        await login(data.user, data.token);
+      } else {
+        throw new Error(data.error || 'Erreur de connexion Google');
+      }
+    } catch (err: any) {
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+        // L'utilisateur a annulé — ne rien faire
+      } else if (err.code === statusCodes.IN_PROGRESS) {
+        // Connexion déjà en cours
+      } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Erreur', 'Google Play Services non disponible');
+      } else {
+        Alert.alert('❌', err.message || 'Impossible de se connecter avec Google');
+      }
+    } finally {
       setGoogleLoading(false);
-      Alert.alert('❌', 'Impossible d\'ouvrir la connexion Google');
     }
   };
 
