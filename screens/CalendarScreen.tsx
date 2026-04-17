@@ -450,6 +450,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       refetch();
     } catch (error) {
       console.error('Error updating event:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les modifications.');
+      setEditModalOpen(false);
+      setSelectedEvent(null);
+      resetForm();
     }
   };
 
@@ -488,7 +492,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       startTime: format(startTime, 'HH:mm'),
       endTime: format(endTime, 'HH:mm'),
       category: event.category || 'other',
-      reminder: event.reminder?.toString() || '15',
+      reminder: (event.reminderMinutes ?? event.reminder)?.toString() || '15',
       isPrivate: event.isPrivate || false});
     setEditModalOpen(true);
   };
@@ -1445,8 +1449,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 style={[styles.pickerOption, formData.reminder === option.value && { backgroundColor: isDark ? '#374151' : '#ede9fe' }]}
                 onPress={() => { setFormData(p => ({ ...p, reminder: option.value })); setShowReminderDropdown(false); }}
               >
-                <Text style={styles.pickerOptionText}>\uD83D\uDD14 {option.label}</Text>
-                {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>\u2713</Text>}
+                <Text style={styles.pickerOptionText}>🔔 {option.label}</Text>
+                {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>✓</Text>}
               </TouchableOpacity>
             ))}
           </View>
