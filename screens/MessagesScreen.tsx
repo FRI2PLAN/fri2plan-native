@@ -107,7 +107,9 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   };
 
   const isOwnMessage = (msg: any): boolean => {
-    return msg.userId === user?.id || msg.senderId === user?.id;
+    const myId = user?.id ? Number(user.id) : null;
+    if (!myId) return false;
+    return Number(msg.userId) === myId || Number(msg.senderId) === myId;
   };
 
   const getInitials = (name: string) => name.charAt(0).toUpperCase();

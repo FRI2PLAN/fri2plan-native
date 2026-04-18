@@ -201,7 +201,8 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   };
   
   const renderMessage = (message: any) => {
-    const isOwnMessage = message.userId === user?.id;
+    const myId = user?.id ? Number(user.id) : null;
+    const isOwnMessage = myId !== null && Number(message.userId) === myId;
     
     return (
       <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
