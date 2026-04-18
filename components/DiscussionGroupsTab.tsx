@@ -206,6 +206,15 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     
     return (
       <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
+        {/* Avatar à gauche pour les autres (extérieur bulle) */}
+        {!isOwnMessage && (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {message.userName?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
+
         <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
           {/* Nom de l'expéditeur (autres seulement) */}
           {!isOwnMessage && (
@@ -245,16 +254,8 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             </View>
           )}
 
-          {/* Pied de bulle : avatar + timestamp + bouton Réagir */}
+          {/* Pied de bulle : timestamp + bouton Réagir */}
           <View style={styles.bubbleFooter}>
-            {/* Avatar à gauche pour les autres */}
-            {!isOwnMessage && (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {message.userName?.charAt(0).toUpperCase() || '?'}
-                </Text>
-              </View>
-            )}
             <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
               {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
@@ -267,16 +268,17 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             >
               <Text style={[styles.reactButtonLabel, isOwnMessage && { color: 'rgba(255,255,255,0.8)' }]}>😊 Réagir</Text>
             </TouchableOpacity>
-            {/* Avatar à droite pour soi */}
-            {isOwnMessage && (
-              <View style={[styles.avatar, styles.ownAvatar]}>
-                <Text style={styles.avatarText}>
-                  {message.userName?.charAt(0).toUpperCase() || '?'}
-                </Text>
-              </View>
-            )}
           </View>
         </View>
+
+        {/* Avatar à droite pour soi (extérieur bulle) */}
+        {isOwnMessage && (
+          <View style={[styles.avatar, styles.ownAvatar]}>
+            <Text style={styles.avatarText}>
+              {message.userName?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };

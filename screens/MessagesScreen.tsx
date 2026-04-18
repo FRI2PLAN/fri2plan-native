@@ -121,6 +121,13 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
     return (
       <View style={[styles.messageBubbleWrapper, own ? styles.ownWrapper : styles.otherWrapper]}>
+        {/* Avatar à gauche pour les autres (extérieur bulle, aligné en bas) */}
+        {!own && (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitials(senderName)}</Text>
+          </View>
+        )}
+
         <View style={[styles.bubble, own ? styles.ownBubble : styles.otherBubble]}>
           {/* Nom de l'expéditeur (autres seulement) */}
           {!own && (
@@ -158,14 +165,8 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             </View>
           )}
 
-          {/* Pied de bulle : timestamp + bouton Réagir + avatar */}
+          {/* Pied de bulle : timestamp + bouton Réagir */}
           <View style={styles.bubbleFooter}>
-            {/* Avatar à gauche pour les autres */}
-            {!own && (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{getInitials(senderName)}</Text>
-              </View>
-            )}
             <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
               {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
@@ -178,14 +179,15 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             >
               <Text style={[styles.reactButtonText, own && styles.reactButtonTextOwn]}>😊 {t('messages.react')}</Text>
             </TouchableOpacity>
-            {/* Avatar à droite pour soi */}
-            {own && (
-              <View style={[styles.avatar, styles.ownAvatar]}>
-                <Text style={styles.avatarText}>{getInitials(user?.name || 'M')}</Text>
-              </View>
-            )}
           </View>
         </View>
+
+        {/* Avatar à droite pour soi (extérieur bulle, aligné en bas) */}
+        {own && (
+          <View style={[styles.avatar, styles.ownAvatar]}>
+            <Text style={styles.avatarText}>{getInitials(user?.name || 'M')}</Text>
+          </View>
+        )}
       </View>
     );
   };
