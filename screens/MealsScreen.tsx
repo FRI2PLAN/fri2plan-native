@@ -292,6 +292,19 @@ export default function MealsScreen({
     const mealTime = customTimes[form.mealType] || DEFAULT_TIMES[form.mealType];
     const dateStr = format(selectedDay, 'yyyy-MM-dd') + 'T' + mealTime + ':00';
 
+    // Construire les notes en incluant les ingrédients en tête si présents
+    let finalNotes = form.notes || '';
+    if (form.ingredients.length > 0) {
+      const ingSection = `Ingrédients :\n${form.ingredients.map(i => `• ${i}`).join('\n')}`;
+      // Si des notes manuelles existent et ne contiennent pas déjà une section ingrédients
+      if (finalNotes && !finalNotes.toLowerCase().includes('ingrédient')) {
+        finalNotes = ingSection + '\n\n' + finalNotes;
+      } else if (!finalNotes) {
+        finalNotes = ingSection;
+      }
+      // Si notes contient déjà une section ingrédients (import URL), on garde les notes telles quelles
+    }
+
     if (editingMeal) {
       await updateMeal.mutateAsync({
         mealId: editingMeal.id,
@@ -299,7 +312,7 @@ export default function MealsScreen({
         mealType: form.mealType,
         date: dateStr,
         servings: form.servings,
-        notes: form.notes || undefined,
+        notes: finalNotes || undefined,
         sourceUrl: form.sourceUrl || undefined,
         imageUrl: form.imageUrl || undefined});
     } else {
@@ -309,7 +322,7 @@ export default function MealsScreen({
         mealType: form.mealType,
         date: dateStr,
         servings: form.servings,
-        notes: form.notes || undefined,
+        notes: finalNotes || undefined,
         sourceUrl: form.sourceUrl || undefined,
         imageUrl: form.imageUrl || undefined});
     }
@@ -325,6 +338,8 @@ export default function MealsScreen({
     if (query.length < 2) { setRecipeSuggestions([]); return; }
     setSearchLoading(true);
     try {
+      // TheMealDB supporte uniquement l'anglais — on cherche toujours en anglais
+      // Pour FR/DE, on utilise aussi TheMealDB (base internationale) mais on traduit le placeholder
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
       const data = await res.json();
       setRecipeSuggestions((data.meals || []).slice(0, 5));
@@ -389,6 +404,7 @@ export default function MealsScreen({
 
   const openAddToShopping = (meal: Meal) => {
     // Parser les ingrédients depuis les notes (toutes formes possibles)
+    // Note: les ingrédients sont toujours stockés dans notes au format "Ingrédients :\n• ..."
     const notes = meal.notes || '';
     const lines = notes.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     let ingLines: string[] = [];
@@ -554,7 +570,40 @@ export default function MealsScreen({
           : (historyMeals as Meal[]).map(m => (
             <View key={m.id}>
               {renderMealCard(m)}
-              <TouchableOpacity style={s.reuseBtn} onPress={() => openCreate()}>
+              <TouchableOpacity style={s.reuseBtn} onPress={() => {
+                setEditingMeal(null);
+                setSelectedDay(new Date());
+                // Extraire les ingrédients depuis les notes du repas historique
+                const extractedIngredients: string[] = [];
+                const notes = m.notes || '';
+                const lines = notes.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+                const ingHeaderIdx = lines.findIndex((l: string) =>
+                  l.toLowerCase().includes('ingrédient') || l.toLowerCase().includes('ingredient')
+                );
+                if (ingHeaderIdx >= 0) {
+                  const endIdx = lines.findIndex((l: string, i: number) =>
+                    i > ingHeaderIdx && (l.toLowerCase().includes('préparation') || l.toLowerCase().includes('preparation') || l.toLowerCase().includes('instruction'))
+                  );
+                  const section = lines.slice(ingHeaderIdx + 1, endIdx > 0 ? endIdx : undefined);
+                  section.filter((l: string) => l.startsWith('•') || l.startsWith('-') || l.startsWith('*'))
+                    .forEach((l: string) => extractedIngredients.push(l.replace(/^[•\-\*]\s*/, '').trim()));
+                }
+                setForm({
+                  name: m.name,
+                  mealType: m.mealType,
+                  servings: m.servings || defaultServings,
+                  notes: '',
+                  sourceUrl: m.sourceUrl || '',
+                  imageUrl: m.imageUrl || '',
+                  ingredients: extractedIngredients
+                });
+                setShowForm(true);
+                setRecipeSearch('');
+                setRecipeSuggestions([]);
+                setHistorySuggestions([]);
+                setImportUrl('');
+                setImportResult(null);
+              }}>
                 <Text style={s.reuseBtnText}>↩️ {t('meals.reuse') || 'Réutiliser'}</Text>
               </TouchableOpacity>
             </View>
@@ -662,6 +711,12 @@ export default function MealsScreen({
               placeholder={t('meals.searchPlaceholder') || 'Ex: chicken, pasta...'}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
+            {/* Note: TheMealDB = base anglaise. Pour FR/DE, utiliser l'import URL (Marmiton, 750g...) */}
+            <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 4, marginTop: -4 }}>
+              {i18n.language === 'de' ? '🌐 Suche auf Englisch (z.B. "apple tart"). Für Deutsch: URL-Import nutzen.' :
+               i18n.language === 'fr' ? '🌐 Recherche en anglais (ex: "apple tart"). Pour FR: importer via URL Marmiton.' :
+               '🌐 Search in English (e.g. "apple tart"). For local recipes: use URL import.'}
+            </Text>
             {searchLoading && <ActivityIndicator size="small" color="#7c3aed" />}
             {recipeSuggestions.length > 0 && (
               <View style={s.suggestions}>

@@ -13,6 +13,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (user: User) => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  resetOnboarding: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -193,6 +194,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const resetOnboarding = async () => {
+    try {
+      await AsyncStorage.removeItem('hasSeenOnboarding');
+      setHasSeenOnboarding(false);
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -203,6 +213,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logout,
     updateUser,
     completeOnboarding,
+    resetOnboarding,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

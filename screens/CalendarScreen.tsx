@@ -435,7 +435,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const endDateTime = new Date(`${dateStr}T${format(endTimeDate, 'HH:mm')}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
       await updateEvent.mutateAsync({
-        id: selectedEvent.id,
+        eventId: selectedEvent.id,
         title: formData.title,
         description: formData.description,
         startDate: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),

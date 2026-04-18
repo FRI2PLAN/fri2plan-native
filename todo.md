@@ -1589,3 +1589,14 @@ components/
   - Modaux pickers partagés création/modification
   - Formulaire partagé TaskForm pour DRY
   - Dark mode complet
+
+## Bugs et améliorations (18 avril 2026)
+- [x] Fix repas : ingrédients sauvegardés dans notes (format structuré "Ingrédients :\n• ...")
+- [x] Fix repas : ajouter aux courses depuis le champ ingredients (pas seulement notes)
+- [x] Fix repas : import depuis historique reprend les ingrédients du repas original
+- [x] Fix calendrier : correction id→eventId dans updateEvent (cause du blocage)
+- [x] Fix guide démarrage : resetOnboarding() dans AuthContext, guide s'affiche immédiatement
+- [x] Fix Note app : utiliser market:// au lieu de https:// pour revenir dans l'app
+- [x] Fix JSON Parse error Google Sign-In (double /api dans l'URL corrigé)
+- [x] Fix notifications push Courses : shopping_item retiré de noPushTypes
+- [x] Recherche recettes : note informative langue anglaise + rappel import URL Marmiton

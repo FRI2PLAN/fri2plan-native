@@ -113,6 +113,7 @@ export default function HelpScreen({
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const auth = useAuth() as any;
+  const { resetOnboarding } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -148,8 +149,21 @@ export default function HelpScreen({
     createTicketMutation.mutate(ticketForm);
   };
 
-  const handleRateApp = () => {
-    Linking.openURL(GOOGLE_PLAY_URL).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le Google Play Store."));
+  const handleRateApp = async () => {
+    // Sur Android, utiliser market:// pour rester dans le contexte de l'app
+    // et permettre le retour via la flèche arrière
+    const marketUrl = 'market://details?id=space.manus.fri2plan.twa';
+    const webUrl = GOOGLE_PLAY_URL;
+    try {
+      const canOpenMarket = await Linking.canOpenURL(marketUrl);
+      if (canOpenMarket) {
+        await Linking.openURL(marketUrl);
+      } else {
+        await Linking.openURL(webUrl);
+      }
+    } catch {
+      Linking.openURL(webUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le Google Play Store."));
+    }
   };
 
   const handleRestartOnboarding = () => {
@@ -161,13 +175,8 @@ export default function HelpScreen({
         {
           text: 'Oui, relancer',
           onPress: async () => {
-            try {
-              const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-              await AsyncStorage.removeItem('hasSeenOnboarding');
-              Alert.alert('✅', 'Fermez et rouvrez l\'app pour voir le guide de démarrage.');
-            } catch {
-              Alert.alert('Info', "Fermez et rouvrez l'app pour voir le guide de démarrage.");
-            }
+            await resetOnboarding();
+            // Le guide s'affiche immédiatement sans déconnecter ni redémarrer
           },
         },
       ]

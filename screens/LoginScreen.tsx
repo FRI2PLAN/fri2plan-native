@@ -76,7 +76,9 @@ export default function LoginScreen() {
       if (!idToken) throw new Error('Pas de token Google');
 
       // Envoyer le token au serveur pour validation et connexion
-      const resp = await fetch(`${API_URL.replace('/trpc', '')}/api/google/native-signin`, {
+      // API_URL = 'https://app.fri2plan.ch/api/trpc' → base = 'https://app.fri2plan.ch'
+      const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
+      const resp = await fetch(`${baseUrl}/api/google/native-signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
