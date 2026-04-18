@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (isColdStart.current) {
           try {
-            const response = await fetch(`${API_URL}/api/trpc/user.me`, {
+            const response = await fetch(`${API_URL}/api/trpc/auth.me`, {
               headers: { Authorization: `Bearer ${storedToken}` },
             });
             if (!response.ok) {

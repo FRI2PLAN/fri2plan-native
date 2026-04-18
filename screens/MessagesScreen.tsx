@@ -119,7 +119,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
     return (
       <View style={[styles.messageBubbleWrapper, own ? styles.ownWrapper : styles.otherWrapper]}>
-        {/* Avatar (autres seulement) */}
+        {/* Avatar à gauche pour les autres */}
         {!own && (
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{getInitials(senderName)}</Text>
@@ -144,36 +144,43 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             />
           )}
 
-          {/* Timestamp */}
-          <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
-            {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
-          </Text>
-
           {/* Réactions existantes */}
           {Object.keys(reactions).length > 0 && (
             <View style={styles.reactionsRow}>
               {Object.entries(reactions).map(([emoji, users]: [string, any]) => (
-                <View key={emoji} style={styles.reactionBadge}>
+                <TouchableOpacity
+                  key={emoji}
+                  style={styles.reactionBadge}
+                  onPress={() => {
+                    setReactingToMessageId(message.id);
+                    setIsEmojiPickerOpen(true);
+                  }}
+                >
                   <Text style={styles.reactionEmoji}>{emoji}</Text>
                   <Text style={styles.reactionCount}>{(users as any[]).length}</Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
 
-          {/* Bouton Réagir */}
-          <TouchableOpacity
-            style={styles.reactButton}
-            onPress={() => {
-              setReactingToMessageId(message.id);
-              setIsEmojiPickerOpen(true);
-            }}
-          >
-            <Text style={styles.reactButtonText}>😊 {t('messages.react')}</Text>
-          </TouchableOpacity>
+          {/* Pied de bulle : timestamp + bouton Réagir */}
+          <View style={styles.bubbleFooter}>
+            <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
+              {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
+            </Text>
+            <TouchableOpacity
+              style={[styles.reactButton, own && styles.reactButtonOwn]}
+              onPress={() => {
+                setReactingToMessageId(message.id);
+                setIsEmojiPickerOpen(true);
+              }}
+            >
+              <Text style={[styles.reactButtonText, own && styles.reactButtonTextOwn]}>😊 {t('messages.react')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Avatar (soi-même à droite) */}
+        {/* Avatar à droite pour soi */}
         {own && (
           <View style={[styles.avatar, styles.ownAvatar]}>
             <Text style={styles.avatarText}>{getInitials(user?.name || 'M')}</Text>
@@ -437,13 +444,29 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 12,
     color: isDark ? '#d1d5db' : '#374151',
     fontWeight: '600'},
-  reactButton: {
+  bubbleFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 6,
-    alignSelf: 'flex-start'},
+    gap: 6,
+    flexWrap: 'wrap'},
+  reactButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(124,58,237,0.3)' : 'rgba(124,58,237,0.2)'},
+  reactButtonOwn: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.25)'},
   reactButtonText: {
     fontSize: 12,
-    color: isDark ? 'rgba(255,255,255,0.6)' : '#7c3aed',
+    color: isDark ? '#a78bfa' : '#7c3aed',
     fontWeight: '500'},
+  reactButtonTextOwn: {
+    color: 'rgba(255,255,255,0.85)'},
   // Zone de saisie
   inputContainer: {
     flexDirection: 'row',

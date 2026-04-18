@@ -1600,3 +1600,15 @@ components/
 - [x] Fix JSON Parse error Google Sign-In (double /api dans l'URL corrigé)
 - [x] Fix notifications push Courses : shopping_item retiré de noPushTypes
 - [x] Recherche recettes : note informative langue anglaise + rappel import URL Marmiton
+
+## Bugs et améliorations (18 avr. 2026 - session 2)
+
+- [ ] Fix session 30j : token non persistant, MDP redemandé après quelques minutes
+- [ ] Fix LoginScreen : boutons Google/Apple style natif (fond blanc, bordure, logo couleur)
+- [ ] Fix RegisterScreen : scroll bloqué quand clavier ouvert (MDP, confirmation, bouton S'inscrire inaccessible)
+- [ ] Fix RegisterScreen : validation format email
+- [ ] Fix RegisterScreen : supprimer boutons Manus et Microsoft
+- [ ] Fix onboarding : s'affiche à chaque saisie de MDP (ne doit s'afficher qu'à la 1ère connexion)
+- [ ] Fix onboarding : au relancement depuis Paramètres, scroll commence par la fin au lieu du début
+- [ ] Fix Messages Groupes : style bulles différent de Général (avatar extérieur, message collé bord)
+- [ ] Fix Messages Groupes : réactions style différent de Général

@@ -75,18 +75,31 @@ function calculateSplit(
   members: any[],
   currency: string
 ): { from: string; to: string; amount: number; currency: string }[] {
+  // N'utiliser QUE les dépenses (type 'expense') pour le calcul du split
+  // Les remboursements (type 'income', category 'Remboursement') sont exclus
+  const expenses = transactions.filter(t => t.type === 'expense');
+
   // Calculer ce que chaque membre a payé et ce qu'il doit
   const paid: Record<number, number> = {};
   const owes: Record<number, number> = {};
 
   members.forEach(m => { paid[m.id] = 0; owes[m.id] = 0; });
 
-  const total = transactions.reduce((sum, t) => sum + t.amount / 100, 0);
+  const total = expenses.reduce((sum, t) => sum + t.amount / 100, 0);
   const perPerson = members.length > 0 ? total / members.length : 0;
 
-  transactions.forEach(t => {
+  expenses.forEach(t => {
     if (t.userId && paid[t.userId] !== undefined) {
       paid[t.userId] += t.amount / 100;
+    }
+  });
+
+  // Soustraire les remboursements déjà effectués
+  const reimbursements = transactions.filter(t => t.type === 'income' && t.category === 'Remboursement');
+  reimbursements.forEach(r => {
+    if (r.userId && paid[r.userId] !== undefined) {
+      // Le rembourseur a payé cette somme → augmenter son crédit
+      paid[r.userId] += r.amount / 100;
     }
   });
 
@@ -205,6 +218,9 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     amount: '', category: 'Restaurant', description: '', payerId: user?.id || 0, date: new Date()});
   const [showProjectDatePicker, setShowProjectDatePicker] = useState(false);
   const [showCatDropdown, setShowCatDropdown] = useState(false);
+
+  // ── Remboursements confirmés (clé = "projectId-from-to-amount") ──
+  const [paidSettlements, setPaidSettlements] = useState<Set<string>>(new Set());
 
   // ── Formulaire catégorie ──
   const [catModalOpen, setCatModalOpen] = useState(false);
@@ -382,29 +398,39 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
     ]);
   };
 
+  // ── Clé unique pour identifier un remboursement ──
+  const getSettlementKey = (s: { from: string; to: string; amount: number }, projectId: number) =>
+    `${projectId}-${s.from}-${s.to}-${s.amount.toFixed(2)}`;
+
   // ── Marquer un remboursement comme payé ──
   const handleMarkSettlementPaid = (settlement: { from: string; to: string; amount: number; currency: string }, projectId: number) => {
+    const key = getSettlementKey(settlement, projectId);
+    // Si déjà payé, ne rien faire
+    if (paidSettlements.has(key)) return;
+
     const fromMember = (members as any[]).find(m => m.name === settlement.from);
     if (!fromMember) return;
     Alert.alert(
-      '✅ Marquer comme payé',
-      `${settlement.from} a remboursé ${settlement.amount.toFixed(2)} ${getCurrencySymbol(settlement.currency)} à ${settlement.to} ?`,
+      '\u2705 Marquer comme payé',
+      `${settlement.from} a remboursé ${settlement.amount.toFixed(2)} ${getCurrencySymbol(settlement.currency)} \u00e0 ${settlement.to} ?`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: 'Confirmer',
           onPress: () => {
-            // Ajouter une transaction de remboursement qui annule la dette
+            // Marquer visuellement comme payé immédiatement
+            setPaidSettlements(prev => new Set([...prev, key]));
+            // Ajouter une transaction de remboursement qui réduit la dette
             createTx.mutate({
               familyId: activeFamilyId,
               type: 'income',
               amount: Math.round(settlement.amount * 100),
               category: 'Remboursement',
-              description: `✅ Remboursé par ${settlement.from} à ${settlement.to}`,
+              description: `\u2705 Rembours\u00e9 par ${settlement.from} \u00e0 ${settlement.to}`,
               date: new Date(),
               isPrivate: 0,
               projectId,
-              payerId: fromMember.id,
+              userId: fromMember.id,
             });
           },
         },
@@ -1007,25 +1033,32 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
                     {settlements.length > 0 && (
                       <View style={styles.splitSection}>
                         <Text style={styles.splitTitle}>💸 {t('budget.splitSummary')}</Text>
-                        {settlements.map((s, i) => (
-                          <View key={i} style={styles.settlementCard}>
-                            <View style={{ flex: 1 }}>
-                              <Text style={styles.settlementText}>
-                                <Text style={styles.settlementFrom}>{s.from}</Text>
-                                {` ${t('budget.owes')} `}
-                                <Text style={styles.settlementAmount}>{s.amount.toFixed(2)} {getCurrencySymbol(s.currency)}</Text>
-                                {` ${t('budget.to')} `}
-                                <Text style={styles.settlementTo}>{s.to}</Text>
-                              </Text>
+                        {settlements.map((s, i) => {
+                          const key = getSettlementKey(s, selectedProject!.id);
+                          const isPaid = paidSettlements.has(key);
+                          return (
+                            <View key={i} style={styles.settlementCard}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.settlementText}>
+                                  <Text style={[styles.settlementFrom, isPaid && { color: '#10b981' }]}>{s.from}</Text>
+                                  {` ${t('budget.owes')} `}
+                                  <Text style={[styles.settlementAmount, isPaid && { color: '#10b981' }]}>{s.amount.toFixed(2)} {getCurrencySymbol(s.currency)}</Text>
+                                  {` ${t('budget.to')} `}
+                                  <Text style={styles.settlementTo}>{s.to}</Text>
+                                </Text>
+                              </View>
+                              <TouchableOpacity
+                                style={[styles.settlementPaidBtn, isPaid && styles.settlementPaidBtnConfirmed]}
+                                onPress={() => handleMarkSettlementPaid(s, selectedProject!.id)}
+                                disabled={isPaid}
+                              >
+                                <Text style={[styles.settlementPaidBtnText, isPaid && styles.settlementPaidBtnTextConfirmed]}>
+                                  {isPaid ? '\u2705 Payé' : 'Payé ?'}
+                                </Text>
+                              </TouchableOpacity>
                             </View>
-                            <TouchableOpacity
-                              style={styles.settlementPaidBtn}
-                              onPress={() => handleMarkSettlementPaid(s, selectedProject!.id)}
-                            >
-                              <Text style={styles.settlementPaidBtnText}>✅ Payé</Text>
-                            </TouchableOpacity>
-                          </View>
-                        ))}
+                          );
+                        })}
                       </View>
                     )}
 
@@ -1371,9 +1404,16 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   settlementAmount: { fontWeight: '700', color: '#7c3aed' },
   settlementTo: { fontWeight: '700', color: '#10b981' },
   settlementPaidBtn: {
-    backgroundColor: '#10b981', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    borderWidth: 1,
+    borderColor: isDark ? '#4b5563' : '#d1d5db',
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0},
-  settlementPaidBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  settlementPaidBtnConfirmed: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981'},
+  settlementPaidBtnText: { color: isDark ? '#d1d5db' : '#374151', fontSize: 12, fontWeight: '700' },
+  settlementPaidBtnTextConfirmed: { color: '#fff' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: isDark ? '#fff' : '#111827', marginHorizontal: 16, marginTop: 8, marginBottom: 8 },
   // Settings
   settingsSection: {

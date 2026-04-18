@@ -205,30 +205,21 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     
     return (
       <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
-        {/* Bulle avec avatar intégré (style Général) */}
+        {/* Avatar à gauche pour les autres */}
+        {!isOwnMessage && (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {message.userName?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
+
         <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
-          {/* En-tête : avatar + nom (seulement pour les autres) */}
+          {/* Nom de l'expéditeur (autres seulement) */}
           {!isOwnMessage && (
-            <View style={styles.messageHeader}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {message.userName?.charAt(0).toUpperCase() || '?'}
-                </Text>
-              </View>
-              <Text style={styles.messageSender}>
-                {message.userName || t('messages.unknownUser')}
-              </Text>
-            </View>
-          )}
-          {/* En-tête pour mes messages : avatar + nom à droite */}
-          {isOwnMessage && (
-            <View style={[styles.messageHeader, { justifyContent: 'flex-end' }]}>
-              <View style={[styles.avatar, styles.ownAvatar]}>
-                <Text style={styles.avatarText}>
-                  {message.userName?.charAt(0).toUpperCase() || '?'}
-                </Text>
-              </View>
-            </View>
+            <Text style={styles.messageSender}>
+              {message.userName || t('messages.unknownUser')}
+            </Text>
           )}
 
           {/* Contenu */}
@@ -262,7 +253,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             </View>
           )}
 
-          {/* Timestamp + bouton Réagir amélioré */}
+          {/* Timestamp + bouton Réagir */}
           <View style={styles.bubbleFooter}>
             <Text style={[styles.messageTime, isOwnMessage && { color: 'rgba(255,255,255,0.65)' }]}>
               {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
@@ -278,6 +269,15 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Avatar à droite pour soi */}
+        {isOwnMessage && (
+          <View style={[styles.avatar, styles.ownAvatar]}>
+            <Text style={styles.avatarText}>
+              {message.userName?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };

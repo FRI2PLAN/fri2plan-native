@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -165,6 +165,15 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ visible, onComplete, onNavigate }: OnboardingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const prevVisibleRef = useRef(false);
+
+  // Réinitialiser à l'étape 0 chaque fois que l'onboarding devient visible
+  useEffect(() => {
+    if (visible && !prevVisibleRef.current) {
+      setCurrentStep(0);
+    }
+    prevVisibleRef.current = visible;
+  }, [visible]);
 
   const step = ONBOARDING_STEPS[currentStep];
   const isFirstStep = currentStep === 0;
