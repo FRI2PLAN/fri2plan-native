@@ -32,6 +32,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Indique si c'est le premier chargement (démarrage à froid) ou un retour d'arrière-plan
   const isColdStart = useRef(true);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  // Timestamp de mise en arrière-plan pour calculer la durée d'inactivité
+  const backgroundedAtRef = useRef<number | null>(null);
+  // Durée max d'inactivité avant revalidation du token (30 minutes)
+  const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
   // Écouter les changements d'état de l'app (active / background / inactive)
   useEffect(() => {
@@ -39,15 +43,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const prev = appStateRef.current;
       appStateRef.current = nextAppState;
 
+      // L'app passe en arrière-plan → noter l'heure
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        backgroundedAtRef.current = Date.now();
+        console.log('[AuthContext] App mise en arrière-plan à', new Date().toISOString());
+      }
+
       // L'app revient au premier plan depuis l'arrière-plan
       if (
         (prev === 'background' || prev === 'inactive') &&
         nextAppState === 'active'
       ) {
-        // Ne pas revalider le token — la session est déjà en mémoire
-        // On marque qu'on n'est plus en démarrage à froid
-        isColdStart.current = false;
-        console.log('[AuthContext] App revenue au premier plan — pas de revalidation du token');
+        const backgroundedAt = backgroundedAtRef.current;
+        const elapsed = backgroundedAt ? Date.now() - backgroundedAt : 0;
+        console.log('[AuthContext] App revenue au premier plan, inactivité:', Math.round(elapsed / 1000), 'sec');
+
+        if (elapsed > SESSION_TIMEOUT_MS) {
+          // Inactivité > 30 min → revalider le token
+          console.log('[AuthContext] Inactivité > 30 min, revalidation du token...');
+          isColdStart.current = true;
+          loadUserData();
+        } else {
+          // Inactivité courte → utiliser le cache sans revalidation
+          isColdStart.current = false;
+          console.log('[AuthContext] Inactivité courte — token utilisé depuis le cache');
+        }
+        backgroundedAtRef.current = null;
       }
     });
 

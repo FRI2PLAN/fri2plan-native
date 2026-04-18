@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as Updates from 'expo-updates';
+import { API_URL } from '../lib/trpc';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal,
   TextInput, Alert, ActivityIndicator, Linking, KeyboardAvoidingView, Platform, Image,
@@ -49,6 +50,26 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const { setSwipeEnabled } = usePager();
 
   const [subScreen, setSubScreen] = useState<SubScreen>(null);
+
+  // ─── Indicateur de connexion serveur ──────────────────────────────────────
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  useEffect(() => {
+    const checkServer = async () => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const baseUrl = API_URL.replace('/trpc', '');
+        const resp = await fetch(`${baseUrl}/api/health`, { signal: controller.signal });
+        clearTimeout(timeout);
+        setServerStatus(resp.ok ? 'online' : 'offline');
+      } catch {
+        setServerStatus('offline');
+      }
+    };
+    checkServer();
+    const interval = setInterval(checkServer, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Désactiver le swipe du pager quand un sous-écran est ouvert
   const navigateToSubScreen = (screen: SubScreen) => {
@@ -1044,6 +1065,23 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <Text style={styles.settingLabel}>{t('settings.version')}</Text>
             </View>
             <Text style={styles.settingValue}>{(Updates as any).manifest?.version || (Updates as any).manifest2?.extra?.expoClient?.version || '1.0.1'}</Text>
+          </View>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Text style={styles.settingIcon}>🌐</Text>
+              <Text style={styles.settingLabel}>{t('settings.serverStatus') || 'Serveur'}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{
+                width: 10, height: 10, borderRadius: 5,
+                backgroundColor: serverStatus === 'online' ? '#22c55e' : serverStatus === 'offline' ? '#ef4444' : '#f59e0b',
+              }} />
+              <Text style={styles.settingValue}>
+                {serverStatus === 'online' ? (t('settings.serverOnline') || 'Connecté') :
+                 serverStatus === 'offline' ? (t('settings.serverOffline') || 'Hors ligne') :
+                 (t('settings.serverChecking') || 'Vérification...')}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.settingItem} onPress={() => setShowTermsModal(true)}>
             <View style={styles.settingLeft}>

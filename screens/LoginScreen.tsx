@@ -279,10 +279,6 @@ export default function LoginScreen() {
             </View>
 
             {/* OAuth buttons */}
-            <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>{t('auth.continueWithManus')}</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.oauthButton, styles.oauthButtonGoogle]}
               onPress={handleGoogleLogin}
@@ -294,12 +290,18 @@ export default function LoginScreen() {
                   <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
                 </View>
               ) : (
-                <Text style={styles.oauthButtonText}>🔵 {t('auth.continueWithGoogle')}</Text>
+                <View style={styles.oauthLoadingRow}>
+                  <Text style={{ fontSize: 18, marginRight: 8 }}>G</Text>
+                  <Text style={styles.oauthButtonText}>{t('auth.continueWithGoogle')}</Text>
+                </View>
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.oauthButton} disabled>
-              <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
+            <TouchableOpacity style={[styles.oauthButton, styles.oauthButtonApple]} disabled>
+              <View style={styles.oauthLoadingRow}>
+                <Text style={{ fontSize: 18, marginRight: 8, color: '#fff', fontWeight: 'bold' }}></Text>
+                <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -492,5 +494,9 @@ const styles = StyleSheet.create({
   oauthLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  oauthButtonApple: {
+    backgroundColor: '#000',
+    opacity: 0.6,
   },
 });
