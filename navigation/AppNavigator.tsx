@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './navigationRef';
 import CircularPager from '../components/CircularPager';
 import GlobalPrefetch from '../components/GlobalPrefetch';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
@@ -99,7 +100,7 @@ export default function AppNavigator({
   };
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Drawer.Navigator
         initialRouteName="Home"
         drawerContent={(props) => (

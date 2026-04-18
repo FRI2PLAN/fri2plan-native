@@ -11,14 +11,22 @@ import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
-
-// ─── Configuration du comportement des notifications en foreground ────────────
+// ─── Configuration du comportement des notifications en foreground ────────────────────
+// Les notifications s'affichent TOUJOURS (même si l'app est ouverte)
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data as Record<string, string> | undefined;
+    const type = data?.type || '';
+    // Rappels et messages : son + vibration + alerte
+    const isUrgent = type.includes('reminder') || type.includes('message');
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: isUrgent,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
 export interface PushNotificationState {
@@ -39,16 +47,40 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     return null;
   }
 
-  // Créer le canal de notification Android (requis Android 8+)
+  // Créer les canaux de notification Android (requis Android 8+)
   if (Platform.OS === 'android') {
+    // Canal principal (rappels événements et tâches)
     await Notifications.setNotificationChannelAsync('fri2plan_notifications', {
-      name: 'FRI2PLAN',
+      name: 'FRI2PLAN — Rappels',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#7c3aed',
       sound: 'default',
       enableVibrate: true,
       showBadge: true,
+      description: 'Rappels d\'\u00e9vénements et de tâches',
+    });
+    // Canal messages
+    await Notifications.setNotificationChannelAsync('fri2plan_messages', {
+      name: 'FRI2PLAN — Messages',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 100, 100, 100],
+      lightColor: '#7c3aed',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+      description: 'Messages familiaux',
+    });
+    // Canal général (autres notifications)
+    await Notifications.setNotificationChannelAsync('fri2plan_general', {
+      name: 'FRI2PLAN — Général',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 100],
+      lightColor: '#7c3aed',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+      description: 'Notifications générales',
     });
   }
 
@@ -112,11 +144,18 @@ export function usePushNotifications(): PushNotificationState {
       console.log('[Push] Notification reçue en foreground:', notif.request.content.title);
     });
 
-    // Écouter les interactions avec les notifications (tap)
+    // Écouter les interactions avec les notifications (tap) → naviguer vers le bon écran
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
-      console.log('[Push] Notification tapée, data:', data);
-      // Navigation future : utiliser data.url ou data.screen pour naviguer
+      const data = response.notification.request.content.data as Record<string, string> | undefined;
+      const type = data?.type || '';
+      console.log('[Push] Notification tapée, type:', type, 'data:', data);
+      // Naviguer vers l'écran correspondant au type de notification
+      if (type) {
+        // Import dynamique pour éviter les dépendances circulaires
+        import('../navigation/navigationRef').then(({ navigateFromNotification }) => {
+          navigateFromNotification(type);
+        }).catch(err => console.error('[Push] Erreur navigation:', err));
+      }
     });
 
     return () => {

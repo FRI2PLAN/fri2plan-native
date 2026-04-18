@@ -28,30 +28,34 @@ const queryClient = new QueryClient({
 // Doit être rendu INSIDE <trpc.Provider> pour pouvoir utiliser les hooks tRPC
 function PushRegistrar() {
   const { isAuthenticated, token } = useAuth();
-  const pushTokenRegistered = useRef(false);
+  const lastRegisteredToken = useRef<string | null>(null);
   const registerPushMutation = trpc.fcm.registerToken.useMutation();
 
   useEffect(() => {
-    if (isAuthenticated && token && !pushTokenRegistered.current) {
-      pushTokenRegistered.current = true;
-      registerForPushNotificationsAsync()
-        .then(expoPushToken => {
-          if (expoPushToken) {
-            registerPushMutation.mutate(
-              { token: expoPushToken, platform: Platform.OS },
-              {
-                onSuccess: () => console.log('[Push] Token Expo enregistré sur le serveur'),
-                onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
-              }
-            );
-          }
-        })
-        .catch(err => console.error('[Push] Erreur obtention token:', err));
+    if (!isAuthenticated || !token) {
+      // Réinitialiser lors de la déconnexion pour forcer le re-enregistrement à la prochaine connexion
+      lastRegisteredToken.current = null;
+      return;
     }
-    // Réinitialiser lors de la déconnexion
-    if (!isAuthenticated) {
-      pushTokenRegistered.current = false;
-    }
+
+    // Enregistrer le token push à chaque démarrage/connexion
+    // (le serveur fait un upsert donc pas de doublon)
+    registerForPushNotificationsAsync()
+      .then(expoPushToken => {
+        if (expoPushToken && expoPushToken !== lastRegisteredToken.current) {
+          lastRegisteredToken.current = expoPushToken;
+          registerPushMutation.mutate(
+            { token: expoPushToken, platform: Platform.OS },
+            {
+              onSuccess: () => console.log('[Push] Token Expo enregistré/mis à jour sur le serveur:', expoPushToken.slice(0, 40) + '...'),
+              onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
+            }
+          );
+        } else if (!expoPushToken) {
+          console.warn('[Push] Impossible d\'obtenir le token Expo Push (permissions refusées ou émulateur)');
+        }
+      })
+      .catch(err => console.error('[Push] Erreur obtention token:', err));
   }, [isAuthenticated, token]);
 
   return null; // Composant invisible — effet uniquement
