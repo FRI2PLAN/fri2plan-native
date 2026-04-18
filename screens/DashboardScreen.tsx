@@ -68,16 +68,17 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     undefined,
     { enabled: !!activeFamily }
   );
-  // Normaliser les dates : le serveur peut retourner des objets Date JS ou des strings SQL
+  // Normaliser les dates : le serveur stocke les dates en heure locale (Europe/Zurich)
+  // NE PAS ajouter 'Z' (qui forcerait une interprétation UTC et décalerait de +2h)
   const normalizeDate = (d: any): string => {
     if (!d) return '';
     if (typeof d === 'string') {
-      // String SQL "2026-04-16 08:00:00" → ajouter Z pour UTC
-      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.replace(' ', 'T') + (d.includes('Z') || d.includes('+') ? '' : 'Z');
-      return d; // déjà ISO ou autre format
+      // String SQL "2026-04-16 08:00:00" → remplacer espace par T, sans ajouter Z
+      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.includes('T') ? d : d.replace(' ', 'T');
+      return d;
     }
-    // Objet Date JS ou timestamp
-    return new Date(d).toISOString();
+    // Objet Date JS ou timestamp (déjà en heure locale)
+    return new Date(d).toISOString().replace('Z', '');
   };
   const events = (rawEvents as any[]).map((e: any) => ({
     ...e,

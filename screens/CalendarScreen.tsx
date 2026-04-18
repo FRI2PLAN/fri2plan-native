@@ -293,9 +293,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const isLoadingEvents = eventsQuery.isLoading;
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
-    // Ajouter 'Z' pour forcer l'interprétation UTC → conversion automatique en heure locale
-    startTime: e.startDate ? e.startDate.replace(' ', 'T') + 'Z' : e.startDate,
-    endTime: e.endDate ? e.endDate.replace(' ', 'T') + 'Z' : e.endDate}));
+    // Les dates en base sont en heure locale (Europe/Zurich) — NE PAS ajouter 'Z' (qui forcerait UTC +2h)
+    startTime: e.startDate ? e.startDate.replace(' ', 'T') : e.startDate,
+    endTime: e.endDate ? e.endDate.replace(' ', 'T') : e.endDate}));
   const refetch = eventsQuery.refetch;
 
   const createEvent = trpc.events.create.useMutation();
