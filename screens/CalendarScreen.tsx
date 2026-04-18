@@ -15,6 +15,22 @@ import { useFamily } from '../contexts/FamilyContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+/**
+ * Parser une date stockée en base (heure locale Europe/Zurich) en objet Date JS.
+ * Sur Android/Hermes, new Date("2026-04-18T18:30:00") SANS Z est interprété comme UTC (+2h).
+ * Cette fonction parse explicitement les composants pour éviter toute ambiguïté.
+ */
+function parseLocalDate(dateStr: string | undefined | null): Date {
+  if (!dateStr) return new Date();
+  // Normaliser : remplacer espace par T si nécessaire
+  const s = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  // Parser les composants manuellement pour forcer l'heure locale
+  const [datePart, timePart = '00:00:00'] = s.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, seconds);
+}
+
 const EVENT_CATEGORIES = [
   { value: 'meal', label: 'Repas', labelEn: 'Meal', labelDe: 'Mahlzeit', icon: '🍽️', color: '#f59e0b' },
   { value: 'birthday', label: 'Anniversaire', labelEn: 'Birthday', labelDe: 'Geburtstag', icon: '🎂', color: '#ec4899' },
@@ -294,8 +310,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
     // Les dates en base sont en heure locale (Europe/Zurich) — NE PAS ajouter 'Z' (qui forcerait UTC +2h)
-    startTime: e.startDate ? e.startDate.replace(' ', 'T') : e.startDate,
-    endTime: e.endDate ? e.endDate.replace(' ', 'T') : e.endDate}));
+    startTime: e.startDate || '',
+    endTime: e.endDate || ''}));
   const refetch = eventsQuery.refetch;
 
   const createEvent = trpc.events.create.useMutation();
@@ -380,16 +396,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!events) return [];
     let filteredEvents = events;
     if (viewMode === 'agenda') {
-      filteredEvents = filteredEvents.filter(event => new Date(event.startTime) >= new Date());
+      filteredEvents = filteredEvents.filter(event => parseLocalDate(event.startTime) >= new Date());
     } else if (viewMode === 'week') {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
       filteredEvents = filteredEvents.filter(event => {
-        const eventDate = new Date(event.startTime);
+        const eventDate = parseLocalDate(event.startTime);
         return eventDate >= weekStart && eventDate <= weekEnd;
       });
     } else {
-      filteredEvents = filteredEvents.filter(event => isSameDay(new Date(event.startTime), date));
+      filteredEvents = filteredEvents.filter(event => isSameDay(parseLocalDate(event.startTime), date));
     }
     if (selectedCategories.length > 0) {
       filteredEvents = filteredEvents.filter(event => selectedCategories.includes(event.category));
@@ -481,8 +497,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
-    const startTime = new Date(event.startTime);
-    const endTime = new Date(event.endTime);
+    const startTime = parseLocalDate(event.startTime);
+    const endTime = parseLocalDate(event.endTime);
     setEventDate(startTime);
     setStartTimeDate(startTime);
     setEndTimeDate(endTime);
@@ -643,7 +659,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <View style={styles.daysGrid}>
                 {calendarGrid.map((day) => {
                   const isCurrentMonth = isSameMonth(day, currentDate);
-                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(new Date(e.startTime), day)) : [];
+                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(parseLocalDate(e.startTime), day)) : [];
                   const hasEvents = dayEvts.length > 0;
                   const isSelected = isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
@@ -666,7 +682,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       ]}
                       onPress={() => {
                         setSelectedDate(day);
-                        const dayEvents = (events || []).filter(e => isSameDay(new Date(e.startTime), day));
+                        const dayEvents = (events || []).filter(e => isSameDay(parseLocalDate(e.startTime), day));
                         if (dayEvents.length > 0) setDropdownModalOpen(true);
                         else {
                           setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
@@ -725,14 +741,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       }
                       return (event as any).color || category.color;
                     })();
-                    const isEventPast = new Date(event.startTime) < new Date();
+                    const isEventPast = parseLocalDate(event.startTime) < new Date();
                     return (
                       <TouchableOpacity key={event.id} style={[styles.eventCard, isEventPast && { opacity: 0.6 }]} onPress={() => openEditModal(event)}>
                         <View style={[styles.eventColorBar, { backgroundColor: barColor }]} />
                         <View style={styles.eventCardContent}>
                           <View style={styles.eventHeader}>
                             <Text style={styles.eventIcon}>{category.icon}</Text>
-                            <Text style={styles.eventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                            <Text style={styles.eventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
                             {isEventPast && (
                               <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
                                 <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>
@@ -773,11 +789,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           <View style={styles.agendaContainer}>
             {events && events.length > 0 ? (
               events
-                .filter(event => new Date(event.startTime) >= new Date())
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .filter(event => parseLocalDate(event.startTime) >= new Date())
+                .sort((a, b) => parseLocalDate(a.startTime).getTime() - parseLocalDate(b.startTime).getTime())
                 .map((event, index, arr) => {
-                  const eventDate = new Date(event.startTime);
-                  const prevEventDate = index > 0 ? new Date(arr[index - 1].startTime) : null;
+                  const eventDate = parseLocalDate(event.startTime);
+                  const prevEventDate = index > 0 ? parseLocalDate(arr[index - 1].startTime) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
                   const category = getCategoryInfo(event.category);
                   const desc = cleanDescription(event.description);
@@ -854,7 +870,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => {
                     const hourEvents = (events || []).filter(event => {
-                      const eventDate = new Date(event.startTime);
+                      const eventDate = parseLocalDate(event.startTime);
                       return isSameDay(eventDate, day) && eventDate.getHours() === hour;
                     });
                     return (
@@ -869,7 +885,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             >
                               <Text style={styles.weekEventIcon}>{category.icon}</Text>
                               <Text style={styles.weekEventTitle} numberOfLines={1}>{event.title}</Text>
-                              <Text style={styles.weekEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                              <Text style={styles.weekEventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -899,7 +915,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <ScrollView style={styles.dayTimeline}>
               {Array.from({ length: 24 }, (_, hour) => {
                 const hourEvents = (events || []).filter(event => {
-                  const eventDate = new Date(event.startTime);
+                  const eventDate = parseLocalDate(event.startTime);
                   return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
                 });
                 return (
@@ -911,8 +927,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View style={styles.dayTimeHalfHourLine} />
                       {hourEvents.map(event => {
                         const category = getCategoryInfo(event.category);
-                        const startT = new Date(event.startTime);
-                        const endT = new Date(event.endTime);
+const startT = parseLocalDate(event.startTime);
+        const endT = parseLocalDate(event.endTime);
                         const durationMinutes = (endT.getTime() - startT.getTime()) / (1000 * 60);
                         const eventHeight = Math.max(durationMinutes * 2, 40);
                         const topOffset = startT.getMinutes() * 2;
@@ -1090,7 +1106,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
             <ScrollView style={styles.dropdownEventsList}>
-              {(events || []).filter(e => isSameDay(new Date(e.startTime), selectedDate)).map(event => {
+              {(events || []).filter(e => isSameDay(parseLocalDate(e.startTime), selectedDate)).map(event => {
                 const category = getCategoryInfo(event.category);
                 const desc = cleanDescription(event.description);
                 // Couleur barre : abonnement > couleur event > catégorie
@@ -1102,14 +1118,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   return (event as any).color || category.color;
                 })();
                 const isImported = !!(event as any).calendarSubscriptionId;
-                const isDropPast = new Date(event.startTime) < new Date();
+                const isDropPast = parseLocalDate(event.startTime) < new Date();
                 return (
                   <TouchableOpacity key={event.id} style={[styles.dropdownEventCard, isDropPast && { opacity: 0.6 }]} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
                     <View style={[styles.dropdownEventColorBar, { backgroundColor: dropBarColor }]} />
                     <View style={styles.dropdownEventContent}>
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
-                        <Text style={styles.dropdownEventTime}>{format(new Date(event.startTime), 'HH:mm')}</Text>
+                        <Text style={styles.dropdownEventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
                         {isDropPast && (
                           <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
                             <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>

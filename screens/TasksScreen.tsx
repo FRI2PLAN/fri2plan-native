@@ -10,6 +10,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
+/** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
+function parseLocalDate(dateStr: string | undefined | null): Date {
+  if (!dateStr) return new Date();
+  const s = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  const [datePart, timePart = '00:00:00'] = s.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, seconds);
+}
+
 interface TasksScreenProps {
   onNavigate?: (screen: string) => void;
   onPrevious?: () => void;
@@ -125,8 +135,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
   const getDueDateStr = (dueDate: string) => {
-    // Les dates en base sont en heure locale — NE PAS ajouter 'Z'
-    try { return format(new Date(dueDate.replace(' ', 'T')), 'yyyy-MM-dd'); }
+    try { return format(parseLocalDate(dueDate), 'yyyy-MM-dd'); }
     catch { return ''; }
   };
 
@@ -143,21 +152,21 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const getStatusLabel = (s: string) => ({ todo: '⭕ À faire', inProgress: '🔵 En cours', completed: '✅ Terminée' }[s] || s);
 
   const formatDueDate = (d: string) => {
-    try { return format(new Date(d.replace(' ', 'T')), 'dd MMM', { locale: getLocale() }); }
+    try { return format(parseLocalDate(d), 'dd MMM', { locale: getLocale() }); }
     catch { return d; }
   };
 
   // ── Filtrage ──
   const todayTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) === todayStr);
   const upcomingTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) >= tomorrowStr)
-    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime());
+    .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
 
   const upcomingGroups: { label: string; dateStr: string; tasks: typeof upcomingTasks }[] = [];
   upcomingTasks.forEach(t => {
     const ds = getDueDateStr(t.dueDate!);
     let label = ds === tomorrowStr
       ? `Demain — ${format(addDays(new Date(), 1), 'dd MMMM', { locale: getLocale() })}`
-      : (() => { const d = new Date(t.dueDate!.replace(' ', 'T')); const l = format(d, 'EEEE dd MMMM', { locale: getLocale() }); return l.charAt(0).toUpperCase() + l.slice(1); })();
+      : (() => { const d = parseLocalDate(t.dueDate!); const l = format(d, 'EEEE dd MMMM', { locale: getLocale() }); return l.charAt(0).toUpperCase() + l.slice(1); })();
     const g = upcomingGroups.find(g => g.dateStr === ds);
     if (g) g.tasks.push(t); else upcomingGroups.push({ label, dateStr: ds, tasks: [t] });
   });
@@ -181,7 +190,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       title: selectedTask.title,
       description: selectedTask.description || '',
       assignedTo: selectedTask.assignedTo,
-      dueDate: selectedTask.dueDate ? new Date(selectedTask.dueDate.replace(' ', 'T')) : undefined,
+      dueDate: selectedTask.dueDate ? parseLocalDate(selectedTask.dueDate) : undefined,
       recurrence: selectedTask.recurrence || 'none',
       points: selectedTask.points || 10,
       priority: selectedTask.priority || 'medium',

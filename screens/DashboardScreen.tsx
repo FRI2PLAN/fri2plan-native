@@ -17,6 +17,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Modal } from 'react-native';
 import FamilySetupScreen from './FamilySetupScreen';
 
+/** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
+function parseLocalDate(dateStr: string | undefined | null): Date {
+  if (!dateStr) return new Date();
+  const s = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  const [datePart, timePart = '00:00:00'] = s.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, seconds);
+}
+
 interface DashboardScreenProps {
   onLogout: () => void;
   onPrevious?: () => void;
@@ -121,7 +131,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     return tasks.filter(t => {
       if (t.status === 'completed') return false;
       if (!t.dueDate) return false;
-      const dueDate = new Date(t.dueDate);
+      const dueDate = parseLocalDate(t.dueDate);
       dueDate.setHours(0, 0, 0, 0);
       return dueDate.getTime() === today.getTime();
     }).length;
@@ -134,7 +144,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
     return events.filter(e => {
-      const eventDate = new Date(e.startDate);
+      const eventDate = parseLocalDate(e.startDate);
       return eventDate >= todayStart && eventDate <= todayEnd;
     });
   }, [events]);
@@ -151,10 +161,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       tomorrow.setDate(tomorrow.getDate() + 1);
       return events
         .filter(e => {
-          const eventDate = new Date(e.startDate);
+          const eventDate = parseLocalDate(e.startDate);
           return eventDate >= now && eventDate < tomorrow;
         })
-        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime())
         .slice(0, 3);
     } else {
       // Vue Semaine : aujourd'hui + 7 jours (semaine coulante), sans passés, max 3
@@ -164,10 +174,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       in7days.setHours(23, 59, 59, 999);
       return events
         .filter(e => {
-          const eventDate = new Date(e.startDate);
+          const eventDate = parseLocalDate(e.startDate);
           return eventDate >= now && eventDate <= in7days;
         })
-        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime())
         .slice(0, 3);
     }
   }, [events, viewMode]);
@@ -419,7 +429,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                           <View style={styles.eventContent}>
                             <Text style={styles.eventTitle}>{event.title}</Text>
                             <Text style={styles.eventTime}>
-                              {format(new Date(event.startDate), viewMode === 'week' ? 'EEE d MMM · HH:mm' : 'HH:mm', { locale: fr })}
+                              {format(parseLocalDate(event.startDate), viewMode === 'week' ? 'EEE d MMM · HH:mm' : 'HH:mm', { locale: fr })}
                             </Text>
                           </View>
                           <View style={[styles.eventDot, { backgroundColor: event.color || '#7c3aed' }]} />
