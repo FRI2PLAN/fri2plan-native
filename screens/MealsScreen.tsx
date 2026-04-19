@@ -149,7 +149,7 @@ export default function MealsScreen({
 
   // ─── Repas de la semaine ───────────────────────────────────────────────────
   const { data: weekMeals = [], isLoading: mealsLoading } = trpc.meals.list.useQuery(
-    { familyId: familyId!, startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') },
+    { familyId: familyId!, startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') + ' 23:59:59' },
     { enabled: !!familyId }
   );
 

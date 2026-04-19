@@ -206,6 +206,8 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     
     return (
       <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
+        {/* Spacer pour pousser la bulle à droite (messages propres) */}
+        {isOwnMessage && <View style={{ flex: 1, minWidth: 40 }} />}
         {/* Avatar à gauche pour les autres (extérieur bulle) */}
         {!isOwnMessage && (
           <View style={styles.avatar}>

@@ -351,6 +351,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     setGoogleCalendarLoading(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
+      // Récupérer le token Google stocké lors du polling
+      let googleToken: any = null;
+      try {
+        const stored = await AsyncStorage.getItem('googleOAuthToken');
+        if (stored) googleToken = JSON.parse(stored);
+      } catch {}
       const response = await fetch('https://app.fri2plan.ch/api/google-calendar/subscribe', {
         method: 'POST',
         headers: {
@@ -361,6 +367,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           calendarId: cal.id,
           calendarName: cal.summary,
           color: cal.backgroundColor || '#4285f4',
+          googleToken,
         }),
       });
       const data = await response.json();
@@ -599,11 +606,40 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.calMenuIcon}>📤</Text>
               <Text style={styles.calMenuLabel}>{t('calendar.exportIcs') || 'Exporter le calendrier'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calMenuItem} onPress={() => {
+            <TouchableOpacity style={styles.calMenuItem} onPress={async () => {
               setCalendarMenuVisible(false);
-              Linking.openURL('https://app.fri2plan.ch/api/google-calendar/connect?source=android').catch(() =>
+              // Générer un sessionId unique pour le polling
+              const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}`;
+              Linking.openURL(connectUrl).catch(() =>
                 Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
               );
+              // Polling toutes les 2s pendant 3 minutes max
+              let attempts = 0;
+              const maxAttempts = 90;
+              const token = await AsyncStorage.getItem('authToken');
+              const pollInterval = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                  clearInterval(pollInterval);
+                  return;
+                }
+                try {
+                  const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, {
+                    headers: { 'Authorization': token ? `Bearer ${token}` : '' },
+                  });
+                  const pollData = await pollRes.json();
+                  if (pollData.status === 'ready') {
+                    clearInterval(pollInterval);
+                    // Stocker le token Google pour l'utiliser lors de subscribe
+                    if (pollData.tokenData) {
+                      await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
+                    }
+                    setGoogleCalendars(pollData.calendars || []);
+                    setGoogleCalendarModal(true);
+                  }
+                } catch { /* ignorer les erreurs de polling */ }
+              }, 2000);
             }}>
               <Text style={styles.calMenuIcon}>🗓️</Text>
               <Text style={styles.calMenuLabel}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
@@ -1477,7 +1513,7 @@ const startT = parseLocalDate(event.startTime);
       <Modal visible={googleCalendarModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>\uD83D\uDDD3\uFE0F Calendriers Google</Text>
+            <Text style={styles.modalTitle}>🗓️ Calendriers Google</Text>
             <Text style={[styles.importInfoText, { marginBottom: 12 }]}>
               Sélectionnez un calendrier à synchroniser avec FRI2PLAN.
             </Text>
@@ -1504,7 +1540,7 @@ const startT = parseLocalDate(event.startTime);
                   <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cal.backgroundColor || '#4285f4', marginRight: 12 }} />
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }}>
-                      {cal.summary}{cal.primary ? ' \u2605' : ''}
+                      {cal.summary}{cal.primary ? ' ★' : ''}
                     </Text>
                     {cal.description ? (
                       <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }} numberOfLines={1}>
@@ -1517,7 +1553,7 @@ const startT = parseLocalDate(event.startTime);
               ))}
             </ScrollView>
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
-              <ModalIconButton icon="\u2715" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setGoogleCalendarModal(false)} />
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setGoogleCalendarModal(false)} />
             </View>
           </View>
         </View>

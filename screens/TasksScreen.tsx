@@ -296,8 +296,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     );
   };
 
-  // ── Composant formulaire ─────────────────────────────────────────────────
-  const TaskForm = ({ data, setData, isEdit = false }: { data: typeof emptyForm; setData: any; isEdit?: boolean }) => (
+  // ── Formulaire (fonction de rendu, pas un composant, pour éviter le re-montage au clavier) ──
+  const renderTaskForm = (data: typeof emptyForm, setData: (d: typeof emptyForm) => void, isEdit = false) => (
     <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
       {/* Titre */}
       <View style={styles.formGroup}>
@@ -548,7 +548,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 </TouchableOpacity>
               </View>
             </View>
-            <TaskForm data={formData} setData={setFormData} isEdit={false} />
+            {renderTaskForm(formData, setFormData, false)}
           </View>
         </View>
       </Modal>
@@ -573,7 +573,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 </TouchableOpacity>
               </View>
             </View>
-            <TaskForm data={editFormData} setData={setEditFormData} isEdit={true} />
+            {renderTaskForm(editFormData, setEditFormData, true)}
           </View>
         </View>
       </Modal>
