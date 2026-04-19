@@ -206,8 +206,6 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     
     return (
       <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
-        {/* Spacer pour pousser la bulle à droite (messages propres) */}
-        {isOwnMessage && <View style={{ flex: 1, minWidth: 40 }} />}
         {/* Avatar à gauche pour les autres (extérieur bulle) */}
         {!isOwnMessage && (
           <View style={styles.avatar}>
@@ -661,9 +659,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'flex-end',
     marginBottom: 12,
     paddingHorizontal: 4,
+    width: '100%',
   },
   messageRowOwn: {
-    justifyContent: 'flex-end',
+    flexDirection: 'row-reverse',
+    justifyContent: 'flex-start',
   },
   messageRowOther: {
     justifyContent: 'flex-start',
