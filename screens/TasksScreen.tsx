@@ -59,6 +59,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [favoriteFilter, setFavoriteFilter] = useState<FilterType>('inProgress');
 
   // ── Sections collapsibles ──
+  const [overdueExpanded, setOverdueExpanded] = useState(true);
   const [todayExpanded, setTodayExpanded] = useState(true);
   const [upcomingExpanded, setUpcomingExpanded] = useState(false);
 
@@ -157,6 +158,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   // ── Filtrage ──
+  const overdueTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) < todayStr)
+    .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
   const todayTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) === todayStr);
   const upcomingTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) >= tomorrowStr)
     .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
@@ -404,6 +407,21 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <TasksSkeleton />
         ) : (
           <>
+            {/* Section En retard */}
+            {overdueTasks.length > 0 && (
+              <>
+                <TouchableOpacity style={[styles.sectionToday, { backgroundColor: '#f59e0b' }]} onPress={() => setOverdueExpanded(p => !p)} activeOpacity={0.8}>
+                  <Text style={styles.sectionTodayIcon}>⚠️</Text>
+                  <Text style={styles.sectionTodayTitle}>{t('tasks.overdue') || 'En retard'}</Text>
+                  <View style={styles.sectionRight}>
+                    <View style={styles.sectionBadge}><Text style={styles.sectionBadgeText}>{overdueTasks.length}</Text></View>
+                    <Text style={styles.sectionChevron}>{overdueExpanded ? '▲' : '▼'}</Text>
+                  </View>
+                </TouchableOpacity>
+                {overdueExpanded && overdueTasks.map(t => <TaskCard key={t.id} task={t} />)}
+              </>
+            )}
+
             {/* Section Aujourd'hui */}
             <TouchableOpacity style={styles.sectionToday} onPress={() => setTodayExpanded(p => !p)} activeOpacity={0.8}>
               <Text style={styles.sectionTodayIcon}>📅</Text>
