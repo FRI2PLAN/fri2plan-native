@@ -36,15 +36,18 @@ export default function RichHeader({
   // Récupérer les données utilisateur
   const { data: user } = trpc.auth.me.useQuery();
 
-  // Récupérer le nombre de notifications non lues
-  const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery();
-
   // Récupérer les points de la famille pour le classement
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId
     ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0]
     : families?.[0];
+
+  // Récupérer le nombre de notifications non lues filtrées par famille active
+  const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery(
+    { familyId: activeFamily?.id || undefined },
+    { enabled: !!activeFamily }
+  );
   const activeFamilyName: string | null = activeFamily?.name || null;
   const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamily?.id || 0 },

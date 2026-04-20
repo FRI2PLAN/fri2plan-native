@@ -157,7 +157,16 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   // ── Famille ──
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
-  const activeFamilyId = ctxFamilyId ?? (families as any[])[0]?.id ?? 1;
+  // Utiliser useMemo pour résoudre correctement la famille active (même pattern que DashboardScreen)
+  const activeFamily = useMemo(() => {
+    if (!families || (families as any[]).length === 0) return undefined;
+    if (ctxFamilyId) {
+      const found = (families as any[]).find((f: any) => f.id === ctxFamilyId);
+      if (found) return found;
+    }
+    return (families as any[])[0];
+  }, [families, ctxFamilyId]);
+  const activeFamilyId = activeFamily?.id ?? 0;
   const { data: members = [] } = trpc.family.members.useQuery(
     { familyId: activeFamilyId },
     { enabled: !!activeFamilyId }

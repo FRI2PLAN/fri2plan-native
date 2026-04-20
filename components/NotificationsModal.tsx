@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -33,10 +34,15 @@ export default function NotificationsModal({
   const styles = getStyles(isDark);
 
   const utils = trpc.useUtils();
+  const { activeFamilyId } = useFamily();
+  const { data: families } = trpc.family.list.useQuery();
+  const activeFamily = activeFamilyId
+    ? (families as any[])?.find((f: any) => f.id === activeFamilyId) ?? families?.[0]
+    : families?.[0];
 
   const { data: notifications = [], isLoading, refetch } = trpc.notifications.list.useQuery(
-    undefined,
-    { enabled: visible }
+    { familyId: activeFamily?.id || undefined },
+    { enabled: visible && !!activeFamily }
   );
 
   const refreshAll = () => {

@@ -215,28 +215,37 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   ];
   const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  // Clé isolée par famille pour éviter le partage des raccourcis entre cercles
+  const favoritesKey = activeFamilyId ? `dashboard_favorites_${activeFamilyId}` : 'dashboard_favorites';
 
-  // Load favorites from AsyncStorage on mount
+  // Load favorites from AsyncStorage (réinitialise quand la famille change)
   useEffect(() => {
-    AsyncStorage.getItem('dashboard_favorites').then((stored) => {
+    setFavoritesLoaded(false);
+    AsyncStorage.getItem(favoritesKey).then((stored) => {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setFavorites(parsed);
+          } else {
+            setFavorites(DEFAULT_FAVORITES);
           }
-        } catch {}
+        } catch {
+          setFavorites(DEFAULT_FAVORITES);
+        }
+      } else {
+        setFavorites(DEFAULT_FAVORITES);
       }
       setFavoritesLoaded(true);
     });
-  }, []);
+  }, [favoritesKey]);
 
   // Save favorites to AsyncStorage whenever they change (after initial load)
   useEffect(() => {
     if (favoritesLoaded) {
-      AsyncStorage.setItem('dashboard_favorites', JSON.stringify(favorites));
+      AsyncStorage.setItem(favoritesKey, JSON.stringify(favorites));
     }
-  }, [favorites, favoritesLoaded]);
+  }, [favorites, favoritesLoaded, favoritesKey]);
 
   // All available pages for favorites selection
   const allPages = [
