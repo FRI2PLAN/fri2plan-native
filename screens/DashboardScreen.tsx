@@ -186,24 +186,30 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     return messages.filter(m => 'isRead' in m && m.isRead === 0).length;
   }, [messages]);
 
-  // Get upcoming birthdays (max 3)
+  // Get upcoming birthdays from calendar events (category = 'birthday') — same logic as webview UpcomingBirthdaysWidget
   const upcomingBirthdays = useMemo(() => {
     const today = new Date();
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
-    return familyMembers
-      .filter(m => m.birthday)
-      .map(m => {
-        const birthday = new Date(m.birthday!);
-        const thisYearBirthday = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
-        const nextYearBirthday = new Date(today.getFullYear() + 1, birthday.getMonth(), birthday.getDate());
-        const upcomingBirthday = thisYearBirthday >= today ? thisYearBirthday : nextYearBirthday;
-        const daysUntil = Math.ceil((upcomingBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return { ...m, upcomingBirthday, daysUntil };
+    today.setHours(0, 0, 0, 0);
+    return (events as any[])
+      .filter(e => e.category === 'birthday')
+      .map(e => {
+        // Calculer la prochaine occurrence annuelle (anniversaires récurrents)
+        const eventDate = parseLocalDate(e.startDate);
+        const thisYearDate = new Date(today.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+        const nextYearDate = new Date(today.getFullYear() + 1, eventDate.getMonth(), eventDate.getDate());
+        const nextBirthday = thisYearDate >= today ? thisYearDate : nextYearDate;
+        const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return {
+          id: e.id,
+          name: e.title,
+          userColor: e.color || '#ec4899',
+          upcomingBirthday: nextBirthday,
+          daysUntil,
+        };
       })
-      .filter(m => m.upcomingBirthday <= nextMonth)
       .sort((a, b) => a.daysUntil - b.daysUntil)
       .slice(0, 3);
-  }, [familyMembers]);
+  }, [events]);
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
