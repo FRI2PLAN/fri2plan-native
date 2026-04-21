@@ -103,6 +103,7 @@ const TICKET_CATEGORIES = [
   { value: 'technique', label: '🔧 Problème technique' },
   { value: 'facturation', label: '💳 Facturation' },
   { value: 'fonctionnalite', label: '💡 Suggestion' },
+  { value: 'test_ferme', label: '🧪 Test fermé' },
   { value: 'autre', label: '📋 Autre' },
 ];
 
@@ -120,7 +121,7 @@ export default function HelpScreen({
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [ticketForm, setTicketForm] = useState({
-    category: 'technique' as 'technique' | 'facturation' | 'fonctionnalite' | 'autre',
+    category: 'technique' as 'technique' | 'facturation' | 'fonctionnalite' | 'test_ferme' | 'autre',
     subject: '',
     message: '',
   });
