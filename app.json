@@ -49,11 +49,6 @@
       "package": "com.fri2plan.app",
       "versionCode": 3,
       "edgeToEdgeEnabled": true,
-      "navigationBar": {
-        "visible": "immersive",
-        "barStyle": "dark-content",
-        "backgroundColor": "#7c3aed"
-      },
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
