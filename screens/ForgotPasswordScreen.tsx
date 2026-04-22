@@ -68,7 +68,7 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
           <View style={styles.card}>
             {/* Logo centré dans la card */}
             <Image
-              source={require('../assets/logo.jpg')}
+              source={require('../assets/logo.png')}
               style={styles.cardLogo}
               resizeMode="contain"
             />

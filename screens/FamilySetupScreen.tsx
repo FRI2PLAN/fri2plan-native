@@ -86,7 +86,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
         <StatusBar style="light" />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
-            <Image source={require('../assets/logo.jpg')} style={styles.logo} resizeMode="contain" />
+            <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
             <Text style={styles.title}>Bienvenue ! 🎉</Text>
             <Text style={styles.subtitle}>
               Pour commencer, créez votre famille ou rejoignez une famille existante.
