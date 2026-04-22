@@ -109,16 +109,17 @@ function AppContent() {
     }
   }, [token]);
 
-  // Afficher le splash screen tant que l'auth OU Google Sign-In ne sont pas prêts
-  if (isLoading || isInitializing || !googleReady) {
-    return <SplashScreen />;
-  }
-
+  // Le trpc.Provider enveloppe TOUT (splash + login + app)
+  // pour que LoginScreen puisse utiliser les hooks tRPC (trpc.auth.login.useMutation)
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       {/* PushRegistrar est INSIDE trpc.Provider — peut utiliser les hooks tRPC */}
       <PushRegistrar />
-      {isAuthenticated ? (
+
+      {/* Splash screen tant que l'auth OU Google Sign-In ne sont pas prêts */}
+      {(isLoading || isInitializing || !googleReady) ? (
+        <SplashScreen />
+      ) : isAuthenticated ? (
         <>
           <AppNavigator onLogout={logout} />
           <OnboardingScreen
