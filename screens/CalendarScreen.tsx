@@ -355,7 +355,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     onError: (e: any) => Alert.alert('Erreur', e.message || 'Impossible de supprimer les événements'),
   });
   const updateSubscription = trpc.events.updateSubscription.useMutation({
-    onSuccess: () => { refetchSubscriptions(); refetch(); setColorPickerSubId(null); },
+    onSuccess: () => {
+      calendarUtils.events.listSubscriptions.invalidate();
+      calendarUtils.events.list.invalidate();
+      setColorPickerSubId(null);
+    },
   });
   const [subscribeName, setSubscribeName] = useState('');
   const [subscribeLoading, setSubscribeLoading] = useState(false);
