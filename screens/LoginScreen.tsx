@@ -83,6 +83,9 @@ export default function LoginScreen() {
     try {
       setGoogleLoading(true);
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Forcer l'affichage du sélecteur de compte Google en se déconnectant d'abord
+      // Cela évite le bug Android où signIn() ne montre pas la fenêtre au premier appel
+      try { await GoogleSignin.signOut(); } catch (_) {}
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
       if (!idToken) throw new Error('Pas de token Google');
