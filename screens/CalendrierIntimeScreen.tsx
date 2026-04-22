@@ -29,9 +29,15 @@ const getFlowOptions = (t: (k: string) => string) => [
   { value: 'heavy',  label: t('intimate.flowHeavy'),  emoji: '💧💧💧' },
 ];
 
-const SYMPTOM_OPTIONS = [
-  'Crampes', 'Maux de tête', 'Fatigue', 'Ballonnements',
-  'Nausées', 'Douleurs dorsales', 'Sautes d\'humeur', 'Acné',
+const getSymptomOptions = (t: (k: string) => string) => [
+  t('intimate.symptomCramps'),
+  t('intimate.symptomHeadache'),
+  t('intimate.symptomFatigue'),
+  t('intimate.symptomBloating'),
+  t('intimate.symptomNausea'),
+  t('intimate.symptomBackPain'),
+  t('intimate.symptomMoodSwings'),
+  t('intimate.symptomAcne'),
 ];
 
 const PHASE_COLORS = {
