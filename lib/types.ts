@@ -3,6 +3,8 @@
 
 export interface User {
   id: number;
+  openId?: string;
+  loginMethod?: string;
   name: string;
   email: string;
   role?: string;

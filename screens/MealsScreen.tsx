@@ -196,6 +196,8 @@ export default function MealsScreen({
   const deleteMeal = trpc.meals.delete.useMutation({ onSuccess: () => { utils.meals.list.invalidate(); utils.meals.history.invalidate(); } });
   const toggleFavorite = trpc.meals.toggleFavorite.useMutation({ onSuccess: () => { utils.meals.history.invalidate(); utils.meals.favorites.invalidate(); } });
   const importFromUrl = trpc.meals.importFromUrl.useMutation();
+  const translateRecipeMutation = trpc.meals.translateRecipe.useMutation();
+  const [translating, setTranslating] = useState(false);
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
 
   // ─── Listes de courses (pour ajouter ingrédients) ─────────────────────────
@@ -379,29 +381,53 @@ export default function MealsScreen({
   const importFromSpoonacular = async (recipe: SpoonacularResult) => {
     // Récupérer les détails complets de la recette (ingrédients, instructions)
     setSearchLoading(true);
+    let ingredients: string[] = [];
+    let notes = '';
     try {
-      const lang = i18n.language === 'de' ? 'de' : i18n.language === 'fr' ? 'fr' : 'en';
-      const res = await fetch(`https://api.spoonacular.com/recipes/${recipe.id}/information?language=${lang}&apiKey=${SPOONACULAR_API_KEY}`);
+      // Toujours récupérer en anglais (base Spoonacular), on traduira ensuite
+      const res = await fetch(`https://api.spoonacular.com/recipes/${recipe.id}/information?apiKey=${SPOONACULAR_API_KEY}`);
       const data = await res.json();
-      const ingredients: string[] = (data.extendedIngredients || []).map((ing: any) => {
+      ingredients = (data.extendedIngredients || []).map((ing: any) => {
         const amount = ing.amount ? `${ing.amount} ${ing.unit || ''}`.trim() : '';
         return amount ? `${amount} ${ing.name}` : ing.name;
       });
-      const notes = data.instructions ? data.instructions.replace(/<[^>]+>/g, '').substring(0, 500) : '';
-      setForm(p => ({
-        ...p,
-        name: recipe.title,
-        ingredients,
-        imageUrl: recipe.image || '',
-        notes,
-        sourceUrl: `https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, '-')}-${recipe.id}`,
-      }));
+      notes = data.instructions ? data.instructions.replace(/<[^>]+>/g, '').substring(0, 1000) : '';
     } catch {
       // Fallback : juste le titre et l'image
       setForm(p => ({ ...p, name: recipe.title, imageUrl: recipe.image || '' }));
+      setSearchLoading(false);
+      setRecipeSuggestions([]);
+      setRecipeSearch('');
+      return;
     } finally {
       setSearchLoading(false);
     }
+    // Traduire si la langue n'est pas l'anglais
+    const userLang = i18n.language === 'de' ? 'de' : i18n.language === 'fr' ? 'fr' : 'en';
+    if (userLang !== 'en' && (ingredients.length > 0 || notes)) {
+      setTranslating(true);
+      try {
+        const translated = await translateRecipeMutation.mutateAsync({
+          ingredients,
+          instructions: notes,
+          targetLang: userLang,
+        });
+        ingredients = translated.ingredients;
+        notes = translated.instructions;
+      } catch {
+        // En cas d'erreur de traduction, garder les données originales
+      } finally {
+        setTranslating(false);
+      }
+    }
+    setForm(p => ({
+      ...p,
+      name: recipe.title,
+      ingredients,
+      imageUrl: recipe.image || '',
+      notes,
+      sourceUrl: `https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, '-')}-${recipe.id}`,
+    }));
     setRecipeSuggestions([]);
     setRecipeSearch('');
   };
@@ -760,6 +786,14 @@ export default function MealsScreen({
                '🌐 Search in English, French or German (Spoonacular)'}
             </Text>
             {searchLoading && <ActivityIndicator size="small" color="#7c3aed" />}
+            {translating && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                <ActivityIndicator size="small" color="#7c3aed" />
+                <Text style={{ color: '#7c3aed', fontSize: 13 }}>
+                  {i18n.language === 'de' ? 'Übersetzung...' : i18n.language === 'fr' ? 'Traduction en cours...' : 'Translating...'}
+                </Text>
+              </View>
+            )}
             {recipeSuggestions.length > 0 && (
               <View style={s.suggestions}>
                 {recipeSuggestions.map(r => (

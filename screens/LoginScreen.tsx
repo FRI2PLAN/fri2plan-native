@@ -300,13 +300,13 @@ export default function LoginScreen() {
             >
               {googleLoading ? (
                 <View style={styles.oauthLoadingRow}>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
+                  <ActivityIndicator color="#374151" size="small" />
+                  <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#374151' }]}>Connexion en cours...</Text>
                 </View>
               ) : !googleReady ? (
                 <View style={styles.oauthLoadingRow}>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>{t('auth.continueWithGoogle')}</Text>
+                  <ActivityIndicator color="#374151" size="small" />
+                  <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#374151' }]}>{t('auth.continueWithGoogle')}</Text>
                 </View>
               ) : (
                 <View style={styles.oauthLoadingRow}>
@@ -323,7 +323,7 @@ export default function LoginScreen() {
                       <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                     </G>
                   </Svg>
-                  <Text style={styles.oauthButtonText}>{t('auth.continueWithGoogle')}</Text>
+                  <Text style={[styles.oauthButtonText, { color: '#374151' }]}>{t('auth.continueWithGoogle')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -519,7 +519,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   oauthButtonGoogle: {
-    backgroundColor: '#4285f4',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
     opacity: 1,
   },
   oauthLoadingRow: {
