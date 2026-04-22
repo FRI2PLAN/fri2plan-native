@@ -642,7 +642,120 @@
     "rateApp": "Laisser un avis sur Google Play",
     "contactSupport": "Contacter le support",
     "category": "Catégorie",
-    "sendTicket": "Envoyer le ticket"
+    "sendTicket": "Envoyer le ticket",
+    "guideTitle": "Guide\ndémarrage",
+    "myTicketsShort": "Mes\ntickets",
+    "contactSupportShort": "Contacter\nsupport",
+    "rateAppShort": "Noter\nl'app",
+    "searchPlaceholder": "🔍 Rechercher dans la FAQ...",
+    "noResults": "Aucun résultat pour",
+    "rateBannerTitle": "⭐ Vous aimez FRI2PLAN ?",
+    "rateBannerText": "Votre avis sur le Google Play Store nous aide énormément à nous améliorer et à atteindre d'autres familles !",
+    "subjectLabel": "Sujet *",
+    "subjectPlaceholder": "Ex: Problème de connexion...",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Décrivez votre problème en détail...",
+    "emailHint": "📧 Vous recevrez une confirmation par email et serez notifié des réponses.",
+    "ticketCreatedTitle": "✅ Ticket créé",
+    "ticketCreatedMsg": "Votre ticket {{number}} a été créé. Vous recevrez une réponse par email.",
+    "fieldRequired": "Champ requis",
+    "subjectRequired": "Veuillez saisir un sujet.",
+    "messageRequired": "Veuillez décrire votre problème.",
+    "ticketError": "Impossible de créer le ticket.",
+    "restartGuideTitle": "🚀 Guide de démarrage",
+    "restartGuideMsg": "Voulez-vous revoir le guide de démarrage ?",
+    "restartGuideConfirm": "Oui, relancer",
+    "statusNew": "Nouveau",
+    "statusInProgress": "En cours",
+    "statusResolved": "Résolu",
+    "statusClosed": "Fermé",
+    "catAll": "Tous",
+    "catStart": "Démarrage",
+    "catCalendar": "Calendrier",
+    "catBudget": "Budget",
+    "catRewards": "Récompenses",
+    "catAccount": "Compte",
+    "catSubscription": "Abonnement",
+    "catTechnical": "🔧 Problème technique",
+    "catBilling": "💳 Facturation",
+    "catSuggestion": "💡 Suggestion",
+    "catClosedTest": "🧪 Test fermé",
+    "catOther": "📋 Autre",
+    "openStoreError": "Impossible d'ouvrir le Google Play Store.",
+    "faqItems": [
+      {
+        "id": 1,
+        "category": "catStart",
+        "question": "Comment créer ma famille ?",
+        "answer": "Allez dans l'onglet Cercles (👥), puis appuyez sur \"Créer un cercle\". Donnez un nom à votre famille, choisissez une couleur et invitez les membres via leur email ou un code d'invitation."
+      },
+      {
+        "id": 2,
+        "category": "catStart",
+        "question": "Comment inviter un membre de ma famille ?",
+        "answer": "Dans Cercles → votre famille → onglet Invitations. Copiez le code d'invitation ou partagez-le directement. Le membre invité peut rejoindre depuis son app via \"Rejoindre un cercle\"."
+      },
+      {
+        "id": 3,
+        "category": "catCalendar",
+        "question": "Comment ajouter un événement partagé ?",
+        "answer": "Appuyez sur le bouton + dans le calendrier. Remplissez le titre, la date et l'heure. L'événement sera visible par tous les membres de votre famille."
+      },
+      {
+        "id": 4,
+        "category": "catCalendar",
+        "question": "Qu'est-ce que le Calendrier Intime ?",
+        "answer": "Le Calendrier Intime est un espace personnel et privé pour suivre votre cycle menstruel. Il doit être activé dans les Paramètres. Vos données restent strictement privées et ne sont jamais partagées avec les autres membres."
+      },
+      {
+        "id": 5,
+        "category": "catBudget",
+        "question": "Comment fonctionne \"On Partage\" ?",
+        "answer": "L'onglet \"On Partage\" vous permet de suivre les dépenses communes de votre famille. Ajoutez une dépense avec le montant, la catégorie et le payeur. Les statistiques vous montrent la répartition des dépenses par membre."
+      },
+      {
+        "id": 6,
+        "category": "catBudget",
+        "question": "Puis-je attribuer une dépense à un autre membre ?",
+        "answer": "Oui ! Lors de la création ou modification d'une dépense, utilisez le champ \"Payé par\" pour sélectionner n'importe quel membre de la famille. Pratique si quelqu'un n'a pas son téléphone."
+      },
+      {
+        "id": 7,
+        "category": "catRewards",
+        "question": "Comment fonctionnent les points ?",
+        "answer": "Chaque tâche complétée rapporte des points. L'administrateur peut aussi attribuer des points manuellement. Les points s'accumulent et permettent de débloquer des récompenses définies par la famille."
+      },
+      {
+        "id": 8,
+        "category": "catRewards",
+        "question": "Comment créer une récompense ?",
+        "answer": "Dans l'onglet Récompenses → Catalogue → bouton \"+ Nouvelle récompense\". Définissez un nom, une description et un coût en points. Les membres peuvent ensuite échanger leurs points contre ces récompenses."
+      },
+      {
+        "id": 9,
+        "category": "catAccount",
+        "question": "Comment modifier mon avatar ?",
+        "answer": "Allez dans Cercles → votre famille → bouton \"👤 Mon profil\". Vous pouvez modifier votre nom, choisir une couleur et sélectionner un emoji comme avatar."
+      },
+      {
+        "id": 10,
+        "category": "catAccount",
+        "question": "Comment changer le rôle d'un membre ?",
+        "answer": "Seul l'administrateur peut modifier les rôles. Dans Cercles → votre famille → appuyez sur un membre → \"Modifier le rôle\". Pour transférer le rôle admin, utilisez l'option \"Transférer l'administration\"."
+      },
+      {
+        "id": 11,
+        "category": "catSubscription",
+        "question": "Qu'est-ce que le plan Premium ?",
+        "answer": "Le plan Premium débloque toutes les fonctionnalités : budget illimité, calendrier intime, statistiques avancées, badges, et plus. Gérez votre abonnement dans Paramètres → Abonnement."
+      },
+      {
+        "id": 12,
+        "category": "catSubscription",
+        "question": "Mon abonnement n'apparaît pas après paiement ?",
+        "answer": "Si votre paiement a été effectué mais que l'abonnement n'apparaît pas, allez dans Paramètres → Abonnement → \"Synchroniser l'abonnement\". Si le problème persiste, créez un ticket de support."
+      }
+    ]
   },
   "tabs": {
     "home": "Accueil",

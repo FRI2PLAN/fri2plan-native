@@ -642,7 +642,120 @@
     "rateApp": "Rate on Google Play",
     "contactSupport": "Contact support",
     "category": "Category",
-    "sendTicket": "Send ticket"
+    "sendTicket": "Send ticket",
+    "guideTitle": "Getting\nstarted",
+    "myTicketsShort": "My\ntickets",
+    "contactSupportShort": "Contact\nsupport",
+    "rateAppShort": "Rate\napp",
+    "searchPlaceholder": "🔍 Search the FAQ...",
+    "noResults": "No results for",
+    "rateBannerTitle": "⭐ Enjoying FRI2PLAN?",
+    "rateBannerText": "Your review on the Google Play Store helps us improve and reach more families!",
+    "subjectLabel": "Subject *",
+    "subjectPlaceholder": "E.g.: Login issue...",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Describe your issue in detail...",
+    "emailHint": "📧 You will receive a confirmation by email and be notified of replies.",
+    "ticketCreatedTitle": "✅ Ticket created",
+    "ticketCreatedMsg": "Your ticket {{number}} has been created. You will receive a reply by email.",
+    "fieldRequired": "Required field",
+    "subjectRequired": "Please enter a subject.",
+    "messageRequired": "Please describe your issue.",
+    "ticketError": "Unable to create the ticket.",
+    "restartGuideTitle": "🚀 Getting started guide",
+    "restartGuideMsg": "Would you like to review the getting started guide?",
+    "restartGuideConfirm": "Yes, restart",
+    "statusNew": "New",
+    "statusInProgress": "In progress",
+    "statusResolved": "Resolved",
+    "statusClosed": "Closed",
+    "catAll": "All",
+    "catStart": "Getting started",
+    "catCalendar": "Calendar",
+    "catBudget": "Budget",
+    "catRewards": "Rewards",
+    "catAccount": "Account",
+    "catSubscription": "Subscription",
+    "catTechnical": "🔧 Technical issue",
+    "catBilling": "💳 Billing",
+    "catSuggestion": "💡 Suggestion",
+    "catClosedTest": "🧪 Closed beta",
+    "catOther": "📋 Other",
+    "openStoreError": "Unable to open the Google Play Store.",
+    "faqItems": [
+      {
+        "id": 1,
+        "category": "catStart",
+        "question": "How do I create my family?",
+        "answer": "Go to the Circles tab (👥), then tap \"Create a circle\". Give your family a name, choose a color, and invite members via their email or an invitation code."
+      },
+      {
+        "id": 2,
+        "category": "catStart",
+        "question": "How do I invite a family member?",
+        "answer": "In Circles → your family → Invitations tab. Copy the invitation code or share it directly. The invited member can join from their app via \"Join a circle\"."
+      },
+      {
+        "id": 3,
+        "category": "catCalendar",
+        "question": "How do I add a shared event?",
+        "answer": "Tap the + button in the calendar. Fill in the title, date and time. The event will be visible to all family members."
+      },
+      {
+        "id": 4,
+        "category": "catCalendar",
+        "question": "What is the Intimate Calendar?",
+        "answer": "The Intimate Calendar is a personal and private space to track your menstrual cycle. It must be enabled in Settings. Your data remains strictly private and is never shared with other members."
+      },
+      {
+        "id": 5,
+        "category": "catBudget",
+        "question": "How does \"We Share\" work?",
+        "answer": "The \"We Share\" tab lets you track your family's shared expenses. Add an expense with the amount, category and payer. Statistics show the breakdown of expenses by member."
+      },
+      {
+        "id": 6,
+        "category": "catBudget",
+        "question": "Can I assign an expense to another member?",
+        "answer": "Yes! When creating or editing an expense, use the \"Paid by\" field to select any family member. Handy if someone doesn't have their phone."
+      },
+      {
+        "id": 7,
+        "category": "catRewards",
+        "question": "How do points work?",
+        "answer": "Each completed task earns points. The administrator can also assign points manually. Points accumulate and can be used to unlock rewards defined by the family."
+      },
+      {
+        "id": 8,
+        "category": "catRewards",
+        "question": "How do I create a reward?",
+        "answer": "In the Rewards tab → Catalog → \"+ New reward\" button. Set a name, description and point cost. Members can then redeem their points for these rewards."
+      },
+      {
+        "id": 9,
+        "category": "catAccount",
+        "question": "How do I change my avatar?",
+        "answer": "Go to Circles → your family → \"👤 My profile\" button. You can change your name, choose a color and select an emoji as your avatar."
+      },
+      {
+        "id": 10,
+        "category": "catAccount",
+        "question": "How do I change a member's role?",
+        "answer": "Only the administrator can change roles. In Circles → your family → tap a member → \"Edit role\". To transfer the admin role, use the \"Transfer administration\" option."
+      },
+      {
+        "id": 11,
+        "category": "catSubscription",
+        "question": "What is the Premium plan?",
+        "answer": "The Premium plan unlocks all features: unlimited budget, intimate calendar, advanced statistics, badges, and more. Manage your subscription in Settings → Subscription."
+      },
+      {
+        "id": 12,
+        "category": "catSubscription",
+        "question": "My subscription doesn't appear after payment?",
+        "answer": "If your payment was made but the subscription doesn't appear, go to Settings → Subscription → \"Sync subscription\". If the issue persists, create a support ticket."
+      }
+    ]
   },
   "tabs": {
     "home": "Home",

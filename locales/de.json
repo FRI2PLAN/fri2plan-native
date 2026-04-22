@@ -642,7 +642,120 @@
     "rateApp": "Auf Google Play bewerten",
     "contactSupport": "Support kontaktieren",
     "category": "Kategorie",
-    "sendTicket": "Ticket senden"
+    "sendTicket": "Ticket senden",
+    "guideTitle": "Erste\nSchritte",
+    "myTicketsShort": "Meine\nTickets",
+    "contactSupportShort": "Support\nkontaktieren",
+    "rateAppShort": "App\nbewerten",
+    "searchPlaceholder": "🔍 FAQ durchsuchen...",
+    "noResults": "Keine Ergebnisse für",
+    "rateBannerTitle": "⭐ Gefällt Ihnen FRI2PLAN?",
+    "rateBannerText": "Ihre Bewertung im Google Play Store hilft uns sehr, uns zu verbessern und weitere Familien zu erreichen!",
+    "subjectLabel": "Betreff *",
+    "subjectPlaceholder": "Z.B.: Anmeldeproblem...",
+    "descriptionLabel": "Beschreibung *",
+    "descriptionPlaceholder": "Beschreiben Sie Ihr Problem im Detail...",
+    "emailHint": "📧 Sie erhalten eine Bestätigung per E-Mail und werden über Antworten benachrichtigt.",
+    "ticketCreatedTitle": "✅ Ticket erstellt",
+    "ticketCreatedMsg": "Ihr Ticket {{number}} wurde erstellt. Sie erhalten eine Antwort per E-Mail.",
+    "fieldRequired": "Pflichtfeld",
+    "subjectRequired": "Bitte geben Sie einen Betreff ein.",
+    "messageRequired": "Bitte beschreiben Sie Ihr Problem.",
+    "ticketError": "Das Ticket konnte nicht erstellt werden.",
+    "restartGuideTitle": "🚀 Erste-Schritte-Anleitung",
+    "restartGuideMsg": "Möchten Sie die Erste-Schritte-Anleitung erneut ansehen?",
+    "restartGuideConfirm": "Ja, neu starten",
+    "statusNew": "Neu",
+    "statusInProgress": "In Bearbeitung",
+    "statusResolved": "Gelöst",
+    "statusClosed": "Geschlossen",
+    "catAll": "Alle",
+    "catStart": "Erste Schritte",
+    "catCalendar": "Kalender",
+    "catBudget": "Budget",
+    "catRewards": "Belohnungen",
+    "catAccount": "Konto",
+    "catSubscription": "Abonnement",
+    "catTechnical": "🔧 Technisches Problem",
+    "catBilling": "💳 Abrechnung",
+    "catSuggestion": "💡 Vorschlag",
+    "catClosedTest": "🧪 Geschlossener Test",
+    "catOther": "📋 Sonstiges",
+    "openStoreError": "Der Google Play Store konnte nicht geöffnet werden.",
+    "faqItems": [
+      {
+        "id": 1,
+        "category": "catStart",
+        "question": "Wie erstelle ich meine Familie?",
+        "answer": "Gehen Sie zum Tab Kreise (👥) und tippen Sie auf \"Kreis erstellen\". Geben Sie Ihrer Familie einen Namen, wählen Sie eine Farbe und laden Sie Mitglieder per E-Mail oder Einladungscode ein."
+      },
+      {
+        "id": 2,
+        "category": "catStart",
+        "question": "Wie lade ich ein Familienmitglied ein?",
+        "answer": "In Kreise → Ihre Familie → Tab Einladungen. Kopieren Sie den Einladungscode oder teilen Sie ihn direkt. Das eingeladene Mitglied kann über \"Kreis beitreten\" in der App beitreten."
+      },
+      {
+        "id": 3,
+        "category": "catCalendar",
+        "question": "Wie füge ich ein gemeinsames Ereignis hinzu?",
+        "answer": "Tippen Sie auf die + Schaltfläche im Kalender. Füllen Sie Titel, Datum und Uhrzeit aus. Das Ereignis ist für alle Familienmitglieder sichtbar."
+      },
+      {
+        "id": 4,
+        "category": "catCalendar",
+        "question": "Was ist der Intime Kalender?",
+        "answer": "Der Intime Kalender ist ein persönlicher und privater Bereich zur Verfolgung Ihres Menstruationszyklus. Er muss in den Einstellungen aktiviert werden. Ihre Daten bleiben streng privat und werden nie mit anderen Mitgliedern geteilt."
+      },
+      {
+        "id": 5,
+        "category": "catBudget",
+        "question": "Wie funktioniert \"Wir teilen\"?",
+        "answer": "Der Tab \"Wir teilen\" ermöglicht es Ihnen, die gemeinsamen Ausgaben Ihrer Familie zu verfolgen. Fügen Sie eine Ausgabe mit Betrag, Kategorie und Zahler hinzu. Statistiken zeigen die Ausgabenverteilung pro Mitglied."
+      },
+      {
+        "id": 6,
+        "category": "catBudget",
+        "question": "Kann ich eine Ausgabe einem anderen Mitglied zuweisen?",
+        "answer": "Ja! Beim Erstellen oder Bearbeiten einer Ausgabe verwenden Sie das Feld \"Bezahlt von\", um ein beliebiges Familienmitglied auszuwählen. Praktisch, wenn jemand sein Telefon nicht dabei hat."
+      },
+      {
+        "id": 7,
+        "category": "catRewards",
+        "question": "Wie funktionieren Punkte?",
+        "answer": "Jede abgeschlossene Aufgabe bringt Punkte. Der Administrator kann auch manuell Punkte vergeben. Punkte sammeln sich an und können zum Freischalten von Belohnungen der Familie verwendet werden."
+      },
+      {
+        "id": 8,
+        "category": "catRewards",
+        "question": "Wie erstelle ich eine Belohnung?",
+        "answer": "Im Tab Belohnungen → Katalog → Schaltfläche \"+ Neue Belohnung\". Legen Sie einen Namen, eine Beschreibung und Punktekosten fest. Mitglieder können dann ihre Punkte gegen diese Belohnungen einlösen."
+      },
+      {
+        "id": 9,
+        "category": "catAccount",
+        "question": "Wie ändere ich meinen Avatar?",
+        "answer": "Gehen Sie zu Kreise → Ihre Familie → Schaltfläche \"👤 Mein Profil\". Sie können Ihren Namen ändern, eine Farbe wählen und ein Emoji als Avatar auswählen."
+      },
+      {
+        "id": 10,
+        "category": "catAccount",
+        "question": "Wie ändere ich die Rolle eines Mitglieds?",
+        "answer": "Nur der Administrator kann Rollen ändern. In Kreise → Ihre Familie → tippen Sie auf ein Mitglied → \"Rolle bearbeiten\". Um die Admin-Rolle zu übertragen, verwenden Sie die Option \"Verwaltung übertragen\"."
+      },
+      {
+        "id": 11,
+        "category": "catSubscription",
+        "question": "Was ist der Premium-Plan?",
+        "answer": "Der Premium-Plan schaltet alle Funktionen frei: unbegrenztes Budget, intimer Kalender, erweiterte Statistiken, Abzeichen und mehr. Verwalten Sie Ihr Abonnement in Einstellungen → Abonnement."
+      },
+      {
+        "id": 12,
+        "category": "catSubscription",
+        "question": "Mein Abonnement erscheint nicht nach der Zahlung?",
+        "answer": "Wenn Ihre Zahlung erfolgt ist, aber das Abonnement nicht erscheint, gehen Sie zu Einstellungen → Abonnement → \"Abonnement synchronisieren\". Wenn das Problem weiterhin besteht, erstellen Sie ein Support-Ticket."
+      }
+    ]
   },
   "tabs": {
     "home": "Startseite",

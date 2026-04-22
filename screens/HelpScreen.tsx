@@ -22,109 +22,42 @@ interface HelpScreenProps {
 
 const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=space.manus.fri2plan.twa';
 
-const FAQ_ITEMS = [
-  {
-    id: 1,
-    category: 'Démarrage',
-    question: 'Comment créer ma famille ?',
-    answer: "Allez dans l'onglet Cercles (👥), puis appuyez sur \"Créer un cercle\". Donnez un nom à votre famille, choisissez une couleur et invitez les membres via leur email ou un code d'invitation.",
-  },
-  {
-    id: 2,
-    category: 'Démarrage',
-    question: 'Comment inviter un membre de ma famille ?',
-    answer: "Dans Cercles → votre famille → onglet Invitations. Copiez le code d'invitation ou partagez-le directement. Le membre invité peut rejoindre depuis son app via \"Rejoindre un cercle\".",
-  },
-  {
-    id: 3,
-    category: 'Calendrier',
-    question: 'Comment ajouter un événement partagé ?',
-    answer: "Appuyez sur le bouton + dans le calendrier. Remplissez le titre, la date et l'heure. L'événement sera visible par tous les membres de votre famille.",
-  },
-  {
-    id: 4,
-    category: 'Calendrier',
-    question: "Qu'est-ce que le Calendrier Intime ?",
-    answer: "Le Calendrier Intime est un espace personnel et privé pour suivre votre cycle menstruel. Il doit être activé dans les Paramètres. Vos données restent strictement privées et ne sont jamais partagées avec les autres membres.",
-  },
-  {
-    id: 5,
-    category: 'Budget',
-    question: 'Comment fonctionne "On Partage" ?',
-    answer: "L'onglet \"On Partage\" vous permet de suivre les dépenses communes de votre famille. Ajoutez une dépense avec le montant, la catégorie et le payeur. Les statistiques vous montrent la répartition des dépenses par membre.",
-  },
-  {
-    id: 6,
-    category: 'Budget',
-    question: "Puis-je attribuer une dépense à un autre membre ?",
-    answer: "Oui ! Lors de la création ou modification d'une dépense, utilisez le champ \"Payé par\" pour sélectionner n'importe quel membre de la famille. Pratique si quelqu'un n'a pas son téléphone.",
-  },
-  {
-    id: 7,
-    category: 'Récompenses',
-    question: 'Comment fonctionnent les points ?',
-    answer: "Chaque tâche complétée rapporte des points. L'administrateur peut aussi attribuer des points manuellement. Les points s'accumulent et permettent de débloquer des récompenses définies par la famille.",
-  },
-  {
-    id: 8,
-    category: 'Récompenses',
-    question: 'Comment créer une récompense ?',
-    answer: 'Dans l\'onglet Récompenses → Catalogue → bouton "+ Nouvelle récompense". Définissez un nom, une description et un coût en points. Les membres peuvent ensuite échanger leurs points contre ces récompenses.',
-  },
-  {
-    id: 9,
-    category: 'Compte',
-    question: 'Comment modifier mon avatar ?',
-    answer: "Allez dans Cercles → votre famille → bouton \"👤 Mon profil\". Vous pouvez modifier votre nom, choisir une couleur et sélectionner un emoji comme avatar.",
-  },
-  {
-    id: 10,
-    category: 'Compte',
-    question: "Comment changer le rôle d'un membre ?",
-    answer: "Seul l'administrateur peut modifier les rôles. Dans Cercles → votre famille → appuyez sur un membre → \"Modifier le rôle\". Pour transférer le rôle admin, utilisez l'option \"Transférer l'administration\".",
-  },
-  {
-    id: 11,
-    category: 'Abonnement',
-    question: "Qu'est-ce que le plan Premium ?",
-    answer: "Le plan Premium débloque toutes les fonctionnalités : budget illimité, calendrier intime, statistiques avancées, badges, et plus. Gérez votre abonnement dans Paramètres → Abonnement.",
-  },
-  {
-    id: 12,
-    category: 'Abonnement',
-    question: "Mon abonnement n'apparaît pas après paiement ?",
-    answer: "Si votre paiement a été effectué mais que l'abonnement n'apparaît pas, allez dans Paramètres → Abonnement → \"Synchroniser l'abonnement\". Si le problème persiste, créez un ticket de support.",
-  },
-];
-
-const CATEGORIES = ['Tous', 'Démarrage', 'Calendrier', 'Budget', 'Récompenses', 'Compte', 'Abonnement'];
-
-const TICKET_CATEGORIES = [
-  { value: 'technique', label: '🔧 Problème technique' },
-  { value: 'facturation', label: '💳 Facturation' },
-  { value: 'fonctionnalite', label: '💡 Suggestion' },
-  { value: 'test_ferme', label: '🧪 Test fermé' },
-  { value: 'autre', label: '📋 Autre' },
-];
+type TicketCategory = 'technique' | 'facturation' | 'fonctionnalite' | 'test_ferme' | 'autre';
 
 export default function HelpScreen({
   onNavigate,
 }: HelpScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const auth = useAuth() as any;
   const { resetOnboarding } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tous');
+  const [selectedCategory, setSelectedCategory] = useState('catAll');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [ticketForm, setTicketForm] = useState({
-    category: 'technique' as 'technique' | 'facturation' | 'fonctionnalite' | 'test_ferme' | 'autre',
+    category: 'technique' as TicketCategory,
     subject: '',
     message: '',
   });
+
+  // Catégories de filtre (clés i18n)
+  const CATEGORY_KEYS = ['catAll', 'catStart', 'catCalendar', 'catBudget', 'catRewards', 'catAccount', 'catSubscription'];
+
+  // Catégories de ticket (clés i18n)
+  const TICKET_CATEGORIES: { value: TicketCategory; key: string }[] = [
+    { value: 'technique', key: 'catTechnical' },
+    { value: 'facturation', key: 'catBilling' },
+    { value: 'fonctionnalite', key: 'catSuggestion' },
+    { value: 'test_ferme', key: 'catClosedTest' },
+    { value: 'autre', key: 'catOther' },
+  ];
+
+  // FAQ items depuis les traductions
+  const faqItems: Array<{ id: number; category: string; question: string; answer: string }> =
+    t('help.faqItems', { returnObjects: true }) as any;
 
   const { data: myTickets = [], isLoading: ticketsLoading, refetch: refetchTickets } =
     trpc.supportTickets.listMyTickets.useQuery(undefined, { enabled: showMyTickets });
@@ -132,65 +65,69 @@ export default function HelpScreen({
   const createTicketMutation = trpc.supportTickets.createTicket.useMutation({
     onSuccess: (data: any) => {
       Alert.alert(
-        '✅ Ticket créé',
-        `Votre ticket ${data.ticketNumber} a été créé. Vous recevrez une réponse par email.`,
+        t('help.ticketCreatedTitle'),
+        t('help.ticketCreatedMsg', { number: data.ticketNumber }),
         [{ text: 'OK', onPress: () => { setShowTicketModal(false); resetTicketForm(); refetchTickets(); } }]
       );
     },
     onError: (err: any) => {
-      Alert.alert('Erreur', err.message || 'Impossible de créer le ticket.');
+      Alert.alert(t('common.error'), err.message || t('help.ticketError'));
     },
   });
 
   const resetTicketForm = () => setTicketForm({ category: 'technique', subject: '', message: '' });
 
   const handleCreateTicket = () => {
-    if (!ticketForm.subject.trim()) { Alert.alert('Champ requis', 'Veuillez saisir un sujet.'); return; }
-    if (!ticketForm.message.trim()) { Alert.alert('Champ requis', 'Veuillez décrire votre problème.'); return; }
+    if (!ticketForm.subject.trim()) {
+      Alert.alert(t('help.fieldRequired'), t('help.subjectRequired'));
+      return;
+    }
+    if (!ticketForm.message.trim()) {
+      Alert.alert(t('help.fieldRequired'), t('help.messageRequired'));
+      return;
+    }
     createTicketMutation.mutate(ticketForm);
   };
 
   const handleRateApp = async () => {
-    // Sur Android, utiliser market:// pour rester dans le contexte de l'app
-    // et permettre le retour via la flèche arrière
     const marketUrl = 'market://details?id=space.manus.fri2plan.twa';
-    const webUrl = GOOGLE_PLAY_URL;
     try {
       const canOpenMarket = await Linking.canOpenURL(marketUrl);
       if (canOpenMarket) {
         await Linking.openURL(marketUrl);
       } else {
-        await Linking.openURL(webUrl);
+        await Linking.openURL(GOOGLE_PLAY_URL);
       }
     } catch {
-      Linking.openURL(webUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le Google Play Store."));
+      Linking.openURL(GOOGLE_PLAY_URL).catch(() =>
+        Alert.alert(t('common.error'), t('help.openStoreError'))
+      );
     }
   };
 
   const handleRestartOnboarding = () => {
     Alert.alert(
-      '🚀 Guide de démarrage',
-      'Voulez-vous revoir le guide de démarrage ?',
+      t('help.restartGuideTitle'),
+      t('help.restartGuideMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Oui, relancer',
+          text: t('help.restartGuideConfirm'),
           onPress: async () => {
             await resetOnboarding();
-            // Le guide s'affiche immédiatement sans déconnecter ni redémarrer
           },
         },
       ]
     );
   };
 
-  const filteredFaq = FAQ_ITEMS.filter((item) => {
-    const matchCat = selectedCategory === 'Tous' || item.category === selectedCategory;
+  const filteredFaq = Array.isArray(faqItems) ? faqItems.filter((item) => {
+    const matchCat = selectedCategory === 'catAll' || item.category === selectedCategory;
     const matchSearch = !searchQuery ||
       item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.answer.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCat && matchSearch;
-  });
+  }) : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -204,12 +141,17 @@ export default function HelpScreen({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'nouveau': return 'Nouveau';
-      case 'en_cours': return 'En cours';
-      case 'resolu': return 'Résolu';
-      case 'ferme': return 'Fermé';
+      case 'nouveau': return t('help.statusNew');
+      case 'en_cours': return t('help.statusInProgress');
+      case 'resolu': return t('help.statusResolved');
+      case 'ferme': return t('help.statusClosed');
       default: return status;
     }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const locale = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-GB' : 'fr-FR';
+    return new Date(dateStr).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   return (
@@ -224,19 +166,19 @@ export default function HelpScreen({
         <View style={styles.quickActionsRow}>
           <TouchableOpacity style={styles.quickCard} onPress={handleRestartOnboarding}>
             <Text style={styles.quickIcon}>🚀</Text>
-            <Text style={styles.quickTitle}>Guide{'\n'}démarrage</Text>
+            <Text style={styles.quickTitle}>{t('help.guideTitle')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickCard} onPress={() => setShowMyTickets(!showMyTickets)}>
             <Text style={styles.quickIcon}>🎫</Text>
-            <Text style={styles.quickTitle}>Mes{'\n'}tickets</Text>
+            <Text style={styles.quickTitle}>{t('help.myTicketsShort')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickCard, styles.quickCardPurple]} onPress={() => setShowTicketModal(true)}>
             <Text style={styles.quickIcon}>✉️</Text>
-            <Text style={[styles.quickTitle, { color: '#fff' }]}>Contacter{'\n'}support</Text>
+            <Text style={[styles.quickTitle, { color: '#fff' }]}>{t('help.contactSupportShort')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickCard, styles.quickCardGold]} onPress={handleRateApp}>
             <Text style={styles.quickIcon}>⭐</Text>
-            <Text style={[styles.quickTitle, { color: '#92400e' }]}>Noter{'\n'}l'app</Text>
+            <Text style={[styles.quickTitle, { color: '#92400e' }]}>{t('help.rateAppShort')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -270,9 +212,7 @@ export default function HelpScreen({
                     </View>
                   </View>
                   <Text style={styles.ticketSubject}>{ticket.subject}</Text>
-                  <Text style={styles.ticketDate}>
-                    {new Date(ticket.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </Text>
+                  <Text style={styles.ticketDate}>{formatDate(ticket.createdAt)}</Text>
                 </View>
               ))
             )}
@@ -283,7 +223,7 @@ export default function HelpScreen({
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="🔍 Rechercher dans la FAQ..."
+            placeholder={t('help.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#9ca3af"
@@ -292,14 +232,14 @@ export default function HelpScreen({
 
         {/* Category Filter */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-          {CATEGORIES.map((cat) => (
+          {CATEGORY_KEYS.map((catKey) => (
             <TouchableOpacity
-              key={cat}
-              style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
-              onPress={() => setSelectedCategory(cat)}
+              key={catKey}
+              style={[styles.categoryChip, selectedCategory === catKey && styles.categoryChipActive]}
+              onPress={() => setSelectedCategory(catKey)}
             >
-              <Text style={[styles.categoryChipText, selectedCategory === cat && styles.categoryChipTextActive]}>
-                {cat}
+              <Text style={[styles.categoryChipText, selectedCategory === catKey && styles.categoryChipTextActive]}>
+                {t(`help.${catKey}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -310,7 +250,7 @@ export default function HelpScreen({
           <Text style={styles.sectionTitle}>{t('help.faq')}</Text>
           {filteredFaq.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Aucun résultat pour "{searchQuery}"</Text>
+              <Text style={styles.emptyText}>{t('help.noResults')} "{searchQuery}"</Text>
             </View>
           ) : (
             filteredFaq.map((item) => (
@@ -322,7 +262,7 @@ export default function HelpScreen({
               >
                 <View style={styles.faqHeaderRow}>
                   <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                    <Text style={styles.categoryBadgeText}>{t(`help.${item.category}`)}</Text>
                   </View>
                   <Text style={styles.expandIcon}>{expandedFaq === item.id ? '−' : '+'}</Text>
                 </View>
@@ -337,10 +277,8 @@ export default function HelpScreen({
 
         {/* Rate Banner */}
         <View style={styles.rateBanner}>
-          <Text style={styles.rateBannerTitle}>⭐ Vous aimez FRI2PLAN ?</Text>
-          <Text style={styles.rateBannerText}>
-            Votre avis sur le Google Play Store nous aide énormément à nous améliorer et à atteindre d'autres familles !
-          </Text>
+          <Text style={styles.rateBannerTitle}>{t('help.rateBannerTitle')}</Text>
+          <Text style={styles.rateBannerText}>{t('help.rateBannerText')}</Text>
           <TouchableOpacity style={styles.rateButton} onPress={handleRateApp}>
             <Text style={styles.rateButtonText}>{t('help.rateApp')}</Text>
           </TouchableOpacity>
@@ -366,26 +304,26 @@ export default function HelpScreen({
                   <TouchableOpacity
                     key={cat.value}
                     style={[styles.catBtn, ticketForm.category === cat.value && styles.catBtnActive]}
-                    onPress={() => setTicketForm({ ...ticketForm, category: cat.value as any })}
+                    onPress={() => setTicketForm({ ...ticketForm, category: cat.value })}
                   >
                     <Text style={[styles.catBtnText, ticketForm.category === cat.value && styles.catBtnTextActive]}>
-                      {cat.label}
+                      {t(`help.${cat.key}`)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={styles.fieldLabel}>Sujet *</Text>
+              <Text style={styles.fieldLabel}>{t('help.subjectLabel')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Ex: Problème de connexion..."
+                placeholder={t('help.subjectPlaceholder')}
                 value={ticketForm.subject}
                 onChangeText={(v) => setTicketForm({ ...ticketForm, subject: v })}
                 placeholderTextColor="#9ca3af"
               />
-              <Text style={styles.fieldLabel}>Description *</Text>
+              <Text style={styles.fieldLabel}>{t('help.descriptionLabel')}</Text>
               <TextInput
                 style={[styles.input, styles.inputMultiline]}
-                placeholder="Décrivez votre problème en détail..."
+                placeholder={t('help.descriptionPlaceholder')}
                 value={ticketForm.message}
                 onChangeText={(v) => setTicketForm({ ...ticketForm, message: v })}
                 multiline
@@ -393,9 +331,7 @@ export default function HelpScreen({
                 textAlignVertical="top"
                 placeholderTextColor="#9ca3af"
               />
-              <Text style={styles.fieldHint}>
-                📧 Vous recevrez une confirmation par email et serez notifié des réponses.
-              </Text>
+              <Text style={styles.fieldHint}>{t('help.emailHint')}</Text>
               <TouchableOpacity
                 style={[styles.submitBtn, createTicketMutation.isPending && styles.submitBtnDisabled]}
                 onPress={handleCreateTicket}
