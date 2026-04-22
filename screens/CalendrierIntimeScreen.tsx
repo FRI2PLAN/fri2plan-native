@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 
 interface CalendrierIntimeScreenProps {
@@ -14,19 +15,19 @@ interface CalendrierIntimeScreenProps {
   onNext?: () => void;
 }
 
-const MOOD_OPTIONS = [
-  { value: 'great',   label: 'Excellent', emoji: '😄' },
-  { value: 'good',    label: 'Bien',      emoji: '🙂' },
-  { value: 'neutral', label: 'Neutre',    emoji: '😐' },
-  { value: 'bad',     label: 'Mauvais',   emoji: '😔' },
-  { value: 'terrible', label: 'Terrible', emoji: '😢' },
-] as const;
+const getMoodOptions = (t: (k: string) => string) => [
+  { value: 'great',    label: t('intimate.moodGreat'),    emoji: '😄' },
+  { value: 'good',     label: t('intimate.moodGood'),     emoji: '🙂' },
+  { value: 'neutral',  label: t('intimate.moodNeutral'),  emoji: '😐' },
+  { value: 'bad',      label: t('intimate.moodBad'),      emoji: '😔' },
+  { value: 'terrible', label: t('intimate.moodTerrible'), emoji: '😢' },
+];
 
-const FLOW_OPTIONS = [
-  { value: 'light',  label: 'Léger',  emoji: '💧' },
-  { value: 'medium', label: 'Moyen',  emoji: '💧💧' },
-  { value: 'heavy',  label: 'Abondant', emoji: '💧💧💧' },
-] as const;
+const getFlowOptions = (t: (k: string) => string) => [
+  { value: 'light',  label: t('intimate.flowLight'),  emoji: '💧' },
+  { value: 'medium', label: t('intimate.flowMedium'), emoji: '💧💧' },
+  { value: 'heavy',  label: t('intimate.flowHeavy'),  emoji: '💧💧💧' },
+];
 
 const SYMPTOM_OPTIONS = [
   'Crampes', 'Maux de tête', 'Fatigue', 'Ballonnements',
@@ -43,6 +44,10 @@ const PHASE_COLORS = {
 
 export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext }: CalendrierIntimeScreenProps) {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
+  const MOOD_OPTIONS = getMoodOptions(t);
+  const FLOW_OPTIONS = getFlowOptions(t);
+  const SYMPTOM_OPTIONS = getSymptomOptions(t);
   const styles = getStyles(isDark);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'settings'>('overview');
@@ -65,15 +70,15 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
 
   const toggleMutation = trpc.menstrual.toggleFeature.useMutation({
     onSuccess: () => utils.menstrual.getSettings.invalidate(),
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Erreur')
+    onError: (e: any) => Alert.alert(t('common.error'), e.message || t('common.error'))
   });
 
   const updateSettingsMutation = trpc.menstrual.updateSettings.useMutation({
     onSuccess: () => {
       utils.menstrual.getSettings.invalidate();
-      Alert.alert('✅', 'Paramètres sauvegardés');
+      Alert.alert('✅', t('intimate.settingsSaved'));
     },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Erreur')
+    onError: (e: any) => Alert.alert(t('common.error'), e.message || t('common.error'))
   });
 
   const createCycleMutation = trpc.menstrual.createCycle.useMutation({
@@ -82,14 +87,14 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
       utils.menstrual.getSettings.invalidate();
       setNewCycleOpen(false);
       setSelectedMood(''); setSelectedFlow(''); setSelectedSymptoms([]); setCycleNotes('');
-      Alert.alert('✅', 'Nouveau cycle enregistré !');
+      Alert.alert('✅', t('intimate.newCycleSuccess'));
     },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Erreur')
+    onError: (e: any) => Alert.alert(t('common.error'), e.message || t('common.error'))
   });
 
   const deleteCycleMutation = trpc.menstrual.deleteCycle.useMutation({
-    onSuccess: () => { utils.menstrual.getCycles.invalidate(); Alert.alert('✅', 'Cycle supprimé'); },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Erreur')
+    onSuccess: () => { utils.menstrual.getCycles.invalidate(); Alert.alert('✅', t('intimate.deleteSuccess')); },
+    onError: (e: any) => Alert.alert(t('common.error'), e.message || t('common.error'))
   });
 
   const onRefresh = async () => {
@@ -123,7 +128,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   };
 
   const handleDeleteCycle = (cycleId: number) => {
-    Alert.alert('Supprimer', 'Supprimer ce cycle ?', [
+    Alert.alert('Supprimer', t('intimate.deleteConfirm'), [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Supprimer', style: 'destructive', onPress: () => deleteCycleMutation.mutate({ cycleId }) }
     ]);
@@ -154,15 +159,15 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
     let phaseColor: string;
     let phaseEmoji: string;
     if (dayOfCycle <= periodDuration) {
-      phase = 'Menstruations'; phaseColor = PHASE_COLORS.menstruation; phaseEmoji = '🩸';
+      phase = t('intimate.phaseMenstruation'); phaseColor = PHASE_COLORS.menstruation; phaseEmoji = '🩸';
     } else if (dayOfCycle < fertilityStart) {
-      phase = 'Phase folliculaire'; phaseColor = PHASE_COLORS.follicular; phaseEmoji = '🌱';
+      phase = t('intimate.phaseFollicular'); phaseColor = PHASE_COLORS.follicular; phaseEmoji = '🌱';
     } else if (dayOfCycle <= fertilityEnd) {
-      phase = 'Fenêtre fertile'; phaseColor = PHASE_COLORS.fertility; phaseEmoji = '🌸';
+      phase = t('intimate.phaseFertility'); phaseColor = PHASE_COLORS.fertility; phaseEmoji = '🌸';
     } else if (dayOfCycle === ovulationDay) {
-      phase = 'Ovulation'; phaseColor = PHASE_COLORS.ovulation; phaseEmoji = '🌟';
+      phase = t('intimate.phaseOvulation'); phaseColor = PHASE_COLORS.ovulation; phaseEmoji = '🌟';
     } else {
-      phase = 'Phase lutéale'; phaseColor = PHASE_COLORS.luteal; phaseEmoji = '🌙';
+      phase = t('intimate.phaseLuteal'); phaseColor = PHASE_COLORS.luteal; phaseEmoji = '🌙';
     }
 
     return { dayOfCycle, cycleDuration, periodDuration, phase, phaseColor, phaseEmoji, nextPeriodDate, daysUntilNext, ovulationDay, fertilityStart, fertilityEnd };
@@ -182,7 +187,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   if (settingsLoading) {
     return (
       <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={styles.loadingText}>Chargement...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -200,7 +205,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
       {!isEnabled ? (
         <ScrollView contentContainerStyle={styles.activationContainer}>
           <Text style={styles.activationEmoji}>🌸</Text>
-          <Text style={styles.activationTitle}>Calendrier Intime</Text>
+          <Text style={styles.activationTitle}>{t('intimate.activationTitle')}</Text>
           <Text style={styles.activationDesc}>
             Suivez votre cycle menstruel, prédisez vos prochaines règles et identifiez votre fenêtre de fertilité.
             Cette fonctionnalité est 100% privée — seule vous pouvez y accéder.
@@ -213,18 +218,18 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
             ))}
           </View>
           <TouchableOpacity style={styles.activateBtn} onPress={() => handleToggleFeature(true)} disabled={toggleMutation.isLoading}>
-            <Text style={styles.activateBtnText}>{toggleMutation.isLoading ? '...' : 'Activer le calendrier intime'}</Text>
+            <Text style={styles.activateBtnText}>{toggleMutation.isLoading ? '...' : t('intimate.activateBtn')}</Text>
           </TouchableOpacity>
-          <Text style={styles.activationNote}>⚠️ Cette fonctionnalité est à titre informatif uniquement et ne remplace pas un avis médical.</Text>
+          <Text style={styles.activationNote}>{t('intimate.medicalNote')}</Text>
         </ScrollView>
       ) : (
         <>
           {/* Onglets */}
           <View style={styles.tabsRow}>
             {[
-              { key: 'overview', label: '📊 Vue d\'ensemble' },
-              { key: 'history',  label: '📜 Historique' },
-              { key: 'settings', label: '⚙️ Paramètres' },
+              { key: 'overview', label: t('intimate.tabOverview') },
+              { key: 'history', label: t('intimate.tabHistory') },
+              { key: 'settings', label: t('intimate.tabSettings') },
             ].map(tab => (
               <TouchableOpacity key={tab.key} style={[styles.tabBtn, activeTab === tab.key && styles.tabBtnActive]} onPress={() => setActiveTab(tab.key as any)}>
                 <Text style={[styles.tabBtnText, activeTab === tab.key && styles.tabBtnTextActive]}>{tab.label}</Text>
@@ -238,7 +243,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
             {activeTab === 'overview' && (
               <>
                 <TouchableOpacity style={styles.newCycleBtn} onPress={() => setNewCycleOpen(true)}>
-                  <Text style={styles.newCycleBtnText}>🩸 Nouveau cycle (règles aujourd'hui)</Text>
+                  <Text style={styles.newCycleBtnText}>{t('intimate.newCycleBtn')}</Text>
                 </TouchableOpacity>
 
                 {currentCycleInfo ? (
@@ -262,7 +267,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                     <View style={styles.datesRow}>
                       <View style={styles.dateCard}>
                         <Text style={styles.dateCardEmoji}>🩸</Text>
-                        <Text style={styles.dateCardLabel}>Prochaines règles</Text>
+                        <Text style={styles.dateCardLabel}>{t('intimate.nextPeriod')}</Text>
                         <Text style={styles.dateCardValue}>
                           {currentCycleInfo.daysUntilNext > 0
                             ? `Dans ${currentCycleInfo.daysUntilNext} j.`
@@ -272,7 +277,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                       </View>
                       <View style={styles.dateCard}>
                         <Text style={styles.dateCardEmoji}>🌸</Text>
-                        <Text style={styles.dateCardLabel}>Fenêtre fertile</Text>
+                        <Text style={styles.dateCardLabel}>{t('intimate.fertilityWindow')}</Text>
                         <Text style={styles.dateCardValue}>J.{currentCycleInfo.fertilityStart}–J.{currentCycleInfo.fertilityEnd}</Text>
                         <Text style={styles.dateCardDate}>Ovulation J.{currentCycleInfo.ovulationDay}</Text>
                       </View>
@@ -280,12 +285,12 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
 
                     {/* Phases du cycle */}
                     <View style={styles.phasesCard}>
-                      <Text style={styles.sectionTitle}>Phases du cycle</Text>
+                      <Text style={styles.sectionTitle}>{t('intimate.cyclePhases')}</Text>
                       {[
-                        { name: 'Menstruations',     start: 1, end: currentCycleInfo.periodDuration, color: PHASE_COLORS.menstruation, emoji: '🩸' },
-                        { name: 'Phase folliculaire', start: currentCycleInfo.periodDuration + 1, end: currentCycleInfo.fertilityStart - 1, color: PHASE_COLORS.follicular, emoji: '🌱' },
-                        { name: 'Fenêtre fertile',    start: currentCycleInfo.fertilityStart, end: currentCycleInfo.fertilityEnd, color: PHASE_COLORS.fertility, emoji: '🌸' },
-                        { name: 'Phase lutéale',      start: currentCycleInfo.fertilityEnd + 1, end: currentCycleInfo.cycleDuration, color: PHASE_COLORS.luteal, emoji: '🌙' },
+                        { name: t('intimate.phaseMenstruation'),     start: 1, end: currentCycleInfo.periodDuration, color: PHASE_COLORS.menstruation, emoji: '🩸' },
+                        { name: t('intimate.phaseFollicular'), start: currentCycleInfo.periodDuration + 1, end: currentCycleInfo.fertilityStart - 1, color: PHASE_COLORS.follicular, emoji: '🌱' },
+                        { name: t('intimate.phaseFertility'),    start: currentCycleInfo.fertilityStart, end: currentCycleInfo.fertilityEnd, color: PHASE_COLORS.fertility, emoji: '🌸' },
+                        { name: t('intimate.phaseLuteal'),      start: currentCycleInfo.fertilityEnd + 1, end: currentCycleInfo.cycleDuration, color: PHASE_COLORS.luteal, emoji: '🌙' },
                       ].map(phase => (
                         <View key={phase.name} style={[styles.phaseRow, currentCycleInfo.phase === phase.name && styles.phaseRowActive]}>
                           <Text style={styles.phaseRowEmoji}>{phase.emoji}</Text>
@@ -295,7 +300,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                           </View>
                           {currentCycleInfo.phase === phase.name && (
                             <View style={[styles.currentBadge, { backgroundColor: phase.color }]}>
-                              <Text style={styles.currentBadgeText}>Actuel</Text>
+                              <Text style={styles.currentBadgeText}>{t('intimate.current')}</Text>
                             </View>
                           )}
                         </View>
@@ -305,8 +310,8 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                 ) : (
                   <View style={styles.empty}>
                     <Text style={styles.emptyEmoji}>🌸</Text>
-                    <Text style={styles.emptyText}>Aucun cycle enregistré</Text>
-                    <Text style={styles.emptySubtext}>Appuyez sur "Nouveau cycle" pour commencer le suivi</Text>
+                    <Text style={styles.emptyText}>{t('intimate.noCycle')}</Text>
+                    <Text style={styles.emptySubtext}>{t('intimate.noCycleHint')}</Text>
                   </View>
                 )}
               </>
@@ -317,11 +322,11 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
               <>
                 <Text style={styles.sectionTitle}>{(cycles as any[]).length} cycle(s) enregistré(s)</Text>
                 {cyclesLoading ? (
-                  <Text style={styles.loadingText}>Chargement...</Text>
+                  <Text style={styles.loadingText}>{t('common.loading')}</Text>
                 ) : (cycles as any[]).length === 0 ? (
                   <View style={styles.empty}>
                     <Text style={styles.emptyEmoji}>📜</Text>
-                    <Text style={styles.emptyText}>Aucun historique</Text>
+                    <Text style={styles.emptyText}>{t('intimate.noHistory')}</Text>
                   </View>
                 ) : (
                   (cycles as any[]).map((cycle: any, index: number) => (
@@ -338,7 +343,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                           {cycle.status && (
                             <View style={[styles.statusBadge, { backgroundColor: cycle.status === 'regular' ? '#d1fae5' : cycle.status === 'early' ? '#fef3c7' : '#fee2e2' }]}>
                               <Text style={[styles.statusBadgeText, { color: cycle.status === 'regular' ? '#065f46' : cycle.status === 'early' ? '#92400e' : '#991b1b' }]}>
-                                {cycle.status === 'regular' ? 'Régulier' : cycle.status === 'early' ? 'En avance' : 'En retard'}
+                                {cycle.status === 'regular' ? t('intimate.statusRegular') : cycle.status === 'early' ? t('intimate.statusEarly') : t('intimate.statusLate')}
                               </Text>
                             </View>
                           )}
@@ -366,13 +371,13 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
               <>
                 <View style={styles.settingsCard}>
                   <View style={styles.settingsRow}>
-                    <Text style={styles.settingsLabel}>Fonctionnalité activée</Text>
+                    <Text style={styles.settingsLabel}>{t('intimate.featureEnabled')}</Text>
                     <Switch value={isEnabled} onValueChange={handleToggleFeature} trackColor={{ true: '#7c3aed' }} />
                   </View>
                 </View>
                 <View style={styles.settingsCard}>
-                  <Text style={styles.settingsCardTitle}>Durée du cycle</Text>
-                  <Text style={styles.settingsHint}>Durée moyenne de votre cycle (en jours)</Text>
+                  <Text style={styles.settingsCardTitle}>{t('intimate.cycleDurationLabel')}</Text>
+                  <Text style={styles.settingsHint}>{t('intimate.cycleDurationHint')}</Text>
                   <TextInput
                     style={styles.settingsInput}
                     value={settingsCycleDuration}
@@ -383,8 +388,8 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                   />
                 </View>
                 <View style={styles.settingsCard}>
-                  <Text style={styles.settingsCardTitle}>Durée des règles</Text>
-                  <Text style={styles.settingsHint}>Durée moyenne de vos règles (en jours)</Text>
+                  <Text style={styles.settingsCardTitle}>{t('intimate.periodDurationLabel')}</Text>
+                  <Text style={styles.settingsHint}>{t('intimate.periodDurationHint')}</Text>
                   <TextInput
                     style={styles.settingsInput}
                     value={settingsPeriodDuration}
@@ -395,7 +400,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                   />
                 </View>
                 <TouchableOpacity style={styles.saveSettingsBtn} onPress={handleSaveSettings} disabled={updateSettingsMutation.isLoading}>
-                  <Text style={styles.saveSettingsBtnText}>{updateSettingsMutation.isLoading ? '...' : 'Sauvegarder'}</Text>
+                  <Text style={styles.saveSettingsBtnText}>{updateSettingsMutation.isLoading ? '...' : t('intimate.saveSettings')}</Text>
                 </TouchableOpacity>
                 <Text style={styles.medicalNote}>⚠️ Ces informations sont à titre indicatif uniquement et ne constituent pas un avis médical. Consultez un professionnel de santé pour tout suivi médical.</Text>
               </>
@@ -409,16 +414,16 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setNewCycleOpen(false)} />
           <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text style={styles.modalTitle}>🩸 Nouveau cycle</Text>
-            <Text style={styles.fieldLabel}>Date de début *</Text>
+            <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>
+            <Text style={styles.fieldLabel}>{t('intimate.dateLabel')}</Text>
             <TextInput
               style={styles.input}
               value={cycleDate}
               onChangeText={setCycleDate}
-              placeholder="AAAA-MM-JJ"
+              {...{placeholder: t('intimate.datePlaceholder')}}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.fieldLabel}>Humeur</Text>
+            <Text style={styles.fieldLabel}>{t('intimate.moodLabel')}</Text>
             <View style={styles.optionsRow}>
               {MOOD_OPTIONS.map(opt => (
                 <TouchableOpacity key={opt.value} style={[styles.optionBtn, selectedMood === opt.value && styles.optionBtnActive]} onPress={() => setSelectedMood(selectedMood === opt.value ? '' : opt.value)}>
@@ -427,7 +432,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.fieldLabel}>Flux</Text>
+            <Text style={styles.fieldLabel}>{t('intimate.flowLabel')}</Text>
             <View style={styles.optionsRow}>
               {FLOW_OPTIONS.map(opt => (
                 <TouchableOpacity key={opt.value} style={[styles.optionBtn, selectedFlow === opt.value && styles.optionBtnActive]} onPress={() => setSelectedFlow(selectedFlow === opt.value ? '' : opt.value)}>
@@ -436,7 +441,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.fieldLabel}>Symptômes</Text>
+            <Text style={styles.fieldLabel}>{t('intimate.symptomsLabel')}</Text>
             <View style={styles.symptomsGrid}>
               {SYMPTOM_OPTIONS.map(symptom => (
                 <TouchableOpacity key={symptom} style={[styles.symptomChip, selectedSymptoms.includes(symptom) && styles.symptomChipActive]} onPress={() => toggleSymptom(symptom)}>
@@ -444,12 +449,12 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.fieldLabel}>Notes</Text>
+            <Text style={styles.fieldLabel}>{t('intimate.notesLabel')}</Text>
             <TextInput
               style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
               value={cycleNotes}
               onChangeText={setCycleNotes}
-              placeholder="Notes optionnelles..."
+              {...{placeholder: t('intimate.notesPlaceholder')}}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
               multiline
             />
@@ -458,7 +463,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                 <Text style={styles.cancelBtnText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={handleCreateCycle} disabled={createCycleMutation.isLoading}>
-                <Text style={styles.saveBtnText}>{createCycleMutation.isLoading ? '...' : 'Enregistrer'}</Text>
+                <Text style={styles.saveBtnText}>{createCycleMutation.isLoading ? '...' : t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

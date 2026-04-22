@@ -131,9 +131,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   };
 
   const handleClaim = (rewardId: number, rewardName: string) => {
-    Alert.alert("Réclamer", `Réclamer "${rewardName}" ?`, [
+    Alert.alert(t('rewards.claimTitle'), t('rewards.claimConfirm').replace('{{name}}', rewardName), [
       { text: "Annuler", style: "cancel" },
-      { text: "Réclamer", onPress: () => claimMutation.mutate({ rewardId, familyId: activeFamilyId }) }
+      { text: t('rewards.claimBtn'), onPress: () => claimMutation.mutate({ rewardId, familyId: activeFamilyId }) }
     ]);
   };
 
@@ -277,7 +277,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                             disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}
                           >
                             <Text style={styles.claimBtnText}>
-                              {alreadyClaimed ? "En attente" : canAfford ? "Réclamer" : "Insuffisant"}
+                              {alreadyClaimed ? t('rewards.pending') : canAfford ? t('rewards.claimBtn') : t('rewards.insufficient')}
                             </Text>
                           </TouchableOpacity>
                         )}
@@ -390,9 +390,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('rewards.newReward')}</Text>
             <Text style={styles.fieldLabel}>Nom *</Text>
-            <TextInput style={styles.input} value={formName} onChangeText={setFormName} placeholder="Ex: Sortie cinéma" placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
+            <TextInput style={styles.input} value={formName} onChangeText={setFormName} {...{placeholder: t('rewards.rewardNamePlaceholder')}} placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
             <Text style={styles.fieldLabel}>Description</Text>
-            <TextInput style={[styles.input, { height: 80, textAlignVertical: "top" }]} value={formDesc} onChangeText={setFormDesc} placeholder="Détails..." placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} multiline />
+            <TextInput style={[styles.input, { height: 80, textAlignVertical: "top" }]} value={formDesc} onChangeText={setFormDesc} {...{placeholder: t('rewards.rewardDescPlaceholder')}} placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} multiline />
             <Text style={styles.fieldLabel}>{t('rewards.pointsCost')}</Text>
             <TextInput style={styles.input} value={formPoints} onChangeText={setFormPoints} keyboardType="numeric" placeholder="10" placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
             <Text style={styles.fieldLabel}>{t('rewards.icon')}</Text>

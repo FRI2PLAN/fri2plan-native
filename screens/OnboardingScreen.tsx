@@ -30,34 +30,34 @@ interface OnboardingStep {
 
 const getOnboardingSteps = (t: (key: string) => string): OnboardingStep[] => [
   {
-    title: "Bienvenue sur FRI2PLAN ! 🎉",
-    description: "Votre organiseur familial complet pour gérer le quotidien ensemble. Découvrez comment utiliser l'application en quelques étapes simples.",
+    title: t('onboarding.welcomeTitle'),
+    description: t('onboarding.welcomeSubtitle'),
     icon: "people",
     category: "essential",
     tips: [
       t('onboarding.guideIntro'),
       t('onboarding.guideRevisit'),
-      "Chaque section a son propre mini-tutoriel pour vous guider"
+      t('onboarding.guideTip3') || "Chaque section a son propre mini-tutoriel pour vous guider"
     ]
   },
   {
-    title: "Calendrier familial 📅",
-    description: "Créez et partagez des événements avec toute la famille. Synchronisez vos calendriers externes et activez le Calendrier Intime pour un suivi personnel.",
+    title: t('onboarding.calendarTitle'),
+    description: t('onboarding.calendarDesc'),
     icon: "calendar",
     category: "essential",
     tips: [
       t('onboarding.calendarTip1'),
-      "Importez vos calendriers Google/Outlook en un clic",
-      "Activez les rappels pour ne rien oublier"
+      t('onboarding.calendarTip2') || "Importez vos calendriers Google/Outlook en un clic",
+      t('onboarding.calendarTip3') || "Activez les rappels pour ne rien oublier"
     ],
     action: {
-      label: "Explorer le calendrier",
+      label: t('onboarding.calendarBtn') || "Explorer le calendrier",
       pageIndex: 1,
     },
   },
   {
     title: t('onboarding.tasksTitle'),
-    description: "Organisez vos tâches, assignez-les aux membres de la famille et suivez leur progression. Gagnez des points en complétant des tâches !",
+    description: t('onboarding.tasksDesc'),
     icon: "checkmark-circle",
     category: "essential",
     tips: [
@@ -66,94 +66,94 @@ const getOnboardingSteps = (t: (key: string) => string): OnboardingStep[] => [
       t('onboarding.tasksTip3')
     ],
     action: {
-      label: "Voir les tâches",
+      label: t('onboarding.tasksBtn') || "Voir les tâches",
       pageIndex: 2,
     },
   },
   {
-    title: "Messages et groupes 💬",
-    description: "Communiquez en temps réel avec votre famille. Créez des groupes thématiques pour organiser vos conversations.",
+    title: t('onboarding.messagesTitle'),
+    description: t('onboarding.messagesDesc'),
     icon: "chatbubbles",
     category: "essential",
     tips: [
-      "Les messages sont instantanés grâce à la technologie WebSocket",
-      "Créez des groupes pour différents sujets (Courses, Vacances...)",
-      "Partagez des photos et documents facilement"
+      t('onboarding.messagesTip1'),
+      t('onboarding.messagesTip2'),
+      t('onboarding.messagesTip3') || "Partagez des photos et documents facilement"
     ],
     action: {
-      label: "Accéder aux messages",
+      label: t('onboarding.messagesBtn'),
       pageIndex: 5,
     },
   },
   {
-    title: "Listes de courses 🛒",
-    description: "Créez des listes de courses partagées. Cochez les articles en temps réel pendant vos achats.",
+    title: t('onboarding.shoppingTitle'),
+    description: t('onboarding.shoppingDesc'),
     icon: "cart",
     category: "essential",
     tips: [
-      "Créez plusieurs listes pour différents magasins",
-      "Les modifications sont synchronisées en temps réel",
-      "Organisez vos articles par catégorie"
+      t('onboarding.shoppingTip1'),
+      t('onboarding.shoppingTip2') || "Les modifications sont synchronisées en temps réel",
+      t('onboarding.shoppingTip3') || "Organisez vos articles par catégorie"
     ],
     action: {
-      label: "Voir les courses",
+      label: t('onboarding.shoppingBtn'),
       pageIndex: 3,
     },
   },
   {
-    title: "Budget et dépenses 💰",
-    description: "Suivez vos dépenses familiales, visualisez vos statistiques et gérez votre budget mensuel. (Fonctionnalité Premium)",
+    title: t('onboarding.budgetTitle'),
+    description: t('onboarding.budgetDesc'),
     icon: "wallet",
     category: "premium",
     tips: [
-      "Enregistrez toutes vos dépenses avec catégorie",
-      "Définissez un budget mensuel et recevez des alertes",
-      "Visualisez l'évolution de vos dépenses sur 30 jours"
+      t('onboarding.budgetTip1'),
+      t('onboarding.budgetTip2') || "Définissez un budget mensuel et recevez des alertes",
+      t('onboarding.budgetTip3') || "Visualisez l'évolution de vos dépenses sur 30 jours"
     ],
     action: {
-      label: "Gérer le budget",
+      label: t('onboarding.budgetBtn'),
       pageIndex: 8,
     },
   },
   {
-    title: "Notes partagées 📝",
-    description: "Créez des notes personnelles ou partagées avec la famille. Ajoutez des pièces jointes et épinglez les notes importantes. (Premium)",
+    title: t('onboarding.notesTitle') || "Notes partagées 📝",
+    description: t('onboarding.notesDesc') || "Créez des notes personnelles ou partagées avec la famille.",
     icon: "document-text",
     category: "premium",
     tips: [
-      "Épinglez vos notes importantes en haut de la liste",
-      "Ajoutez des images et documents (max 10 MB)",
-      "Marquez une note comme privée si nécessaire"
+      t('onboarding.notesTip1') || "Épinglez vos notes importantes en haut de la liste",
+      t('onboarding.notesTip2') || "Ajoutez des images et documents (max 10 MB)",
+      t('onboarding.notesTip3') || "Marquez une note comme privée si nécessaire"
     ],
     action: {
-      label: "Voir les notes",
+      label: t('onboarding.notesBtn') || "Voir les notes",
       pageIndex: 7,
     },
   },
   {
-    title: "Système de récompenses 🏆",
-    description: "Motivez les membres de la famille avec un système de points et de récompenses personnalisées. (Premium)",
+    title: t('onboarding.rewardsTitle') || "Système de récompenses 🏆",
+    description: t('onboarding.rewardsDesc') || "Motivez les membres de la famille avec un système de points et de récompenses.",
     icon: "trophy",
     category: "premium",
     tips: [
-      "Chaque tâche terminée rapporte des points",
-      "Créez des récompenses personnalisées pour votre famille",
-      "Les enfants peuvent échanger leurs points contre des récompenses"
+      t('onboarding.rewardsTip1') || "Chaque tâche terminée rapporte des points",
+      t('onboarding.rewardsTip2') || "Créez des récompenses personnalisées pour votre famille",
+      t('onboarding.rewardsTip3') || "Les enfants peuvent échanger leurs points contre des récompenses"
     ],
     action: {
-      label: "Voir les récompenses",
+      label: t('onboarding.rewardsBtn') || "Voir les récompenses",
       pageIndex: 9,
     },
   },
   {
-    title: "Vous êtes prêt ! 🚀",
-    description: "Vous avez découvert toutes les fonctionnalités principales. Commencez à organiser votre vie familiale dès maintenant !",
+    title: t('onboarding.readyTitle'),
+    description: t('onboarding.readyDesc'),
     icon: "checkmark-done-circle",
     category: "essential",
     tips: [
-      "Vous pouvez revisiter ce guide depuis Paramètres > Centre d'aide",
-      "Chaque section a son propre tutoriel détaillé",
-      "N'hésitez pas à nous contacter si vous avez des questions"
+      t('onboarding.readyTip1') || "Vous pouvez revisiter ce guide depuis Paramètres > Centre d'aide",
+      t('onboarding.readyTip2') || "Chaque section a son propre tutoriel détaillé",
+      t('onboarding.readyTip3') || "N'hésitez pas à nous contacter si vous avez des questions"
     ]
   },
 ];

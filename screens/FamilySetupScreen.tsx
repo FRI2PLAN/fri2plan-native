@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ActivityIndicator, Alert, ScrollView, Share, Platform,
@@ -18,7 +19,9 @@ interface FamilySetupScreenProps {
 
 type Mode = 'choice' | 'create' | 'join' | 'created';
 
+// i18n injected
 export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScreenProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('choice');
   const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -91,7 +94,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
 
             <TouchableOpacity style={styles.primaryBtn} onPress={() => setMode('create')}>
               <Ionicons name="home-outline" size={22} color="#fff" style={styles.btnIcon} />
-              <Text style={styles.primaryBtnText}>Créer une famille</Text>
+              <Text style={styles.primaryBtnText}>{t('familySetup.createBtn')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('join')}>
@@ -123,7 +126,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
                 <Text style={styles.backBtnText}>Retour</Text>
               </TouchableOpacity>
 
-              <Text style={styles.title}>🏠 Créer une famille</Text>
+              <Text style={styles.title}>{t('familySetup.createTitle')}</Text>
               <Text style={styles.subtitle}>
                 Donnez un nom à votre famille. Vous pourrez ensuite inviter vos proches.
               </Text>
@@ -152,7 +155,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle-outline" size={22} color="#fff" style={styles.btnIcon} />
-                    <Text style={styles.primaryBtnText}>Créer la famille</Text>
+                    <Text style={styles.primaryBtnText}>{t('familySetup.createFamilyBtn')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -178,7 +181,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
 
               <Text style={styles.title}>👥 Rejoindre une famille</Text>
               <Text style={styles.subtitle}>
-                Saisissez le code d'invitation que vous avez reçu d'un membre de la famille.
+                {t('familySetup.joinInviteHint')}
               </Text>
 
               <Text style={styles.label}>Code d'invitation</Text>
@@ -248,7 +251,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
 
           <TouchableOpacity style={styles.primaryBtn} onPress={onComplete}>
             <Ionicons name="arrow-forward-outline" size={22} color="#fff" style={styles.btnIcon} />
-            <Text style={styles.primaryBtnText}>Accéder à l'application</Text>
+            <Text style={styles.primaryBtnText}>{t('familySetup.accessApp')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
