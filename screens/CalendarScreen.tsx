@@ -16,18 +16,34 @@ import { useFamily } from '../contexts/FamilyContext';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
- * Parser une date stockée en base (heure locale Europe/Zurich) en objet Date JS.
- * Sur Android/Hermes, new Date("2026-04-18T18:30:00") SANS Z est interprété comme UTC (+2h).
- * Cette fonction parse explicitement les composants pour éviter toute ambiguïté.
+ * Parser une date stockée en base en objet Date JS.
+ *
+ * @param dateStr  - La string de date (format MySQL DATETIME)
+ * @param isUtc    - true si la date est en UTC (import iCal), false si heure locale (création manuelle)
+ *
+ * Deux cas :
+ *  - isUtc = false (défaut) : heure locale (création manuelle '2026-05-04 17:00:00')
+ *    → on parse les composants manuellement pour forcer l'heure locale de l'appareil.
+ *  - isUtc = true : UTC (import iCal '2026-05-04 15:00:00' qui représente 17:00 à Zurich)
+ *    → on ajoute le Z et new Date() convertit automatiquement en heure locale de l'appareil.
+ *
+ * Cette approche fonctionne quel que soit le fuseau horaire de l'utilisateur.
  */
-function parseLocalDate(dateStr: string | undefined | null): Date {
+function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
   if (!dateStr) return new Date();
   // Normaliser : remplacer espace par T si nécessaire
   const s = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
-  // Parser les composants manuellement pour forcer l'heure locale
+  // Si isUtc=true, la date est en UTC : ajouter Z pour que new Date() convertisse en heure locale
+  if (isUtc) {
+    const utcStr = s.endsWith('Z') ? s : s + 'Z';
+    return new Date(utcStr);
+  }
+  // Sinon, c'est une heure locale (création manuelle) :
+  // on parse les composants manuellement pour éviter l'interprétation UTC
+  // par Android/Hermes qui traite les strings ISO sans Z comme UTC.
   const [datePart, timePart = '00:00:00'] = s.split('T');
   const [year, month, day] = datePart.split('-').map(Number);
-  const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+  const [hours, minutes, seconds = 0] = timePart.replace('Z', '').split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
@@ -403,16 +419,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!events) return [];
     let filteredEvents = events;
     if (viewMode === 'agenda') {
-      filteredEvents = filteredEvents.filter(event => parseLocalDate(event.startTime) >= new Date());
+      filteredEvents = filteredEvents.filter(event => parseLocalDate(event.startTime, !!event.isUtc) >= new Date());
     } else if (viewMode === 'week') {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
       filteredEvents = filteredEvents.filter(event => {
-        const eventDate = parseLocalDate(event.startTime);
+        const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
         return eventDate >= weekStart && eventDate <= weekEnd;
       });
     } else {
-      filteredEvents = filteredEvents.filter(event => isSameDay(parseLocalDate(event.startTime), date));
+      filteredEvents = filteredEvents.filter(event => isSameDay(parseLocalDate(event.startTime, !!event.isUtc), date));
     }
     if (selectedCategories.length > 0) {
       filteredEvents = filteredEvents.filter(event => selectedCategories.includes(event.category));
@@ -504,8 +520,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
-    const startTime = parseLocalDate(event.startTime);
-    const endTime = parseLocalDate(event.endTime);
+    const startTime = parseLocalDate(event.startTime, !!event.isUtc);
+    const endTime = parseLocalDate(event.endTime, !!event.isUtc);
     setEventDate(startTime);
     setStartTimeDate(startTime);
     setEndTimeDate(endTime);
@@ -701,7 +717,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <View style={styles.daysGrid}>
                 {calendarGrid.map((day) => {
                   const isCurrentMonth = isSameMonth(day, currentDate);
-                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(parseLocalDate(e.startTime), day)) : [];
+                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), day)) : [];
                   const hasEvents = dayEvts.length > 0;
                   const isSelected = isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
@@ -724,7 +740,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       ]}
                       onPress={() => {
                         setSelectedDate(day);
-                        const dayEvents = (events || []).filter(e => isSameDay(parseLocalDate(e.startTime), day));
+                        const dayEvents = (events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), day));
                         if (dayEvents.length > 0) setDropdownModalOpen(true);
                         else {
                           setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
@@ -783,14 +799,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       }
                       return (event as any).color || category.color;
                     })();
-                    const isEventPast = parseLocalDate(event.startTime) < new Date();
+                    const isEventPast = parseLocalDate(event.startTime, !!event.isUtc) < new Date();
                     return (
                       <TouchableOpacity key={event.id} style={[styles.eventCard, isEventPast && { opacity: 0.6 }]} onPress={() => openEditModal(event)}>
                         <View style={[styles.eventColorBar, { backgroundColor: barColor }]} />
                         <View style={styles.eventCardContent}>
                           <View style={styles.eventHeader}>
                             <Text style={styles.eventIcon}>{category.icon}</Text>
-                            <Text style={styles.eventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
+                            <Text style={styles.eventTime}>{format(parseLocalDate(event.startTime, !!event.isUtc), 'HH:mm')}</Text>
                             {isEventPast && (
                               <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
                                 <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>
@@ -831,11 +847,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           <View style={styles.agendaContainer}>
             {events && events.length > 0 ? (
               events
-                .filter(event => parseLocalDate(event.startTime) >= new Date())
-                .sort((a, b) => parseLocalDate(a.startTime).getTime() - parseLocalDate(b.startTime).getTime())
+                .filter(event => parseLocalDate(event.startTime, !!event.isUtc) >= new Date())
+                .sort((a, b) => parseLocalDate(a.startTime, !!a.isUtc).getTime() - parseLocalDate(b.startTime, !!b.isUtc).getTime())
                 .map((event, index, arr) => {
-                  const eventDate = parseLocalDate(event.startTime);
-                  const prevEventDate = index > 0 ? parseLocalDate(arr[index - 1].startTime) : null;
+                  const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
+                  const prevEventDate = index > 0 ? parseLocalDate(arr[index - 1].startTime, !!arr[index - 1].isUtc) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
                   const category = getCategoryInfo(event.category);
                   const desc = cleanDescription(event.description);
@@ -912,7 +928,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => {
                     const hourEvents = (events || []).filter(event => {
-                      const eventDate = parseLocalDate(event.startTime);
+                      const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
                       return isSameDay(eventDate, day) && eventDate.getHours() === hour;
                     });
                     return (
@@ -927,7 +943,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             >
                               <Text style={styles.weekEventIcon}>{category.icon}</Text>
                               <Text style={styles.weekEventTitle} numberOfLines={1}>{event.title}</Text>
-                              <Text style={styles.weekEventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
+                              <Text style={styles.weekEventTime}>{format(parseLocalDate(event.startTime, !!event.isUtc), 'HH:mm')}</Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -957,7 +973,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             <ScrollView style={styles.dayTimeline}>
               {Array.from({ length: 24 }, (_, hour) => {
                 const hourEvents = (events || []).filter(event => {
-                  const eventDate = parseLocalDate(event.startTime);
+                  const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
                   return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
                 });
                 return (
@@ -969,8 +985,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       <View style={styles.dayTimeHalfHourLine} />
                       {hourEvents.map(event => {
                         const category = getCategoryInfo(event.category);
-const startT = parseLocalDate(event.startTime);
-        const endT = parseLocalDate(event.endTime);
+const startT = parseLocalDate(event.startTime, !!event.isUtc);
+        const endT = parseLocalDate(event.endTime, !!event.isUtc);
                         const durationMinutes = (endT.getTime() - startT.getTime()) / (1000 * 60);
                         const eventHeight = Math.max(durationMinutes * 2, 40);
                         const topOffset = startT.getMinutes() * 2;
@@ -1148,7 +1164,7 @@ const startT = parseLocalDate(event.startTime);
               <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
             <ScrollView style={styles.dropdownEventsList}>
-              {(events || []).filter(e => isSameDay(parseLocalDate(e.startTime), selectedDate)).map(event => {
+              {(events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), selectedDate)).map(event => {
                 const category = getCategoryInfo(event.category);
                 const desc = cleanDescription(event.description);
                 // Couleur barre : abonnement > couleur event > catégorie
@@ -1160,14 +1176,14 @@ const startT = parseLocalDate(event.startTime);
                   return (event as any).color || category.color;
                 })();
                 const isImported = !!(event as any).calendarSubscriptionId;
-                const isDropPast = parseLocalDate(event.startTime) < new Date();
+                const isDropPast = parseLocalDate(event.startTime, !!event.isUtc) < new Date();
                 return (
                   <TouchableOpacity key={event.id} style={[styles.dropdownEventCard, isDropPast && { opacity: 0.6 }]} onPress={() => { setDropdownModalOpen(false); openEditModal(event); }}>
                     <View style={[styles.dropdownEventColorBar, { backgroundColor: dropBarColor }]} />
                     <View style={styles.dropdownEventContent}>
                       <View style={styles.dropdownEventHeader}>
                         <Text style={styles.dropdownEventIcon}>{category.icon}</Text>
-                        <Text style={styles.dropdownEventTime}>{format(parseLocalDate(event.startTime), 'HH:mm')}</Text>
+                        <Text style={styles.dropdownEventTime}>{format(parseLocalDate(event.startTime, !!event.isUtc), 'HH:mm')}</Text>
                         {isDropPast && (
                           <View style={{ backgroundColor: '#9ca3af', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
                             <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('calendar.past') || 'Passé'}</Text>
