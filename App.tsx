@@ -9,10 +9,12 @@ import { PagerProvider } from './contexts/PagerContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
-import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
+import SplashScreen from './screens/SplashScreen';
+import { StyleSheet, Platform } from 'react-native';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Create QueryClient (stable, never recreated)
 const queryClient = new QueryClient({
@@ -66,6 +68,26 @@ function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+
+  // Initialiser Google Sign-In au niveau app (une seule fois, avant l'écran de login)
+  useEffect(() => {
+    const initGoogle = async () => {
+      try {
+        GoogleSignin.configure({
+          webClientId: '846470017457-qh90rioca6oujshvm05p23b5do8fbv6t.apps.googleusercontent.com',
+          offlineAccess: true,
+        });
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false });
+      } catch (e) {
+        // Play Services non disponible — on continue quand même
+        console.warn('[App] Google Play Services non disponible:', e);
+      } finally {
+        setGoogleReady(true);
+      }
+    };
+    initGoogle();
+  }, []);
 
   const { activeFamilyId } = useFamily();
   // Recreate tRPC client whenever the auth token or active family changes so requests include the correct headers
@@ -87,12 +109,9 @@ function AppContent() {
     }
   }, [token]);
 
-  if (isLoading || isInitializing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#7c3aed" />
-      </View>
-    );
+  // Afficher le splash screen tant que l'auth OU Google Sign-In ne sont pas prêts
+  if (isLoading || isInitializing || !googleReady) {
+    return <SplashScreen />;
   }
 
   return (
@@ -111,7 +130,7 @@ function AppContent() {
           />
         </>
       ) : (
-        <LoginScreen />
+        <LoginScreen googleAlreadyReady={googleReady} />
       )}
     </trpc.Provider>
   );
@@ -141,11 +160,4 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-});
+const styles = StyleSheet.create({});

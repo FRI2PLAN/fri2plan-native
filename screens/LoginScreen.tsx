@@ -30,7 +30,11 @@ type ScreenMode = 'login' | 'register' | 'forgotPassword';
 const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
 const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+  googleAlreadyReady?: boolean;
+}
+
+export default function LoginScreen({ googleAlreadyReady = false }: LoginScreenProps) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -40,26 +44,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleReady, setGoogleReady] = useState(false);
-
-  // Initialiser Google Sign-In
-  useEffect(() => {
-    const initGoogle = async () => {
-      try {
-        GoogleSignin.configure({
-          webClientId: '846470017457-qh90rioca6oujshvm05p23b5do8fbv6t.apps.googleusercontent.com',
-          offlineAccess: true,
-        });
-        // Vérifier que Play Services est disponible avant d'activer le bouton
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false });
-      } catch (e) {
-        // Play Services non disponible ou erreur — on active quand même le bouton
-      } finally {
-        setGoogleReady(true);
-      }
-    };
-    initGoogle();
-  }, []);
+  // Google est déjà initialisé au niveau App.tsx — on utilise la prop directement
+  const googleReady = googleAlreadyReady;
 
   // Charger l'email sauvegardé au démarrage si "Se souvenir de moi" était coché
   useEffect(() => {
