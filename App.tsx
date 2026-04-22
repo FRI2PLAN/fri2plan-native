@@ -38,20 +38,25 @@ function PushRegistrar() {
       return;
     }
 
-    registerForPushNotificationsAsync()
-      .then(expoPushToken => {
-        if (expoPushToken && expoPushToken !== lastRegisteredToken.current) {
-          lastRegisteredToken.current = expoPushToken;
-          registerPushMutation.mutate(
-            { token: expoPushToken, platform: Platform.OS },
-            {
-              onSuccess: () => console.log('[Push] Token enregistré:', expoPushToken.slice(0, 40) + '...'),
-              onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
-            }
-          );
-        }
-      })
-      .catch(err => console.error('[Push] Erreur obtention token:', err));
+    // Délai de 3s après connexion avant de demander les permissions push
+    // évite le crash Android quand la dialog système s'ouvre trop tôt
+    const pushTimer = setTimeout(() => {
+      registerForPushNotificationsAsync()
+        .then(expoPushToken => {
+          if (expoPushToken && expoPushToken !== lastRegisteredToken.current) {
+            lastRegisteredToken.current = expoPushToken;
+            registerPushMutation.mutate(
+              { token: expoPushToken, platform: Platform.OS },
+              {
+                onSuccess: () => console.log('[Push] Token enregistré:', expoPushToken.slice(0, 40) + '...'),
+                onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
+              }
+            );
+          }
+        })
+        .catch(err => console.error('[Push] Erreur obtention token:', err));
+    }, 3000);
+    return () => clearTimeout(pushTimer);
   }, [isAuthenticated, token]);
 
   return null;
@@ -62,12 +67,12 @@ function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [isInitializing, setIsInitializing] = useState(false);
-  // Durée minimale du splash : 1500ms pour que l'animation soit visible
+  // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
 
-  // Timer durée minimale splash (1500ms)
+  // Timer durée minimale splash (3000ms) — laisse le temps à l'app de se monter complètement
   useEffect(() => {
-    const timer = setTimeout(() => setSplashMinDone(true), 1500);
+    const timer = setTimeout(() => setSplashMinDone(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
