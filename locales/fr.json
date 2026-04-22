@@ -859,7 +859,9 @@
     "snack": "Collation",
     "ingredient": "ingrédient",
     "preparation": "préparation",
-    "step": "étape"
+    "step": "étape",
+    "shareRecipe": "Partager la recette",
+    "shareRecipeMessage": "Recette partagée depuis FRI2PLAN"
   },
   "quickActions": {
     "title": "Actions rapides",

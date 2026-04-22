@@ -11,7 +11,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image, Share} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
@@ -262,6 +262,33 @@ export default function MealsScreen({
     }
   }, [triggerCreate]);
 
+  const shareMeal = async (meal: Meal) => {
+    const lines: string[] = [];
+    lines.push(`🍽️ ${meal.name}`);
+    lines.push(`${customLabels[meal.mealType]} · ${meal.servings || 2} ${t('meals.servings') || 'pers.'}`);
+    const notes = meal.notes || '';
+    // Extraire les ingrédients depuis les notes si présents
+    const ingredientMatch = notes.match(/Ingrédients\s*:\s*([\s\S]*?)(?:\n\n|Instructions|$)/i);
+    if (ingredientMatch) {
+      lines.push('');
+      lines.push(`🥕 ${t('meals.ingredients') || 'Ingrédients'} :`);
+      lines.push(ingredientMatch[1].trim());
+    } else if (notes.trim()) {
+      lines.push('');
+      lines.push(notes.substring(0, 300));
+    }
+    if (meal.sourceUrl) {
+      lines.push('');
+      lines.push(`🔗 ${meal.sourceUrl}`);
+    }
+    const message = lines.join('\n');
+    try {
+      await Share.share({ message, title: meal.name });
+    } catch (e) {
+      // ignoré si l'utilisateur annule
+    }
+  };
+
   const openEdit = (meal: Meal) => {
     setEditingMeal(meal);
     setSelectedDay(parseISO(meal.date));
@@ -487,6 +514,9 @@ export default function MealsScreen({
         <View style={s.mealCardActions}>
           <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
             <Text style={s.mealActionBtn}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => shareMeal(meal)}>
+            <Text style={s.mealActionBtn}>📤</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => openAddToShopping(meal)}>
             <Text style={s.mealActionBtn}>🛒</Text>

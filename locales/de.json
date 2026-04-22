@@ -859,7 +859,9 @@
     "snack": "Snack",
     "ingredient": "Zutat",
     "preparation": "Zubereitung",
-    "step": "Schritt"
+    "step": "Schritt",
+    "shareRecipe": "Rezept teilen",
+    "shareRecipeMessage": "Rezept geteilt von FRI2PLAN"
   },
   "quickActions": {
     "title": "Schnellaktionen",
