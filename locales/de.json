@@ -32,7 +32,8 @@
     "optional": "optional",
     "notifications": "Benachrichtigungen",
     "validate": "Bestätigen",
-    "familyOrganizer": "Familienorganisator"
+    "familyOrganizer": "Familienorganisator",
+    "skip": "Überspringen"
   },
   "auth": {
     "login": "Anmelden",
@@ -66,7 +67,12 @@
     "continueWithApple": "Mit Apple fortfahren",
     "continueWithMicrosoft": "Mit Microsoft fortfahren",
     "minChars": "Mindestens 8 Zeichen",
-    "logoutConfirm": "Möchten Sie sich wirklich abmelden?"
+    "logoutConfirm": "Möchten Sie sich wirklich abmelden?",
+    "fillAllFields": "Bitte füllen Sie alle Pflichtfelder aus",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "passwordMustContain": "Passwort muss enthalten:",
+    "emailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -228,7 +234,11 @@
     "noTask": "Keine Aufgabe",
     "chooseMember": "Mitglied wählen",
     "unassigned": "Nicht zugewiesen",
-    "noOne": "Keiner"
+    "noOne": "Keiner",
+    "statusTodo": "⭕ Zu erledigen",
+    "statusDone": "✅ Erledigt",
+    "titlePlaceholder": "Aufgabentitel",
+    "statusInProgress": "🔵 In Bearbeitung"
   },
   "shopping": {
     "title": "Einkaufen",
@@ -462,7 +472,18 @@
     "projectMembers": "Teilnehmer",
     "projectMembersHint": "Alle Mitglieder sind standardmäßig eingeschlossen",
     "projectParticipants": "Teilnehmer",
-    "shareInviteMessage": "Tritt unserem Projekt \"{{projectName}}\" auf Fri2Plan bei! App herunterladen: {{appUrl}}"
+    "shareInviteMessage": "Tritt unserem Projekt \"{{projectName}}\" auf Fri2Plan bei! App herunterladen: {{appUrl}}",
+    "sante": "Gesundheit",
+    "education": "Bildung",
+    "vetements": "Kleidung",
+    "activites": "Aktivitäten",
+    "autre": "Andere",
+    "de": "von",
+    "markAsPaid": "✅ Als bezahlt markieren",
+    "paid": "✅ Bezahlt",
+    "paidQuestion": "Bezahlt?",
+    "reimbursedQuestion": "Hat {{from}} {{amount}} {{currency}} an {{to}} erstattet?",
+    "reimbursedBy": "✅ Erstattet von {{from}} an {{to}}"
   },
   "rewards": {
     "title": "Belohnungen",
@@ -477,7 +498,23 @@
     "noneObtained": "Keine Belohnungen erhalten",
     "noClaims": "Keine ausstehenden Ansprüche",
     "pointsCost": "Punktekosten *",
-    "icon": "Symbol"
+    "icon": "Symbol",
+    "badge_firstTask": "Erste Aufgabe",
+    "badge_firstTaskDesc": "Schließen Sie Ihre erste Aufgabe ab",
+    "badge_10tasks": "10 Aufgaben",
+    "badge_10tasksDesc": "Schließen Sie 10 Aufgaben ab",
+    "badge_50tasks": "50 Aufgaben",
+    "badge_50tasksDesc": "Schließen Sie 50 Aufgaben ab",
+    "badge_100tasks": "100 Aufgaben",
+    "badge_100tasksDesc": "Schließen Sie 100 Aufgaben ab",
+    "badge_7days": "Schließen Sie alle Ihre Aufgaben 7 Tage in Folge ab",
+    "badge_earlyBird": "Frühaufsteher",
+    "badge_memberOfMonth": "Mitglied des Monats",
+    "badge_memberOfMonthDesc": "Haben Sie diesen Monat die meisten Punkte",
+    "badge_perfectWeek": "Perfekte Woche",
+    "badge_earlyBirdDesc": "Schließen Sie eine Aufgabe vor 8 Uhr morgens ab",
+    "badge_teamPlayer": "Teamplayer",
+    "badge_teamPlayerDesc": "Helfen Sie 5 verschiedenen Familienmitgliedern"
   },
   "members": {
     "title": "Mitglieder",
@@ -499,7 +536,14 @@
     "circleName": "Kreisname",
     "enterInviteCode": "Geben Sie den Einladungscode des Kreises ein",
     "noPendingInvites": "Keine ausstehenden Einladungen",
-    "inviteMember": "Mitglied einladen"
+    "inviteMember": "Mitglied einladen",
+    "soloAdminWarning": "Sie sind der einzige Admin. Übertragen Sie die Admin-Rolle auf ein anderes Mitglied, bevor Sie diesen Administrator entfernen.",
+    "displayName": "Anzeigename",
+    "changeRole": "Rolle ändern",
+    "transferAdmin": "Admin-Rechte übertragen",
+    "transferAdminBtn": "Übertragen",
+    "soloAdminWarning2": "Sie müssen zuerst die Admin-Rolle auf ein anderes Mitglied übertragen, bevor Sie diesen Administrator entfernen.",
+    "transferAdminConfirm": "Administratorrechte an {{name}} übertragen? Sie werden Mitglied."
   },
   "referral": {
     "title": "Empfehlen",
@@ -628,7 +672,13 @@
     "save33": "33% sparen",
     "mySubscription": "Mein Abonnement",
     "planLabel": "Plan",
-    "renewalLabel": "Verlängerung"
+    "renewalLabel": "Verlängerung",
+    "langFr": "🇫🇷 Französisch",
+    "langEn": "🇬🇧 Englisch",
+    "langDe": "🇩🇪 Deutsch",
+    "currencyUSD": "🇺🇸 USD - US-Dollar",
+    "currencySEK": "🇸🇪 SEK - Schwedische Krone",
+    "currencyNOK": "🇳🇴 NOK - Norwegische Krone"
   },
   "help": {
     "title": "Hilfezentrum",
@@ -799,7 +849,10 @@
     "breakfast": "Frühstück",
     "lunch": "Mittagessen",
     "dinner": "Abendessen",
-    "snack": "Snack"
+    "snack": "Snack",
+    "ingredient": "Zutat",
+    "preparation": "Zubereitung",
+    "step": "Schritt"
   },
   "quickActions": {
     "title": "Schnellaktionen",
@@ -820,5 +873,106 @@
     "noNotifications": "Keine Benachrichtigungen",
     "deleteAll": "Alle löschen"
   },
-  "google_calendars": "Google Kalender"
+  "google_calendars": "Google Kalender",
+  "calendrierIntime": {
+    "excellent": "Ausgezeichnet",
+    "bien": "Gut",
+    "moyen": "Durchschnittlich",
+    "mauvais": "Schlecht",
+    "tresMauvais": "Sehr schlecht",
+    "leger": "Leicht",
+    "moyen2": "Mäßig",
+    "abondant": "Stark",
+    "treAbondant": "Sehr stark",
+    "mauxDeTete": "Kopfschmerzen",
+    "nausees": "Übelkeit",
+    "sautesDHumeur": "Stimmungsschwankungen",
+    "acne": "Akne",
+    "crampes": "Krämpfe",
+    "fatigue": "Müdigkeit",
+    "ballonnements": "Blähungen",
+    "fenetreFertile": "Fruchtbares Fenster",
+    "fenetreFertileIcon": "🌸 Fruchtbares Fenster",
+    "phaseLuteale": "Lutealphase",
+    "suiviDuCycle": "🩸 Zyklus-Tracking",
+    "predictions": "📅 Vorhersagen",
+    "humeurSymptomes": "😊 Stimmung & Symptome",
+    "vueEnsemble": "📊 Übersicht",
+    "parametres": "⚙️ Einstellungen",
+    "activerCalendrier": "Intimen Kalender aktivieren",
+    "avertissementMedical": "⚠️ Diese Funktion dient nur zu Informationszwecken und ersetzt keinen ärztlichen Rat.",
+    "avertissementMedical2": "⚠️ Diese Informationen dienen nur als Orientierung und stellen keine medizinische Beratung dar. Konsultieren Sie einen Arzt für medizinische Nachsorge.",
+    "nouveauCycle": "🩸 Neuer Zyklus (Periode heute)",
+    "prochainesRegles": "Nächste Periode",
+    "phasesDuCycle": "Zyklusphasen",
+    "aucunCycle": "Kein Zyklus aufgezeichnet",
+    "commencerSuivi": "Tippen Sie auf \"Neuer Zyklus\", um das Tracking zu starten",
+    "aucunHistorique": "Kein Verlauf",
+    "dureeCycle": "Dauer: {{days}} Tage",
+    "regulier": "Regelmäßig",
+    "enAvance": "Früh",
+    "enRetard": "Spät",
+    "fonctionnaliteActivee": "Funktion aktiviert",
+    "dureeDuCycle": "Zykluslänge",
+    "dureeMoyenneCycle": "Durchschnittliche Zykluslänge (in Tagen)",
+    "dureeDesRegles": "Periodenlänge",
+    "dureeMoyenneRegles": "Durchschnittliche Periodenlänge (in Tagen)",
+    "symptomes": "Symptome"
+  },
+  "familySetup": {
+    "bienvenue": "Willkommen! 🎉",
+    "creerFamille": "Eine Familie erstellen",
+    "creerFamilleIcon": "🏠 Eine Familie erstellen",
+    "rejoindre": "Einer Familie beitreten",
+    "rejoindreIcon": "👥 Einer Familie beitreten",
+    "plusTard": "Später",
+    "nomFamille": "Familienname",
+    "nomFamillePlaceholder": "Bsp: Familie Dupont",
+    "creerLaFamille": "Familie erstellen",
+    "codeInvitation": "Einladungscode",
+    "codeInvitationPlaceholder": "Bsp: ABC123",
+    "invitationInstruction": "Geben Sie den Einladungscode ein, den Sie von einem Familienmitglied erhalten haben.",
+    "familleCree": "🎉 Familie erstellt!",
+    "partagerCode": "Teilen Sie diesen Code mit Ihren Lieben, damit sie Ihrer Familie beitreten können.",
+    "accederApp": "Zur App",
+    "continuer": "Weiter",
+    "rejoindreApp": "Beitreten"
+  },
+  "header": {
+    "logoutConfirmTitle": "Abmelden",
+    "logoutConfirmMsg": "Sind Sie sicher, dass Sie sich abmelden möchten?"
+  },
+  "forgotPassword": {
+    "emailSentTitle": "E-Mail gesendet",
+    "emailSentMsg": "Wenn ein Konto mit dieser E-Mail existiert, erhalten Sie einen Reset-Link.",
+    "title": "Passwort vergessen",
+    "subtitle": "Geben Sie Ihre E-Mail ein, um einen Reset-Link zu erhalten",
+    "emailPlaceholder": "Ihre E-Mail",
+    "sendBtn": "Link senden",
+    "successTitle": "E-Mail gesendet!",
+    "successMsg": "Überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen.",
+    "backToLogin": "Zurück zur Anmeldung",
+    "spamNote": "Wenn Sie innerhalb von 5 Minuten keine E-Mail erhalten, überprüfen Sie Ihren Spam-Ordner."
+  },
+  "onboarding": {
+    "welcomeSubtitle": "Ihr vollständiger Familienorganizer für den gemeinsamen Alltag. Entdecken Sie, wie FRI2PLAN Ihr Familienleben vereinfachen kann.",
+    "guideIntro": "Folgen Sie diesem Leitfaden, um alle Funktionen zu entdecken",
+    "guideRevisit": "Sie können dieses Tutorial jederzeit über die Einstellungen erneut aufrufen",
+    "calendarDesc": "Erstellen und teilen Sie Ereignisse mit der ganzen Familie. Synchronisieren Sie Ihre Google-Kalender, um nichts zu verpassen.",
+    "calendarTip1": "Tippen Sie auf ein Datum, um schnell ein Ereignis zu erstellen",
+    "tasksTitle": "Aufgabenverwaltung ✅",
+    "tasksDesc": "Organisieren Sie Ihre Aufgaben, weisen Sie sie Familienmitgliedern zu und verfolgen Sie den Fortschritt.",
+    "tasksTip1": "Halten Sie eine Aufgabe gedrückt, um Schnellaktionen aufzurufen",
+    "tasksTip2": "Verwenden Sie Prioritäten, um Ihre Aufgaben zu organisieren",
+    "tasksTip3": "Markieren Sie Ihre Lieblingsaufgaben für schnellen Zugriff",
+    "welcomeTitle": "Willkommen bei FRI2PLAN! 🎉",
+    "calendarTitle": "Familienkalender 📅",
+    "readyTitle": "Sie sind bereit! 🚀",
+    "readyDesc": "Sie haben alle Hauptfunktionen entdeckt. Beginnen Sie jetzt, Ihr Familienleben zu organisieren!"
+  },
+  "register": {
+    "accountCreatedTitle": "Konto erstellt!",
+    "accountCreatedMsg": "Ihr Konto wurde erstellt. Bitte melden Sie sich an.",
+    "passwordMinLength": "Mindestens 8 Zeichen"
+  }
 }

@@ -150,7 +150,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const getPriorityEmoji = (p: string) => ({ urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' }[p] || '⚪');
   const getPriorityLabel = (p: string) => ({ urgent: t('tasks.urgent') || 'Urgent', high: t('tasks.high') || 'Haute', medium: t('tasks.medium') || 'Moyenne', low: t('tasks.low') || 'Basse' }[p] || '');
   const getRecurrenceLabel = (r: Recurrence) => ({ none: '🚫 Aucune', daily: '📅 Quotidienne', weekly: '📆 Hebdomadaire', monthly: '🗓️ Mensuelle', yearly: '🎉 Annuelle' }[r]);
-  const getStatusLabel = (s: string) => ({ todo: '⭕ À faire', inProgress: '🔵 En cours', completed: '✅ Terminée' }[s] || s);
+  const getStatusLabel = (s: string) => ({ todo: t('tasks.statusTodo'), inProgress: t('tasks.statusInProgress') || '🔵 En cours', completed: t('tasks.statusDone') }[s] || s);
 
   const formatDueDate = (d: string) => {
     try { return format(parseLocalDate(d), 'dd MMM', { locale: getLocale() }); }
@@ -305,7 +305,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* Titre */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t('common.title') || 'Titre'} *</Text>
-        <TextInput style={styles.input} placeholder="Titre de la tâche" placeholderTextColor={isDark ? '#9ca3af' : '#9ca3af'}
+        <TextInput style={styles.input} placeholder={t('tasks.titlePlaceholder')} placeholderTextColor={isDark ? '#9ca3af' : '#9ca3af'}
           value={data.title} onChangeText={text => setData({ ...data, title: text })} />
       </View>
       {/* Description */}

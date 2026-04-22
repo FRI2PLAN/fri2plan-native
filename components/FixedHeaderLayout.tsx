@@ -6,6 +6,7 @@ import QuickActionsModal from './QuickActionsModal';
 import NotificationsModal from './NotificationsModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface FixedHeaderLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export default function FixedHeaderLayout({
   const { isDark, toggleTheme } = useTheme();
   const styles = getStyles(isDark);
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
 
@@ -36,15 +38,15 @@ export default function FixedHeaderLayout({
 
   const handleLogout = () => {
     Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      t('header.logoutConfirmTitle'),
+      t('header.logoutConfirmMsg'),
       [
         {
-          text: 'Annuler',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Déconnexion',
+          text: t('header.logoutConfirmTitle'),
           style: 'destructive',
           onPress: async () => {
             // Utiliser AuthContext.logout() qui vide token + user

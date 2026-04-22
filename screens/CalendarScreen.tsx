@@ -610,14 +610,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               setCalendarMenuVisible(false);
               // Générer un sessionId unique pour le polling
               const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}`;
+              // Récupérer le token FRI2PLAN AVANT d'ouvrir le navigateur
+              const token = await AsyncStorage.getItem('authToken');
+              if (!token) {
+                Alert.alert('Erreur', 'Vous devez être connecté pour utiliser Google Calendar.');
+                return;
+              }
+              // Passer le token dans l'URL car Linking.openURL ne peut pas envoyer de headers Authorization
+              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
               Linking.openURL(connectUrl).catch(() =>
                 Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
               );
               // Polling toutes les 2s pendant 3 minutes max
               let attempts = 0;
               const maxAttempts = 90;
-              const token = await AsyncStorage.getItem('authToken');
               const pollInterval = setInterval(async () => {
                 attempts++;
                 if (attempts > maxAttempts) {

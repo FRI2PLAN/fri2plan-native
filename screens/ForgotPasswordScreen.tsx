@@ -35,20 +35,20 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
       setLoading(false);
       setEmailSent(true);
       Alert.alert(
-        'Email envoyé',
-        'Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.'
+        t('forgotPassword.emailSentTitle'),
+        t('forgotPassword.emailSentMsg')
       );
     },
     onError: (error) => {
       console.error('Password reset error:', error);
       setLoading(false);
-      Alert.alert('Erreur', error.message || 'Erreur lors de la demande de réinitialisation');
+      Alert.alert(t('common.error'), error.message || t('common.error'));
     },
   });
 
   const handleRequestReset = async () => {
     if (!email) {
-      Alert.alert('Erreur', 'Veuillez entrer votre adresse email');
+      Alert.alert(t('common.error'), t('auth.emailRequired') || 'Veuillez entrer votre adresse email');
       return;
     }
 
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
             {!emailSent ? (
               <>
                 <Text style={styles.subtitle}>
-                  Entrez votre email pour réinitialiser votre mot de passe
+                  {t('forgotPassword.subtitle')}
                 </Text>
 
                 {/* Email */}
@@ -116,10 +116,10 @@ export default function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordSc
                 <Text style={styles.successIcon}>✉️</Text>
                 <Text style={styles.successTitle}>{t('auth.emailSent')}</Text>
                 <Text style={styles.successText}>
-                  Vérifiez votre boîte de réception et cliquez sur le lien pour réinitialiser votre mot de passe.
+                  {t('forgotPassword.successMsg')}
                 </Text>
                 <Text style={styles.successNote}>
-                  Si vous ne recevez pas d'email dans les 5 minutes, vérifiez vos spams.
+                  {t('forgotPassword.spamNote') || 'Si vous ne recevez pas d\'email dans les 5 minutes, vérifiez vos spams.'}
                 </Text>
               </View>
             )}

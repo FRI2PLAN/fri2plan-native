@@ -97,8 +97,8 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
     onError: () => {
       setLoading(false);
       Alert.alert(
-        'Compte créé !',
-        'Votre compte a été créé. Veuillez vous connecter.',
+        t('register.accountCreatedTitle'),
+        t('register.accountCreatedMsg'),
         [{ text: 'OK', onPress: onBackToLogin }]
       );
     },
@@ -112,7 +112,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
     onError: (error) => {
       console.error('Registration error:', error);
       setLoading(false);
-      Alert.alert('Erreur', error.message || 'Erreur lors de l\'inscription');
+      Alert.alert(t('common.error'), error.message || t('common.error'));
     },
   });
 
@@ -122,7 +122,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
       return;
     }
     if (!EMAIL_REGEX.test(value)) {
-      setEmailError('Adresse email invalide');
+      setEmailError(t('auth.invalidEmail') || 'Adresse email invalide');
     } else {
       setEmailError('');
     }
@@ -130,22 +130,22 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
 
   const handleRegister = async () => {
     if (!email || !password || !name) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
+      Alert.alert(t('common.error'), t('auth.fillAllFields') || 'Veuillez remplir tous les champs obligatoires');
       return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      Alert.alert('Erreur', 'Adresse email invalide');
+      Alert.alert(t('common.error'), t('auth.invalidEmail') || 'Adresse email invalide');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      Alert.alert(t('common.error'), t('auth.passwordMismatch') || 'Les mots de passe ne correspondent pas');
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 8 caractères');
+      Alert.alert(t('common.error'), t('register.passwordMinLength') || 'Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -248,13 +248,13 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
 
             {/* Règles du mot de passe */}
             <View style={styles.passwordRules}>
-              <Text style={styles.passwordRulesTitle}>Le mot de passe doit contenir :</Text>
+              <Text style={styles.passwordRulesTitle}>{t('auth.passwordMustContain') || 'Le mot de passe doit contenir :'}</Text>
               {[
-                { label: '8 caractères minimum', ok: password.length >= 8 },
-                { label: 'Une majuscule (A-Z)', ok: /[A-Z]/.test(password) },
-                { label: 'Une minuscule (a-z)', ok: /[a-z]/.test(password) },
-                { label: 'Un chiffre (0-9)', ok: /[0-9]/.test(password) },
-                { label: 'Un caractère spécial (!@#$...)', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) },
+                { label: t('register.passwordMinLength'), ok: password.length >= 8 },
+                { label: t('auth.pwdUppercase') || 'Une majuscule (A-Z)', ok: /[A-Z]/.test(password) },
+                { label: t('auth.pwdLowercase') || 'Une minuscule (a-z)', ok: /[a-z]/.test(password) },
+                { label: t('auth.pwdDigit') || 'Un chiffre (0-9)', ok: /[0-9]/.test(password) },
+                { label: t('auth.pwdSpecial') || 'Un caractère spécial (!@#$...)', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) },
               ].map((rule, i) => (
                 <View key={i} style={styles.passwordRule}>
                   <Ionicons

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,15 +28,15 @@ interface OnboardingStep {
   category: 'essential' | 'premium' | 'advanced';
 }
 
-const ONBOARDING_STEPS: OnboardingStep[] = [
+const getOnboardingSteps = (t: (key: string) => string): OnboardingStep[] => [
   {
     title: "Bienvenue sur FRI2PLAN ! 🎉",
     description: "Votre organiseur familial complet pour gérer le quotidien ensemble. Découvrez comment utiliser l'application en quelques étapes simples.",
     icon: "people",
     category: "essential",
     tips: [
-      "Suivez ce guide pour découvrir toutes les fonctionnalités",
-      "Vous pourrez revisiter ce tutoriel à tout moment depuis les paramètres",
+      t('onboarding.guideIntro'),
+      t('onboarding.guideRevisit'),
       "Chaque section a son propre mini-tutoriel pour vous guider"
     ]
   },
@@ -45,7 +46,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     icon: "calendar",
     category: "essential",
     tips: [
-      "Cliquez sur une date pour créer un événement rapidement",
+      t('onboarding.calendarTip1'),
       "Importez vos calendriers Google/Outlook en un clic",
       "Activez les rappels pour ne rien oublier"
     ],
@@ -55,14 +56,14 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
   {
-    title: "Gestion des tâches ✅",
+    title: t('onboarding.tasksTitle'),
     description: "Organisez vos tâches, assignez-les aux membres de la famille et suivez leur progression. Gagnez des points en complétant des tâches !",
     icon: "checkmark-circle",
     category: "essential",
     tips: [
-      "Maintenez appuyé sur une tâche pour accéder aux actions rapides",
-      "Utilisez les priorités pour organiser vos tâches",
-      "Marquez vos tâches favorites pour y accéder rapidement"
+      t('onboarding.tasksTip1'),
+      t('onboarding.tasksTip2'),
+      t('onboarding.tasksTip3')
     ],
     action: {
       label: "Voir les tâches",
@@ -164,6 +165,8 @@ interface OnboardingScreenProps {
 }
 
 export default function OnboardingScreen({ visible, onComplete, onNavigate }: OnboardingScreenProps) {
+  const { t } = useTranslation();
+  const ONBOARDING_STEPS = getOnboardingSteps(t);
   const [currentStep, setCurrentStep] = useState(0);
   const prevVisibleRef = useRef(false);
 
@@ -213,7 +216,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
             <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Passer</Text>
+              <Text style={styles.skipText}>{t('common.skip') || 'Passer'}</Text>
             </TouchableOpacity>
           </View>
 

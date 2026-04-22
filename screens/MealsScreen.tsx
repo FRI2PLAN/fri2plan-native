@@ -74,11 +74,20 @@ const DEFAULT_TIMES: Record<MealType, string> = {
   dinner: '19:00',
   snack: '16:00'};
 
+// Labels traduits via t() dans le composant — DEFAULT_LABELS est un fallback statique
 const DEFAULT_LABELS: Record<MealType, string> = {
   breakfast: 'Petit-déjeuner',
   lunch: 'Déjeuner',
   dinner: 'Dîner',
   snack: 'Collation'};
+
+// Helper pour obtenir les labels traduits (utilisé dans le composant)
+const getMealLabels = (t: (key: string) => string): Record<MealType, string> => ({
+  breakfast: t('meals.breakfast'),
+  lunch: t('meals.lunch'),
+  dinner: t('meals.dinner'),
+  snack: t('meals.snack') || 'Collation',
+});
 
 const MEAL_EMOJIS: Record<MealType, string> = {
   breakfast: '☀️',
@@ -167,7 +176,8 @@ export default function MealsScreen({
 
   // ─── Paramètres (AsyncStorage) ─────────────────────────────────────────────
   const [defaultServings, setDefaultServings] = useState(4);
-  const [customLabels, setCustomLabels] = useState<Record<MealType, string>>({ ...DEFAULT_LABELS });
+  const mealLabels = getMealLabels(t);
+  const [customLabels, setCustomLabels] = useState<Record<MealType, string>>({ ...mealLabels });
   const [customTimes, setCustomTimes] = useState<Record<MealType, string>>({ ...DEFAULT_TIMES });
 
   useEffect(() => {

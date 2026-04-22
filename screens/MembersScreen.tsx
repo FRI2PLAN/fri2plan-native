@@ -281,7 +281,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       if (adminCount <= 1) {
         Alert.alert(
           '⚠️ Impossible de quitter',
-          'Vous êtes le seul admin. Transférez d\'abord le rôle admin à un autre membre.',
+          t('members.soloAdminWarning'),
           [{ text: 'OK' }]
         );
         return;
@@ -294,7 +294,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     if (isMemberAdmin(member)) {
       Alert.alert(
         '⚠️ Action impossible',
-        'Vous devez d\'abord transférer le rôle admin à un autre membre avant de retirer cet administrateur.',
+          t('members.soloAdminWarning'),
         [{ text: 'OK' }]
       );
       return;
@@ -696,7 +696,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 </Text>
               </View>
             </View>
-            <Text style={styles.modalLabel}>Nom affiché</Text>
+            <Text style={styles.modalLabel}>{t('members.displayName')}</Text>
             <TextInput
               style={styles.input}
               value={profileName}
@@ -786,7 +786,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       <Modal visible={showRoleModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Changer le rôle</Text>
+            <Text style={styles.modalTitle}>{t('members.changeRole')}</Text>
             <Text style={styles.modalSubtitle}>{selectedMember?.name}</Text>
             <View style={styles.roleRow}>
               <TouchableOpacity
@@ -863,9 +863,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       <Modal visible={showTransferModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Transférer les droits admin</Text>
+            <Text style={styles.modalTitle}>{t('members.transferAdmin')}</Text>
             <Text style={styles.modalSubtitle}>
-              Transférer les droits d'administrateur à {selectedMember?.name} ? Vous deviendrez membre.
+              {t('members.transferAdminConfirm', { name: selectedMember?.name }) || `Transférer les droits d'administrateur à ${selectedMember?.name} ? Vous deviendrez membre.`}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowTransferModal(false)}>
@@ -875,7 +875,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 style={styles.confirmBtn}
                 onPress={() => selectedMember && activeFamily && transferMutation.mutate({ newAdminUserId: selectedMember.id, familyId: activeFamily.id })}
               >
-                <Text style={styles.confirmBtnText}>Transférer</Text>
+                <Text style={styles.confirmBtnText}>{t('members.transferAdminBtn')}</Text>
               </TouchableOpacity>
             </View>
           </View>

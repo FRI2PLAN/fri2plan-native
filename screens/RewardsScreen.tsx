@@ -17,21 +17,33 @@ interface RewardsScreenProps {
   onNext?: () => void;
 }
 
-const BADGE_METADATA: Record<string, { name: string; description: string; emoji: string; color: string }> = {
-  first_task:      { name: "Première tâche",    description: "Complétez votre première tâche",                  emoji: "🏅", color: "#3b82f6" },
-  tasks_10:        { name: "10 tâches",          description: "Complétez 10 tâches",                             emoji: "🎯", color: "#10b981" },
-  tasks_50:        { name: "50 tâches",          description: "Complétez 50 tâches",                             emoji: "🏆", color: "#f59e0b" },
-  tasks_100:       { name: "100 tâches",         description: "Complétez 100 tâches",                            emoji: "⭐", color: "#7c3aed" },
-  member_of_month: { name: "Membre du mois",     description: "Ayez le plus de points ce mois-ci",              emoji: "👑", color: "#f97316" },
-  perfect_week:    { name: "Semaine parfaite",   description: "Complétez toutes vos tâches 7 jours de suite",   emoji: "🌟", color: "#ec4899" },
-  early_bird:      { name: "Lève-tôt",           description: "Complétez une tâche avant 8h du matin",          emoji: "🌅", color: "#f59e0b" },
-  team_player:     { name: "Joueur d'équipe",    description: "Aidez 5 membres différents de votre famille",    emoji: "🤝", color: "#14b8a6" },
+const BADGE_METADATA_STATIC: Record<string, { emoji: string; color: string }> = {
+  first_task:      { emoji: "🏅", color: "#3b82f6" },
+  tasks_10:        { emoji: "🎯", color: "#10b981" },
+  tasks_50:        { emoji: "🏆", color: "#f59e0b" },
+  tasks_100:       { emoji: "⭐", color: "#7c3aed" },
+  member_of_month: { emoji: "👑", color: "#f97316" },
+  perfect_week:    { emoji: "🌟", color: "#ec4899" },
+  early_bird:      { emoji: "🌅", color: "#f59e0b" },
+  team_player:     { emoji: "🤝", color: "#14b8a6" },
 };
+
+const getBadgeMetadata = (t: (key: string) => string): Record<string, { name: string; description: string; emoji: string; color: string }> => ({
+  first_task:      { ...BADGE_METADATA_STATIC.first_task,      name: t('rewards.badge_firstTask'),    description: t('rewards.badge_firstTaskDesc') },
+  tasks_10:        { ...BADGE_METADATA_STATIC.tasks_10,        name: t('rewards.badge_10tasks'),      description: t('rewards.badge_10tasksDesc') },
+  tasks_50:        { ...BADGE_METADATA_STATIC.tasks_50,        name: t('rewards.badge_50tasks'),      description: t('rewards.badge_50tasksDesc') },
+  tasks_100:       { ...BADGE_METADATA_STATIC.tasks_100,       name: t('rewards.badge_100tasks'),     description: t('rewards.badge_100tasksDesc') },
+  member_of_month: { ...BADGE_METADATA_STATIC.member_of_month, name: t('rewards.badge_memberOfMonth') || "Membre du mois", description: t('rewards.badge_memberOfMonthDesc') || "Ayez le plus de points ce mois-ci" },
+  perfect_week:    { ...BADGE_METADATA_STATIC.perfect_week,    name: t('rewards.badge_perfectWeek') || "Semaine parfaite", description: t('rewards.badge_7days') },
+  early_bird:      { ...BADGE_METADATA_STATIC.early_bird,      name: t('rewards.badge_earlyBird'),    description: t('rewards.badge_earlyBirdDesc') || "Complétez une tâche avant 8h du matin" },
+  team_player:     { ...BADGE_METADATA_STATIC.team_player,     name: t('rewards.badge_teamPlayer') || "Joueur d'équipe", description: t('rewards.badge_teamPlayerDesc') || "Aidez 5 membres différents de votre famille" },
+});
 
 const ICON_EMOJIS: Record<string, string> = { gift: "🎁", trophy: "🏆", star: "⭐", sparkles: "✨" };
 
 export default function RewardsScreen({ onNavigate, onPrevious, onNext }: RewardsScreenProps) {
   const { t } = useTranslation();
+  const BADGE_METADATA = getBadgeMetadata(t);
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);

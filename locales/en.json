@@ -32,7 +32,8 @@
     "optional": "optional",
     "notifications": "Notifications",
     "validate": "Validate",
-    "familyOrganizer": "Family Organizer"
+    "familyOrganizer": "Family Organizer",
+    "skip": "Skip"
   },
   "auth": {
     "login": "Login",
@@ -66,7 +67,12 @@
     "continueWithApple": "Continue with Apple",
     "continueWithMicrosoft": "Continue with Microsoft",
     "minChars": "Minimum 8 characters",
-    "logoutConfirm": "Are you sure you want to log out?"
+    "logoutConfirm": "Are you sure you want to log out?",
+    "fillAllFields": "Please fill in all required fields",
+    "invalidEmail": "Invalid email address",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMustContain": "Password must contain:",
+    "emailRequired": "Please enter your email address"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -228,7 +234,11 @@
     "noTask": "No task",
     "chooseMember": "Choose a member",
     "unassigned": "Unassigned",
-    "noOne": "None"
+    "noOne": "None",
+    "statusTodo": "⭕ To do",
+    "statusDone": "✅ Done",
+    "titlePlaceholder": "Task title",
+    "statusInProgress": "🔵 In progress"
   },
   "shopping": {
     "title": "Shopping",
@@ -462,7 +472,18 @@
     "projectMembers": "Participants",
     "projectMembersHint": "All members are included by default",
     "projectParticipants": "Participants",
-    "shareInviteMessage": "Join our project \"{{projectName}}\" on Fri2Plan! Download the app: {{appUrl}}"
+    "shareInviteMessage": "Join our project \"{{projectName}}\" on Fri2Plan! Download the app: {{appUrl}}",
+    "sante": "Health",
+    "education": "Education",
+    "vetements": "Clothing",
+    "activites": "Activities",
+    "autre": "Other",
+    "de": "of",
+    "markAsPaid": "✅ Mark as paid",
+    "paid": "✅ Paid",
+    "paidQuestion": "Paid?",
+    "reimbursedQuestion": "Did {{from}} reimburse {{amount}} {{currency}} to {{to}}?",
+    "reimbursedBy": "✅ Reimbursed by {{from}} to {{to}}"
   },
   "rewards": {
     "title": "Rewards",
@@ -477,7 +498,23 @@
     "noneObtained": "No rewards obtained",
     "noClaims": "No pending claims",
     "pointsCost": "Points cost *",
-    "icon": "Icon"
+    "icon": "Icon",
+    "badge_firstTask": "First task",
+    "badge_firstTaskDesc": "Complete your first task",
+    "badge_10tasks": "10 tasks",
+    "badge_10tasksDesc": "Complete 10 tasks",
+    "badge_50tasks": "50 tasks",
+    "badge_50tasksDesc": "Complete 50 tasks",
+    "badge_100tasks": "100 tasks",
+    "badge_100tasksDesc": "Complete 100 tasks",
+    "badge_7days": "Complete all your tasks 7 days in a row",
+    "badge_earlyBird": "Early bird",
+    "badge_memberOfMonth": "Member of the month",
+    "badge_memberOfMonthDesc": "Have the most points this month",
+    "badge_perfectWeek": "Perfect week",
+    "badge_earlyBirdDesc": "Complete a task before 8am",
+    "badge_teamPlayer": "Team player",
+    "badge_teamPlayerDesc": "Help 5 different family members"
   },
   "members": {
     "title": "Members",
@@ -499,7 +536,14 @@
     "circleName": "Circle name",
     "enterInviteCode": "Enter the circle invite code",
     "noPendingInvites": "No pending invitations",
-    "inviteMember": "Invite a member"
+    "inviteMember": "Invite a member",
+    "soloAdminWarning": "You are the only admin. Transfer the admin role to another member before removing this administrator.",
+    "displayName": "Display name",
+    "changeRole": "Change role",
+    "transferAdmin": "Transfer admin rights",
+    "transferAdminBtn": "Transfer",
+    "soloAdminWarning2": "You must first transfer the admin role to another member before removing this administrator.",
+    "transferAdminConfirm": "Transfer administrator rights to {{name}}? You will become a member."
   },
   "referral": {
     "title": "Referral",
@@ -628,7 +672,13 @@
     "save33": "Save 33%",
     "mySubscription": "My subscription",
     "planLabel": "Plan",
-    "renewalLabel": "Renewal"
+    "renewalLabel": "Renewal",
+    "langFr": "🇫🇷 French",
+    "langEn": "🇬🇧 English",
+    "langDe": "🇩🇪 German",
+    "currencyUSD": "🇺🇸 USD - US Dollar",
+    "currencySEK": "🇸🇪 SEK - Swedish Krona",
+    "currencyNOK": "🇳🇴 NOK - Norwegian Krone"
   },
   "help": {
     "title": "Help Center",
@@ -799,7 +849,10 @@
     "breakfast": "Breakfast",
     "lunch": "Lunch",
     "dinner": "Dinner",
-    "snack": "Snack"
+    "snack": "Snack",
+    "ingredient": "ingredient",
+    "preparation": "preparation",
+    "step": "step"
   },
   "quickActions": {
     "title": "Quick actions",
@@ -820,5 +873,106 @@
     "noNotifications": "No notifications",
     "deleteAll": "Delete all"
   },
-  "google_calendars": "Google Calendars"
+  "google_calendars": "Google Calendars",
+  "calendrierIntime": {
+    "excellent": "Excellent",
+    "bien": "Good",
+    "moyen": "Average",
+    "mauvais": "Bad",
+    "tresMauvais": "Very bad",
+    "leger": "Light",
+    "moyen2": "Moderate",
+    "abondant": "Heavy",
+    "treAbondant": "Very heavy",
+    "mauxDeTete": "Headaches",
+    "nausees": "Nausea",
+    "sautesDHumeur": "Mood swings",
+    "acne": "Acne",
+    "crampes": "Cramps",
+    "fatigue": "Fatigue",
+    "ballonnements": "Bloating",
+    "fenetreFertile": "Fertile window",
+    "fenetreFertileIcon": "🌸 Fertile window",
+    "phaseLuteale": "Luteal phase",
+    "suiviDuCycle": "🩸 Cycle tracking",
+    "predictions": "📅 Predictions",
+    "humeurSymptomes": "😊 Mood & symptoms",
+    "vueEnsemble": "📊 Overview",
+    "parametres": "⚙️ Settings",
+    "activerCalendrier": "Activate intimate calendar",
+    "avertissementMedical": "⚠️ This feature is for informational purposes only and does not replace medical advice.",
+    "avertissementMedical2": "⚠️ This information is for guidance only and does not constitute medical advice. Consult a healthcare professional for any medical follow-up.",
+    "nouveauCycle": "🩸 New cycle (period today)",
+    "prochainesRegles": "Next period",
+    "phasesDuCycle": "Cycle phases",
+    "aucunCycle": "No cycle recorded",
+    "commencerSuivi": "Tap \"New cycle\" to start tracking",
+    "aucunHistorique": "No history",
+    "dureeCycle": "Duration: {{days}} days",
+    "regulier": "Regular",
+    "enAvance": "Early",
+    "enRetard": "Late",
+    "fonctionnaliteActivee": "Feature enabled",
+    "dureeDuCycle": "Cycle length",
+    "dureeMoyenneCycle": "Average cycle length (in days)",
+    "dureeDesRegles": "Period length",
+    "dureeMoyenneRegles": "Average period length (in days)",
+    "symptomes": "Symptoms"
+  },
+  "familySetup": {
+    "bienvenue": "Welcome! 🎉",
+    "creerFamille": "Create a family",
+    "creerFamilleIcon": "🏠 Create a family",
+    "rejoindre": "Join a family",
+    "rejoindreIcon": "👥 Join a family",
+    "plusTard": "Later",
+    "nomFamille": "Family name",
+    "nomFamillePlaceholder": "E.g.: Dupont Family",
+    "creerLaFamille": "Create family",
+    "codeInvitation": "Invitation code",
+    "codeInvitationPlaceholder": "E.g.: ABC123",
+    "invitationInstruction": "Enter the invitation code you received from a family member.",
+    "familleCree": "🎉 Family created!",
+    "partagerCode": "Share this code with your loved ones so they can join your family.",
+    "accederApp": "Access the app",
+    "continuer": "Continue",
+    "rejoindreApp": "Join"
+  },
+  "header": {
+    "logoutConfirmTitle": "Logout",
+    "logoutConfirmMsg": "Are you sure you want to log out?"
+  },
+  "forgotPassword": {
+    "emailSentTitle": "Email sent",
+    "emailSentMsg": "If an account exists with this email, you will receive a reset link.",
+    "title": "Forgot password",
+    "subtitle": "Enter your email to receive a reset link",
+    "emailPlaceholder": "Your email",
+    "sendBtn": "Send link",
+    "successTitle": "Email sent!",
+    "successMsg": "Check your inbox and follow the instructions.",
+    "backToLogin": "Back to login",
+    "spamNote": "If you don't receive an email within 5 minutes, check your spam folder."
+  },
+  "onboarding": {
+    "welcomeSubtitle": "Your complete family organizer to manage daily life together. Discover how FRI2PLAN can simplify your family life.",
+    "guideIntro": "Follow this guide to discover all features",
+    "guideRevisit": "You can revisit this tutorial at any time from settings",
+    "calendarDesc": "Create and share events with the whole family. Sync your Google calendars to never miss anything.",
+    "calendarTip1": "Tap a date to quickly create an event",
+    "tasksTitle": "Task management ✅",
+    "tasksDesc": "Organize your tasks, assign them to family members and track their progress.",
+    "tasksTip1": "Long press a task to access quick actions",
+    "tasksTip2": "Use priorities to organize your tasks",
+    "tasksTip3": "Mark your favorite tasks for quick access",
+    "welcomeTitle": "Welcome to FRI2PLAN! 🎉",
+    "calendarTitle": "Family calendar 📅",
+    "readyTitle": "You're ready! 🚀",
+    "readyDesc": "You've discovered all the main features. Start organizing your family life now!"
+  },
+  "register": {
+    "accountCreatedTitle": "Account created!",
+    "accountCreatedMsg": "Your account has been created. Please log in.",
+    "passwordMinLength": "Minimum 8 characters"
+  }
 }

@@ -435,7 +435,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               type: 'income',
               amount: Math.round(settlement.amount * 100),
               category: 'Remboursement',
-              description: `\u2705 Rembours\u00e9 par ${settlement.from} \u00e0 ${settlement.to}`,
+              description: t('budget.reimbursedBy', { from: settlement.from, to: settlement.to }),
               date: new Date(),
               isPrivate: 0,
               projectId,

@@ -163,10 +163,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
     setShowLanguageModal(false);
   };
   const getLanguageLabel = (lang: string) => {
-    if (lang === 'fr') return '🇫🇷 Français';
-    if (lang === 'en') return '🇬🇧 English';
-    if (lang === 'de') return '🇩🇪 Deutsch';
-    return '🇫🇷 Français';
+    if (lang === 'fr') return t('settings.langFr');
+    if (lang === 'en') return t('settings.langEn');
+    if (lang === 'de') return t('settings.langDe');
+    return t('settings.langFr');
   };
 
   // ─── Sauvegarde push ───────────────────────────────────────────────────────
@@ -224,13 +224,13 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const CURRENCIES = [
     { value: 'CHF', label: '🇨🇭 CHF - Franc suisse' },
     { value: 'EUR', label: '🇪🇺 EUR - Euro' },
-    { value: 'USD', label: '🇺🇸 USD - Dollar américain' },
+    { value: 'USD', label: t('settings.currencyUSD') },
     { value: 'GBP', label: '🇬🇧 GBP - Livre sterling' },
     { value: 'CAD', label: '🇨🇦 CAD - Dollar canadien' },
     { value: 'AUD', label: '🇦🇺 AUD - Dollar australien' },
     { value: 'JPY', label: '🇯🇵 JPY - Yen japonais' },
-    { value: 'SEK', label: '🇸🇪 SEK - Couronne suédoise' },
-    { value: 'NOK', label: '🇳🇴 NOK - Couronne norvégienne' },
+    { value: 'SEK', label: t('settings.currencySEK') },
+    { value: 'NOK', label: t('settings.currencyNOK') },
     { value: 'DKK', label: '🇩🇰 DKK - Couronne danoise' },
   ];
   const handleSaveCurrency = (val: string) => {
