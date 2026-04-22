@@ -69,6 +69,8 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isInitializing, setIsInitializing] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
+  // Durée minimale du splash : 1500ms pour que l'animation soit visible
+  const [splashMinDone, setSplashMinDone] = useState(false);
 
   // Initialiser Google Sign-In au niveau app (une seule fois, avant l'écran de login)
   useEffect(() => {
@@ -87,6 +89,12 @@ function AppContent() {
       }
     };
     initGoogle();
+  }, []);
+
+  // Timer durée minimale splash (1500ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashMinDone(true), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const { activeFamilyId } = useFamily();
@@ -116,8 +124,8 @@ function AppContent() {
       {/* PushRegistrar est INSIDE trpc.Provider — peut utiliser les hooks tRPC */}
       <PushRegistrar />
 
-      {/* Splash screen tant que l'auth OU Google Sign-In ne sont pas prêts */}
-      {(isLoading || isInitializing || !googleReady) ? (
+      {/* Splash screen tant que l'auth OU Google Sign-In ne sont pas prêts OU durée minimale non écoulée */}
+      {(isLoading || isInitializing || !googleReady || !splashMinDone) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>
