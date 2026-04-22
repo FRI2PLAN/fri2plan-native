@@ -41,32 +41,15 @@ interface Meal {
   familyId?: number;
 }
 
-interface TheMealDbResult {
-  idMeal: string;
-  strMeal: string;
-  strCategory: string;
-  strMealThumb: string;
-  strIngredient1?: string;
-  strIngredient2?: string;
-  strIngredient3?: string;
-  strIngredient4?: string;
-  strIngredient5?: string;
-  strIngredient6?: string;
-  strIngredient7?: string;
-  strIngredient8?: string;
-  strIngredient9?: string;
-  strIngredient10?: string;
-  strMeasure1?: string;
-  strMeasure2?: string;
-  strMeasure3?: string;
-  strMeasure4?: string;
-  strMeasure5?: string;
-  strMeasure6?: string;
-  strMeasure7?: string;
-  strMeasure8?: string;
-  strMeasure9?: string;
-  strMeasure10?: string;
+// Spoonacular remplace TheMealDB pour le support multilingue FR/EN/DE
+interface SpoonacularResult {
+  id: number;
+  title: string;
+  image: string;
+  imageType: string;
 }
+
+const SPOONACULAR_API_KEY = 'b52af068607649b1b2503e9fb8b25888';
 
 const DEFAULT_TIMES: Record<MealType, string> = {
   breakfast: '08:00',
@@ -341,41 +324,57 @@ export default function MealsScreen({
 
   // ─── Recherche TheMealDB ───────────────────────────────────────────────────
   const [recipeSearch, setRecipeSearch] = useState('');
-  const [recipeSuggestions, setRecipeSuggestions] = useState<TheMealDbResult[]>([]);
+  const [recipeSuggestions, setRecipeSuggestions] = useState<SpoonacularResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
   const searchRecipes = useCallback(async (query: string) => {
     if (query.length < 2) { setRecipeSuggestions([]); return; }
     setSearchLoading(true);
     try {
-      // TheMealDB supporte uniquement l'anglais — on cherche toujours en anglais
-      // Pour FR/DE, on utilise aussi TheMealDB (base internationale) mais on traduit le placeholder
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+      // Spoonacular supporte FR, EN, DE nativement via le paramètre 'language'
+      const lang = i18n.language === 'de' ? 'de' : i18n.language === 'fr' ? 'fr' : 'en';
+      const url = `https://api.spoonacular.com/recipes/complexSearch?query=${encodeURIComponent(query)}&language=${lang}&number=6&apiKey=${SPOONACULAR_API_KEY}`;
+      const res = await fetch(url);
       const data = await res.json();
-      setRecipeSuggestions((data.meals || []).slice(0, 5));
+      setRecipeSuggestions((data.results || []).slice(0, 6));
     } catch {
       setRecipeSuggestions([]);
     } finally {
       setSearchLoading(false);
     }
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const timer = setTimeout(() => searchRecipes(recipeSearch), 500);
     return () => clearTimeout(timer);
   }, [recipeSearch]);
 
-  const importFromTheMealDb = (meal: TheMealDbResult) => {
-    // Extraire les ingrédients
-    const ingredients: string[] = [];
-    for (let i = 1; i <= 10; i++) {
-      const ing = (meal as any)[`strIngredient${i}`];
-      const msr = (meal as any)[`strMeasure${i}`];
-      if (ing && ing.trim()) {
-        ingredients.push(msr && msr.trim() ? `${msr.trim()} ${ing.trim()}` : ing.trim());
-      }
+  const importFromSpoonacular = async (recipe: SpoonacularResult) => {
+    // Récupérer les détails complets de la recette (ingrédients, instructions)
+    setSearchLoading(true);
+    try {
+      const lang = i18n.language === 'de' ? 'de' : i18n.language === 'fr' ? 'fr' : 'en';
+      const res = await fetch(`https://api.spoonacular.com/recipes/${recipe.id}/information?language=${lang}&apiKey=${SPOONACULAR_API_KEY}`);
+      const data = await res.json();
+      const ingredients: string[] = (data.extendedIngredients || []).map((ing: any) => {
+        const amount = ing.amount ? `${ing.amount} ${ing.unit || ''}`.trim() : '';
+        return amount ? `${amount} ${ing.name}` : ing.name;
+      });
+      const notes = data.instructions ? data.instructions.replace(/<[^>]+>/g, '').substring(0, 500) : '';
+      setForm(p => ({
+        ...p,
+        name: recipe.title,
+        ingredients,
+        imageUrl: recipe.image || '',
+        notes,
+        sourceUrl: `https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, '-')}-${recipe.id}`,
+      }));
+    } catch {
+      // Fallback : juste le titre et l'image
+      setForm(p => ({ ...p, name: recipe.title, imageUrl: recipe.image || '' }));
+    } finally {
+      setSearchLoading(false);
     }
-    setForm(p => ({ ...p, name: meal.strMeal, ingredients, imageUrl: meal.strMealThumb || '' }));
     setRecipeSuggestions([]);
     setRecipeSearch('');
   };
@@ -712,29 +711,34 @@ export default function MealsScreen({
               </View>
             )}
 
-            {/* Recherche TheMealDB */}
+            {/* Recherche Spoonacular — multilingue FR/EN/DE */}
             <Text style={s.label}>🔍 {t('meals.searchRecipe') || 'Rechercher une recette'}</Text>
             <TextInput
               style={s.input}
               value={recipeSearch}
               onChangeText={setRecipeSearch}
-              placeholder={t('meals.searchPlaceholder') || 'Ex: chicken, pasta...'}
+              placeholder={
+                i18n.language === 'de' ? 'z.B. Apfelkuchen, Pasta...' :
+                i18n.language === 'fr' ? 'Ex: tarte aux pommes, pasta...' :
+                'E.g. apple pie, pasta...'
+              }
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            {/* Note: TheMealDB = base anglaise. Pour FR/DE, utiliser l'import URL (Marmiton, 750g...) */}
             <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 4, marginTop: -4 }}>
-              {i18n.language === 'de' ? '🌐 Suche auf Englisch (z.B. "apple tart"). Für Deutsch: URL-Import nutzen.' :
-               i18n.language === 'fr' ? '🌐 Recherche en anglais (ex: "apple tart"). Pour FR: importer via URL Marmiton.' :
-               '🌐 Search in English (e.g. "apple tart"). For local recipes: use URL import.'}
+              {i18n.language === 'de' ? '🌐 Suche auf Deutsch, Englisch oder Französisch (Spoonacular)' :
+               i18n.language === 'fr' ? '🌐 Recherche en français, anglais ou allemand (Spoonacular)' :
+               '🌐 Search in English, French or German (Spoonacular)'}
             </Text>
             {searchLoading && <ActivityIndicator size="small" color="#7c3aed" />}
             {recipeSuggestions.length > 0 && (
               <View style={s.suggestions}>
                 {recipeSuggestions.map(r => (
-                  <TouchableOpacity key={r.idMeal} style={s.suggestionItem} onPress={() => importFromTheMealDb(r)}>
+                  <TouchableOpacity key={r.id} style={s.suggestionItem} onPress={() => importFromSpoonacular(r)}>
                     <View style={s.suggestionInfo}>
-                      <Text style={s.suggestionName}>{r.strMeal}</Text>
-                      <Text style={s.suggestionMeta}>{r.strCategory}</Text>
+                      <Text style={s.suggestionName}>{r.title}</Text>
+                      {r.image ? (
+                        <Image source={{ uri: r.image }} style={{ width: 40, height: 40, borderRadius: 6, marginTop: 2 }} />
+                      ) : null}
                     </View>
                     <Text style={s.importBtn}>⬇️</Text>
                   </TouchableOpacity>
@@ -749,7 +753,11 @@ export default function MealsScreen({
                 style={[s.input, { flex: 1, marginBottom: 0 }]}
                 value={importUrl}
                 onChangeText={setImportUrl}
-                placeholder="https://www.marmiton.org/..."
+                placeholder={
+                  i18n.language === 'de' ? 'marmiton.org, 750g.com, chefkoch.de, bbcgoodfood.com...' :
+                  i18n.language === 'fr' ? 'marmiton.org, 750g.com, allrecipes.com, bbcgoodfood.com...' :
+                  'marmiton.org, allrecipes.com, bbcgoodfood.com, chefkoch.de...'
+                }
                 placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
                 autoCapitalize="none"
                 keyboardType="url"
