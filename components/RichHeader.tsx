@@ -46,7 +46,7 @@ export default function RichHeader({
   // Récupérer le nombre de notifications non lues filtrées par famille active
   const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery(
     { familyId: activeFamily?.id || undefined },
-    { enabled: !!activeFamily }
+    { enabled: !!activeFamily, refetchInterval: 30000 }
   );
   const activeFamilyName: string | null = activeFamily?.name || null;
   const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(

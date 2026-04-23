@@ -46,7 +46,7 @@ function PushRegistrar() {
           if (fcmToken && fcmToken !== lastRegisteredToken.current) {
             lastRegisteredToken.current = fcmToken;
             registerPushMutation.mutate(
-              { token: fcmToken, platform: Platform.OS },
+              { token: fcmToken, platform: Platform.OS === 'android' ? 'native_android' : 'native_ios' },
               {
                 onSuccess: () => console.log('[Push] Token FCM enregistré:', fcmToken.slice(0, 40) + '...'),
                 onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
