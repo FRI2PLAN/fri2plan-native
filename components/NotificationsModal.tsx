@@ -196,10 +196,14 @@ export default function NotificationsModal({
                       {notification.message}
                     </Text>
                     <Text style={[styles.itemTime, { color: isDark ? '#6b7280' : '#9ca3af' }]}>
-                      {formatDistanceToNow(new Date(notification.createdAt), {
-                        addSuffix: true,
-                        locale: getLocale(),
-                      })}
+                      {formatDistanceToNow(
+                        new Date(
+                          typeof notification.createdAt === 'string' && !notification.createdAt.endsWith('Z')
+                            ? notification.createdAt.replace(' ', 'T') + 'Z'
+                            : notification.createdAt
+                        ),
+                        { addSuffix: true, locale: getLocale() }
+                      )}
                     </Text>
                   </View>
                   {!notification.isRead && <View style={styles.unreadDot} />}

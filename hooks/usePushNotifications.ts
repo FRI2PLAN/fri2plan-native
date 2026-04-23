@@ -1,18 +1,55 @@
 /**
  * usePushNotifications
  * Gère l'enregistrement du token FCM natif via @react-native-firebase/messaging.
- * Utilise UNIQUEMENT @react-native-firebase/messaging — expo-notifications n'est plus utilisé.
+ * Crée les channels Android via expo-notifications (package uniquement, pas le plugin).
  *
  * Le token FCM natif est envoyé au serveur via trpc.fcm.registerToken.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
 
 export interface PushNotificationState {
   fcmToken: string | null;
   permissionStatus: 'granted' | 'denied' | 'undetermined' | null;
   error: string | null;
+}
+
+/**
+ * Créer les channels Android nécessaires pour les notifications FCM.
+ * Sans ces channels, Android ignore silencieusement les notifications FCM.
+ */
+async function createAndroidChannels(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  try {
+    await Notifications.setNotificationChannelAsync('fri2plan_notifications', {
+      name: 'Notifications FRI2PLAN',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#7c3aed',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+    });
+    await Notifications.setNotificationChannelAsync('fri2plan_messages', {
+      name: 'Messages FRI2PLAN',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#7c3aed',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+    });
+    await Notifications.setNotificationChannelAsync('fri2plan_general', {
+      name: 'Général FRI2PLAN',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      showBadge: true,
+    });
+    console.log('[Push] Channels Android créés avec succès');
+  } catch (error) {
+    console.error('[Push] Erreur lors de la création des channels Android:', error);
+  }
 }
 
 /**
@@ -25,6 +62,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
       return null;
     }
+
+    // Créer les channels Android AVANT de demander les permissions
+    await createAndroidChannels();
 
     // Demander les permissions FCM
     const authStatus = await messaging().requestPermission();
@@ -69,6 +109,18 @@ export function usePushNotifications(): PushNotificationState {
     // Écouter les messages FCM reçus en foreground
     const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
       console.log('[FCM] Message reçu en foreground:', remoteMessage.notification?.title);
+      // Afficher la notification en foreground via expo-notifications
+      if (remoteMessage.notification) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: remoteMessage.notification.title || 'FRI2PLAN',
+            body: remoteMessage.notification.body || '',
+            data: remoteMessage.data || {},
+            sound: 'default',
+          },
+          trigger: null, // Immédiat
+        });
+      }
     });
 
     // Écouter les taps sur notifications (app en background/killed)
