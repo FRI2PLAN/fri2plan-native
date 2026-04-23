@@ -42,13 +42,13 @@ function PushRegistrar() {
     // évite le crash Android quand la dialog système s'ouvre trop tôt
     const pushTimer = setTimeout(() => {
       registerForPushNotificationsAsync()
-        .then(expoPushToken => {
-          if (expoPushToken && expoPushToken !== lastRegisteredToken.current) {
-            lastRegisteredToken.current = expoPushToken;
+        .then(fcmToken => {
+          if (fcmToken && fcmToken !== lastRegisteredToken.current) {
+            lastRegisteredToken.current = fcmToken;
             registerPushMutation.mutate(
-              { token: expoPushToken, platform: Platform.OS },
+              { token: fcmToken, platform: Platform.OS },
               {
-                onSuccess: () => console.log('[Push] Token enregistré:', expoPushToken.slice(0, 40) + '...'),
+                onSuccess: () => console.log('[Push] Token FCM enregistré:', fcmToken.slice(0, 40) + '...'),
                 onError: (err) => console.error('[Push] Erreur enregistrement token:', err),
               }
             );

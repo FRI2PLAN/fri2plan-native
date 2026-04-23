@@ -15,6 +15,7 @@
     "scheme": "fri2plan",
     "plugins": [
       "expo-dev-client",
+      "@react-native-firebase/app",
       [
         "@react-native-google-signin/google-signin",
         {
