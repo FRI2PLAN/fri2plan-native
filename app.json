@@ -21,15 +21,6 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.846470017457-b250hpecqp44u8av020p72f87dch0dus"
         }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#7c3aed",
-          "defaultChannel": "fri2plan_notifications",
-          "sounds": []
-        }
       ]
     ],
     "notification": {
