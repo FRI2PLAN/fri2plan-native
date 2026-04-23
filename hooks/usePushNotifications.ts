@@ -1,78 +1,29 @@
 /**
  * usePushNotifications
- * Gère l'enregistrement du token FCM natif via @react-native-firebase/messaging,
- * les permissions Android/iOS, et la réception des notifications en foreground.
+ * Gère l'enregistrement du token FCM natif via @react-native-firebase/messaging.
+ * Utilise UNIQUEMENT @react-native-firebase/messaging — expo-notifications n'est plus utilisé.
  *
  * Le token FCM natif est envoyé au serveur via trpc.fcm.registerToken.
  */
 import { useEffect, useRef, useState } from 'react';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 
-// ─── Configuration du comportement des notifications en foreground ────────────
-// Les notifications s'affichent TOUJOURS (même si l'app est ouverte)
-Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const data = notification.request.content.data as Record<string, string> | undefined;
-    const type = data?.type || '';
-    const isUrgent = type.includes('reminder') || type.includes('message');
-    return {
-      shouldShowAlert: true,
-      shouldPlaySound: isUrgent,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    };
-  },
-});
-
 export interface PushNotificationState {
   fcmToken: string | null;
-  notification: Notifications.Notification | null;
   permissionStatus: 'granted' | 'denied' | 'undetermined' | null;
   error: string | null;
 }
 
 /**
  * Enregistre l'appareil pour les notifications push FCM natif.
- * Retourne le token FCM natif (pas un token Expo).
+ * Retourne le token FCM natif.
  * Doit être appelé après que l'utilisateur est authentifié.
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   try {
-    // Créer les canaux de notification Android (requis Android 8+)
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('fri2plan_notifications', {
-        name: 'FRI2PLAN — Rappels',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#7c3aed',
-        sound: 'default',
-        enableVibrate: true,
-        showBadge: true,
-        description: 'Rappels d\'événements et de tâches',
-      });
-      await Notifications.setNotificationChannelAsync('fri2plan_messages', {
-        name: 'FRI2PLAN — Messages',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 100, 100, 100],
-        lightColor: '#7c3aed',
-        sound: 'default',
-        enableVibrate: true,
-        showBadge: true,
-        description: 'Messages familiaux',
-      });
-      await Notifications.setNotificationChannelAsync('fri2plan_general', {
-        name: 'FRI2PLAN — Général',
-        importance: Notifications.AndroidImportance.DEFAULT,
-        vibrationPattern: [0, 100],
-        lightColor: '#7c3aed',
-        sound: 'default',
-        enableVibrate: true,
-        showBadge: true,
-        description: 'Notifications générales',
-      });
+    if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+      return null;
     }
 
     // Demander les permissions FCM
@@ -101,12 +52,8 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
  */
 export function usePushNotifications(): PushNotificationState {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notifications.Notification | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined' | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
-  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
     registerForPushNotificationsAsync()
@@ -119,17 +66,15 @@ export function usePushNotifications(): PushNotificationState {
         setPermissionStatus('denied');
       });
 
-    // Écouter les notifications reçues en foreground via expo-notifications
-    notificationListener.current = Notifications.addNotificationReceivedListener(notif => {
-      setNotification(notif);
-      console.log('[Push] Notification reçue en foreground:', notif.request.content.title);
+    // Écouter les messages FCM reçus en foreground
+    const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
+      console.log('[FCM] Message reçu en foreground:', remoteMessage.notification?.title);
     });
 
-    // Écouter les taps sur notifications
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data as Record<string, string> | undefined;
-      const type = data?.type || '';
-      console.log('[Push] Notification tapée, type:', type);
+    // Écouter les taps sur notifications (app en background/killed)
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      const type = remoteMessage.data?.type as string | undefined;
+      console.log('[FCM] Notification tapée (background), type:', type);
       if (type) {
         import('../navigation/navigationRef').then(({ navigateFromNotification }) => {
           navigateFromNotification(type);
@@ -137,17 +82,25 @@ export function usePushNotifications(): PushNotificationState {
       }
     });
 
-    // Écouter les messages FCM en foreground
-    const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
-      console.log('[FCM] Message reçu en foreground:', remoteMessage.notification?.title);
+    // Vérifier si l'app a été ouverte depuis une notification (app killed)
+    messaging().getInitialNotification().then(remoteMessage => {
+      if (remoteMessage) {
+        const type = remoteMessage.data?.type as string | undefined;
+        console.log('[FCM] App ouverte depuis notification (killed), type:', type);
+        if (type) {
+          setTimeout(() => {
+            import('../navigation/navigationRef').then(({ navigateFromNotification }) => {
+              navigateFromNotification(type);
+            }).catch(err => console.error('[Push] Erreur navigation:', err));
+          }, 1000);
+        }
+      }
     });
 
     return () => {
-      notificationListener.current?.remove();
-      responseListener.current?.remove();
       unsubscribeFCM();
     };
   }, []);
 
-  return { fcmToken, notification, permissionStatus, error };
+  return { fcmToken, permissionStatus, error };
 }

@@ -23,12 +23,6 @@
         }
       ]
     ],
-    "notification": {
-      "icon": "./assets/notification-icon.png",
-      "color": "#7c3aed",
-      "androidMode": "default",
-      "androidCollapsedTitle": "FRI2PLAN"
-    },
     "ios": {
       "supportsTablet": true
     },
