@@ -11,7 +11,7 @@ import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
 import { StyleSheet, Platform } from 'react-native';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
 
@@ -62,6 +62,34 @@ function PushRegistrar() {
   return null;
 }
 
+// ─── Sous-composant FCMLogoutHandler ─────────────────────────────────────────
+// Supprime le token FCM natif côté serveur lors de la déconnexion
+// Doit être rendu INSIDE <trpc.Provider> pour pouvoir utiliser les hooks tRPC
+function FCMLogoutHandler({ onLogoutReady }: { onLogoutReady: (logoutFn: () => Promise<void>) => void }) {
+  const { logout } = useAuth();
+  const deleteTokenMutation = trpc.fcm.deleteToken.useMutation();
+
+  const handleLogout = useCallback(async () => {
+    try {
+      // Supprimer uniquement le token native_android (ou native_ios) côté serveur
+      const platform = Platform.OS === 'android' ? 'native_android' : 'native_ios';
+      await deleteTokenMutation.mutateAsync({ platform });
+      console.log('[Push] Token FCM supprimé côté serveur pour platform:', platform);
+    } catch (err) {
+      // Ne pas bloquer la déconnexion si la suppression échoue
+      console.warn('[Push] Erreur suppression token FCM:', err);
+    }
+    // Puis déconnecter localement
+    await logout();
+  }, [logout, deleteTokenMutation]);
+
+  useEffect(() => {
+    onLogoutReady(handleLogout);
+  }, [handleLogout, onLogoutReady]);
+
+  return null;
+}
+
 // ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
@@ -69,6 +97,8 @@ function AppContent() {
   const [isInitializing, setIsInitializing] = useState(false);
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
+  // Fonction logout enrichie (avec suppression FCM) fournie par FCMLogoutHandler
+  const [fcmLogout, setFcmLogout] = useState<(() => Promise<void>) | null>(null);
 
   // Timer durée minimale splash (3000ms) — laisse le temps à l'app de se monter complètement
   useEffect(() => {
@@ -94,17 +124,26 @@ function AppContent() {
     }
   }, [token]);
 
+  // Callback stable pour recevoir la fonction logout enrichie depuis FCMLogoutHandler
+  const handleLogoutReady = useCallback((logoutFn: () => Promise<void>) => {
+    setFcmLogout(() => logoutFn);
+  }, []);
+
+  // Utiliser le logout enrichi (avec suppression FCM) si disponible, sinon le logout simple
+  const effectiveLogout = fcmLogout ?? logout;
+
   // Le trpc.Provider enveloppe TOUT pour que LoginScreen puisse utiliser les hooks tRPC
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PushRegistrar />
+      <FCMLogoutHandler onLogoutReady={handleLogoutReady} />
 
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée */}
       {(isLoading || isInitializing || !splashMinDone) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>
-          <AppNavigator onLogout={logout} />
+          <AppNavigator onLogout={effectiveLogout} />
           <OnboardingScreen
             visible={!hasSeenOnboarding}
             onComplete={completeOnboarding}
