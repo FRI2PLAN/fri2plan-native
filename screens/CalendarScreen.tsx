@@ -114,6 +114,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  // Rappel par défaut depuis les préférences utilisateur
+  const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null };
+  const defaultReminderStr = String((userSettings as any)?.eventReminderMinutes ?? 15);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -236,7 +239,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (line === 'BEGIN:VEVENT') {
-        currentEvent = { title: '', description: '', startDate: '', durationMinutes: 60, category: 'other', reminderMinutes: 15, isPrivate: 0 };
+        currentEvent = { title: '', description: '', startDate: '', durationMinutes: 60, category: 'other', reminderMinutes: parseInt(defaultReminderStr) || 15, isPrivate: 0 };
       } else if (line === 'END:VEVENT' && currentEvent) {
         if (currentEvent.startDate) eventsArr.push(currentEvent);
         currentEvent = null;
@@ -281,7 +284,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     startTime: '09:00',
     endTime: '10:00',
     category: 'other',
-    reminder: '15',
+    reminder: defaultReminderStr,
     isPrivate: false});
   // Pickers date/heure
   const [eventDate, setEventDate] = useState(new Date());
@@ -290,6 +293,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  // State temporaire pour le TimePicker — stocke la valeur pendant le défilement
+  // et ne la confirme que quand l'utilisateur appuie sur OK
+  const [tempTimeValue, setTempTimeValue] = useState(new Date());
+  const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showReminderDropdown, setShowReminderDropdown] = useState(false);
 
@@ -500,20 +507,34 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
-  const handleDeleteEvent = async () => {
+  const handleDeleteEvent = () => {
     if (!selectedEvent) return;
-    try {
-      await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
-      setEditModalOpen(false);
-      setSelectedEvent(null);
-      refetch();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-    }
+    Alert.alert(
+      'Supprimer l\'événement',
+      `Voulez-vous supprimer "${selectedEvent.title}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
+              setEditModalOpen(false);
+              setSelectedEvent(null);
+              refetch();
+            } catch (error: any) {
+              console.error('Error deleting event:', error);
+              Alert.alert('Erreur', error?.message || 'Impossible de supprimer l\'événement. Vérifiez votre connexion.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', reminder: '15', isPrivate: false });
+    setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', reminder: defaultReminderStr, isPrivate: false });
     const now = new Date();
     setEventDate(selectedDate);
     const s = new Date(selectedDate); s.setHours(9, 0, 0, 0); setStartTimeDate(s);
@@ -1050,24 +1071,18 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+                <DateTimePicker value={eventDate} mode="date" display="spinner" onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowStartTimePicker(true)}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowStartTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
-              {showStartTimePicker && (
-                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
-              )}
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowEndTimePicker(true)}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowEndTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
-              {showEndTimePicker && (
-                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
-              )}
               {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
               <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
@@ -1115,24 +1130,18 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+                <DateTimePicker value={eventDate} mode="date" display="spinner" onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowStartTimePicker(true)}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowStartTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
-              {showStartTimePicker && (
-                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
-              )}
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowEndTimePicker(true)}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowEndTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
-              {showEndTimePicker && (
-                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
-              )}
               {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
               <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
@@ -1584,11 +1593,53 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
           </View>
         </View>
       </Modal>
+
+      {/* ── Modal TimePicker centralisé — évite le bug Android double onChange ── */}
+      <Modal
+        visible={showStartTimePicker || showEndTimePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { setShowStartTimePicker(false); setShowEndTimePicker(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
+            <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
+              {timePickerTarget === 'start' ? (t('calendar.startTime') || 'Heure de début') : (t('calendar.endTime') || 'Heure de fin')}
+            </Text>
+            <DateTimePicker
+              value={tempTimeValue}
+              mode="time"
+              is24Hour
+              display="spinner"
+              onChange={(_, d) => { if (d) setTempTimeValue(d); }}
+              textColor={isDark ? '#f9fafb' : '#111827'}
+            />
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+              <TouchableOpacity
+                onPress={() => { setShowStartTimePicker(false); setShowEndTimePicker(false); }}
+                style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
+              >
+                <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel') || 'Annuler'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  if (timePickerTarget === 'start') setStartTimeDate(tempTimeValue);
+                  else setEndTimeDate(tempTimeValue);
+                  setShowStartTimePicker(false);
+                  setShowEndTimePicker(false);
+                }}
+                style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '600' }}>{t('common.confirm') || 'Confirmer'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
-
-// ─── Styles ────────────────────────────────────────────────────────────────────
+// ─── Styless ────────────────────────────────────────────────────────────────────
 const getStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: isDark ? '#111827' : '#f9fafb' },
   content: { flex: 1 },

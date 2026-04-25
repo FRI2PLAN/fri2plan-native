@@ -133,6 +133,22 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const [emailPrefs, setEmailPrefs] = useState({
     digest: true, events: true, tasks: true, requests: true, budget: true,
   });
+  // ─── État rappel par défaut événements ─────────────────────────────────
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [reminderPickerValue, setReminderPickerValue] = useState(15);
+  const [reminderPickerUnit, setReminderPickerUnit] = useState<'minutes' | 'heures' | 'jours'>('minutes');
+  const [defaultReminderMinutes, setDefaultReminderMinutes] = useState(15);
+
+  const reminderToMinutes = (val: number, unit: 'minutes' | 'heures' | 'jours') => {
+    if (unit === 'heures') return val * 60;
+    if (unit === 'jours') return val * 1440;
+    return val;
+  };
+  const reminderLabel = (minutes: number) => {
+    if (minutes % 1440 === 0 && minutes >= 1440) return `${minutes / 1440} jour${minutes / 1440 > 1 ? 's' : ''}`;
+    if (minutes % 60 === 0 && minutes >= 60) return `${minutes / 60} heure${minutes / 60 > 1 ? 's' : ''}`;
+    return `${minutes} min`;
+  };
 
   useEffect(() => {
     if (userSettings) {
@@ -153,6 +169,11 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         requests: (userSettings as any).emailDigestRequests !== 0,
         budget: (userSettings as any).emailDigestBudget !== 0,
       });
+      const rem = (userSettings as any).eventReminderMinutes ?? 15;
+      setDefaultReminderMinutes(rem);
+      if (rem % 1440 === 0 && rem >= 1440) { setReminderPickerValue(rem / 1440); setReminderPickerUnit('jours'); }
+      else if (rem % 60 === 0 && rem >= 60) { setReminderPickerValue(rem / 60); setReminderPickerUnit('heures'); }
+      else { setReminderPickerValue(rem); setReminderPickerUnit('minutes'); }
     }
   }, [userSettings]);
 
@@ -181,11 +202,12 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       notifyRewards: pushPrefs.rewards ? 1 : 0,
       notifyShopping: pushPrefs.shopping ? 1 : 0,
       notifyNotes: pushPrefs.notes ? 1 : 0,
+      eventReminderMinutes: defaultReminderMinutes,
     }, {
       onSuccess: () => Alert.alert('✅', t('settings.saved')),
       onError: () => Alert.alert('❌', t('common.error')),
     });
-  }, [pushPrefs, updateSettingsMutation, t]);
+  }, [pushPrefs, defaultReminderMinutes, updateSettingsMutation, t]);
 
   // ─── Sauvegarde email ──────────────────────────────────────────────────────
   const saveEmailPrefs = useCallback(() => {
@@ -406,6 +428,99 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
             ))}
           </View>
+          {/* Rappel par défaut pour les événements */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { marginBottom: 8 }]}>🔔 Rappel par défaut (événements)</Text>
+            <Text style={[styles.sectionDesc, { marginBottom: 12 }]}>
+              Délai appliqué automatiquement à chaque nouvel événement créé ou importé.
+            </Text>
+            <TouchableOpacity
+              style={[styles.settingItem, { justifyContent: 'space-between' }]}
+              onPress={() => setShowReminderPicker(true)}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>⏰</Text>
+                <Text style={styles.settingLabel}>Délai standard</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ color: '#7c3aed', fontWeight: '600', fontSize: 15 }}>
+                  {reminderLabel(defaultReminderMinutes)}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color="#9ca3af" />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Modal picker rappel */}
+          <Modal visible={showReminderPicker} transparent animationType="slide">
+            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+              <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: isDark ? '#f9fafb' : '#111827', marginBottom: 20, textAlign: 'center' }}>
+                  Délai de rappel par défaut
+                </Text>
+                {/* Valeur numérique */}
+                <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 13, marginBottom: 8 }}>Valeur</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                  {[1,2,5,10,15,20,30,45].map(v => (
+                    <TouchableOpacity
+                      key={v}
+                      onPress={() => setReminderPickerValue(v)}
+                      style={{
+                        paddingHorizontal: 14, paddingVertical: 8,
+                        borderRadius: 20,
+                        backgroundColor: reminderPickerValue === v ? '#7c3aed' : (isDark ? '#374151' : '#f3f4f6'),
+                        borderWidth: 1,
+                        borderColor: reminderPickerValue === v ? '#7c3aed' : (isDark ? '#4b5563' : '#e5e7eb'),
+                      }}
+                    >
+                      <Text style={{ color: reminderPickerValue === v ? '#fff' : (isDark ? '#f9fafb' : '#374151'), fontWeight: '600' }}>{v}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {/* Unité */}
+                <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 13, marginBottom: 8 }}>Unité</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
+                  {(['minutes', 'heures', 'jours'] as const).map(unit => (
+                    <TouchableOpacity
+                      key={unit}
+                      onPress={() => setReminderPickerUnit(unit)}
+                      style={{
+                        flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+                        backgroundColor: reminderPickerUnit === unit ? '#7c3aed' : (isDark ? '#374151' : '#f3f4f6'),
+                        borderWidth: 1,
+                        borderColor: reminderPickerUnit === unit ? '#7c3aed' : (isDark ? '#4b5563' : '#e5e7eb'),
+                      }}
+                    >
+                      <Text style={{ color: reminderPickerUnit === unit ? '#fff' : (isDark ? '#f9fafb' : '#374151'), fontWeight: '600', textTransform: 'capitalize' }}>{unit}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {/* Prévisualisation */}
+                <Text style={{ textAlign: 'center', color: '#7c3aed', fontWeight: '700', fontSize: 16, marginBottom: 20 }}>
+                  ⏰ {reminderPickerValue} {reminderPickerUnit} avant l’événement
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6' }}
+                    onPress={() => setShowReminderPicker(false)}
+                  >
+                    <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: '#7c3aed' }}
+                    onPress={() => {
+                      const minutes = reminderToMinutes(reminderPickerValue, reminderPickerUnit);
+                      setDefaultReminderMinutes(minutes);
+                      setShowReminderPicker(false);
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '700' }}>Confirmer</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
           <View style={styles.section}>
             <TouchableOpacity style={styles.saveButton} onPress={savePushPrefs}>
               <Text style={styles.saveButtonText}>{t('settings.saveSettings')}</Text>
