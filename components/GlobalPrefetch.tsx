@@ -6,26 +6,22 @@
 import { useEffect, useState } from 'react';
 import { trpc } from '../lib/trpc';
 
-const STALE_2MIN = 2 * 60 * 1000;
-const STALE_5MIN = 5 * 60 * 1000;
+const STALE_10MIN = 10 * 60 * 1000;
 
 export default function GlobalPrefetch() {
-  // Délai de 800ms pour ne pas bloquer le rendu initial du Dashboard
+  // Délai de 5s pour laisser le Dashboard s'afficher avant de lancer les requêtes de fond
+  // Évite la congestion réseau au démarrage (30+ requêtes simultanées)
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 800);
+    const timer = setTimeout(() => setReady(true), 5000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Prefetch silencieux — les données seront dans le cache React Query
-  // quand les pages se montent pour la première fois
-  trpc.tasks.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN });
-  trpc.notes.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN });
-  trpc.rewards.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN });
-  trpc.rewards.myPoints.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN });
-  trpc.requests.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN });
-  trpc.family.list.useQuery(undefined, { enabled: ready, staleTime: STALE_5MIN });
+  // Prefetch silencieux — uniquement les données essentielles, staleTime 10min
+  trpc.family.list.useQuery(undefined, { enabled: ready, staleTime: STALE_10MIN });
+  trpc.tasks.list.useQuery(undefined, { enabled: ready, staleTime: STALE_10MIN });
+  trpc.requests.list.useQuery(undefined, { enabled: ready, staleTime: STALE_10MIN });
 
   return null;
 }

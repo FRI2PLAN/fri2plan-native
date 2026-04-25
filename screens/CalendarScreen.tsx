@@ -500,16 +500,30 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     }
   };
 
-  const handleDeleteEvent = async () => {
+  const handleDeleteEvent = () => {
     if (!selectedEvent) return;
-    try {
-      await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
-      setEditModalOpen(false);
-      setSelectedEvent(null);
-      refetch();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-    }
+    Alert.alert(
+      'Supprimer l\'événement',
+      `Voulez-vous supprimer "${selectedEvent.title}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
+              setEditModalOpen(false);
+              setSelectedEvent(null);
+              refetch();
+            } catch (error: any) {
+              console.error('Error deleting event:', error);
+              Alert.alert('Erreur', error?.message || 'Impossible de supprimer l\'événement. Vérifiez votre connexion.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const resetForm = () => {
@@ -1050,7 +1064,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+                <DateTimePicker value={eventDate} mode="date" display="spinner" onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
@@ -1058,7 +1072,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {showStartTimePicker && (
-                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
+                <DateTimePicker value={startTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
               )}
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
@@ -1066,7 +1080,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {showEndTimePicker && (
-                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
+                <DateTimePicker value={endTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
               )}
               {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
@@ -1115,7 +1129,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
               </TouchableOpacity>
               {showDatePicker && (
-                <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
+                <DateTimePicker value={eventDate} mode="date" display="spinner" onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
@@ -1123,7 +1137,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {showStartTimePicker && (
-                <DateTimePicker value={startTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
+                <DateTimePicker value={startTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTimeDate(d); }} />
               )}
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
@@ -1131,7 +1145,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {showEndTimePicker && (
-                <DateTimePicker value={endTimeDate} mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
+                <DateTimePicker value={endTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTimeDate(d); }} />
               )}
               {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>

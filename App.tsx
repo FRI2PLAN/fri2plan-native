@@ -20,7 +20,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5000,
+      staleTime: 5 * 60 * 1000, // 5 minutes — évite les requêtes répétées à chaque navigation
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });
