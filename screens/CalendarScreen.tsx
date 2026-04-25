@@ -291,8 +291,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [startTimeDate, setStartTimeDate] = useState(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; });
   const [endTimeDate, setEndTimeDate] = useState(() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; });
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   // State temporaire pour le TimePicker — stocke la valeur pendant le défilement
   // et ne la confirme que quand l'utilisateur appuie sur OK
   const [tempTimeValue, setTempTimeValue] = useState(new Date());
@@ -539,7 +538,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     setEventDate(selectedDate);
     const s = new Date(selectedDate); s.setHours(9, 0, 0, 0); setStartTimeDate(s);
     const e = new Date(selectedDate); e.setHours(10, 0, 0, 0); setEndTimeDate(e);
-    setShowDatePicker(false); setShowStartTimePicker(false); setShowEndTimePicker(false);
+    setShowDatePicker(false); setShowTimePicker(false);
     setShowCategoryDropdown(false); setShowReminderDropdown(false);
   };
 
@@ -1075,12 +1074,12 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowStartTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowEndTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {/* Rappel — Dropdown */}
@@ -1134,12 +1133,12 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowStartTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowEndTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowTimePicker(true); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
               {/* Rappel — Dropdown */}
@@ -1596,10 +1595,10 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
 
       {/* ── Modal TimePicker centralisé — évite le bug Android double onChange ── */}
       <Modal
-        visible={showStartTimePicker || showEndTimePicker}
+        visible={showTimePicker}
         transparent
         animationType="fade"
-        onRequestClose={() => { setShowStartTimePicker(false); setShowEndTimePicker(false); }}
+        onRequestClose={() => { setShowTimePicker(false); }}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
@@ -1616,7 +1615,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             />
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
-                onPress={() => { setShowStartTimePicker(false); setShowEndTimePicker(false); }}
+                onPress={() => { setShowTimePicker(false); }}
                 style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
               >
                 <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel') || 'Annuler'}</Text>
@@ -1625,8 +1624,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 onPress={() => {
                   if (timePickerTarget === 'start') setStartTimeDate(tempTimeValue);
                   else setEndTimeDate(tempTimeValue);
-                  setShowStartTimePicker(false);
-                  setShowEndTimePicker(false);
+                  setShowTimePicker(false);
                 }}
                 style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
               >
