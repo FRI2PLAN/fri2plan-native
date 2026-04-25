@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { FamilyProvider } from './contexts/FamilyContext';
+import { FamilyProvider, useFamily } from './contexts/FamilyContext';
 import { PagerProvider } from './contexts/PagerContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
@@ -108,9 +108,9 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Ne recréer le client tRPC QUE quand le token change
-  // activeFamilyId est lu dynamiquement depuis AsyncStorage dans chaque requête (lib/trpc.ts)
-  const trpcClient = useMemo(() => createTRPCClient(), [token]);
+  const { activeFamilyId } = useFamily();
+  // Recréer le client tRPC quand le token OU la famille active change
+  const trpcClient = useMemo(() => createTRPCClient(), [token, activeFamilyId]);
 
   // Invalider les requêtes quand le token change (connexion / déconnexion)
   const prevTokenRef = useRef<string | null>(null);
