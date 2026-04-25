@@ -116,7 +116,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   );
   // Rappel par défaut depuis les préférences utilisateur
   const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null };
-  const defaultReminderStr = String((userSettings as any)?.eventReminderMinutes ?? 15);
+  const defaultReminderMinutes = (userSettings as any)?.eventReminderMinutes ?? 15;
+  const defaultReminderStr = String(defaultReminderMinutes);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -298,6 +299,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showReminderDropdown, setShowReminderDropdown] = useState(false);
+
+  // Met à jour le rappel par défaut quand les settings arrivent (userSettings est null au montage)
+  useEffect(() => {
+    if (userSettings) {
+      setFormData(prev => ({ ...prev, reminder: defaultReminderStr }));
+    }
+  }, [defaultReminderMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Nettoie les descriptions ICS (URLs, balises HTML, etc.)
   const cleanDescription = (desc: string | null | undefined): string => {
@@ -1074,14 +1082,20 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               )}
               {/* Heure début */}
               <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(startTimeDate); setTimePickerTarget('start'); setShowTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTimePickerTarget('start'); setShowTimePicker(v => !v || timePickerTarget !== 'start'); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
+              {showTimePicker && timePickerTarget === 'start' && (
+                <DateTimePicker value={startTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { if (d) setStartTimeDate(d); setShowTimePicker(false); }} textColor={isDark ? '#f9fafb' : '#111827'} />
+              )}
               {/* Heure fin */}
               <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTempTimeValue(endTimeDate); setTimePickerTarget('end'); setShowTimePicker(true); }}>
+              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTimePickerTarget('end'); setShowTimePicker(v => !v || timePickerTarget !== 'end'); }}>
                 <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
               </TouchableOpacity>
+              {showTimePicker && timePickerTarget === 'end' && (
+                <DateTimePicker value={endTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { if (d) setEndTimeDate(d); setShowTimePicker(false); }} textColor={isDark ? '#f9fafb' : '#111827'} />
+              )}
               {/* Rappel — Dropdown */}
               <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
               <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
@@ -1098,7 +1112,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             </ScrollView>
             {/* Boutons icônes */}
             <View style={styles.iconBtnRow}>
-              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setCreateModalOpen(false); resetForm(); }} />
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setCreateModalOpen(false); setShowTimePicker(false); resetForm(); }} />
               <ModalIconButton icon="✓" color="#10b981" onPress={handleCreateEvent} />
             </View>
           </View>
