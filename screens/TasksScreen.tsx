@@ -604,14 +604,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {showDatePicker && (
         <DateTimePicker
           value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-          mode="date" display="spinner"
+          mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(_, d) => { setShowDatePicker(false); if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); setShowTimePicker(true); } }}
         />
       )}
       {showTimePicker && (
         <DateTimePicker
           value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-          mode="time" is24Hour display="spinner"
+          mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(_, d) => { setShowTimePicker(false); if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); } }}
         />
       )}
