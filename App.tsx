@@ -4,14 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { FamilyProvider, useFamily } from './contexts/FamilyContext';
+import { FamilyProvider } from './contexts/FamilyContext';
 import { PagerProvider } from './contexts/PagerContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
 import { StyleSheet, Platform } from 'react-native';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
 
@@ -62,6 +62,29 @@ function PushRegistrar() {
   return null;
 }
 
+// ─── Sous-composant FCMLogoutHandler ─────────────────────────────────────────
+// Supprime le token FCM natif côté serveur lors de la déconnexion.
+// Utilise useRef pour exposer la fonction logout sans déclencher de re-render.
+function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(() => Promise<void>) | null> }) {
+  const { logout } = useAuth();
+  const deleteTokenMutation = trpc.fcm.deleteToken.useMutation();
+
+  // Mettre à jour la ref à chaque render — pas de re-render parent car c'est une ref
+  logoutRef.current = useCallback(async () => {
+    try {
+      const platform = Platform.OS === 'android' ? 'native_android' : 'native_ios';
+      await deleteTokenMutation.mutateAsync({ platform });
+      console.log('[Push] Token FCM supprimé côté serveur pour platform:', platform);
+    } catch (err) {
+      // Ne pas bloquer la déconnexion si la suppression échoue
+      console.warn('[Push] Erreur suppression token FCM:', err);
+    }
+    await logout();
+  }, [logout, deleteTokenMutation]);
+
+  return null;
+}
+
 // ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
@@ -70,14 +93,18 @@ function AppContent() {
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
 
+  // Ref vers la fonction logout enrichie (avec suppression FCM) — pas de re-render
+  const fcmLogoutRef = useRef<(() => Promise<void>) | null>(null);
+
   // Timer durée minimale splash (3000ms) — laisse le temps à l'app de se monter complètement
   useEffect(() => {
     const timer = setTimeout(() => setSplashMinDone(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
-  const { activeFamilyId } = useFamily();
-  const trpcClient = useMemo(() => createTRPCClient(), [token, activeFamilyId]);
+  // Ne recréer le client tRPC QUE quand le token change
+  // activeFamilyId est lu dynamiquement depuis AsyncStorage dans chaque requête (lib/trpc.ts)
+  const trpcClient = useMemo(() => createTRPCClient(), [token]);
 
   // Invalider les requêtes quand le token change (connexion / déconnexion)
   const prevTokenRef = useRef<string | null>(null);
@@ -93,17 +120,27 @@ function AppContent() {
     }
   }, [token]);
 
+  // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
+  const effectiveLogout = useCallback(async () => {
+    if (fcmLogoutRef.current) {
+      await fcmLogoutRef.current();
+    } else {
+      await logout();
+    }
+  }, [logout]);
+
   // Le trpc.Provider enveloppe TOUT pour que LoginScreen puisse utiliser les hooks tRPC
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PushRegistrar />
+      <FCMLogoutHandler logoutRef={fcmLogoutRef} />
 
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée */}
       {(isLoading || isInitializing || !splashMinDone) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>
-          <AppNavigator onLogout={logout} />
+          <AppNavigator onLogout={effectiveLogout} />
           <OnboardingScreen
             visible={!hasSeenOnboarding}
             onComplete={completeOnboarding}
