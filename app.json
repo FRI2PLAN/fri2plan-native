@@ -42,9 +42,6 @@
         "android.permission.POST_NOTIFICATIONS"
       ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "extra": {
       "eas": {
         "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
