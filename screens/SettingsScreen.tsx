@@ -14,7 +14,6 @@ import { usePager } from '../contexts/PagerContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { trpc } from '../lib/trpc';
-import * as ImagePicker from 'expo-image-picker';
 
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -279,35 +278,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  // ─── Avatar photo ──────────────────────────────────────────────────────────
-  const [avatarUri, setAvatarUri] = useState<string | null>((user as any)?.avatarUrl || null);
-  const updateAvatarMutation = (trpc.members as any).updateAvatar?.useMutation?.();
-  const handlePickAvatar = async () => {
-    // Demander la permission si nécessaire
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'Permission requise pour accéder à la galerie');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-      base64: true,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      const asset = result.assets[0];
-      // Utiliser l'URI locale comme aperçu immédiat
-      setAvatarUri(asset.uri);
-      // Uploader en base64 data URL
-      const dataUrl = `data:image/jpeg;base64,${asset.base64}`;
-      updateAvatarMutation?.mutate({ userId: user!.id, avatarUrl: dataUrl }, {
-        onSuccess: () => Alert.alert('✅', t('common.success')),
-        onError: () => Alert.alert('❌', t('common.error')),
-      });
-    }
-  };
+
   const handleSaveColor = () => {
     if (!user) return;
     updateColorMutation?.mutate({ userId: user.id, color: selectedColor }, {
@@ -627,11 +598,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 style={[styles.avatarCircle, { backgroundColor: user?.userColor || '#7c3aed', overflow: 'hidden' }]}
                 onPress={() => { setSelectedColor(user?.userColor || '#8B5CF6'); setShowColorModal(true); }}
               >
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%', borderRadius: 999 }} />
-                ) : (
-                  <Text style={styles.avatarInitial}>{(user?.name || '?').charAt(0).toUpperCase()}</Text>
-                )}
+                <Text style={styles.avatarInitial}>{(user?.name || '?').charAt(0).toUpperCase()}</Text>
                 <View style={styles.avatarEditBadge}>
                   <Text style={styles.avatarEditBadgeText}>✏️</Text>
                 </View>
@@ -664,17 +631,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <View style={[styles.colorDot, { backgroundColor: user?.userColor || '#7c3aed' }]} />
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
-            {/* Photo avatar */}
-            <TouchableOpacity style={styles.settingItem} onPress={handlePickAvatar}>
-              <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>📷</Text>
-                <Text style={styles.settingLabel}>{t('settings.importPhoto')}</Text>
-              </View>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
-              ) : null}
-              <Text style={styles.settingArrow}>›</Text>
-            </TouchableOpacity>
+
           </View>
 
           {/* Informations personnelles */}
