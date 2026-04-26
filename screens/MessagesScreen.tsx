@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal } from 'react-native';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useRef, useCallback } from 'react';
@@ -28,6 +28,8 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [refreshing, setRefreshing] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
+  const [showMessageMenu, setShowMessageMenu] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const getLocale = () => {
@@ -64,6 +66,58 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   // Réactions
   const addReaction = trpc.messages.addReaction.useMutation({
     onSuccess: () => refetch()});
+
+  // Suppression d'un message
+  const deleteMessage = trpc.messages.delete.useMutation({
+    onSuccess: () => {
+      setShowMessageMenu(false);
+      setSelectedMessageId(null);
+      refetch();
+    },
+    onError: (err) => {
+      setShowMessageMenu(false);
+      Alert.alert(t('common.error'), t('messages.deleteError'));
+    }
+  });
+
+  // Suppression de tous les messages
+  const deleteAllMessages = trpc.messages.deleteAll.useMutation({
+    onSuccess: () => {
+      refetch();
+      Alert.alert(t('common.success'), t('messages.deleteAllSuccess'));
+    },
+    onError: (err: any) => {
+      Alert.alert(t('common.error'), err?.message || t('messages.deleteError'));
+    }
+  });
+
+  const handleLongPressMessage = (messageId: number) => {
+    setSelectedMessageId(messageId);
+    setShowMessageMenu(true);
+  };
+
+  const handleDeleteMessage = () => {
+    if (!selectedMessageId) return;
+    Alert.alert(
+      t('messages.deleteConfirmTitle'),
+      t('messages.deleteConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel', onPress: () => setShowMessageMenu(false) },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteMessage.mutate({ messageId: selectedMessageId }) }
+      ]
+    );
+  };
+
+  const handleDeleteAll = () => {
+    Alert.alert(
+      t('messages.deleteAllConfirmTitle'),
+      t('messages.deleteAllConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteAllMessages.mutate({ familyId: activeFamilyId }) }
+      ]
+    );
+  };
 
   // Mutation pour envoyer un message (endpoint create)
   const sendMutation = trpc.messages.create.useMutation({
@@ -120,6 +174,11 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     const reactions = message.reactions || {};
 
     return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onLongPress={() => handleLongPressMessage(message.id)}
+        delayLongPress={400}
+      >
       <View style={[styles.messageBubbleWrapper, own ? styles.ownWrapper : styles.otherWrapper]}>
         {/* Avatar à gauche pour les autres (extérieur bulle, aligné en bas) */}
         {!own && (
@@ -189,6 +248,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           </View>
         )}
       </View>
+      </TouchableOpacity>
     );
   };
 
@@ -199,6 +259,14 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>💬 {t('messages.title')}</Text>
+        {activeTab === 'general' && messages.length > 0 && (
+          <TouchableOpacity
+            style={styles.deleteAllButton}
+            onPress={handleDeleteAll}
+          >
+            <Text style={styles.deleteAllButtonText}>🗑️ {t('messages.deleteAllMessages')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Onglets */}
@@ -290,6 +358,35 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       ) : (
         <DiscussionGroupsTab activeFamilyId={activeFamilyId} />
       )}
+
+      {/* Modal menu message (long-press) */}
+      <Modal
+        visible={showMessageMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMessageMenu(false)}
+      >
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMessageMenu(false)}
+        >
+          <View style={[styles.messageMenu, { backgroundColor: isDark ? '#1f2937' : '#fff' }]}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleDeleteMessage}
+            >
+              <Text style={styles.menuItemDelete}>🗑️ {t('messages.deleteMessage')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemLast]}
+              onPress={() => setShowMessageMenu(false)}
+            >
+              <Text style={[styles.menuItemText, { color: isDark ? '#9ca3af' : '#6b7280' }]}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Emoji Picker */}
       <EmojiPicker
@@ -511,4 +608,47 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   sendButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700'}});
+    fontWeight: '700'},
+  deleteAllButton: {
+    marginTop: 4,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.2)'},
+  deleteAllButtonText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600'},
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center'},
+  messageMenu: {
+    width: 240,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8},
+  menuItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#f3f4f6'},
+  menuItemLast: {
+    borderBottomWidth: 0},
+  menuItemDelete: {
+    fontSize: 16,
+    color: '#ef4444',
+    fontWeight: '600',
+    textAlign: 'center'},
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center'}});

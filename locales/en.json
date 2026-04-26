@@ -314,7 +314,14 @@
     "groupDescription": "Description (optional)",
     "selectMembers": "Select members",
     "noMessagesInGroup": "No messages in this group",
-    "createdBy": "Created by"
+    "createdBy": "Created by",
+    "deleteMessage": "Delete this message",
+    "deleteAllMessages": "Delete all",
+    "deleteAllConfirmTitle": "Delete all messages?",
+    "deleteAllConfirmMessage": "All messages will be permanently deleted. This action cannot be undone.",
+    "deleteAllSuccess": "All messages have been deleted",
+    "deleteSuccess": "Message deleted",
+    "adminOnly": "Only an administrator can delete all messages"
   },
   "requests": {
     "title": "Requests",

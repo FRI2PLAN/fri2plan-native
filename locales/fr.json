@@ -314,7 +314,14 @@
     "groupDescription": "Description (optionnel)",
     "selectMembers": "Sélectionner les membres",
     "noMessagesInGroup": "Aucun message dans ce groupe",
-    "createdBy": "Créé par"
+    "createdBy": "Créé par",
+    "deleteMessage": "Supprimer ce message",
+    "deleteAllMessages": "Tout supprimer",
+    "deleteAllConfirmTitle": "Supprimer tous les messages ?",
+    "deleteAllConfirmMessage": "Tous les messages seront supprimés définitivement. Cette action est irréversible.",
+    "deleteAllSuccess": "Tous les messages ont été supprimés",
+    "deleteSuccess": "Message supprimé",
+    "adminOnly": "Seul un administrateur peut supprimer tous les messages"
   },
   "requests": {
     "title": "Requêtes",

@@ -24,6 +24,8 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
+  const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
@@ -137,6 +139,57 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       Alert.alert(t('common.error'), t('messages.groupLeaveError'));
     }
   });
+
+  const deleteMessage = trpc.discussionGroups.deleteMessage.useMutation({
+    onSuccess: () => {
+      setShowMessageMenu(false);
+      setSelectedMessageId(null);
+      refetchMessages();
+    },
+    onError: () => {
+      setShowMessageMenu(false);
+      Alert.alert(t('common.error'), t('messages.deleteError'));
+    }
+  });
+
+  const deleteAllMessages = trpc.discussionGroups.deleteAllMessages.useMutation({
+    onSuccess: () => {
+      refetchMessages();
+      Alert.alert(t('common.success'), t('messages.deleteAllSuccess'));
+    },
+    onError: (err: any) => {
+      Alert.alert(t('common.error'), err?.message || t('messages.deleteError'));
+    }
+  });
+
+  const handleLongPressMessage = (messageId: number) => {
+    setSelectedMessageId(messageId);
+    setShowMessageMenu(true);
+  };
+
+  const handleDeleteMessage = () => {
+    if (!selectedMessageId || !selectedGroup) return;
+    Alert.alert(
+      t('messages.deleteConfirmTitle'),
+      t('messages.deleteConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel', onPress: () => setShowMessageMenu(false) },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteMessage.mutate({ messageId: selectedMessageId, groupId: selectedGroup }) }
+      ]
+    );
+  };
+
+  const handleDeleteAllMessages = () => {
+    if (!selectedGroup) return;
+    Alert.alert(
+      t('messages.deleteAllConfirmTitle'),
+      t('messages.deleteAllConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteAllMessages.mutate({ groupId: selectedGroup }) }
+      ]
+    );
+  };
   
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) {
@@ -205,7 +258,13 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     const isOwnMessage = myId !== null && Number(message.userId) === myId;
     
     return (
-      <View key={message.id} style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
+      <TouchableOpacity
+        key={message.id}
+        activeOpacity={0.85}
+        onLongPress={() => handleLongPressMessage(message.id)}
+        delayLongPress={400}
+      >
+      <View style={[styles.messageRow, isOwnMessage ? styles.messageRowOwn : styles.messageRowOther]}>
         {/* Avatar à gauche pour les autres (extérieur bulle) */}
         {!isOwnMessage && (
           <View style={styles.avatar}>
@@ -280,6 +339,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
           </View>
         )}
       </View>
+      </TouchableOpacity>
     );
   };
   
@@ -407,9 +467,19 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             <Text style={styles.groupConversationDescription}>{currentGroup.description}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={() => setMembersDialogOpen(true)} style={styles.settingsButton}>
-          <Text style={styles.settingsButtonText}>⚙️</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          {messages.length > 0 && (
+            <TouchableOpacity
+              onPress={handleDeleteAllMessages}
+              style={styles.deleteAllGroupButton}
+            >
+              <Text style={styles.deleteAllGroupButtonText}>🗑️</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => setMembersDialogOpen(true)} style={styles.settingsButton}>
+            <Text style={styles.settingsButtonText}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       {/* Messages */}
@@ -497,6 +567,35 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
         </View>
       </Modal>
       
+      {/* Modal menu message (long-press) */}
+      <Modal
+        visible={showMessageMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMessageMenu(false)}
+      >
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMessageMenu(false)}
+        >
+          <View style={[styles.messageMenu, { backgroundColor: isDark ? '#1f2937' : '#fff' }]}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleDeleteMessage}
+            >
+              <Text style={styles.menuItemDelete}>🗑️ {t('messages.deleteMessage')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemLast]}
+              onPress={() => setShowMessageMenu(false)}
+            >
+              <Text style={[styles.menuItemText, { color: isDark ? '#9ca3af' : '#6b7280' }]}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Lightbox pour les images */}
       <Modal visible={!!lightboxImage} transparent animationType="fade">
         <View style={styles.lightboxContainer}>
@@ -993,5 +1092,54 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   lightboxImage: {
     width: '90%',
     height: '80%',
+  },
+  deleteAllGroupButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteAllGroupButtonText: {
+    fontSize: 16,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageMenu: {
+    width: 240,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  menuItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#374151' : '#f3f4f6',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuItemDelete: {
+    fontSize: 16,
+    color: '#ef4444',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

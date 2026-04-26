@@ -314,7 +314,14 @@
     "groupDescription": "Beschreibung (optional)",
     "selectMembers": "Mitglieder auswählen",
     "noMessagesInGroup": "Keine Nachrichten in dieser Gruppe",
-    "createdBy": "Erstellt von"
+    "createdBy": "Erstellt von",
+    "deleteMessage": "Diese Nachricht löschen",
+    "deleteAllMessages": "Alle löschen",
+    "deleteAllConfirmTitle": "Alle Nachrichten löschen?",
+    "deleteAllConfirmMessage": "Alle Nachrichten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteAllSuccess": "Alle Nachrichten wurden gelöscht",
+    "deleteSuccess": "Nachricht gelöscht",
+    "adminOnly": "Nur ein Administrator kann alle Nachrichten löschen"
   },
   "requests": {
     "title": "Anfragen",
