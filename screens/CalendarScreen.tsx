@@ -381,6 +381,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [subscribeColor, setSubscribeColor] = useState('#6366f1');
   const [colorPickerSubId, setColorPickerSubId] = useState<number | null>(null);
 
+  // ─── Calendriers Google synchronisés ────────────────────────────────────────
+  const [googleManageModal, setGoogleManageModal] = useState(false);
+  const [googleColorPickerId, setGoogleColorPickerId] = useState<number | null>(null);
+  const [googleSyncingId, setGoogleSyncingId] = useState<number | null>(null);
+  const { data: syncedCalendars = [], refetch: refetchSyncedCalendars } = (trpc.syncedCalendars as any)?.list?.useQuery?.(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  ) ?? { data: [], refetch: () => {} };
+  const deleteSyncedCalendarMutation = (trpc.syncedCalendars as any)?.delete?.useMutation?.({ onSuccess: () => { refetchSyncedCalendars(); refetch(); } }) ?? { mutate: () => {}, isPending: false };
+  const updateSyncedCalendarMutation = (trpc.syncedCalendars as any)?.update?.useMutation?.({ onSuccess: () => { refetchSyncedCalendars(); refetch(); setGoogleColorPickerId(null); } }) ?? { mutate: () => {}, isPending: false };
+  const syncSyncedCalendarMutation = (trpc.syncedCalendars as any)?.sync?.useMutation?.({ onSuccess: () => { refetchSyncedCalendars(); refetch(); setGoogleSyncingId(null); Alert.alert('\u2713', 'Calendrier synchronisé'); }, onError: () => setGoogleSyncingId(null) }) ?? { mutate: () => {}, isPending: false };
+
   const subscribeGoogleCalendar = async (cal: any) => {
     setGoogleCalendarLoading(true);
     try {
@@ -696,8 +708,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               }, 2000);
             }}>
               <Text style={styles.calMenuIcon}>🗓️</Text>
-              <Text style={styles.calMenuLabel}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
+              <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
+              <Text style={{ fontSize: 11, color: '#6b7280' }}>+ Ajouter</Text>
             </TouchableOpacity>
+            {(syncedCalendars as any[]).length > 0 && (
+              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setGoogleManageModal(true); }}>
+                <Text style={styles.calMenuIcon}>⚙️</Text>
+                <Text style={[styles.calMenuLabel, { flex: 1 }]}>Gérer les calendriers Google</Text>
+                <View style={{ backgroundColor: '#4285f4', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, marginLeft: 4 }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{(syncedCalendars as any[]).length}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
             <View style={styles.calMenuDivider} />
             <TouchableOpacity style={[styles.calMenuItem, hasActiveFilters && styles.calMenuItemActive]} onPress={() => { setCalendarMenuVisible(false); setFilterModalOpen(true); }}>
               <Text style={styles.calMenuIcon}>⚙️</Text>
@@ -1602,6 +1624,105 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             </ScrollView>
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
               <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setGoogleCalendarModal(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Modal Gérer les calendriers Google ── */}
+      <Modal visible={googleManageModal} animationType="slide" transparent onRequestClose={() => { setGoogleManageModal(false); setGoogleColorPickerId(null); }}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
+            <Text style={styles.modalTitle}>🗓️ Calendriers Google</Text>
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              {(syncedCalendars as any[]).length === 0 ? (
+                <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier Google connecté</Text>
+              ) : (syncedCalendars as any[]).map((cal: any) => (
+                <View key={cal.id} style={{ marginBottom: 12, borderRadius: 12, backgroundColor: isDark ? '#1f2937' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', overflow: 'hidden' }}>
+                  {/* En-tête du calendrier */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
+                    <TouchableOpacity onPress={() => setGoogleColorPickerId(googleColorPickerId === cal.id ? null : cal.id)} style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: cal.color || '#4285f4', marginRight: 12, borderWidth: 2, borderColor: isDark ? '#4b5563' : '#d1d5db' }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }} numberOfLines={1}>{cal.name}</Text>
+                      <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }}>
+                        {cal.lastSyncAt ? `Sync : ${format(new Date(cal.lastSyncAt), 'dd/MM/yyyy HH:mm')}` : 'Jamais synchronisé'}
+                      </Text>
+                    </View>
+                    {/* Toggle actif/inactif */}
+                    <TouchableOpacity
+                      onPress={() => updateSyncedCalendarMutation.mutate({ id: cal.id, isActive: cal.isActive === 1 ? 0 : 1 })}
+                      style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: cal.isActive !== 0 ? '#10b981' : (isDark ? '#374151' : '#d1d5db'), justifyContent: 'center', paddingHorizontal: 3, marginLeft: 8 }}
+                    >
+                      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffffff', alignSelf: cal.isActive !== 0 ? 'flex-end' : 'flex-start' }} />
+                    </TouchableOpacity>
+                  </View>
+                  {/* Palette de couleurs */}
+                  {googleColorPickerId === cal.id && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingBottom: 12 }}>
+                      {['#4285f4','#ea4335','#fbbc04','#34a853','#ff6d00','#46bdc6','#7986cb','#e67c73','#f4511e','#039be5','#616161','#8e24aa'].map(c => (
+                        <TouchableOpacity key={c} onPress={() => updateSyncedCalendarMutation.mutate({ id: cal.id, color: c })} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: cal.color === c ? 3 : 0, borderColor: isDark ? '#ffffff' : '#1f2937' }} />
+                      ))}
+                    </View>
+                  )}
+                  {/* Actions */}
+                  <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#e5e7eb' }}>
+                    <TouchableOpacity
+                      style={{ flex: 1, padding: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
+                      onPress={() => { setGoogleSyncingId(cal.id); syncSyncedCalendarMutation.mutate({ id: cal.id }); }}
+                      disabled={googleSyncingId === cal.id}
+                    >
+                      <Text style={{ fontSize: 14 }}>{googleSyncingId === cal.id ? '⏳' : '🔄'}</Text>
+                      <Text style={{ fontSize: 13, color: '#4285f4', fontWeight: '600' }}>{googleSyncingId === cal.id ? 'Sync...' : 'Synchroniser'}</Text>
+                    </TouchableOpacity>
+                    <View style={{ width: 1, backgroundColor: isDark ? '#374151' : '#e5e7eb' }} />
+                    <TouchableOpacity
+                      style={{ flex: 1, padding: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
+                      onPress={() => Alert.alert('Supprimer', `Supprimer "${cal.name}" et tous ses événements importés ?`, [
+                        { text: 'Annuler', style: 'cancel' },
+                        { text: 'Supprimer', style: 'destructive', onPress: () => deleteSyncedCalendarMutation.mutate({ id: cal.id }) }
+                      ])}
+                    >
+                      <Text style={{ fontSize: 14 }}>🗑️</Text>
+                      <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>Supprimer</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            {/* Bouton Ajouter un calendrier */}
+            <TouchableOpacity
+              style={{ marginTop: 12, padding: 14, borderRadius: 10, backgroundColor: '#4285f4', alignItems: 'center' }}
+              onPress={() => {
+                setGoogleManageModal(false);
+                // Relancer le flux OAuth Google
+                setTimeout(async () => {
+                  const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+                  const token = await AsyncStorage.getItem('authToken');
+                  if (!token) { Alert.alert('Erreur', 'Vous devez être connecté.'); return; }
+                  const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
+                  Linking.openURL(connectUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
+                  let attempts = 0;
+                  const pollInterval = setInterval(async () => {
+                    attempts++;
+                    if (attempts > 90) { clearInterval(pollInterval); return; }
+                    try {
+                      const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                      const pollData = await pollRes.json();
+                      if (pollData.status === 'ready') {
+                        clearInterval(pollInterval);
+                        if (pollData.tokenData) await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
+                        setGoogleCalendars(pollData.calendars || []);
+                        setGoogleCalendarModal(true);
+                      }
+                    } catch {}
+                  }, 2000);
+                }, 300);
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15 }}>🗓️ Ajouter un calendrier Google</Text>
+            </TouchableOpacity>
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 12 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setGoogleManageModal(false); setGoogleColorPickerId(null); }} />
             </View>
           </View>
         </View>
