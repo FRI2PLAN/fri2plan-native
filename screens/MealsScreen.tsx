@@ -408,10 +408,12 @@ export default function MealsScreen({
       setTranslating(true);
       try {
         const translated = await translateRecipeMutation.mutateAsync({
+          title: recipe.title,
           ingredients,
           instructions: notes,
           targetLang: userLang,
         });
+        if (translated.title) (recipe as any).title = translated.title;
         ingredients = translated.ingredients;
         notes = translated.instructions;
       } catch {
