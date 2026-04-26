@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -678,7 +679,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               }
               // Passer le token dans l'URL car Linking.openURL ne peut pas envoyer de headers Authorization
               const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-              Linking.openURL(connectUrl).catch(() =>
+              WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() =>
                 Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
               );
               // Polling toutes les 2s pendant 3 minutes max
@@ -1700,7 +1701,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                   const token = await AsyncStorage.getItem('authToken');
                   if (!token) { Alert.alert('Erreur', 'Vous devez être connecté.'); return; }
                   const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-                  Linking.openURL(connectUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
+                  WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
                   let attempts = 0;
                   const pollInterval = setInterval(async () => {
                     attempts++;
