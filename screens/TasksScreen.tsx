@@ -175,7 +175,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   });
 
   const filteredTasks = (tasks || []).filter(t => {
-    if (filter === 'myTasks') return t.assignedTo === user?.id;
+    // "Mes tâches" = assignées à moi ET non terminées (les terminées vont dans l'onglet Terminé)
+    if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed';
     return t.status === filter;
   });
 
@@ -381,7 +382,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* Filtres + bouton + sur la même ligne */}
       <View style={styles.filterContainer}>
         {([
-          { key: 'myTasks' as FilterType, label: t('tasks.myTasks') || 'Mes tâches', count: (tasks || []).filter(t => t.assignedTo === user?.id).length },
+          { key: 'myTasks' as FilterType, label: t('tasks.myTasks') || 'Mes tâches', count: (tasks || []).filter(t => t.assignedTo === user?.id && t.status !== 'completed').length },
           { key: 'completed' as FilterType, label: '✓ ' + (t('tasks.completed') || 'Terminé'), count: (tasks || []).filter(t => t.status === 'completed').length },
         ]).map(({ key, label, count }) => (
           <TouchableOpacity
