@@ -16,15 +16,20 @@
     "plugins": [
       "expo-dev-client",
       "@react-native-firebase/app",
+      "./withFirebasePodfile",
       [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.846470017457-b250hpecqp44u8av020p72f87dch0dus"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "ch.fri2plan.app",
+      "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
