@@ -14,9 +14,17 @@
     },
     "scheme": "fri2plan",
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "forceStaticLinking": ["RNFBApp", "RNFBMessaging"]
+          }
+        }
+      ],
       "expo-dev-client",
       "@react-native-firebase/app",
-      "./withFirebasePodfile",
       [
         "@react-native-google-signin/google-signin",
         {

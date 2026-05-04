@@ -24,6 +24,7 @@
     "@trpc/server": "^11.9.0",
     "date-fns": "^4.1.0",
     "expo": "~54.0.33",
+    "expo-build-properties": "~1.0.9",
     "expo-dev-client": "^6.0.20",
     "expo-device": "~8.0.10",
     "expo-document-picker": "^14.0.8",
