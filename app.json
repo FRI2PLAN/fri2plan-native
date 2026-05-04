@@ -35,7 +35,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
@@ -45,7 +45,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.fri2plan.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
@@ -60,13 +60,8 @@
       }
     },
     "owner": "fri2plan",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "updates": {
-      "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94",
-      "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "ON_LOAD"
+      "enabled": false
     }
   }
 }
