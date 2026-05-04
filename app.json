@@ -28,14 +28,14 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.846470017457-b250hpecqp44u8av020p72f87dch0dus"
+          "iosUrlScheme": "com.googleusercontent.apps.582461718885-4614i560felc7gquqif8v8oamod4i68s"
         }
       ]
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
@@ -45,7 +45,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.fri2plan.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
