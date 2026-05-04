@@ -1412,12 +1412,19 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                         </View>
                       )}
                       {/* Ligne de statut */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4, paddingVertical: 5, backgroundColor: statusColor + '11', borderRadius: 6 }}>
-                        <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', flex: 1, textAlign: 'center' }}>
-                          {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
-                        </Text>
+                      <View style={{ marginBottom: 8, paddingHorizontal: 4, paddingVertical: 5, backgroundColor: statusColor + '11', borderRadius: 6 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', textAlign: 'center' }}>
+                            {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
+                          </Text>
+                          {(sub.eventCount !== undefined && sub.eventCount !== null) && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#374151' : '#e5e7eb', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 }}>
+                              <Text style={{ fontSize: 10, color: isDark ? '#d1d5db' : '#374151', fontWeight: '600' }}>📅 {sub.eventCount} événement{sub.eventCount !== 1 ? 's' : ''}</Text>
+                            </View>
+                          )}
+                        </View>
                         {hasError && (
-                          <Text style={{ fontSize: 10, color: '#ef4444', flex: 2, textAlign: 'center' }} numberOfLines={1}>{sub.lastSyncError}</Text>
+                          <Text style={{ fontSize: 10, color: '#ef4444', textAlign: 'center', marginTop: 3 }} numberOfLines={2}>{sub.lastSyncError}</Text>
                         )}
                       </View>
                       {/* Fréquence de sync */}
