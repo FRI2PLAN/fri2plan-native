@@ -25,7 +25,11 @@
         "buildType": "app-bundle"
       },
       "ios": {
-        "autoIncrement": false
+        "autoIncrement": false,
+        "image": "macos-sequoia-15.6-xcode-26.3",
+        "env": {
+          "FIREBASE_SDK_VERSION": "12.12.0"
+        }
       }
     }
   },
