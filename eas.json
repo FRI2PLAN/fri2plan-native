@@ -23,6 +23,9 @@
       "channel": "production",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "autoIncrement": false
       }
     }
   },

@@ -25,6 +25,7 @@
       ],
       "expo-dev-client",
       "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "@react-native-google-signin/google-signin",
         {
@@ -35,8 +36,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "4",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "buildNumber": "5",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
+        "FirebaseAppDelegateProxyEnabled": false
+      },
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "adaptiveIcon": {
