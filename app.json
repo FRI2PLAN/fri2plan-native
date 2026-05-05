@@ -18,14 +18,20 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static",
-            "forceStaticLinking": ["RNFBApp", "RNFBMessaging"]
+            "useFrameworks": "static"
           }
         }
       ],
       "expo-dev-client",
-      "@react-native-firebase/app",
-      "@react-native-firebase/messaging",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#7c3aed",
+          "sounds": [],
+          "iosDisplayInForeground": true
+        }
+      ],
       [
         "@react-native-google-signin/google-signin",
         {
@@ -36,10 +42,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"],
+        "UIBackgroundModes": ["remote-notification", "fetch"],
+        "NSUserNotificationsUsageDescription": "FRI2PLAN envoie des rappels et notifications pour votre famille.",
         "FirebaseAppDelegateProxyEnabled": false
       },
       "entitlements": {
@@ -53,7 +60,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.fri2plan.app",
-      "versionCode": 6,
+      "versionCode": 7,
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
