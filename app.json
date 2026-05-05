@@ -42,12 +42,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification", "fetch"],
         "NSUserNotificationsUsageDescription": "FRI2PLAN envoie des rappels et notifications pour votre famille.",
-        "FirebaseAppDelegateProxyEnabled": false
+        "FirebaseAppDelegateProxyEnabled": false,
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "aps-environment": "production"
