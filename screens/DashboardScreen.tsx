@@ -18,12 +18,18 @@ import { Modal } from 'react-native';
 import FamilySetupScreen from './FamilySetupScreen';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
-function parseLocalDate(dateStr: string | undefined | null): Date {
+function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
   if (!dateStr) return new Date();
   const s = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+  // Si isUtc=true (import iCal), la date est en UTC → ajouter Z pour conversion automatique en heure locale
+  if (isUtc) {
+    const utcStr = s.endsWith('Z') ? s : s + 'Z';
+    return new Date(utcStr);
+  }
+  // Heure locale (création manuelle) → parser manuellement pour éviter l'interprétation UTC par Hermes
   const [datePart, timePart = '00:00:00'] = s.split('T');
   const [year, month, day] = datePart.split('-').map(Number);
-  const [hours, minutes, seconds = 0] = timePart.split(':').map(Number);
+  const [hours, minutes, seconds = 0] = timePart.replace('Z', '').split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
@@ -144,7 +150,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
     return events.filter(e => {
-      const eventDate = parseLocalDate(e.startDate);
+      const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
       return eventDate >= todayStart && eventDate <= todayEnd;
     });
   }, [events]);
@@ -161,10 +167,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       tomorrow.setDate(tomorrow.getDate() + 1);
       return events
         .filter(e => {
-          const eventDate = parseLocalDate(e.startDate);
-          return eventDate >= now && eventDate < tomorrow;
-        })
-        .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime())
+          const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
+          return eventDate >= now && eventDate <= tomorrow;        })
+        .sort((a, b) => parseLocalDate(a.startDate, !!(a as any).isUtc).getTime() - parseLocalDate(b.startDate, !!(b as any).isUtc).getTime())
         .slice(0, 3);
     } else {
       // Vue Semaine : aujourd'hui + 7 jours (semaine coulante), sans passés, max 3
@@ -174,10 +179,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       in7days.setHours(23, 59, 59, 999);
       return events
         .filter(e => {
-          const eventDate = parseLocalDate(e.startDate);
+          const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
           return eventDate >= now && eventDate <= in7days;
         })
-        .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime())
+        .sort((a, b) => parseLocalDate(a.startDate, !!(a as any).isUtc).getTime() - parseLocalDate(b.startDate, !!(b as any).isUtc).getTime())
         .slice(0, 3);
     }
   }, [events, viewMode]);
@@ -194,7 +199,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       .filter(e => e.category === 'birthday')
       .map(e => {
         // Calculer la prochaine occurrence annuelle (anniversaires récurrents)
-        const eventDate = parseLocalDate(e.startDate);
+        const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
         const thisYearDate = new Date(today.getFullYear(), eventDate.getMonth(), eventDate.getDate());
         const nextYearDate = new Date(today.getFullYear() + 1, eventDate.getMonth(), eventDate.getDate());
         const nextBirthday = thisYearDate >= today ? thisYearDate : nextYearDate;
@@ -444,7 +449,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                           <View style={styles.eventContent}>
                             <Text style={styles.eventTitle}>{event.title}</Text>
                             <Text style={styles.eventTime}>
-                              {format(parseLocalDate(event.startDate), viewMode === 'week' ? 'EEE d MMM · HH:mm' : 'HH:mm', { locale: fr })}
+                              {format(parseLocalDate(event.startDate, !!(event as any).isUtc), viewMode === 'week' ? 'EEE d MMM · HH:mm' : 'HH:mm', { locale: fr })}
                             </Text>
                           </View>
                           <View style={[styles.eventDot, { backgroundColor: event.color || '#7c3aed' }]} />
