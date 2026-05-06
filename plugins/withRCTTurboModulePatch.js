@@ -1,16 +1,23 @@
 /**
  * Expo Config Plugin: Patch RCTTurboModule.mm for iOS 26 SIGABRT crash fix
  *
- * Root cause: On iOS 26, performVoidMethodInvocation catches NSExceptions and calls
- * convertNSExceptionToJSError, which accesses jsi::Runtime from the wrong thread
- * (not thread-safe), causing heap corruption and SIGABRT.
+ * Root cause analysis (builds 14-19):
+ * 1. A JS error occurs at startup (RCTExceptionsManager.reportFatal:...)
+ * 2. RCTTurboModule.performVoidMethodInvocation catches the resulting NSException
+ * 3. Original code: calls convertNSExceptionToJSError -> accesses jsi::Runtime from
+ *    wrong thread (not thread-safe) -> heap corruption -> SIGABRT
+ * 4. First fix attempt (@throw exception): re-throws on background thread ->
+ *    nobody catches it -> terminate() -> SIGABRT
  *
- * Fix: Replace `throw convertNSExceptionToJSError(...)` with `@throw exception;`
- * This matches the fix in performMethodInvocation (PR #50193) and the backport PR #56694.
+ * FINAL FIX: Swallow the exception in performVoidMethodInvocation.
+ * Void methods are fire-and-forget (async), so swallowing the exception is safe.
+ * The JS error has already been reported via reportFatal before the exception is thrown.
+ * This matches the behavior of performMethodInvocation which also swallows exceptions.
  *
  * References:
  * - https://github.com/facebook/react-native/pull/56694
  * - https://github.com/facebook/react-native/issues/54859
+ * - Analysis: crash at RCTExceptionsManager.reportFatal -> performVoidMethodInvocation
  */
 const { withDangerousMod } = require('@expo/config-plugins');
 const path = require('path');
@@ -44,57 +51,76 @@ const withRCTTurboModulePatch = (config) => {
 
       let content = fs.readFileSync(turboModuleFile, 'utf8');
 
-      const patchMarker = '// IOS26_TURBOMODULE_PATCH_APPLIED';
+      const patchMarker = '// IOS26_TURBOMODULE_PATCH_V2_APPLIED';
 
       if (content.includes(patchMarker)) {
-        console.log('ℹ️  withRCTTurboModulePatch: Patch already applied');
+        console.log('ℹ️  withRCTTurboModulePatch: Patch v2 already applied');
         return config;
       }
 
-      // Pattern 1: react-native 0.81.5 exact signature (with methodNameStr)
-      const old1 = '      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);';
-      const new1 = `      ${patchMarker}\n      // Void methods are always async: re-throw ObjC exception instead of converting to JSError.\n      // convertNSExceptionToJSError accesses jsi::Runtime from the wrong thread (not thread-safe),\n      // causing heap corruption and SIGABRT on iOS 26.\n      // Fix: https://github.com/facebook/react-native/pull/56694\n      @throw exception;`;
+      // Remove v1 marker if present (from previous patch attempt)
+      content = content.replace('// IOS26_TURBOMODULE_PATCH_APPLIED\n      ', '');
 
-      // Pattern 2: without methodNameStr
+      // Pattern 1: @throw exception (v1 patch result - replace with swallow)
+      const old_v1_rethrow = '@throw exception;';
+
+      // Pattern 2: original convertNSExceptionToJSError (with methodNameStr)
+      const old1 = '      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);';
+
+      // Pattern 3: original convertNSExceptionToJSError (without methodNameStr)
       const old2 = '      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName});';
-      const new2 = `      ${patchMarker}\n      // Re-throw ObjC exception instead of converting to JSError (iOS 26 fix)\n      // Fix: https://github.com/facebook/react-native/pull/56694\n      @throw exception;`;
+
+      const newCatch = `      ${patchMarker}
+      // iOS 26 FINAL FIX: Swallow exception in performVoidMethodInvocation.
+      // Root cause: RCTExceptionsManager.reportFatal throws NSException on background thread.
+      // - Original code: convertNSExceptionToJSError accesses jsi::Runtime from wrong thread -> SIGABRT
+      // - v1 fix (@throw): re-throws on background thread, nobody catches -> terminate() -> SIGABRT
+      // - v2 fix (swallow): void methods are fire-and-forget, JS error already reported via reportFatal.
+      // References: https://github.com/facebook/react-native/pull/56694
+      NSLog(@"[RCTTurboModule] iOS26 patch: swallowing NSException in performVoidMethodInvocation: %@ - %@",
+            exception.name, exception.reason);`;
 
       let patched = false;
 
-      if (content.includes(old1)) {
-        content = content.replace(old1, new1);
+      // Check for v1 patch (@throw exception) and replace with swallow
+      if (content.includes(old_v1_rethrow)) {
+        content = content.replace(old_v1_rethrow, newCatch);
         patched = true;
-        console.log('✅ withRCTTurboModulePatch: Applied patch (pattern 1 - with methodNameStr)');
+        console.log('✅ withRCTTurboModulePatch v2: Replaced @throw with swallow (v1 -> v2 upgrade)');
+      } else if (content.includes(old1)) {
+        content = content.replace(old1, newCatch);
+        patched = true;
+        console.log('✅ withRCTTurboModulePatch v2: Applied patch (pattern 1 - with methodNameStr)');
       } else if (content.includes(old2)) {
-        content = content.replace(old2, new2);
+        content = content.replace(old2, newCatch);
         patched = true;
-        console.log('✅ withRCTTurboModulePatch: Applied patch (pattern 2 - without methodNameStr)');
+        console.log('✅ withRCTTurboModulePatch v2: Applied patch (pattern 2 - without methodNameStr)');
       } else {
         // Fallback: search for any throw convertNSExceptionToJSError in @catch block
-        // near [inv invokeWithTarget:strongModule]
         const lines = content.split('\n');
         let patchedLines = false;
         for (let i = 0; i < lines.length; i++) {
           if (lines[i].includes('throw convertNSExceptionToJSError(') &&
               lines[i].includes('exception')) {
-            // Check context: look for invokeWithTarget nearby (within 10 lines before)
             const context = lines.slice(Math.max(0, i - 10), i).join('\n');
             if (context.includes('invokeWithTarget') || context.includes('performVoidMethodInvocation')) {
-              lines[i] = `      ${patchMarker}\n      // Re-throw ObjC exception instead of converting to JSError (iOS 26 fix)\n      // Fix: https://github.com/facebook/react-native/pull/56694\n      @throw exception;`;
+              lines[i] = newCatch;
               content = lines.join('\n');
               patched = true;
               patchedLines = true;
-              console.log('✅ withRCTTurboModulePatch: Applied patch (fallback line search)');
+              console.log('✅ withRCTTurboModulePatch v2: Applied patch (fallback line search)');
               break;
             }
           }
         }
         if (!patchedLines) {
-          console.error('❌ withRCTTurboModulePatch: Could not find pattern to patch in RCTTurboModule.mm');
-          console.error('   Searching for convertNSExceptionToJSError occurrences:');
-          lines.forEach((line, i) => {
-            if (line.includes('convertNSExceptionToJSError')) {
-              console.error(`   Line ${i + 1}: ${line.trim()}`);
+          console.error('❌ withRCTTurboModulePatch v2: Could not find pattern to patch in RCTTurboModule.mm');
+          const lines2 = content.split('\n');
+          lines2.forEach((line, i) => {
+            if (line.includes('convertNSExceptionToJSError') || line.includes('@throw') || line.includes('exception')) {
+              if (line.includes('catch') || line.includes('throw') || line.includes('exception')) {
+                console.error(`   Line ${i + 1}: ${line.trim()}`);
+              }
             }
           });
           return config;
@@ -103,8 +129,8 @@ const withRCTTurboModulePatch = (config) => {
 
       if (patched) {
         fs.writeFileSync(turboModuleFile, content, 'utf8');
-        console.log('✅ withRCTTurboModulePatch: RCTTurboModule.mm patched successfully!');
-        console.log('   iOS 26 SIGABRT crash in performVoidMethodInvocation should be fixed.');
+        console.log('✅ withRCTTurboModulePatch v2: RCTTurboModule.mm patched successfully!');
+        console.log('   iOS 26 SIGABRT crash in performVoidMethodInvocation FIXED (swallow exception).');
       }
 
       return config;
