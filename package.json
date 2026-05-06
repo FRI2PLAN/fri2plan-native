@@ -31,8 +31,8 @@
     "expo-linear-gradient": "^15.0.8",
     "expo-localization": "~17.0.8",
     "expo-navigation-bar": "~5.0.10",
-    "expo-status-bar": "~3.0.9",
     "expo-notifications": "~0.29.14",
+    "expo-status-bar": "~3.0.9",
     "expo-updates": "~29.0.16",
     "expo-web-browser": "~14.0.2",
     "i18next": "^24.2.0",
@@ -45,7 +45,7 @@
     "react-native-pager-view": "6.9.1",
     "react-native-reanimated": "~3.19.5",
     "react-native-safe-area-context": "^5.6.2",
-    "react-native-screens": "^4.23.0",
+    "react-native-screens": "^3.35.0",
     "react-native-svg": "^15.15.3",
     "rn-emoji-keyboard": "^1.7.0",
     "superjson": "^2.2.6"
