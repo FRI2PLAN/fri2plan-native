@@ -37,12 +37,12 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.582461718885-4614i560felc7gquqif8v8oamod4i68s"
         }
-      ]
+      ],
+      "./plugins/withRNSTabBarPatch"
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "10",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification", "fetch"],
