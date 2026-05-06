@@ -37,8 +37,7 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.582461718885-4614i560felc7gquqif8v8oamod4i68s"
         }
-      ],
-      "./plugins/withFirebaseSdkVersion"
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -48,7 +47,6 @@
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification", "fetch"],
         "NSUserNotificationsUsageDescription": "FRI2PLAN envoie des rappels et notifications pour votre famille.",
-        "FirebaseAppDelegateProxyEnabled": false,
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
