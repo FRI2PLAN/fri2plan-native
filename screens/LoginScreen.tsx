@@ -214,9 +214,6 @@ export default function LoginScreen() {
             />
 
             <Text style={styles.title}>Connexion</Text>
-            <Text style={styles.subtitle}>
-              Connectez-vous à votre compte Fri2Plan - Votre agenda familial
-            </Text>
 
             {/* Email */}
             <Text style={styles.label}>Email</Text>
@@ -361,52 +358,52 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 30,
+    paddingBottom: 20,
     justifyContent: 'center',
   },
   card: {
     backgroundColor: '#1f2937', // Card sombre
     borderRadius: 20,
-    padding: 30,
+    padding: 22,
     alignItems: 'center',
   },
   cardLogo: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    marginBottom: 12,
+    borderRadius: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 14,
     color: '#9ca3af',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 16,
     lineHeight: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#fff',
     alignSelf: 'flex-start',
-    marginBottom: 8,
-    marginTop: 10,
+    marginBottom: 5,
+    marginTop: 6,
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 15,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: '#374151',
     borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
+    padding: 11,
+    fontSize: 15,
     color: '#fff',
     width: '100%',
   },
@@ -419,13 +416,13 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    padding: 14,
-    fontSize: 16,
+    padding: 11,
+    fontSize: 15,
     color: '#fff',
   },
   eyeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 11,
+    paddingVertical: 11,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -437,9 +434,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
-    marginBottom: 25,
+    marginBottom: 14,
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 6,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -478,10 +475,10 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#ec4899', // Rose/Magenta
     borderRadius: 8,
-    padding: 16,
+    padding: 13,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -492,9 +489,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   registerText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#9ca3af',
-    marginBottom: 25,
+    marginBottom: 14,
   },
   registerLink: {
     color: '#c084fc',
@@ -504,7 +501,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   dividerLine: {
     flex: 1,
@@ -519,10 +516,10 @@ const styles = StyleSheet.create({
   oauthButton: {
     backgroundColor: '#374151',
     borderRadius: 8,
-    padding: 14,
+    padding: 11,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     opacity: 0.5,
   },
   oauthButtonText: {
