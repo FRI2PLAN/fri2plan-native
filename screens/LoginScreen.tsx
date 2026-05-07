@@ -48,9 +48,15 @@ export default function LoginScreen() {
       try {
         GoogleSignin.configure({
           webClientId: '846470017457-qh90rioca6oujshvm05p23b5do8fbv6t.apps.googleusercontent.com',
+          iosClientId: '582461718885-4614i560felc7gquqif8v8oamod4i68s.apps.googleusercontent.com',
           offlineAccess: true,
         });
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false });
+        // hasPlayServices() est une vérification Android uniquement.
+        // Sur iOS 26 + New Architecture (TurboModules), l'appeler lève une
+        // NSException dans performVoidMethodInvocation et crashe l'app au démarrage.
+        if (Platform.OS === 'android') {
+          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false });
+        }
       } catch (e) {
         // Play Services non disponible — on active quand même le bouton
       } finally {
@@ -82,7 +88,10 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // hasPlayServices() est Android uniquement — ne pas appeler sur iOS 26 (crash TurboModule)
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      }
       // Forcer l'affichage du sélecteur de compte Google en se déconnectant d'abord
       // Cela évite le bug Android où signIn() ne montre pas la fenêtre au premier appel
       try { await GoogleSignin.signOut(); } catch (_) {}
