@@ -93,8 +93,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.includes('T') ? d : d.replace(' ', 'T');
       return d;
     }
-    // Objet Date JS ou timestamp (déjà en heure locale)
-    return new Date(d).toISOString().replace('Z', '');
+    // Objet Date JS ou timestamp → extraire les composantes locales (pas UTC)
+    // new Date(d).toISOString() convertirait en UTC et décalerait de -2h sur Android (UTC+2)
+    const dt = new Date(d);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
   };
   const events = (rawEvents as any[]).map((e: any) => ({
     ...e,
