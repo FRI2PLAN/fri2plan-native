@@ -358,28 +358,27 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
     justifyContent: 'center',
   },
   card: {
     backgroundColor: '#1f2937', // Card sombre
     borderRadius: 20,
-    padding: 18,
+    padding: 24,
     alignItems: 'center',
   },
   cardLogo: {
-    width: 52,
-    height: 52,
-    marginBottom: 8,
-    borderRadius: 12,
+    width: 64,
+    height: 64,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 18,
   },
   subtitle: {
     fontSize: 14,
@@ -393,17 +392,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     alignSelf: 'flex-start',
-    marginBottom: 4,
-    marginTop: 4,
+    marginBottom: 6,
+    marginTop: 10,
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   input: {
     backgroundColor: '#374151',
     borderRadius: 8,
-    padding: 9,
+    padding: 12,
     fontSize: 15,
     color: '#fff',
     width: '100%',
@@ -417,13 +416,13 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    padding: 9,
+    padding: 12,
     fontSize: 15,
     color: '#fff',
   },
   eyeButton: {
-    paddingHorizontal: 11,
-    paddingVertical: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -435,9 +434,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     width: '100%',
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 16,
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -476,10 +476,10 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#ec4899', // Rose/Magenta
     borderRadius: 8,
-    padding: 11,
+    padding: 14,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 14,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   registerText: {
     fontSize: 13,
     color: '#9ca3af',
-    marginBottom: 10,
+    marginBottom: 14,
   },
   registerLink: {
     color: '#c084fc',
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   dividerLine: {
     flex: 1,
@@ -517,10 +517,10 @@ const styles = StyleSheet.create({
   oauthButton: {
     backgroundColor: '#374151',
     borderRadius: 8,
-    padding: 9,
+    padding: 12,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
     opacity: 0.5,
   },
   oauthButtonText: {
