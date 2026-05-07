@@ -61,7 +61,7 @@
         "backgroundColor": "#7c3aed"
       },
       "googleServicesFile": "./google-services.json",
-      "package": "app.fri2plan",
+      "package": "app.fri2plan.ch",
       "versionCode": 1,
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
