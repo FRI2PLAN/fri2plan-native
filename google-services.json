@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:582461718885:android:129a568442fc8fafc9e18c",
+        "mobilesdk_app_id": "1:582461718885:android:26a3d6e52d5238afc9e18c",
         "android_client_info": {
-          "package_name": "com.fri2plan.app"
+          "package_name": "app.fri2plan.ch"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAVsKO2QYehGv2AHtG_IUtREjLFNXiU8v8"
@@ -20,7 +25,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "582461718885-4614i560felc7gquqif8v8oamod4i68s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ch.fri2plan.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582461718885:android:129a568442fc8fafc9e18c",
+        "android_client_info": {
+          "package_name": "com.fri2plan.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "582461718885-9et98vdbavjco1hb86me78egbe1h2mtl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fri2plan.app",
+            "certificate_hash": "e5cb10111a46908884ed17c53c54dd4de0979f1e"
+          }
+        },
+        {
+          "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVsKO2QYehGv2AHtG_IUtREjLFNXiU8v8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "582461718885-4614i560felc7gquqif8v8oamod4i68s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ch.fri2plan.app"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +92,12 @@
           "package_name": "space.manus.fri2plan.twa"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAVsKO2QYehGv2AHtG_IUtREjLFNXiU8v8"
@@ -39,7 +105,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "582461718885-4614i560felc7gquqif8v8oamod4i68s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ch.fri2plan.app"
+              }
+            }
+          ]
         }
       }
     }
