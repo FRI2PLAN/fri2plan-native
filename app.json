@@ -62,7 +62,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan",
-      "versionCode": 7,
+      "versionCode": 1,
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
