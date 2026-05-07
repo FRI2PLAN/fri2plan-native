@@ -84,19 +84,26 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     undefined,
     { enabled: !!activeFamily }
   );
-  // Normaliser les dates : le serveur stocke les dates en heure locale (Europe/Zurich)
-  // NE PAS ajouter 'Z' (qui forcerait une interprétation UTC et décalerait de +2h)
+  // Normaliser les dates retournées par tRPC vers une string locale sans Z
+  // tRPC peut retourner soit '2026-05-07 10:00:00' (string MySQL, heure locale)
+  // soit '2026-05-07T08:00:00.000Z' (ISO UTC avec Z, si Drizzle retourne un Date object)
+  // Dans le cas ISO UTC avec Z, il faut convertir en heure locale AVANT de passer à parseLocalDate
+  // sinon parseLocalDate parse manuellement '08:00' et affiche 08:00 au lieu de 10:00 (-2h sur UTC+2)
   const normalizeDate = (d: any): string => {
     if (!d) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
     if (typeof d === 'string') {
-      // String SQL "2026-04-16 08:00:00" → remplacer espace par T, sans ajouter Z
+      // String ISO UTC avec Z → convertir en heure locale via new Date() qui gère le Z
+      if (d.endsWith('Z') || d.endsWith('z')) {
+        const dt = new Date(d);
+        return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+      }
+      // String SQL '2026-05-07 10:00:00' ou ISO sans Z → remplacer espace par T, retourner tel quel
       if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.includes('T') ? d : d.replace(' ', 'T');
       return d;
     }
-    // Objet Date JS ou timestamp → extraire les composantes locales (pas UTC)
-    // new Date(d).toISOString() convertirait en UTC et décalerait de -2h sur Android (UTC+2)
+    // Objet Date JS → extraire les composantes locales
     const dt = new Date(d);
-    const pad = (n: number) => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
   };
   const events = (rawEvents as any[]).map((e: any) => ({
