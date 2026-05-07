@@ -1,0 +1,17 @@
+--- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
++++ b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+@@ -435,7 +435,13 @@
+     @try {
+       [inv invokeWithTarget:strongModule];
+     } @catch (NSException *exception) {
+-      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);
++      // iOS 26 fix: Swallow NSException in performVoidMethodInvocation.
++      // Void methods are fire-and-forget; the JS error was already reported
++      // via RCTExceptionsManager.reportFatal before the exception was thrown.
++      // Re-throwing on a background dispatch queue causes terminate() -> SIGABRT.
++      // See: https://github.com/facebook/react-native/pull/56694
++      NSLog(@"[RCTTurboModule] iOS26: swallowing NSException in performVoidMethodInvocation: %@ - %@",
++            exception.name, exception.reason);
+     } @finally {
+       [retainedObjectsForInvocation removeAllObjects];
+     }
