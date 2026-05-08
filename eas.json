@@ -22,6 +22,9 @@
     },
     "production": {
       "channel": "production",
+      "cache": {
+        "disabled": true
+      },
       "android": {
         "buildType": "app-bundle",
         "autoIncrement": true
