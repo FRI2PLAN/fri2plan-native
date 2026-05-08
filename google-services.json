@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "582461718885-7p0vqdni4e0odhctdqd56mgkngjer8et.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.fri2plan.ch",
+            "certificate_hash": "419ac1317256d0e9448ed9b986a212632ad361bd"
+          }
+        },
+        {
+          "client_id": "582461718885-k8u5cnc6jalk5bc8qu8hqr6qt5634crk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.fri2plan.ch",
+            "certificate_hash": "25666fb99c1679a41f85164c66800ba1e266da57"
+          }
+        },
+        {
           "client_id": "582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com",
           "client_type": 3
         }
