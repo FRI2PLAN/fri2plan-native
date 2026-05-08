@@ -63,8 +63,9 @@
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
       "versionCode": 1,
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
+      "targetSdkVersion": 35,
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
