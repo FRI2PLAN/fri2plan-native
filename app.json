@@ -83,7 +83,8 @@
     },
     "owner": "fri2plan",
     "updates": {
-      "enabled": false
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
     }
   }
 }
