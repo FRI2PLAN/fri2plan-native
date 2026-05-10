@@ -47,7 +47,7 @@ export default function LoginScreen() {
     const initGoogle = async () => {
       try {
         GoogleSignin.configure({
-          webClientId: '582461718885-k8u5cnc6jalk5bc8qu8hqr6qt5634crk.apps.googleusercontent.com',
+          webClientId: '582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com', // client_type:3 (Web OAuth)
           iosClientId: '582461718885-4614i560felc7gquqif8v8oamod4i68s.apps.googleusercontent.com',
           offlineAccess: true,
         });
