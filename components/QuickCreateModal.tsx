@@ -459,7 +459,10 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={styles.sheet}>
           {/* Handle */}
@@ -471,10 +474,16 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
-          {/* Formulaire */}
-          <ScrollView style={styles.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Formulaire — flex:1 pour occuper l'espace disponible et permettre le scroll */}
+          <ScrollView
+            style={styles.form}
+            contentContainerStyle={styles.formContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={true}
+            bounces={false}
+          >
             {renderForm()}
-            <View style={{ height: 20 }} />
+            <View style={{ height: 24 }} />
           </ScrollView>
           {/* Actions */}
           <View style={styles.actions}>
@@ -496,14 +505,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 // ── Styles ───────────────────────────────────────────────────────────────────
 function getStyles(isDark: boolean) {
   return StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end' },
+    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'transparent' },
     backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
     sheet: {
       backgroundColor: isDark ? '#1f2937' : '#fff',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      maxHeight: '90%',
-      paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+      maxHeight: '92%',
     },
     handle: {
       width: 40, height: 4, backgroundColor: '#d1d5db', borderRadius: 2,
@@ -517,7 +525,8 @@ function getStyles(isDark: boolean) {
     headerTitle: { fontSize: 17, fontWeight: '700', color: isDark ? '#f9fafb' : '#1f2937' },
     closeBtn: { padding: 4 },
     closeBtnText: { fontSize: 18, color: '#6b7280' },
-    form: { paddingHorizontal: 20, paddingTop: 12 },
+    form: { paddingHorizontal: 20, paddingTop: 12, flexShrink: 1 },
+    formContent: { paddingBottom: 8 },
     label: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 6, marginTop: 10 },
     input: {
       backgroundColor: isDark ? '#111827' : '#fff',
@@ -549,7 +558,7 @@ function getStyles(isDark: boolean) {
     typeBtnIncome: { backgroundColor: '#10b981', borderColor: '#10b981' },
     typeBtnText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f9fafb' : '#374151' },
     actions: {
-      flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, gap: 12,
+      flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 32 : 16, gap: 12,
       borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#f3f4f6',
     },
     cancelBtn: {
