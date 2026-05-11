@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RichHeader from './RichHeader';
 import QuickActionsModal from './QuickActionsModal';
+import QuickCreateModal, { QuickCreateType } from './QuickCreateModal';
 import NotificationsModal from './NotificationsModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,6 +24,7 @@ export default function FixedHeaderLayout({
   const { t } = useTranslation();
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [quickCreateType, setQuickCreateType] = useState<QuickCreateType | null>(null);
 
   const handleQuickActions = () => {
     setQuickActionsVisible(true);
@@ -83,11 +85,19 @@ export default function FixedHeaderLayout({
         {children}
       </View>
 
-      {/* Quick Actions Modal */}
+      {/* Quick Actions Modal — liste des actions */}
       <QuickActionsModal
         visible={quickActionsVisible}
         onClose={() => setQuickActionsVisible(false)}
         onNavigate={onNavigate}
+        onSelectType={(type) => setQuickCreateType(type)}
+      />
+
+      {/* Quick Create Modal — formulaire de saisie rapide, rendu au niveau racine */}
+      <QuickCreateModal
+        visible={quickCreateType !== null}
+        type={quickCreateType ?? 'event'}
+        onClose={() => setQuickCreateType(null)}
       />
 
       {/* Notifications Modal */}
@@ -99,16 +109,18 @@ export default function FixedHeaderLayout({
   );
 }
 
-function getStyles(isDark: boolean) { return StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-  },
-  safeArea: {
-    backgroundColor: '#7c3aed', // Purple background for status bar
-  },
-  content: {
-    flex: 1,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-  },
-}); }
+function getStyles(isDark: boolean) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    },
+    safeArea: {
+      backgroundColor: '#7c3aed', // Purple background for status bar
+    },
+    content: {
+      flex: 1,
+      backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    },
+  });
+}

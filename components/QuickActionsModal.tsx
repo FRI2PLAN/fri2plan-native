@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import QuickCreateModal, { QuickCreateType } from './QuickCreateModal';
+import { QuickCreateType } from './QuickCreateModal';
 
 interface QuickActionsModalProps {
   visible: boolean;
   onClose: () => void;
   onNavigate?: (pageIndex: number) => void;
+  onSelectType: (type: QuickCreateType) => void;
 }
 
 interface QuickAction {
@@ -27,12 +28,11 @@ interface QuickAction {
 export default function QuickActionsModal({
   visible,
   onClose,
-  onNavigate,
+  onSelectType,
 }: QuickActionsModalProps) {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
-  const [createType, setCreateType] = useState<QuickCreateType | null>(null);
 
   const quickActions: QuickAction[] = [
     {
@@ -68,14 +68,13 @@ export default function QuickActionsModal({
   ];
 
   const handleActionPress = (actionId: QuickCreateType) => {
+    // Fermer le QuickActionsModal puis notifier le parent
     onClose();
-    // Petit délai pour laisser le QuickActionsModal se fermer avant d'ouvrir le suivant
-    setTimeout(() => setCreateType(actionId), 300);
+    setTimeout(() => onSelectType(actionId), 350);
   };
 
   return (
-    <>
-      <Modal
+    <Modal
         visible={visible}
         transparent
         animationType="slide"
@@ -128,17 +127,7 @@ export default function QuickActionsModal({
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      </Modal>
-
-      {/* Modal de création rapide — par-dessus la page courante, sans navigation */}
-      {createType && (
-        <QuickCreateModal
-          visible={!!createType}
-          type={createType}
-          onClose={() => setCreateType(null)}
-        />
-      )}
-    </>
+    </Modal>
   );
 }
 
