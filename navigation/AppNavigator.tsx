@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
@@ -38,7 +38,7 @@ interface HomeScreenProps {
 }
 
 // All pages in order
-// CalendrierIntime est à la position 9 (entre Récompenses=8 et Membres=10)
+// CalendrierIntime est à la position 10 (entre Récompenses=9 et Membres=11)
 const PAGES = [
   { key: '0', component: DashboardScreen, name: 'Dashboard' },
   { key: '1', component: CalendarScreen, name: 'Calendar' },
@@ -57,23 +57,24 @@ const PAGES = [
   { key: '14', component: HelpScreen, name: 'Help' },
 ];
 
-function HomeScreen({
+// Mémoïsé pour éviter les re-renders inutiles qui réinitialisent CircularPager
+const HomeScreen = memo(function HomeScreen({
   onLogout,
   currentPage,
   onPageChange,
 }: HomeScreenProps) {
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
-  // Render function for CircularPager
-  const renderItem = (page: any, index: number) => {
+
+  // useCallback pour stabiliser la référence et éviter de re-créer CircularPager
+  const renderItem = useCallback((page: any, index: number) => {
     const PageComponent = page.component;
-    
     return (
       <View key={page.key} style={styles.page}>
         <PageComponent onLogout={onLogout} onNavigate={onPageChange} />
       </View>
     );
-  };
+  }, [onLogout, onPageChange, isDark]);
 
   return (
     <FixedHeaderLayout onNavigate={onPageChange}>
@@ -86,7 +87,7 @@ function HomeScreen({
       />
     </FixedHeaderLayout>
   );
-}
+});
 
 export default function AppNavigator({
   onLogout,
@@ -94,10 +95,9 @@ export default function AppNavigator({
   const { isDark } = useTheme();
   const [currentPage, setCurrentPage] = useState(0);
 
-  const handlePageSelect = (pageIndex: number) => {
-    console.log('handlePageSelect called with:', pageIndex);
+  const handlePageSelect = useCallback((pageIndex: number) => {
     setCurrentPage(pageIndex);
-  };
+  }, []);
 
   return (
     <NavigationContainer ref={navigationRef}>
@@ -125,7 +125,7 @@ export default function AppNavigator({
             <HomeScreen
               onLogout={onLogout}
               currentPage={currentPage}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageSelect}
             />
           )}
         </Drawer.Screen>
@@ -134,9 +134,11 @@ export default function AppNavigator({
   );
 }
 
-function getStyles(isDark: boolean) { return StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: isDark ? '#374151' : '#f3f4f6',
-  },
-}); }
+function getStyles(isDark: boolean) {
+  return StyleSheet.create({
+    page: {
+      flex: 1,
+      backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    },
+  });
+}
