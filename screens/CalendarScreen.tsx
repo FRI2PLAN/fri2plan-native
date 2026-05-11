@@ -1819,12 +1819,13 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     paddingTop: 130,
-    paddingRight: 12},
+    paddingRight: 8},
   calMenuContent: {
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
     borderRadius: 12,
     paddingVertical: 8,
-    minWidth: 220,
+    minWidth: 280,
+    maxWidth: 320,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -1833,7 +1834,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   calMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16},
   calMenuItemActive: {
     backgroundColor: isDark ? '#312e81' : '#ede9fe'},
