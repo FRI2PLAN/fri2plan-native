@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import QuickCreateModal, { QuickCreateType } from './QuickCreateModal';
 
 interface QuickActionsModalProps {
   visible: boolean;
@@ -17,10 +18,9 @@ interface QuickActionsModalProps {
 }
 
 interface QuickAction {
-  id: string;
+  id: QuickCreateType;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  pageIndex: number;
   color: string;
 }
 
@@ -32,107 +32,113 @@ export default function QuickActionsModal({
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
+  const [createType, setCreateType] = useState<QuickCreateType | null>(null);
 
   const quickActions: QuickAction[] = [
     {
       id: 'event',
       icon: 'calendar',
       label: t('quickActions.newEvent', 'Nouvel événement'),
-      pageIndex: 1,
       color: '#3b82f6',
     },
     {
       id: 'task',
       icon: 'checkmark-circle',
       label: t('quickActions.newTask', 'Nouvelle tâche'),
-      pageIndex: 2,
       color: '#10b981',
     },
     {
       id: 'note',
       icon: 'document-text',
       label: t('quickActions.newNote', 'Nouvelle note'),
-      pageIndex: 7,
       color: '#06b6d4',
     },
     {
       id: 'expense',
       icon: 'cash',
       label: t('quickActions.newExpense', 'Nouvelle dépense'),
-      pageIndex: 8,
       color: '#f59e0b',
     },
     {
       id: 'request',
       icon: 'help-circle',
       label: t('quickActions.newRequest', 'Nouvelle requête'),
-      pageIndex: 6,
       color: '#ec4899',
     },
   ];
 
-  const handleActionPress = (pageIndex: number) => {
+  const handleActionPress = (actionId: QuickCreateType) => {
     onClose();
-    if (onNavigate) {
-      onNavigate(pageIndex);
-    }
+    // Petit délai pour laisser le QuickActionsModal se fermer avant d'ouvrir le suivant
+    setTimeout(() => setCreateType(actionId), 300);
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={onClose}
       >
-        <View style={styles.modalContainer}>
-          <TouchableOpacity activeOpacity={1}>
-            <View style={styles.modalContent}>
-              {/* Handle bar */}
-              <View style={styles.handleBar} />
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity activeOpacity={1}>
+              <View style={styles.modalContent}>
+                {/* Handle bar */}
+                <View style={styles.handleBar} />
 
-              {/* Header */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {t('quickActions.title', 'Actions rapides')}
-                </Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Actions List — pas de ScrollView, tout visible directement */}
-              <View style={styles.actionsContainer}>
-                {quickActions.map((action) => (
-                  <TouchableOpacity
-                    key={action.id}
-                    style={styles.actionRow}
-                    onPress={() => handleActionPress(action.pageIndex)}
-                    activeOpacity={0.7}
-                  >
-                    <View
-                      style={[
-                        styles.actionIconContainer,
-                        { backgroundColor: action.color },
-                      ]}
-                    >
-                      <Ionicons name={action.icon} size={22} color="#fff" />
-                    </View>
-                    <Text style={styles.actionLabel}>{action.label}</Text>
-                    <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
+                {/* Header */}
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {t('quickActions.title', 'Actions rapides')}
+                  </Text>
+                  <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                    <Ionicons name="close" size={24} color="#6b7280" />
                   </TouchableOpacity>
-                ))}
+                </View>
+
+                {/* Actions List */}
+                <View style={styles.actionsContainer}>
+                  {quickActions.map((action) => (
+                    <TouchableOpacity
+                      key={action.id}
+                      style={styles.actionRow}
+                      onPress={() => handleActionPress(action.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View
+                        style={[
+                          styles.actionIconContainer,
+                          { backgroundColor: action.color },
+                        ]}
+                      >
+                        <Ionicons name={action.icon} size={22} color="#fff" />
+                      </View>
+                      <Text style={styles.actionLabel}>{action.label}</Text>
+                      <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Modal>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Modal de création rapide — par-dessus la page courante, sans navigation */}
+      {createType && (
+        <QuickCreateModal
+          visible={!!createType}
+          type={createType}
+          onClose={() => setCreateType(null)}
+        />
+      )}
+    </>
   );
 }
 
