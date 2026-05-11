@@ -526,7 +526,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                               ? t('dashboard.today')
                               : member.daysUntil === 1
                               ? t('dashboard.tomorrow')
-                              : (member.daysUntil === 1 ? t('dashboard.inDays') : t('dashboard.inDays_plural')).replace('{{count}}', String(member.daysUntil))}
+                              : (member.daysUntil === 1
+                                ? t('dashboard.inDays').replace('{{count}}', '1')
+                                : t('dashboard.inDays_plural').replace('{{count}}', String(member.daysUntil)))}
                           </Text>
                         </View>
                         <Text style={{ fontSize: 20 }}>🎂</Text>
