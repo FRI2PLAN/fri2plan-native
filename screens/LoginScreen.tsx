@@ -22,6 +22,7 @@ import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import Svg, { Path, G, Rect, ClipPath, Defs } from 'react-native-svg';
 import { API_URL } from '../lib/trpc';
 
@@ -41,6 +42,7 @@ export default function LoginScreen() {
   const [screenMode, setScreenMode] = useState<ScreenMode>('login');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   // Initialiser Google Sign-In
   useEffect(() => {
@@ -84,6 +86,43 @@ export default function LoginScreen() {
     };
     loadSavedEmail();
   }, []);
+
+  const handleAppleLogin = async () => {
+    try {
+      setAppleLoading(true);
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const { identityToken, fullName, email } = credential;
+      if (!identityToken) throw new Error('Token Apple manquant');
+      const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
+      const resp = await fetch(`${baseUrl}/api/apple/native-signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identityToken,
+          user: fullName ? { name: fullName, email } : undefined,
+        }),
+      });
+      const data = await resp.json();
+      if (data.token && data.user) {
+        await login(data.user, data.token);
+      } else {
+        throw new Error(data.error || 'Erreur de connexion Apple');
+      }
+    } catch (err: any) {
+      if (err.code === 'ERR_REQUEST_CANCELED') {
+        // L'utilisateur a annulé
+      } else {
+        Alert.alert('❌', err.message || 'Impossible de se connecter avec Apple');
+      }
+    } finally {
+      setAppleLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -338,12 +377,25 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.oauthButton, styles.oauthButtonApple]} disabled>
-              <View style={styles.oauthLoadingRow}>
-                <Text style={{ fontSize: 18, marginRight: 8, color: '#fff', fontWeight: 'bold' }}></Text>
-                <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
-              </View>
-            </TouchableOpacity>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[styles.oauthButton, styles.oauthButtonApple, appleLoading && { opacity: 0.7 }]}
+                onPress={handleAppleLogin}
+                disabled={appleLoading}
+              >
+                {appleLoading ? (
+                  <View style={styles.oauthLoadingRow}>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.oauthLoadingRow}>
+                    <Text style={{ fontSize: 18, marginRight: 8, color: '#fff', fontWeight: 'bold' }}></Text>
+                    <Text style={styles.oauthButtonText}>{t('auth.continueWithApple')}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -540,6 +592,6 @@ const styles = StyleSheet.create({
   },
   oauthButtonApple: {
     backgroundColor: '#000',
-    opacity: 0.6,
+    opacity: 1,
   },
 });

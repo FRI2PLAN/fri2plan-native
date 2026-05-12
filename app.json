@@ -46,7 +46,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.582461718885-4614i560felc7gquqif8v8oamod4i68s"
         }
       ],
-      "./plugins/withRNSTabBarPatch"
+      "./plugins/withRNSTabBarPatch",
+      "expo-apple-authentication"
     ],
     "ios": {
       "supportsTablet": true,
@@ -59,8 +60,10 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
-        "aps-environment": "production"
-      }
+        "aps-environment": "production",
+        "com.apple.developer.applesignin": ["Default"]
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
