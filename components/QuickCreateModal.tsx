@@ -45,8 +45,6 @@ const EXPENSE_CATEGORIES = [
   { value: 'Autre', emoji: '💼', color: '#64748b' },
 ];
 
-const INCOME_CATEGORIES = ['Salaire', 'Allocation', 'Cadeau', 'Autre'];
-
 const REQUEST_TYPES = [
   { value: 'outing', label: 'Sortie', emoji: '✈️', color: '#3b82f6' },
   { value: 'purchase', label: 'Achat', emoji: '🛍️', color: '#10b981' },
@@ -60,6 +58,63 @@ const PRIORITIES = [
   { value: 'medium', label: '🟡 Moyenne', color: '#eab308' },
   { value: 'low', label: '🟢 Basse', color: '#22c55e' },
 ] as const;
+
+const RECURRENCES = [
+  { value: 'none', label: '🚫 Aucune' },
+  { value: 'daily', label: '📅 Quotidienne' },
+  { value: 'weekly', label: '📆 Hebdomadaire' },
+  { value: 'monthly', label: '🗓️ Mensuelle' },
+  { value: 'yearly', label: '🎉 Annuelle' },
+] as const;
+
+const REMINDER_OPTIONS = [
+  { value: '0', label: 'Aucun' },
+  { value: '5', label: '5 minutes' },
+  { value: '15', label: '15 minutes' },
+  { value: '30', label: '30 minutes' },
+  { value: '60', label: '1 heure' },
+  { value: '120', label: '2 heures' },
+  { value: '1440', label: '1 jour' },
+  { value: '10080', label: '1 semaine' },
+] as const;
+
+// ── Composant Dropdown générique ─────────────────────────────────────────────
+interface DropdownProps {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+  isDark: boolean;
+  styles: any;
+}
+function Dropdown({ label, value, options, onChange, isDark, styles }: DropdownProps) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(o => o.value === value);
+  return (
+    <View>
+      <Text style={styles.label}>{label}</Text>
+      <TouchableOpacity style={styles.dropdown} onPress={() => setOpen(v => !v)}>
+        <Text style={styles.dropdownText}>{selected?.label ?? value}</Text>
+        <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}>▼</Text>
+      </TouchableOpacity>
+      {open && (
+        <View style={styles.dropdownMenu}>
+          {options.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.dropdownOption, opt.value === value && styles.dropdownOptionActive]}
+              onPress={() => { onChange(opt.value); setOpen(false); }}
+            >
+              <Text style={[styles.dropdownOptionText, opt.value === value && { color: '#7c3aed', fontWeight: '700' }]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function QuickCreateModal({ visible, type, onClose }: QuickCreateModalProps) {
@@ -83,7 +138,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
   const { data: members = [] } = trpc.family.members.useQuery(
     { familyId: activeFamilyId },
-    { enabled: visible && !!activeFamilyId && (type === 'task' || type === 'expense') }
+    { enabled: visible && !!activeFamilyId && (type === 'task' || type === 'expense' || type === 'event') }
   );
 
   // ── Budget catégories custom ──
@@ -104,12 +159,17 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   // ── Événement ──
   const [eventCategory, setEventCategory] = useState('other');
   const [eventDate, setEventDate] = useState(new Date());
+  const [eventEndDate, setEventEndDate] = useState(new Date()); // pour multi-jours
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [isMultiDay, setIsMultiDay] = useState(false);
   const [startTime, setStartTime] = useState(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; });
   const [endTime, setEndTime] = useState(() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; });
   const [showEventDatePicker, setShowEventDatePicker] = useState(false);
+  const [showEventEndDatePicker, setShowEventEndDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [eventPrivate, setEventPrivate] = useState(false);
+  const [eventReminder, setEventReminder] = useState('15');
 
   // ── Tâche ──
   const [taskPriority, setTaskPriority] = useState<'urgent' | 'high' | 'medium' | 'low'>('medium');
@@ -117,6 +177,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [showTaskDatePicker, setShowTaskDatePicker] = useState(false);
   const [taskPrivate, setTaskPrivate] = useState(false);
+  const [taskRecurrence, setTaskRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'>('none');
 
   // ── Note ──
   const [notePrivate, setNotePrivate] = useState(false);
@@ -167,13 +228,16 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   // ── Reset & fermeture ──
   const handleClose = () => {
     setTitle(''); setDescription('');
-    setEventCategory('other'); setEventDate(new Date());
+    setEventCategory('other'); setEventDate(new Date()); setEventEndDate(new Date());
+    setIsAllDay(false); setIsMultiDay(false);
     const s = new Date(); s.setHours(9, 0, 0, 0); setStartTime(s);
     const e = new Date(); e.setHours(10, 0, 0, 0); setEndTime(e);
-    setEventPrivate(false);
-    setTaskPriority('medium'); setTaskAssignedTo(undefined); setTaskDueDate(undefined); setTaskPrivate(false);
+    setEventPrivate(false); setEventReminder('15');
+    setTaskPriority('medium'); setTaskAssignedTo(undefined); setTaskDueDate(undefined);
+    setTaskPrivate(false); setTaskRecurrence('none');
     setNotePrivate(false);
-    setExpenseType('expense'); setExpenseAmount(''); setExpenseCategory(''); setExpenseDate(new Date()); setExpensePrivate(false);
+    setExpenseType('expense'); setExpenseAmount(''); setExpenseCategory('');
+    setExpenseDate(new Date()); setExpensePrivate(false);
     setRequestType('outing'); setRequestDate(undefined);
     onClose();
   };
@@ -187,9 +251,21 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
     switch (type) {
       case 'event': {
-        const dateStr = format(eventDate, 'yyyy-MM-dd');
-        const startDateTime = new Date(`${dateStr}T${format(startTime, 'HH:mm')}:00`);
-        const endDateTime = new Date(`${dateStr}T${format(endTime, 'HH:mm')}:00`);
+        const startDateStr = format(eventDate, 'yyyy-MM-dd');
+        let startDateTime: Date;
+        let endDateTime: Date;
+
+        if (isAllDay) {
+          // Jour entier : 00:00 → 23:59
+          startDateTime = new Date(`${startDateStr}T00:00:00`);
+          const endDateStr = isMultiDay ? format(eventEndDate, 'yyyy-MM-dd') : startDateStr;
+          endDateTime = new Date(`${endDateStr}T23:59:00`);
+        } else {
+          startDateTime = new Date(`${startDateStr}T${format(startTime, 'HH:mm')}:00`);
+          const endDateStr = isMultiDay ? format(eventEndDate, 'yyyy-MM-dd') : startDateStr;
+          endDateTime = new Date(`${endDateStr}T${format(endTime, 'HH:mm')}:00`);
+        }
+
         const durationMinutes = Math.max(1, Math.round((endDateTime.getTime() - startDateTime.getTime()) / 60000));
         createEvent.mutate({
           title: title.trim(),
@@ -198,7 +274,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
           durationMinutes,
           category: eventCategory,
-          reminderMinutes: 15,
+          reminderMinutes: parseInt(eventReminder),
           isPrivate: eventPrivate ? 1 : 0,
         });
         break;
@@ -209,7 +285,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           description: description.trim() || undefined,
           assignedTo: taskAssignedTo,
           dueDate: taskDueDate,
-          recurrence: 'none',
+          recurrence: taskRecurrence,
           points: 10,
           priority: taskPriority,
           isPrivate: taskPrivate ? 1 : 0,
@@ -264,6 +340,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
     request: '🙋 Nouvelle requête',
   };
 
+  // ── Membres pour dropdown ──
+  const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
+  const memberOptions = [
+    { value: '0', label: '👤 Non assigné' },
+    ...activeMembers.map((m: any) => ({ value: String(m.id), label: m.name || 'Membre' })),
+  ];
+
   // ── Rendu formulaire ──
   const renderForm = () => {
     switch (type) {
@@ -271,51 +354,142 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
         return (
           <>
             <Text style={styles.label}>Titre *</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Titre de l'événement" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titre de l'événement"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Description</Text>
-            <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={2} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={2}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Catégorie</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
               {EVENT_CATEGORIES.map(cat => (
-                <TouchableOpacity key={cat.value} onPress={() => setEventCategory(cat.value)}
-                  style={[styles.chip, eventCategory === cat.value && { backgroundColor: cat.color + '33', borderColor: cat.color }]}>
+                <TouchableOpacity
+                  key={cat.value}
+                  onPress={() => setEventCategory(cat.value)}
+                  style={[styles.chip, eventCategory === cat.value && { backgroundColor: cat.color + '33', borderColor: cat.color }]}
+                >
                   <Text style={styles.chipText}>{cat.icon} {cat.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <Text style={styles.label}>Date</Text>
+
+            {/* Options jour entier + multi-jours */}
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>🌅 Jour entier</Text>
+              <Switch
+                value={isAllDay}
+                onValueChange={setIsAllDay}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={isAllDay ? '#fff' : '#f3f4f6'}
+              />
+            </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>📆 Plusieurs jours</Text>
+              <Switch
+                value={isMultiDay}
+                onValueChange={setIsMultiDay}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={isMultiDay ? '#fff' : '#f3f4f6'}
+              />
+            </View>
+
+            {/* Date de début */}
+            <Text style={styles.label}>Date {isMultiDay ? 'de début' : ''}</Text>
             <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEventDatePicker(true)}>
               <Text style={styles.dateBtnText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {showEventDatePicker && (
-              <DateTimePicker value={eventDate} mode="date" display="default"
-                onChange={(_, d) => { setShowEventDatePicker(false); if (d) setEventDate(d); }} />
+              <DateTimePicker
+                value={eventDate}
+                mode="date"
+                display="default"
+                onChange={(_, d) => { setShowEventDatePicker(false); if (d) setEventDate(d); }}
+              />
             )}
-            <View style={styles.row}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.label}>Début</Text>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowStartTimePicker(true)}>
-                  <Text style={styles.dateBtnText}>🕐 {format(startTime, 'HH:mm')}</Text>
+
+            {/* Date de fin (multi-jours) */}
+            {isMultiDay && (
+              <>
+                <Text style={styles.label}>Date de fin</Text>
+                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEventEndDatePicker(true)}>
+                  <Text style={styles.dateBtnText}>📅 {format(eventEndDate, 'dd/MM/yyyy')}</Text>
                 </TouchableOpacity>
-                {showStartTimePicker && (
-                  <DateTimePicker value={startTime} mode="time" is24Hour display="default"
-                    onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTime(d); }} />
+                {showEventEndDatePicker && (
+                  <DateTimePicker
+                    value={eventEndDate}
+                    mode="date"
+                    display="default"
+                    minimumDate={eventDate}
+                    onChange={(_, d) => { setShowEventEndDatePicker(false); if (d) setEventEndDate(d); }}
+                  />
                 )}
+              </>
+            )}
+
+            {/* Heures (seulement si pas jour entier) */}
+            {!isAllDay && (
+              <View style={styles.row}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={styles.label}>Début</Text>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowStartTimePicker(true)}>
+                    <Text style={styles.dateBtnText}>🕐 {format(startTime, 'HH:mm')}</Text>
+                  </TouchableOpacity>
+                  {showStartTimePicker && (
+                    <DateTimePicker
+                      value={startTime}
+                      mode="time"
+                      is24Hour
+                      display="default"
+                      onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTime(d); }}
+                    />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Fin</Text>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEndTimePicker(true)}>
+                    <Text style={styles.dateBtnText}>🕐 {format(endTime, 'HH:mm')}</Text>
+                  </TouchableOpacity>
+                  {showEndTimePicker && (
+                    <DateTimePicker
+                      value={endTime}
+                      mode="time"
+                      is24Hour
+                      display="default"
+                      onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTime(d); }}
+                    />
+                  )}
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Fin</Text>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEndTimePicker(true)}>
-                  <Text style={styles.dateBtnText}>🕐 {format(endTime, 'HH:mm')}</Text>
-                </TouchableOpacity>
-                {showEndTimePicker && (
-                  <DateTimePicker value={endTime} mode="time" is24Hour display="default"
-                    onChange={(_, d) => { setShowEndTimePicker(false); if (d) setEndTime(d); }} />
-                )}
-              </View>
-            </View>
+            )}
+
+            {/* Rappel */}
+            <Dropdown
+              label="🔔 Rappel"
+              value={eventReminder}
+              options={REMINDER_OPTIONS as unknown as { value: string; label: string }[]}
+              onChange={setEventReminder}
+              isDark={isDark}
+              styles={styles}
+            />
+
             <View style={styles.switchRow}>
               <Text style={styles.label}>🔒 Privé</Text>
-              <Switch value={eventPrivate} onValueChange={setEventPrivate} trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={eventPrivate ? '#fff' : '#f3f4f6'} />
+              <Switch
+                value={eventPrivate}
+                onValueChange={setEventPrivate}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={eventPrivate ? '#fff' : '#f3f4f6'}
+              />
             </View>
           </>
         );
@@ -324,42 +498,76 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
         return (
           <>
             <Text style={styles.label}>Titre *</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Titre de la tâche" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titre de la tâche"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Description</Text>
-            <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={2} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-            <Text style={styles.label}>Priorité</Text>
-            <View style={styles.row}>
-              {PRIORITIES.map(p => (
-                <TouchableOpacity key={p.value} onPress={() => setTaskPriority(p.value)}
-                  style={[styles.chip, taskPriority === p.value && { backgroundColor: p.color + '33', borderColor: p.color }]}>
-                  <Text style={styles.chipText}>{p.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.label}>Assigner à</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-              <TouchableOpacity onPress={() => setTaskAssignedTo(undefined)}
-                style={[styles.chip, !taskAssignedTo && styles.chipActive]}>
-                <Text style={styles.chipText}>👤 Personne</Text>
-              </TouchableOpacity>
-              {(members as any[]).filter((m: any) => m.status === 'active').map((m: any) => (
-                <TouchableOpacity key={m.id} onPress={() => setTaskAssignedTo(m.id)}
-                  style={[styles.chip, taskAssignedTo === m.id && styles.chipActive]}>
-                  <Text style={styles.chipText}>{m.avatarValue || m.name?.charAt(0) || '?'} {m.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={2}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+
+            {/* Priorité — dropdown */}
+            <Dropdown
+              label="Priorité"
+              value={taskPriority}
+              options={PRIORITIES as unknown as { value: string; label: string }[]}
+              onChange={(v) => setTaskPriority(v as any)}
+              isDark={isDark}
+              styles={styles}
+            />
+
+            {/* Assigner à — dropdown */}
+            {activeMembers.length > 0 && (
+              <Dropdown
+                label="Assigner à"
+                value={taskAssignedTo ? String(taskAssignedTo) : '0'}
+                options={memberOptions}
+                onChange={(v) => setTaskAssignedTo(v === '0' ? undefined : parseInt(v))}
+                isDark={isDark}
+                styles={styles}
+              />
+            )}
+
+            {/* Récurrence — dropdown */}
+            <Dropdown
+              label="Récurrence"
+              value={taskRecurrence}
+              options={RECURRENCES as unknown as { value: string; label: string }[]}
+              onChange={(v) => setTaskRecurrence(v as any)}
+              isDark={isDark}
+              styles={styles}
+            />
+
             <Text style={styles.label}>Échéance</Text>
             <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTaskDatePicker(true)}>
               <Text style={styles.dateBtnText}>📅 {taskDueDate ? format(taskDueDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
             </TouchableOpacity>
             {showTaskDatePicker && (
-              <DateTimePicker value={taskDueDate || new Date()} mode="date" display="default"
-                onChange={(_, d) => { setShowTaskDatePicker(false); if (d) setTaskDueDate(d); }} />
+              <DateTimePicker
+                value={taskDueDate || new Date()}
+                mode="date"
+                display="default"
+                onChange={(_, d) => { setShowTaskDatePicker(false); if (d) setTaskDueDate(d); }}
+              />
             )}
+
             <View style={styles.switchRow}>
               <Text style={styles.label}>🔒 Privé</Text>
-              <Switch value={taskPrivate} onValueChange={setTaskPrivate} trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={taskPrivate ? '#fff' : '#f3f4f6'} />
+              <Switch
+                value={taskPrivate}
+                onValueChange={setTaskPrivate}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={taskPrivate ? '#fff' : '#f3f4f6'}
+              />
             </View>
           </>
         );
@@ -368,12 +576,31 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
         return (
           <>
             <Text style={styles.label}>Titre *</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Titre de la note" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titre de la note"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Contenu</Text>
-            <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={4} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              placeholder="Contenu de la note..."
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🔒 Privé</Text>
-              <Switch value={notePrivate} onValueChange={setNotePrivate} trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={notePrivate ? '#fff' : '#f3f4f6'} />
+              <Text style={styles.label}>🔒 Privée</Text>
+              <Switch
+                value={notePrivate}
+                onValueChange={setNotePrivate}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={notePrivate ? '#fff' : '#f3f4f6'}
+              />
             </View>
           </>
         );
@@ -381,45 +608,73 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'expense':
         return (
           <>
-            <Text style={styles.label}>Description</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Description (optionnel)" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
             <Text style={styles.label}>Type</Text>
             <View style={[styles.row, { marginBottom: 12 }]}>
-              <TouchableOpacity onPress={() => setExpenseType('expense')}
-                style={[styles.typeBtn, expenseType === 'expense' && styles.typeBtnExpense]}>
+              <TouchableOpacity
+                onPress={() => setExpenseType('expense')}
+                style={[styles.typeBtn, expenseType === 'expense' && styles.typeBtnExpense]}
+              >
                 <Text style={[styles.typeBtnText, expenseType === 'expense' && { color: '#fff' }]}>📉 Dépense</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setExpenseType('income')}
-                style={[styles.typeBtn, expenseType === 'income' && styles.typeBtnIncome]}>
+              <TouchableOpacity
+                onPress={() => setExpenseType('income')}
+                style={[styles.typeBtn, { marginRight: 0 }, expenseType === 'income' && styles.typeBtnIncome]}
+              >
                 <Text style={[styles.typeBtnText, expenseType === 'income' && { color: '#fff' }]}>📈 Revenu</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.label}>Montant *</Text>
-            <TextInput style={styles.input} value={expenseAmount} onChangeText={setExpenseAmount}
-              placeholder="0.00" keyboardType="decimal-pad" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Description"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
+            <Text style={styles.label}>Montant (CHF) *</Text>
+            <TextInput
+              style={styles.input}
+              value={expenseAmount}
+              onChangeText={setExpenseAmount}
+              placeholder="0.00"
+              keyboardType="decimal-pad"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Catégorie *</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+            <View style={[styles.row, { flexWrap: 'wrap' }]}>
               {(expenseType === 'income'
-                ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' }))
+                ? [{ value: 'Salaire', emoji: '💼', color: '#3b82f6' }, { value: 'Allocation', emoji: '🏛️', color: '#8b5cf6' }, { value: 'Cadeau', emoji: '🎁', color: '#ec4899' }, { value: 'Autre', emoji: '💰', color: '#6b7280' }]
                 : allExpenseCats
               ).map((cat: any) => (
-                <TouchableOpacity key={cat.value} onPress={() => setExpenseCategory(cat.value)}
-                  style={[styles.chip, expenseCategory === cat.value && styles.chipActive]}>
+                <TouchableOpacity
+                  key={cat.value}
+                  onPress={() => setExpenseCategory(cat.value)}
+                  style={[styles.chip, expenseCategory === cat.value && { backgroundColor: cat.color + '33', borderColor: cat.color }]}
+                >
                   <Text style={styles.chipText}>{cat.emoji} {cat.value}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
             <Text style={styles.label}>Date</Text>
             <TouchableOpacity style={styles.dateBtn} onPress={() => setShowExpenseDatePicker(true)}>
               <Text style={styles.dateBtnText}>📅 {format(expenseDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {showExpenseDatePicker && (
-              <DateTimePicker value={expenseDate} mode="date" display="default"
-                onChange={(_, d) => { setShowExpenseDatePicker(false); if (d) setExpenseDate(d); }} />
+              <DateTimePicker
+                value={expenseDate}
+                mode="date"
+                display="default"
+                onChange={(_, d) => { setShowExpenseDatePicker(false); if (d) setExpenseDate(d); }}
+              />
             )}
             <View style={styles.switchRow}>
               <Text style={styles.label}>🔒 Privé</Text>
-              <Switch value={expensePrivate} onValueChange={setExpensePrivate} trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={expensePrivate ? '#fff' : '#f3f4f6'} />
+              <Switch
+                value={expensePrivate}
+                onValueChange={setExpensePrivate}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor={expensePrivate ? '#fff' : '#f3f4f6'}
+              />
             </View>
           </>
         );
@@ -430,16 +685,32 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             <Text style={styles.label}>Type</Text>
             <View style={[styles.row, { flexWrap: 'wrap', marginBottom: 12 }]}>
               {REQUEST_TYPES.map(rt => (
-                <TouchableOpacity key={rt.value} onPress={() => setRequestType(rt.value)}
-                  style={[styles.chip, requestType === rt.value && { backgroundColor: rt.color + '33', borderColor: rt.color }]}>
+                <TouchableOpacity
+                  key={rt.value}
+                  onPress={() => setRequestType(rt.value)}
+                  style={[styles.chip, requestType === rt.value && { backgroundColor: rt.color + '33', borderColor: rt.color }]}
+                >
                   <Text style={styles.chipText}>{rt.emoji} {rt.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <Text style={styles.label}>Titre *</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Titre de la requête" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titre de la requête"
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             <Text style={styles.label}>Description</Text>
-            <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={2} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={2}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+            />
             {(requestType === 'outing' || requestType === 'permission') && (
               <>
                 <Text style={styles.label}>Date *</Text>
@@ -447,8 +718,12 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   <Text style={styles.dateBtnText}>📅 {requestDate ? format(requestDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
                 </TouchableOpacity>
                 {showRequestDatePicker && (
-                  <DateTimePicker value={requestDate || new Date()} mode="date" display="default"
-                    onChange={(_, d) => { setShowRequestDatePicker(false); if (d) setRequestDate(d); }} />
+                  <DateTimePicker
+                    value={requestDate || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(_, d) => { setShowRequestDatePicker(false); if (d) setRequestDate(d); }}
+                  />
                 )}
               </>
             )}
@@ -474,7 +749,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
-          {/* Formulaire — flex:1 pour occuper l'espace disponible et permettre le scroll */}
+          {/* Formulaire */}
           <ScrollView
             style={styles.form}
             contentContainerStyle={styles.formContent}
@@ -557,8 +832,31 @@ function getStyles(isDark: boolean) {
     typeBtnExpense: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
     typeBtnIncome: { backgroundColor: '#10b981', borderColor: '#10b981' },
     typeBtnText: { fontSize: 14, fontWeight: '600', color: isDark ? '#f9fafb' : '#374151' },
+    // Dropdown
+    dropdown: {
+      backgroundColor: isDark ? '#111827' : '#fff',
+      borderWidth: 1.5, borderColor: isDark ? '#fff' : '#374151',
+      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11,
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    },
+    dropdownText: { fontSize: 14, color: isDark ? '#f9fafb' : '#1f2937', flex: 1 },
+    dropdownMenu: {
+      backgroundColor: isDark ? '#1f2937' : '#fff',
+      borderWidth: 1.5, borderColor: isDark ? '#4b5563' : '#d1d5db',
+      borderRadius: 10, marginTop: 4, overflow: 'hidden',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    },
+    dropdownOption: {
+      paddingHorizontal: 14, paddingVertical: 11,
+      borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6',
+    },
+    dropdownOptionActive: { backgroundColor: isDark ? '#312e81' : '#ede9fe' },
+    dropdownOptionText: { fontSize: 14, color: isDark ? '#f9fafb' : '#1f2937' },
+    // Actions
     actions: {
-      flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 32 : 16, gap: 12,
+      flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12,
+      paddingBottom: Platform.OS === 'ios' ? 32 : 16, gap: 12,
       borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#f3f4f6',
     },
     cancelBtn: {

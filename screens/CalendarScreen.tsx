@@ -1824,8 +1824,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#1f2937' : '#ffffff',
     borderRadius: 12,
     paddingVertical: 8,
-    minWidth: 300,
-    maxWidth: 360,
+    minWidth: 340,
+    maxWidth: SCREEN_WIDTH - 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -1834,14 +1834,16 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   calMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16},
+    paddingVertical: 16,
+    paddingHorizontal: 18},
   calMenuItemActive: {
     backgroundColor: isDark ? '#312e81' : '#ede9fe'},
   calMenuIcon: { fontSize: 20, marginRight: 12 },
   calMenuLabel: {
     fontSize: 15,
-    color: isDark ? '#f3f4f6' : '#1f2937'},
+    color: isDark ? '#f3f4f6' : '#1f2937',
+    flex: 1,
+    flexWrap: 'nowrap'},
   calMenuLabelActive: {
     color: isDark ? '#a5b4fc' : '#7c3aed',
     fontWeight: '600'},
