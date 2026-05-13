@@ -90,7 +90,7 @@ function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(()
 
 // ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
-  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token } = useAuth();
+  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [isInitializing, setIsInitializing] = useState(false);
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
@@ -138,8 +138,8 @@ function AppContent() {
       <PushRegistrar />
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
 
-      {/* Splash screen pendant le chargement auth OU durée minimale non écoulée */}
-      {(isLoading || isInitializing || !splashMinDone) ? (
+      {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
+      {(isLoading || isInitializing || !splashMinDone || (isAuthenticated && !user)) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>
