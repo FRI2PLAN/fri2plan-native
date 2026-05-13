@@ -57,6 +57,7 @@
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification", "fetch"],
         "NSUserNotificationsUsageDescription": "FRI2PLAN envoie des rappels et notifications pour votre famille.",
+        "NSFaceIDUsageDescription": "FRI2PLAN utilise Face ID pour vous connecter rapidement et en toute sécurité.",
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {

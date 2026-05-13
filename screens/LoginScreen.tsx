@@ -23,8 +23,14 @@ import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 import Svg, { Path, G, Rect, ClipPath, Defs } from 'react-native-svg';
 import { API_URL } from '../lib/trpc';
+
+const BIOMETRIC_TOKEN_KEY = 'biometric_auth_token';
+const BIOMETRIC_USER_KEY = 'biometric_auth_user';
+const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
@@ -43,6 +49,98 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  // Vérifier la disponibilité biométrique et tenter connexion auto
+  useEffect(() => {
+    const initBiometric = async () => {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        const available = hasHardware && isEnrolled;
+        setBiometricAvailable(available);
+
+        if (available) {
+          const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+          if (enabled === 'true') {
+            setBiometricEnabled(true);
+            // Tenter connexion biométrique automatique au démarrage
+            await handleBiometricLogin(true);
+          }
+        }
+      } catch (e) {
+        // Biométrie non disponible
+      }
+    };
+    initBiometric();
+  }, []);
+
+  const handleBiometricLogin = async (silent = false) => {
+    try {
+      setBiometricLoading(true);
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Connexion à FRI2PLAN',
+        cancelLabel: 'Annuler',
+        fallbackLabel: 'Utiliser le mot de passe',
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        const token = await SecureStore.getItemAsync(BIOMETRIC_TOKEN_KEY);
+        const userJson = await SecureStore.getItemAsync(BIOMETRIC_USER_KEY);
+        if (token && userJson) {
+          const user = JSON.parse(userJson);
+          await login(user, token);
+        } else {
+          // Token expiré ou supprimé — désactiver la biométrie
+          await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
+          await SecureStore.deleteItemAsync(BIOMETRIC_TOKEN_KEY);
+          await SecureStore.deleteItemAsync(BIOMETRIC_USER_KEY);
+          setBiometricEnabled(false);
+          if (!silent) Alert.alert('Session expirée', 'Veuillez vous reconnecter avec votre mot de passe.');
+        }
+      }
+    } catch (e) {
+      // Erreur biométrie
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const saveBiometricCredentials = async (user: any, token: string) => {
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) return;
+
+      const alreadyEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+      if (alreadyEnabled === 'true') return; // Déjà configuré
+
+      const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      const hasFaceId = supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
+      const biometricName = Platform.OS === 'ios' ? (hasFaceId ? 'Face ID' : 'Touch ID') : 'empreinte digitale';
+
+      Alert.alert(
+        `Activer ${biometricName} ?`,
+        `Voulez-vous utiliser ${biometricName} pour vous connecter rapidement à FRI2PLAN ?`,
+        [
+          { text: 'Non merci', style: 'cancel' },
+          {
+            text: 'Activer',
+            onPress: async () => {
+              await SecureStore.setItemAsync(BIOMETRIC_TOKEN_KEY, token);
+              await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, JSON.stringify(user));
+              await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
+              setBiometricEnabled(true);
+            },
+          },
+        ]
+      );
+    } catch (e) {
+      // Ignorer
+    }
+  };
 
   // Initialiser Google Sign-In
   useEffect(() => {
@@ -110,6 +208,7 @@ export default function LoginScreen() {
       const data = await resp.json();
       if (data.token && data.user) {
         await login(data.user, data.token);
+        await saveBiometricCredentials(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Apple');
       }
@@ -196,6 +295,8 @@ export default function LoginScreen() {
 
         // Store token and user data using AuthContext
         await login(data.user, data.token);
+        // Proposer d'activer la biométrie après connexion réussie
+        await saveBiometricCredentials(data.user, data.token);
         setLoading(false);
         // User will be automatically redirected by AuthContext
       } catch (error) {
@@ -396,6 +497,33 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
             )}
+
+            {/* Bouton biométrique - visible si disponible */}
+            {biometricAvailable && (
+              <TouchableOpacity
+                style={[styles.oauthButton, styles.biometricButton, biometricLoading && { opacity: 0.7 }]}
+                onPress={() => handleBiometricLogin(false)}
+                disabled={biometricLoading || loading}
+              >
+                {biometricLoading ? (
+                  <View style={styles.oauthLoadingRow}>
+                    <ActivityIndicator color="#7c3aed" size="small" />
+                    <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#7c3aed' }]}>Vérification...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.oauthLoadingRow}>
+                    <Text style={{ fontSize: 22, marginRight: 8 }}>
+                      {Platform.OS === 'ios' ? '🔒' : '👆'}
+                    </Text>
+                    <Text style={[styles.oauthButtonText, { color: '#7c3aed' }]}>
+                      {biometricEnabled
+                        ? (Platform.OS === 'ios' ? 'Se connecter avec Face ID / Touch ID' : 'Se connecter avec l\'empreinte')
+                        : (Platform.OS === 'ios' ? 'Activer Face ID / Touch ID' : 'Activer l\'empreinte digitale')}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -589,6 +717,11 @@ const styles = StyleSheet.create({
   oauthLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  biometricButton: {
+    backgroundColor: '#f3f0ff',
+    borderWidth: 1.5,
+    borderColor: '#7c3aed',
   },
   oauthButtonApple: {
     backgroundColor: '#000',
