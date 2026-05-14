@@ -8,12 +8,12 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour, isWithinInterval } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
-
+import QuickCreateModal from '../components/QuickCreateModal';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
@@ -30,6 +30,25 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
  *
  * Cette approche fonctionne quel que soit le fuseau horaire de l'utilisateur.
  */
+/**
+ * Retourne true si un événement doit apparaître sur le jour `day`.
+ * Gère les événements multi-jours : un événement Budapest du 15 au 17
+ * doit apparaître sur les jours 15, 16 et 17.
+ */
+function isEventOnDay(event: any, day: Date): boolean {
+  const start = parseLocalDate(event.startTime, !!event.isUtc);
+  if (!event.endTime) return isSameDay(start, day);
+  const end = parseLocalDate(event.endTime, !!event.isUtc);
+  // Si start === end (ou end < 1 jour après start) : événement normal
+  if (isSameDay(start, end)) return isSameDay(start, day);
+  // Événement multi-jours : le jour doit être entre start et end (inclus)
+  const dayStart = startOfDay(day);
+  const dayEnd = endOfDay(day);
+  const eventStart = startOfDay(start);
+  const eventEnd = startOfDay(end);
+  return dayStart >= eventStart && dayStart <= eventEnd;
+}
+
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
   if (!dateStr) return new Date();
   // Normaliser : remplacer espace par T si nécessaire
@@ -459,7 +478,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         return eventDate >= weekStart && eventDate <= weekEnd;
       });
     } else {
-      filteredEvents = filteredEvents.filter(event => isSameDay(parseLocalDate(event.startTime, !!event.isUtc), date));
+      filteredEvents = filteredEvents.filter(event => isEventOnDay(event, date));
     }
     if (selectedCategories.length > 0) {
       filteredEvents = filteredEvents.filter(event => selectedCategories.includes(event.category));
@@ -772,7 +791,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <View style={styles.daysGrid}>
                 {calendarGrid.map((day) => {
                   const isCurrentMonth = isSameMonth(day, currentDate);
-                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), day)) : [];
+                  const dayEvts = isCurrentMonth ? (events || []).filter(e => isEventOnDay(e, day)) : [];
                   const hasEvents = dayEvts.length > 0;
                   const isSelected = isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
@@ -795,12 +814,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       ]}
                       onPress={() => {
                         setSelectedDate(day);
-                        const dayEvents = (events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), day));
+                        const dayEvents = (events || []).filter(e => isEventOnDay(e, day));
                         if (dayEvents.length > 0) setDropdownModalOpen(true);
-                        else {
-                          setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
-                          setCreateModalOpen(true);
-                        }
+                        else setCreateModalOpen(true);
                       }}
                     >
                       <Text style={[
@@ -832,10 +848,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </Text>
                 <TouchableOpacity
                   style={styles.addEventBtn}
-                  onPress={() => {
-                    setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
-                    setCreateModalOpen(true);
-                  }}
+                  onPress={() => setCreateModalOpen(true)}
                 >
                   <Text style={styles.addEventBtnText}>+</Text>
                 </TouchableOpacity>
@@ -884,10 +897,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               ) : (
                 <TouchableOpacity
                   style={styles.noEvents}
-                  onPress={() => {
-                    setFormData(prev => ({ ...prev, startTime: '09:00', endTime: '10:00' }));
-                    setCreateModalOpen(true);
-                  }}
+                  onPress={() => setCreateModalOpen(true)}
                 >
                   <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
                   <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
@@ -984,7 +994,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => {
                     const hourEvents = (events || []).filter(event => {
                       const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
-                      return isSameDay(eventDate, day) && eventDate.getHours() === hour;
+                      return isEventOnDay(event, day) && eventDate.getHours() === hour;
                     });
                     return (
                       <View key={day.toString()} style={styles.weekDayColumn}>
@@ -1029,7 +1039,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               {Array.from({ length: 24 }, (_, hour) => {
                 const hourEvents = (events || []).filter(event => {
                   const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
-                  return isSameDay(eventDate, selectedDate) && eventDate.getHours() === hour;
+                  return isEventOnDay(event, selectedDate) && eventDate.getHours() === hour;
                 });
                 return (
                   <View key={hour} style={styles.dayTimeSlot}>
@@ -1078,69 +1088,12 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
           ════════════════════════════════════════════════════════════ */}
 
       {/* ── Créer événement ── */}
-      <Modal visible={createModalOpen} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.addEvent') || 'Nouvel événement'}</Text>
-            <ScrollView style={styles.modalForm} keyboardShouldPersistTaps="handled">
-              {/* Titre */}
-              <Text style={styles.label}>{t('common.title') || 'Titre'}</Text>
-              <TextInput style={styles.input} value={formData.title} onChangeText={text => setFormData(p => ({ ...p, title: text }))} placeholder={t('common.title') || 'Titre'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-              {/* Description */}
-              <Text style={styles.label}>{t('calendar.description') || 'Description'}</Text>
-              <TextInput style={[styles.input, styles.textArea]} value={formData.description} onChangeText={text => setFormData(p => ({ ...p, description: text }))} multiline numberOfLines={3} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-              {/* Catégorie — Dropdown */}
-              <Text style={styles.label}>{t('calendar.category') || 'Catégorie'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowCategoryDropdown(true)}>
-                <Text style={styles.dropdownTriggerText}>{getCategoryLabel(getCategoryInfo(formData.category))} {getCategoryInfo(formData.category).icon}</Text>
-                <Text style={styles.dropdownChevron}>▼</Text>
-              </TouchableOpacity>
-              {/* Date */}
-              <Text style={styles.label}>{t('common.date') || 'Date'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowDatePicker(true)}>
-                <Text style={styles.dropdownTriggerText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker value={eventDate} mode="date" display="spinner" onChange={(_, d) => { setShowDatePicker(false); if (d) setEventDate(d); }} locale={i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'} />
-              )}
-              {/* Heure début */}
-              <Text style={styles.label}>{t('calendar.startTime') || 'Heure de début'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTimePickerTarget('start'); setShowTimePicker(v => !v || timePickerTarget !== 'start'); }}>
-                <Text style={styles.dropdownTriggerText}>🕐 {format(startTimeDate, 'HH:mm')}</Text>
-              </TouchableOpacity>
-              {showTimePicker && timePickerTarget === 'start' && (
-                <DateTimePicker value={startTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { if (d) setStartTimeDate(d); setShowTimePicker(false); }} textColor={isDark ? '#f9fafb' : '#111827'} />
-              )}
-              {/* Heure fin */}
-              <Text style={styles.label}>{t('calendar.endTime') || 'Heure de fin'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => { setTimePickerTarget('end'); setShowTimePicker(v => !v || timePickerTarget !== 'end'); }}>
-                <Text style={styles.dropdownTriggerText}>🕐 {format(endTimeDate, 'HH:mm')}</Text>
-              </TouchableOpacity>
-              {showTimePicker && timePickerTarget === 'end' && (
-                <DateTimePicker value={endTimeDate} mode="time" is24Hour display="spinner" onChange={(_, d) => { if (d) setEndTimeDate(d); setShowTimePicker(false); }} textColor={isDark ? '#f9fafb' : '#111827'} />
-              )}
-              {/* Rappel — Dropdown */}
-              <Text style={styles.label}>{t('calendar.reminder') || 'Rappel'}</Text>
-              <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowReminderDropdown(true)}>
-                <Text style={styles.dropdownTriggerText}>🔔 {REMINDER_OPTIONS.find(o => o.value === formData.reminder)?.label || '15 min'}</Text>
-                <Text style={styles.dropdownChevron}>▼</Text>
-              </TouchableOpacity>
-              {/* Privé */}
-              <TouchableOpacity style={styles.checkboxRow} onPress={() => setFormData(p => ({ ...p, isPrivate: !p.isPrivate }))}>
-                <View style={[styles.checkbox, formData.isPrivate && styles.checkboxChecked]}>
-                  {formData.isPrivate ? <Text style={styles.checkmark}>✓</Text> : null}
-                </View>
-                <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Événement privé'}</Text>
-              </TouchableOpacity>
-            </ScrollView>
-            {/* Boutons icônes */}
-            <View style={styles.iconBtnRow}>
-              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setCreateModalOpen(false); setShowTimePicker(false); resetForm(); }} />
-              <ModalIconButton icon="✓" color="#10b981" onPress={handleCreateEvent} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* ── Créer événement via QuickCreateModal (plus complet) ── */}
+      <QuickCreateModal
+        visible={createModalOpen}
+        type="event"
+        onClose={() => { setCreateModalOpen(false); refetch(); }}
+      />
 
       {/* ── Modifier événement ── */}
       <Modal visible={editModalOpen} animationType="slide" transparent>
@@ -1209,11 +1162,11 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             <Text style={styles.dropdownTitle}>
               {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
             </Text>
-            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); setFormData(p => ({ ...p, startTime: '09:00', endTime: '10:00' })); setCreateModalOpen(true); }}>
+            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); setCreateModalOpen(true); }}>
               <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
             <ScrollView style={styles.dropdownEventsList}>
-              {(events || []).filter(e => isSameDay(parseLocalDate(e.startTime, !!e.isUtc), selectedDate)).map(event => {
+              {(events || []).filter(e => isEventOnDay(e, selectedDate)).map(event => {
                 const category = getCategoryInfo(event.category);
                 const desc = cleanDescription(event.description);
                 // Couleur barre : abonnement > couleur event > catégorie

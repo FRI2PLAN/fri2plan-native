@@ -115,7 +115,12 @@ export default function LoginScreen() {
       if (!hasHardware || !isEnrolled) return;
 
       const alreadyEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
-      if (alreadyEnabled === 'true') return; // Déjà configuré
+      if (alreadyEnabled === 'true') {
+        // Token actif : mettre à jour silencieusement le token stocké
+        await SecureStore.setItemAsync(BIOMETRIC_TOKEN_KEY, token);
+        await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, JSON.stringify(user));
+        return;
+      }
 
       const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
       const hasFaceId = supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
@@ -248,6 +253,7 @@ export default function LoginScreen() {
       const data = await resp.json();
       if (data.token && data.user) {
         await login(data.user, data.token);
+        await saveBiometricCredentials(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Google');
       }
