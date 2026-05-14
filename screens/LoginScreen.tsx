@@ -108,7 +108,7 @@ export default function LoginScreen() {
     }
   };
 
-  const saveBiometricCredentials = async (user: any, token: string) => {
+  const saveBiometricCredentials = async (user: any, token: string): Promise<void> => {
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -126,22 +126,26 @@ export default function LoginScreen() {
       const hasFaceId = supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
       const biometricName = Platform.OS === 'ios' ? (hasFaceId ? 'Face ID' : 'Touch ID') : 'empreinte digitale';
 
-      Alert.alert(
-        `Activer ${biometricName} ?`,
-        `Voulez-vous utiliser ${biometricName} pour vous connecter rapidement à FRI2PLAN ?`,
-        [
-          { text: 'Non merci', style: 'cancel' },
-          {
-            text: 'Activer',
-            onPress: async () => {
-              await SecureStore.setItemAsync(BIOMETRIC_TOKEN_KEY, token);
-              await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, JSON.stringify(user));
-              await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
-              setBiometricEnabled(true);
+      // Utiliser une Promise pour rendre l'Alert bloquante (attendre la réponse utilisateur)
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          `Activer ${biometricName} ?`,
+          `Voulez-vous utiliser ${biometricName} pour vous connecter rapidement à FRI2PLAN ?`,
+          [
+            { text: 'Non merci', style: 'cancel', onPress: () => resolve() },
+            {
+              text: 'Activer',
+              onPress: async () => {
+                await SecureStore.setItemAsync(BIOMETRIC_TOKEN_KEY, token);
+                await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, JSON.stringify(user));
+                await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
+                setBiometricEnabled(true);
+                resolve();
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      });
     } catch (e) {
       // Ignorer
     }
@@ -212,8 +216,9 @@ export default function LoginScreen() {
       });
       const data = await resp.json();
       if (data.token && data.user) {
-        await login(data.user, data.token);
+        // Proposer la biométrie AVANT le login pour que l'Alert reste visible
         await saveBiometricCredentials(data.user, data.token);
+        await login(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Apple');
       }
@@ -252,8 +257,9 @@ export default function LoginScreen() {
       });
       const data = await resp.json();
       if (data.token && data.user) {
-        await login(data.user, data.token);
+        // Proposer la biométrie AVANT le login pour que l'Alert reste visible
         await saveBiometricCredentials(data.user, data.token);
+        await login(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Google');
       }
