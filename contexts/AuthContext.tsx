@@ -99,10 +99,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             const response = await fetch(`${API_URL}/api/trpc/auth.me`, {
               headers: { Authorization: `Bearer ${storedToken}` },
             });
-            if (!response.ok) {
-              // Token invalide ou expiré → forcer la déconnexion
+            if (response.status === 401 || response.status === 403) {
+              // Token vraiment invalide ou expiré → forcer la déconnexion
               console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
               tokenValid = false;
+            } else if (!response.ok) {
+              // Erreur serveur (503 cold start, 500, etc.) → utiliser le cache local (fail-open)
+              console.log('[AuthContext] Erreur serveur (status ' + response.status + '), utilisation du cache local');
+            } else {
+              // Succès → mettre à jour le user avec les données fraîches (incluant familyId)
+              try {
+                const data = await response.json();
+                const freshUser = data?.result?.data?.json;
+                if (freshUser && freshUser.id) {
+                  console.log('[AuthContext] User mis à jour depuis auth.me:', JSON.stringify(freshUser, null, 2));
+                  await AsyncStorage.setItem('user', JSON.stringify(freshUser));
+                  storedUser = JSON.stringify(freshUser);
+                }
+              } catch (_) {}
             }
           } catch (networkError) {
             // Pas de réseau → utiliser le cache local (fail-open)
