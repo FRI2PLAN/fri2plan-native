@@ -53,29 +53,11 @@ export default function LoginScreen() {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
-  // Vérifier la disponibilité biométrique et tenter connexion auto
-  useEffect(() => {
-    const initBiometric = async () => {
-      try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        const available = hasHardware && isEnrolled;
-        setBiometricAvailable(available);
-
-        if (available) {
-          const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
-          if (enabled === 'true') {
-            setBiometricEnabled(true);
-            // Tenter connexion biométrique automatique au démarrage
-            await handleBiometricLogin(true);
-          }
-        }
-      } catch (e) {
-        // Biométrie non disponible
-      }
-    };
-    initBiometric();
-  }, []);
+  // Biométrie temporairement désactivée — sera réactivée dans une prochaine version
+  // useEffect(() => {
+  //   const initBiometric = async () => { ... };
+  //   initBiometric();
+  // }, []);
 
   const handleBiometricLogin = async (silent = false) => {
     try {
@@ -510,8 +492,8 @@ export default function LoginScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Bouton biométrique - visible si disponible */}
-            {biometricAvailable && (
+            {/* Bouton biométrique - temporairement désactivé */}
+            {false && biometricAvailable && (
               <TouchableOpacity
                 style={[styles.oauthButton, styles.biometricButton, biometricLoading && { opacity: 0.7 }]}
                 onPress={() => handleBiometricLogin(false)}
