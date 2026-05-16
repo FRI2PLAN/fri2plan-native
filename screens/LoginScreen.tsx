@@ -18,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,7 @@ const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { setActiveFamilyId } = useFamily();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -201,6 +203,7 @@ export default function LoginScreen() {
         // Proposer la biométrie AVANT le login pour que l'Alert reste visible
         await saveBiometricCredentials(data.user, data.token);
         await login(data.user, data.token);
+        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
       } else {
         throw new Error(data.error || 'Erreur de connexion Apple');
       }
@@ -242,6 +245,7 @@ export default function LoginScreen() {
         // Proposer la biométrie AVANT le login pour que l'Alert reste visible
         await saveBiometricCredentials(data.user, data.token);
         await login(data.user, data.token);
+        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
       } else {
         throw new Error(data.error || 'Erreur de connexion Google');
       }
