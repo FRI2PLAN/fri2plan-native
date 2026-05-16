@@ -17,13 +17,26 @@ export function FamilyProvider({ children }: { children: React.ReactNode }) {
   const [activeFamilyId, setActiveFamilyIdState] = useState<number | null>(null);
 
   // Charger l'ID de famille active depuis AsyncStorage au démarrage
+  // Fallback: lire depuis user.familyId si active_family_id absent
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+    (async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = parseInt(stored, 10);
-        if (!isNaN(parsed)) setActiveFamilyIdState(parsed);
+        if (!isNaN(parsed)) { setActiveFamilyIdState(parsed); return; }
       }
-    });
+      // Fallback: lire depuis le user en cache
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user?.familyId) {
+            setActiveFamilyIdState(user.familyId);
+            await AsyncStorage.setItem(STORAGE_KEY, String(user.familyId));
+          }
+        } catch (_) {}
+      }
+    })();
   }, []);
 
   const setActiveFamilyId = useCallback(async (id: number | null) => {

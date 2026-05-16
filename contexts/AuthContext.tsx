@@ -137,6 +137,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setToken(storedToken);
         setUser(parsedUser);
         setHasSeenOnboarding(storedOnboarding === 'true');
+        // Restaurer activeFamilyId depuis le user si absent d'AsyncStorage
+        if (parsedUser?.familyId) {
+          const storedFamilyId = await AsyncStorage.getItem('active_family_id');
+          if (!storedFamilyId) {
+            await AsyncStorage.setItem('active_family_id', String(parsedUser.familyId));
+            console.log('[AuthContext] active_family_id restauré depuis user.familyId:', parsedUser.familyId);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
