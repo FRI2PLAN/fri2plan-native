@@ -95,16 +95,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         let tokenValid = true;
 
         if (isColdStart.current) {
+          // Retry logic pour les 503 Cloud Run cold start (3 tentatives max)
+          const fetchAuthMe = async (retryCount = 0): Promise<Response | null> => {
+            try {
+              const resp = await fetch(`${API_URL}/api/trpc/auth.me`, {
+                headers: { Authorization: `Bearer ${storedToken}` },
+              });
+              if (resp.status === 503 && retryCount < 3) {
+                const delay = [1000, 2000, 4000][retryCount];
+                console.log(`[AuthContext] auth.me 503, retry ${retryCount + 1}/3 dans ${delay}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                return fetchAuthMe(retryCount + 1);
+              }
+              return resp;
+            } catch (err) {
+              if (retryCount < 3) {
+                const delay = [1000, 2000, 4000][retryCount];
+                console.log(`[AuthContext] auth.me erreur réseau, retry ${retryCount + 1}/3 dans ${delay}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                return fetchAuthMe(retryCount + 1);
+              }
+              return null;
+            }
+          };
           try {
-            const response = await fetch(`${API_URL}/api/trpc/auth.me`, {
-              headers: { Authorization: `Bearer ${storedToken}` },
-            });
-            if (response.status === 401 || response.status === 403) {
+            const response = await fetchAuthMe();
+            if (!response) {
+              // Toutes les tentatives échouées → utiliser le cache local (fail-open)
+              console.log('[AuthContext] auth.me inaccessible après 3 tentatives, utilisation du cache local');
+            } else if (response.status === 401 || response.status === 403) {
               // Token vraiment invalide ou expiré → forcer la déconnexion
               console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
               tokenValid = false;
             } else if (!response.ok) {
-              // Erreur serveur (503 cold start, 500, etc.) → utiliser le cache local (fail-open)
+              // Erreur serveur persistante → utiliser le cache local (fail-open)
               console.log('[AuthContext] Erreur serveur (status ' + response.status + '), utilisation du cache local');
             } else {
               // Succès → mettre à jour le user avec les données fraîches (incluant familyId)

@@ -38,6 +38,28 @@ type ScreenMode = 'login' | 'register' | 'forgotPassword';
 const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
 const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 
+// Retry automatique pour les 503 Cloud Run cold start
+async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0): Promise<Response> {
+  try {
+    const resp = await fetch(url, options);
+    if (resp.status === 503 && retryCount < 3) {
+      const delay = [1500, 3000, 5000][retryCount];
+      console.log(`[LoginScreen] 503 reçu, retry ${retryCount + 1}/3 dans ${delay}ms`);
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retryCount + 1);
+    }
+    return resp;
+  } catch (err) {
+    if (retryCount < 3) {
+      const delay = [1500, 3000, 5000][retryCount];
+      console.log(`[LoginScreen] Erreur réseau, retry ${retryCount + 1}/3 dans ${delay}ms`);
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retryCount + 1);
+    }
+    throw err;
+  }
+}
+
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { login } = useAuth();
@@ -190,7 +212,7 @@ export default function LoginScreen() {
       const { identityToken, fullName, email } = credential;
       if (!identityToken) throw new Error('Token Apple manquant');
       const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
-      const resp = await fetch(`${baseUrl}/api/apple/native-signin`, {
+      const resp = await fetchWithRetry(`${baseUrl}/api/apple/native-signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -235,7 +257,7 @@ export default function LoginScreen() {
       // Envoyer le token au serveur pour validation et connexion
       // API_URL = 'https://app.fri2plan.ch/api/trpc' → base = 'https://app.fri2plan.ch'
       const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
-      const resp = await fetch(`${baseUrl}/api/google/native-signin`, {
+      const resp = await fetchWithRetry(`${baseUrl}/api/google/native-signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -293,6 +315,7 @@ export default function LoginScreen() {
 
         // Store token and user data using AuthContext
         await login(data.user, data.token);
+        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
         // Proposer d'activer la biométrie après connexion réussie
         await saveBiometricCredentials(data.user, data.token);
         setLoading(false);
