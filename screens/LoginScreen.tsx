@@ -38,23 +38,32 @@ type ScreenMode = 'login' | 'register' | 'forgotPassword';
 const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
 const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 
-// Retry automatique pour les 503 Cloud Run cold start
+// Retry automatique pour les 503 Cloud Run cold start — avec timeout 25s
 async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0): Promise<Response> {
+  const TIMEOUT_MS = 25000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const resp = await fetch(url, options);
+    const resp = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timer);
     if (resp.status === 503 && retryCount < 3) {
-      const delay = [1500, 3000, 5000][retryCount];
+      const delay = [2000, 4000, 7000][retryCount];
       console.log(`[LoginScreen] 503 reçu, retry ${retryCount + 1}/3 dans ${delay}ms`);
       await new Promise(r => setTimeout(r, delay));
       return fetchWithRetry(url, options, retryCount + 1);
     }
     return resp;
-  } catch (err) {
+  } catch (err: any) {
+    clearTimeout(timer);
+    const isTimeout = err?.name === 'AbortError';
     if (retryCount < 3) {
-      const delay = [1500, 3000, 5000][retryCount];
-      console.log(`[LoginScreen] Erreur réseau, retry ${retryCount + 1}/3 dans ${delay}ms`);
+      const delay = [2000, 4000, 7000][retryCount];
+      console.log(`[LoginScreen] ${isTimeout ? 'Timeout' : 'Erreur réseau'}, retry ${retryCount + 1}/3 dans ${delay}ms`);
       await new Promise(r => setTimeout(r, delay));
       return fetchWithRetry(url, options, retryCount + 1);
+    }
+    if (isTimeout) {
+      throw new Error('Le serveur met trop de temps à répondre. Réessaie dans quelques secondes.');
     }
     throw err;
   }
