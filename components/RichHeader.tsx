@@ -11,6 +11,7 @@ import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -33,8 +34,11 @@ export default function RichHeader({
   const styles = getStyles(isDark);
   const navigation = useNavigation();
 
-  // Récupérer les données utilisateur
-  const { data: user } = trpc.auth.me.useQuery();
+  // Récupérer les données utilisateur depuis le cache local (AuthContext) ET depuis le serveur
+  const { user: cachedUser } = useAuth();
+  const { data: meData } = trpc.auth.me.useQuery();
+  // Utiliser les données du serveur si disponibles, sinon le cache local (évite "Utilisateur" au premier rendu)
+  const user = meData ?? cachedUser;
 
   // Récupérer les points de la famille pour le classement
   const { activeFamilyId: ctxFamilyId } = useFamily();

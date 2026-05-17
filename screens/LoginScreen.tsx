@@ -276,7 +276,10 @@ export default function LoginScreen() {
         // Proposer la biométrie AVANT le login pour que l'Alert reste visible
         await saveBiometricCredentials(data.user, data.token);
         await login(data.user, data.token);
-        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
+        // Définir la famille active immédiatement pour éviter l'écran "Créer une famille"
+        if (data.user.familyId) {
+          await setActiveFamilyId(data.user.familyId);
+        }
       } else {
         throw new Error(data.error || 'Erreur de connexion Google');
       }
