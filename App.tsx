@@ -92,7 +92,7 @@ function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(()
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
-  const [isInitializing, setIsInitializing] = useState(false);
+  // isInitializing supprimé — plus de délai artificiel post-login
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
 
@@ -117,8 +117,8 @@ function AppContent() {
       prevTokenRef.current = token;
       queryClient.clear();
       if (token && wasNull) {
-        setIsInitializing(true);
-        setTimeout(() => setIsInitializing(false), 800);
+        // Pas de délai artificiel — l'app s'affiche immédiatement après login
+        // setIsInitializing(true/false) supprimé pour éviter le décalage de 800ms
       }
     }
   }, [token]);
@@ -139,7 +139,7 @@ function AppContent() {
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
 
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
-      {(isLoading || isInitializing || !splashMinDone || (isAuthenticated && !user)) ? (
+      {(isLoading || !splashMinDone || (isAuthenticated && !user)) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>

@@ -10,11 +10,11 @@ const STALE_2MIN = 2 * 60 * 1000;
 const STALE_5MIN = 5 * 60 * 1000;
 
 export default function GlobalPrefetch() {
-  // Délai de 800ms pour ne pas bloquer le rendu initial du Dashboard
+  // Délai de 200ms pour laisser le Dashboard se monter avant de lancer les prefetch
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 800);
+    const timer = setTimeout(() => setReady(true), 200);
     return () => clearTimeout(timer);
   }, []);
 

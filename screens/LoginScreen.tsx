@@ -86,11 +86,27 @@ export default function LoginScreen() {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
-  // Biométrie temporairement désactivée — sera réactivée dans une prochaine version
-  // useEffect(() => {
-  //   const initBiometric = async () => { ... };
-  //   initBiometric();
-  // }, []);
+  // Initialisation biométrie au démarrage
+  useEffect(() => {
+    const initBiometric = async () => {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) return;
+        setBiometricAvailable(true);
+        const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+        if (enabled === 'true') {
+          setBiometricEnabled(true);
+          // Déclencher automatiquement la biométrie si activée
+          handleBiometricLogin(true);
+        }
+      } catch (e) {
+        // Ignorer les erreurs
+      }
+    };
+    initBiometric();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBiometricLogin = async (silent = false) => {
     try {
@@ -531,8 +547,8 @@ export default function LoginScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Bouton biométrique - temporairement désactivé */}
-            {false && biometricAvailable && (
+            {/* Bouton biométrique */}
+            {biometricAvailable && (
               <TouchableOpacity
                 style={[styles.oauthButton, styles.biometricButton, biometricLoading && { opacity: 0.7 }]}
                 onPress={() => handleBiometricLogin(false)}
