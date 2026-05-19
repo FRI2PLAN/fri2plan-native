@@ -1,4 +1,4 @@
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -166,7 +166,6 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ visible, onComplete, onNavigate }: OnboardingScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const ONBOARDING_STEPS = getOnboardingSteps(t);
   const [currentStep, setCurrentStep] = useState(0);
   const prevVisibleRef = useRef(false);
@@ -212,7 +211,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
       <View style={styles.overlay}>
         <SafeAreaView style={styles.container}>
           {/* Progress Bar */}
-          <View style={[styles.progressContainer, { paddingTop: Math.max(insets.top + 8, 20) }]}>
+          <View style={styles.progressContainer}>
             <View style={styles.progressBackground}>
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
@@ -323,6 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 16,
     gap: 12,
   },
