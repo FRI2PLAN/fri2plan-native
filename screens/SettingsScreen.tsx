@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as Updates from 'expo-updates';
+import Constants from 'expo-constants';
 import { API_URL } from '../lib/trpc';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal,
@@ -1136,7 +1137,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               <Text style={styles.settingIcon}>ℹ️</Text>
               <Text style={styles.settingLabel}>{t('settings.version')}</Text>
             </View>
-            <Text style={styles.settingValue}>{(Updates as any).manifest?.version || (Updates as any).manifest2?.extra?.expoClient?.version || '1.0.1'}</Text>
+            <Text style={styles.settingValue}>{Constants.expoConfig?.version || (Updates as any).manifest?.version || '1.0.6'}</Text>
           </View>
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
