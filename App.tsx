@@ -13,6 +13,7 @@ import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
 import { StyleSheet, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
@@ -167,17 +168,19 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <FamilyProvider>
-            <PagerProvider>
-              <AppContent />
-            </PagerProvider>
-          </FamilyProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <FamilyProvider>
+              <PagerProvider>
+                <AppContent />
+              </PagerProvider>
+            </FamilyProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
