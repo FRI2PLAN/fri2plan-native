@@ -101,13 +101,11 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       return null;
     }
 
-    // Utiliser Expo Push Token (fonctionne sur iOS et Android sans config APNS/FCM)
-    // Plus simple et uniforme — Expo gère la livraison sur les deux plateformes
-    const EXPO_PROJECT_ID = 'e57f2b3e-818f-4962-9479-6bf670caca94';
-    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId: EXPO_PROJECT_ID });
-    const expoPushToken = tokenData.data;
-    console.log('[Push] Expo Push Token obtenu:', expoPushToken ? expoPushToken.slice(0, 50) + '...' : 'null');
-    return expoPushToken || null;
+    // Obtenir le token FCM natif (device push token)
+    const tokenData = await Notifications.getDevicePushTokenAsync();
+    const fcmToken = tokenData.data as string;
+    console.log('[Push] Token FCM natif obtenu:', fcmToken ? fcmToken.slice(0, 40) + '...' : 'null');
+    return fcmToken || null;
   } catch (error) {
     console.error('[Push] Erreur lors de l\'obtention du token FCM:', error);
     return null;
