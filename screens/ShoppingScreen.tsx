@@ -402,8 +402,8 @@ export default function ShoppingScreen({
             {showDatePicker && (
               <DateTimePicker mode="date" value={targetDate || new Date()} onChange={(_, d) => { setShowDatePicker(false); if (d) setTargetDate(d); }} />
             )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8 }}>
-              <Text style={s.label}>🔒 {t('common.private') || 'Privé'}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8, paddingRight: 4 }}>
+              <Text style={[s.label, { flex: 1, marginRight: 8 }]} numberOfLines={1}>🔒 {t('common.private') || 'Privé'}</Text>
               <Switch
                 value={listForm.isPrivate}
                 onValueChange={v => setListForm(p => ({ ...p, isPrivate: v }))}

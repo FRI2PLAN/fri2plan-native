@@ -375,8 +375,8 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       {/* Modal création */}
       <Modal visible={createDialogOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <ScrollView>
-            <View style={styles.modalContent}>
+          <View style={styles.modalContent}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <Text style={styles.modalTitle}>{t('notes.createTitle')}</Text>
 
               <Text style={styles.fieldLabel}>{t('notes.noteTitle')} *</Text>
@@ -433,16 +433,16 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
                   {createMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryButtonText}>{t('common.create')}</Text>}
                 </TouchableOpacity>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal édition */}
       <Modal visible={editDialogOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <ScrollView>
-            <View style={styles.modalContent}>
+          <View style={styles.modalContent}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={styles.editHeader}>
                 <Text style={styles.modalTitle}>{t('notes.editTitle')}</Text>
                 <TouchableOpacity onPress={() => setEditDialogOpen(false)}>
@@ -513,8 +513,8 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
                   {updateMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryButtonText}>{t('common.save')}</Text>}
                 </TouchableOpacity>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -688,7 +688,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#1f2937' : '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20},
+    padding: 20,
+    maxHeight: '90%'},
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',

@@ -318,13 +318,28 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
   // ── Toutes les catégories (défaut + personnalisées)
   const allCategories = useMemo(() => {
-    const dbCats = (categories as any[]).map((cat: any) => ({
-      value: cat.name,
-      emoji: getCategoryEmoji(cat.icon),
-      color: cat.color || '#64748b'}));
+    // Filtrer uniquement les catégories de type 'expense' depuis la DB
+    const dbExpenseCats = (categories as any[])
+      .filter((cat: any) => cat.type === 'expense')
+      .map((cat: any) => ({
+        value: cat.name,
+        emoji: getCategoryEmoji(cat.icon),
+        color: cat.color || '#64748b'}));
     // Fusionner avec les catégories par défaut (sans doublons)
-    const custom = dbCats.filter(d => !EXPENSE_CATEGORIES.find(e => e.value === d.value));
+    const custom = dbExpenseCats.filter(d => !EXPENSE_CATEGORIES.find(e => e.value === d.value));
     return [...EXPENSE_CATEGORIES, ...custom];
+  }, [categories]);
+  const allIncomeCategories = useMemo(() => {
+    // Filtrer uniquement les catégories de type 'income' depuis la DB
+    const dbIncomeCats = (categories as any[])
+      .filter((cat: any) => cat.type === 'income')
+      .map((cat: any) => ({
+        value: cat.name,
+        emoji: getCategoryEmoji(cat.icon),
+        color: cat.color || '#10b981'}));
+    const incomeDefaults = INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' }));
+    const custom = dbIncomeCats.filter(d => !incomeDefaults.find(e => e.value === d.value));
+    return [...incomeDefaults, ...custom];
   }, [categories]);
 
   // ── Transactions d'un projet ──
@@ -843,7 +858,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
             >
               <Text style={styles.dropdownBtnText}>
                 {txForm.category
-                  ? (() => { const c = (txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵' })) : allCategories).find(x => x.value === txForm.category); return c ? `${c.emoji} ${c.value}` : txForm.category; })()
+                  ? (() => { const c = (txForm.type === 'income' ? allIncomeCategories : allCategories).find(x => x.value === txForm.category); return c ? `${c.emoji} ${c.value}` : txForm.category; })()
                   : t('budget.selectCategory')}
               </Text>
               <Text style={styles.dropdownArrow}>▼</Text>
@@ -851,7 +866,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
             {showTxCatDropdown && (
               <View style={[styles.dropdownList, { maxHeight: 200 }]}>
                 <ScrollView nestedScrollEnabled>
-                  {(txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' })) : allCategories).map(cat => (
+                  {(txForm.type === 'income' ? allIncomeCategories : allCategories).map(cat => (
                     <TouchableOpacity key={cat.value} style={styles.dropdownItem} onPress={() => { setTxForm(f => ({ ...f, category: cat.value })); setShowTxCatDropdown(false); }}>
                       <Text style={[styles.dropdownItemText, txForm.category === cat.value && { color: '#7c3aed', fontWeight: '700' }]}>{cat.emoji} {cat.value}</Text>
                     </TouchableOpacity>
