@@ -8,7 +8,7 @@
     "edit": "Edit",
     "add": "Add",
     "close": "Close",
-    "confirm": "Confirmation",
+    "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
     "search": "Search",
@@ -198,7 +198,9 @@
     "syncFreq1h": "1h",
     "syncFreq6h": "6h",
     "syncFreq24h": "24h",
-    "past": "Past"
+    "past": "Past",
+    "multiDay": "Multiple days",
+    "endDate": "End date"
   },
   "tasks": {
     "title": "Tasks",
@@ -587,7 +589,12 @@
     "passagePremium": "Premium upgrade",
     "fiveReferrals": "5 active referrals",
     "inviteCodeLabel": "Invite code",
-    "copy": "Copy"
+    "copy": "Copy",
+    "statusPending": "Pending",
+    "statusActive": "Active",
+    "statusPremium": "Premium",
+    "heroDesc": "Invite your friends to join FRI2PLAN and receive rewards for each successful registration",
+    "earned": "You earned {{amount}}€"
   },
   "settings": {
     "title": "Settings",
@@ -1053,7 +1060,7 @@
     "passwordMinLength": "Minimum 8 characters"
   },
   "intimate": {
-    "title": "🌸 Intimate Calendar",
+    "title": "Intimate Calendar",
     "activationTitle": "Intimate Calendar",
     "activationDesc": "Track your menstrual cycle, predict your next period and identify your fertility window. This feature is 100% private — only you can access it.",
     "featureCycle": "🩸 Cycle tracking",
@@ -1074,21 +1081,21 @@
     "phaseLuteal": "Luteal phase",
     "phaseDay": "Day {{day}} of {{total}}",
     "nextPeriod": "Next period",
-    "inDays": "In {{n}} d.",
+    "inDays": "In {{count}} d.",
     "today": "Today",
-    "daysAgo": "{{n}} d. ago",
+    "daysAgo": "{{count}} d. ago",
     "fertilityWindow": "Fertility window",
     "ovulationDay": "Ovulation D.{{day}}",
     "cyclePhases": "Cycle phases",
-    "days": "Days {{start}}–{{end}}",
+    "days": "days",
     "current": "Current",
     "noCycle": "No cycle recorded",
     "noCycleHint": "Tap \"New cycle\" to start tracking",
     "cyclesCount": "{{n}} cycle(s) recorded",
     "noHistory": "No history",
     "cycleTitle": "Cycle #{{n}}",
-    "cycleStart": "Start: {{date}}",
-    "cycleDuration": "Duration: {{n}} days",
+    "cycleStart": "Start",
+    "cycleDuration": "Duration",
     "statusRegular": "Regular",
     "statusEarly": "Early",
     "statusLate": "Late",
@@ -1126,6 +1133,10 @@
     "symptomNausea": "Nausea",
     "symptomBackPain": "Back pain",
     "symptomMoodSwings": "Mood swings",
-    "symptomAcne": "Acne"
+    "symptomAcne": "Acne",
+    "dayOfCycle": "Day {{day}} of {{total}}",
+    "daysRange": "Days {{start}}–{{end}}",
+    "cyclesRecorded": "{{count}} cycle(s) recorded",
+    "cycleNumber": "Cycle #{{num}}"
   }
 }

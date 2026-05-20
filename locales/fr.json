@@ -8,7 +8,7 @@
     "edit": "Modifier",
     "add": "Ajouter",
     "close": "Fermer",
-    "confirm": "Confirmation",
+    "confirm": "Confirmer",
     "yes": "Oui",
     "no": "Non",
     "search": "Rechercher",
@@ -198,7 +198,9 @@
     "syncFreq1h": "1h",
     "syncFreq6h": "6h",
     "syncFreq24h": "24h",
-    "past": "Passé"
+    "past": "Passé",
+    "multiDay": "Plusieurs jours",
+    "endDate": "Date de fin"
   },
   "tasks": {
     "title": "Tâches",
@@ -587,7 +589,12 @@
     "passagePremium": "Passage Premium",
     "fiveReferrals": "5 parrainages actifs",
     "inviteCodeLabel": "Code d'invitation",
-    "copy": "Copier"
+    "copy": "Copier",
+    "statusPending": "En attente",
+    "statusActive": "Actif",
+    "statusPremium": "Premium",
+    "heroDesc": "Invitez vos amis à rejoindre FRI2PLAN et recevez des récompenses pour chaque inscription réussie",
+    "earned": "Vous avez gagné {{amount}}€"
   },
   "settings": {
     "title": "Paramètres",
@@ -1053,7 +1060,7 @@
     "passwordMinLength": "8 caractères minimum"
   },
   "intimate": {
-    "title": "🌸 Calendrier Intime",
+    "title": "Calendrier Intime",
     "activationTitle": "Calendrier Intime",
     "activationDesc": "Suivez votre cycle menstruel, prédisez vos prochaines règles et identifiez votre fenêtre de fertilité. Cette fonctionnalité est 100% privée — seule vous pouvez y accéder.",
     "featureCycle": "🩸 Suivi du cycle",
@@ -1074,21 +1081,21 @@
     "phaseLuteal": "Phase lutéale",
     "phaseDay": "Jour {{day}} sur {{total}}",
     "nextPeriod": "Prochaines règles",
-    "inDays": "Dans {{n}} j.",
+    "inDays": "Dans {{count}} j.",
     "today": "Aujourd'hui",
-    "daysAgo": "Il y a {{n}} j.",
+    "daysAgo": "Il y a {{count}} j.",
     "fertilityWindow": "Fenêtre fertile",
     "ovulationDay": "Ovulation J.{{day}}",
     "cyclePhases": "Phases du cycle",
-    "days": "Jours {{start}}–{{end}}",
+    "days": "jours",
     "current": "Actuel",
     "noCycle": "Aucun cycle enregistré",
     "noCycleHint": "Appuyez sur \"Nouveau cycle\" pour commencer le suivi",
     "cyclesCount": "{{n}} cycle(s) enregistré(s)",
     "noHistory": "Aucun historique",
     "cycleTitle": "Cycle #{{n}}",
-    "cycleStart": "Début : {{date}}",
-    "cycleDuration": "Durée : {{n}} jours",
+    "cycleStart": "Début",
+    "cycleDuration": "Durée",
     "statusRegular": "Régulier",
     "statusEarly": "En avance",
     "statusLate": "En retard",
@@ -1126,6 +1133,10 @@
     "symptomNausea": "Nausées",
     "symptomBackPain": "Douleurs dorsales",
     "symptomMoodSwings": "Sautes d'humeur",
-    "symptomAcne": "Acné"
+    "symptomAcne": "Acné",
+    "dayOfCycle": "Jour {{day}} sur {{total}}",
+    "daysRange": "Jours {{start}}–{{end}}",
+    "cyclesRecorded": "{{count}} cycle(s) enregistré(s)",
+    "cycleNumber": "Cycle #{{num}}"
   }
 }

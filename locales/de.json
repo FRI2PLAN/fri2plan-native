@@ -8,7 +8,7 @@
     "edit": "Bearbeiten",
     "add": "Hinzufügen",
     "close": "Schließen",
-    "confirm": "Bestätigung",
+    "confirm": "Bestätigen",
     "yes": "Ja",
     "no": "Nein",
     "search": "Suchen",
@@ -198,7 +198,9 @@
     "syncFreq1h": "1h",
     "syncFreq6h": "6h",
     "syncFreq24h": "24h",
-    "past": "Vergangen"
+    "past": "Vergangen",
+    "multiDay": "Mehrere Tage",
+    "endDate": "Enddatum"
   },
   "tasks": {
     "title": "Aufgaben",
@@ -587,7 +589,12 @@
     "passagePremium": "Premium-Upgrade",
     "fiveReferrals": "5 aktive Empfehlungen",
     "inviteCodeLabel": "Einladungscode",
-    "copy": "Kopieren"
+    "copy": "Kopieren",
+    "statusPending": "Ausstehend",
+    "statusActive": "Aktiv",
+    "statusPremium": "Premium",
+    "heroDesc": "Laden Sie Ihre Freunde ein, FRI2PLAN beizutreten, und erhalten Sie Belohnungen für jede erfolgreiche Registrierung",
+    "earned": "Sie haben {{amount}}€ verdient"
   },
   "settings": {
     "title": "Einstellungen",
@@ -1053,7 +1060,7 @@
     "passwordMinLength": "Mindestens 8 Zeichen"
   },
   "intimate": {
-    "title": "🌸 Intimer Kalender",
+    "title": "Intimer Kalender",
     "activationTitle": "Intimer Kalender",
     "activationDesc": "Verfolgen Sie Ihren Menstruationszyklus, sagen Sie Ihre nächste Periode voraus und identifizieren Sie Ihr Fruchtbarkeitsfenster. Diese Funktion ist 100% privat.",
     "featureCycle": "🩸 Zyklusverfolgung",
@@ -1074,21 +1081,21 @@
     "phaseLuteal": "Lutealphase",
     "phaseDay": "Tag {{day}} von {{total}}",
     "nextPeriod": "Nächste Periode",
-    "inDays": "In {{n}} T.",
+    "inDays": "In {{count}} T.",
     "today": "Heute",
-    "daysAgo": "Vor {{n}} T.",
+    "daysAgo": "Vor {{count}} T.",
     "fertilityWindow": "Fruchtbarkeitsfenster",
     "ovulationDay": "Eisprung T.{{day}}",
     "cyclePhases": "Zyklusphasen",
-    "days": "Tage {{start}}–{{end}}",
+    "days": "Tage",
     "current": "Aktuell",
     "noCycle": "Kein Zyklus aufgezeichnet",
     "noCycleHint": "Tippen Sie auf \"Neuer Zyklus\", um die Verfolgung zu starten",
     "cyclesCount": "{{n}} Zyklus/Zyklen aufgezeichnet",
     "noHistory": "Kein Verlauf",
     "cycleTitle": "Zyklus #{{n}}",
-    "cycleStart": "Beginn: {{date}}",
-    "cycleDuration": "Dauer: {{n}} Tage",
+    "cycleStart": "Beginn",
+    "cycleDuration": "Dauer",
     "statusRegular": "Regelmäßig",
     "statusEarly": "Früh",
     "statusLate": "Spät",
@@ -1126,6 +1133,10 @@
     "symptomNausea": "Übelkeit",
     "symptomBackPain": "Rückenschmerzen",
     "symptomMoodSwings": "Stimmungsschwankungen",
-    "symptomAcne": "Akne"
+    "symptomAcne": "Akne",
+    "dayOfCycle": "Tag {{day}} von {{total}}",
+    "daysRange": "Tage {{start}}–{{end}}",
+    "cyclesRecorded": "{{count}} Zyklus/Zyklen erfasst",
+    "cycleNumber": "Zyklus #{{num}}"
   }
 }

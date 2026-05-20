@@ -134,9 +134,9 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   };
 
   const handleDeleteCycle = (cycleId: number) => {
-    Alert.alert('Supprimer', t('intimate.deleteConfirm'), [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteCycleMutation.mutate({ cycleId }) }
+    Alert.alert(t('common.delete') || 'Supprimer', t('intimate.deleteConfirm'), [
+      { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+      { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => deleteCycleMutation.mutate({ cycleId }) }
     ]);
   };
 
@@ -204,7 +204,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
 
       {/* Titre */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>🌸 Calendrier Intime</Text>
+        <Text style={styles.pageTitle}>🌸 {t('intimate.title') || 'Calendrier Intime'}</Text>
       </View>
 
       {/* Si désactivé : écran d'activation */}
@@ -260,7 +260,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                         <Text style={styles.phaseEmoji}>{currentCycleInfo.phaseEmoji}</Text>
                         <View style={styles.phaseCardBody}>
                           <Text style={[styles.phaseName, { color: currentCycleInfo.phaseColor }]}>{currentCycleInfo.phase}</Text>
-                          <Text style={styles.phaseDay}>Jour {currentCycleInfo.dayOfCycle} sur {currentCycleInfo.cycleDuration}</Text>
+                          <Text style={styles.phaseDay}>{t('intimate.dayOfCycle', { day: currentCycleInfo.dayOfCycle, total: currentCycleInfo.cycleDuration }) || `Jour ${currentCycleInfo.dayOfCycle} sur ${currentCycleInfo.cycleDuration}`}</Text>
                         </View>
                       </View>
                       {/* Barre de progression */}
@@ -276,8 +276,10 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                         <Text style={styles.dateCardLabel}>{t('intimate.nextPeriod')}</Text>
                         <Text style={styles.dateCardValue}>
                           {currentCycleInfo.daysUntilNext > 0
-                            ? `Dans ${currentCycleInfo.daysUntilNext} j.`
-                            : currentCycleInfo.daysUntilNext === 0 ? "Aujourd'hui" : `Il y a ${Math.abs(currentCycleInfo.daysUntilNext)} j.`}
+                            ? (t('intimate.inDays', { count: currentCycleInfo.daysUntilNext }) || `Dans ${currentCycleInfo.daysUntilNext} j.`)
+                            : currentCycleInfo.daysUntilNext === 0
+                              ? (t('intimate.today') || "Aujourd'hui")
+                              : (t('intimate.daysAgo', { count: Math.abs(currentCycleInfo.daysUntilNext) }) || `Il y a ${Math.abs(currentCycleInfo.daysUntilNext)} j.`)}
                         </Text>
                         <Text style={styles.dateCardDate}>{currentCycleInfo.nextPeriodDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</Text>
                       </View>
@@ -285,7 +287,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                         <Text style={styles.dateCardEmoji}>🌸</Text>
                         <Text style={styles.dateCardLabel}>{t('intimate.fertilityWindow')}</Text>
                         <Text style={styles.dateCardValue}>J.{currentCycleInfo.fertilityStart}–J.{currentCycleInfo.fertilityEnd}</Text>
-                        <Text style={styles.dateCardDate}>Ovulation J.{currentCycleInfo.ovulationDay}</Text>
+                        <Text style={styles.dateCardDate}>{t('intimate.ovulationDay', { day: currentCycleInfo.ovulationDay }) || `Ovulation J.${currentCycleInfo.ovulationDay}`}</Text>
                       </View>
                     </View>
 
@@ -302,7 +304,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                           <Text style={styles.phaseRowEmoji}>{phase.emoji}</Text>
                           <View style={styles.phaseRowBody}>
                             <Text style={[styles.phaseRowName, { color: phase.color }]}>{phase.name}</Text>
-                            <Text style={styles.phaseRowDays}>Jours {phase.start}–{phase.end}</Text>
+                            <Text style={styles.phaseRowDays}>{t('intimate.daysRange', { start: phase.start, end: phase.end }) || `Jours ${phase.start}–${phase.end}`}</Text>
                           </View>
                           {currentCycleInfo.phase === phase.name && (
                             <View style={[styles.currentBadge, { backgroundColor: phase.color }]}>
@@ -326,7 +328,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
             {/* HISTORIQUE */}
             {activeTab === 'history' && (
               <>
-                <Text style={styles.sectionTitle}>{(cycles as any[]).length} cycle(s) enregistré(s)</Text>
+                <Text style={styles.sectionTitle}>{t('intimate.cyclesRecorded', { count: (cycles as any[]).length }) || `${(cycles as any[]).length} cycle(s) enregistré(s)`}</Text>
                 {cyclesLoading ? (
                   <Text style={styles.loadingText}>{t('common.loading')}</Text>
                 ) : (cycles as any[]).length === 0 ? (
@@ -339,11 +341,11 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                     <View key={cycle.id} style={styles.cycleCard}>
                       <View style={styles.cycleCardTop}>
                         <View>
-                          <Text style={styles.cycleCardTitle}>Cycle #{(cycles as any[]).length - index}</Text>
+                          <Text style={styles.cycleCardTitle}>{t('intimate.cycleNumber', { num: (cycles as any[]).length - index }) || `Cycle #${(cycles as any[]).length - index}`}</Text>
                           <Text style={styles.cycleCardDate}>
-                            Début : {new Date(cycle.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            {t('intimate.cycleStart') || 'Début'} : {new Date(cycle.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                           </Text>
-                          {cycle.cycleLength && <Text style={styles.cycleCardLength}>Durée : {cycle.cycleLength} jours</Text>}
+                          {cycle.cycleLength && <Text style={styles.cycleCardLength}>{t('intimate.cycleDuration') || 'Durée'} : {cycle.cycleLength} {t('intimate.days') || 'jours'}</Text>}
                         </View>
                         <View style={styles.cycleCardRight}>
                           {cycle.status && (

@@ -351,17 +351,17 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
   // ── Titres ──
   const TITLES: Record<QuickCreateType, string> = {
-    event: '📅 Nouvel événement',
-    task: '✅ Nouvelle tâche',
-    note: '📝 Nouvelle note',
-    expense: '💰 Nouvelle dépense',
-    request: '🙋 Nouvelle requête',
+    event: `📅 ${t('calendar.addEvent')}`,
+    task: `✅ ${t('tasks.addTask')}`,
+    note: `📝 ${t('notes.newNote')}`,
+    expense: `💰 ${t('budget.addExpense')}`,
+    request: `🙋 ${t('requests.newRequest')}`,
   };
 
   // ── Membres pour dropdown ──
   const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
   const memberOptions = [
-    { value: '0', label: '👤 Non assigné' },
+    { value: '0', label: `👤 ${t('tasks.unassigned')}` },
     ...activeMembers.map((m: any) => ({ value: String(m.id), label: m.name || 'Membre' })),
   ];
 
@@ -371,15 +371,15 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'event':
         return (
           <>
-            <Text style={styles.label}>Titre *</Text>
+            <Text style={styles.label}>{t('common.title')} *</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titre de l'événement"
+              placeholder={t('calendar.addEvent')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>{t('common.description')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={description}
@@ -389,7 +389,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
             <Dropdown
-              label="Catégorie"
+              label={t('calendar.category')}
               value={eventCategory}
               options={EVENT_CATEGORIES.map(c => ({ value: c.value, label: `${c.icon} ${c.label}` }))}
               onChange={setEventCategory}
@@ -399,7 +399,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
             {/* Options jour entier + multi-jours */}
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🌅 Jour entier</Text>
+              <Text style={styles.label}>🌅 {t('calendar.allDay')}</Text>
               <Switch
                 value={isAllDay}
                 onValueChange={setIsAllDay}
@@ -408,7 +408,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               />
             </View>
             <View style={styles.switchRow}>
-              <Text style={styles.label}>📆 Plusieurs jours</Text>
+              <Text style={styles.label}>📆 {t('calendar.multiDay') || 'Plusieurs jours'}</Text>
               <Switch
                 value={isMultiDay}
                 onValueChange={setIsMultiDay}
@@ -437,7 +437,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             {/* Date de fin (multi-jours) */}
             {isMultiDay && (
               <>
-                <Text style={styles.label}>Date de fin</Text>
+                <Text style={styles.label}>{t('calendar.endDate') || 'Date de fin'}</Text>
                 <TouchableOpacity style={styles.dateBtn} onPress={() => {
                   if (Platform.OS === 'ios') { setDatePickerTarget('eventEnd'); setTempDateValue(eventEndDate); setShowDatePickerModal(true); }
                   else setShowEventEndDatePicker(true);
@@ -460,7 +460,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             {!isAllDay && (
               <View style={styles.row}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.label}>Début</Text>
+                  <Text style={styles.label}>{t('calendar.startTime')}</Text>
                   <TouchableOpacity
                     style={styles.dateBtn}
                     onPress={() => {
@@ -496,7 +496,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Fin</Text>
+                  <Text style={styles.label}>{t('calendar.endTime')}</Text>
                   <TouchableOpacity
                     style={styles.dateBtn}
                     onPress={() => {
@@ -526,7 +526,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
             {/* Rappel */}
             <Dropdown
-              label="🔔 Rappel"
+              label={`🔔 ${t('calendar.reminder')}`}
               value={eventReminder}
               options={REMINDER_OPTIONS as unknown as { value: string; label: string }[]}
               onChange={setEventReminder}
@@ -535,7 +535,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             />
 
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🔒 Privé</Text>
+              <Text style={styles.label}>🔒 {t('common.private')}</Text>
               <Switch
                 value={eventPrivate}
                 onValueChange={setEventPrivate}
@@ -549,15 +549,15 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'task':
         return (
           <>
-            <Text style={styles.label}>Titre *</Text>
+            <Text style={styles.label}>{t('common.title')} *</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titre de la tâche"
+              placeholder={t('tasks.titlePlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Description</Text>
+                        <Text style={styles.label}>{t('common.description')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={description}
@@ -566,10 +566,9 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               numberOfLines={2}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-
             {/* Priorité — dropdown */}
             <Dropdown
-              label="Priorité"
+              label={t('tasks.priority')}
               value={taskPriority}
               options={PRIORITIES as unknown as { value: string; label: string }[]}
               onChange={(v) => setTaskPriority(v as any)}
@@ -580,7 +579,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             {/* Assigner à — dropdown */}
             {activeMembers.length > 0 && (
               <Dropdown
-                label="Assigner à"
+                label={t('tasks.assignedTo')}
                 value={taskAssignedTo ? String(taskAssignedTo) : '0'}
                 options={memberOptions}
                 onChange={(v) => setTaskAssignedTo(v === '0' ? undefined : parseInt(v))}
@@ -591,7 +590,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
             {/* Récurrence — dropdown */}
             <Dropdown
-              label="Récurrence"
+              label={t('tasks.recurrence')}
               value={taskRecurrence}
               options={RECURRENCES as unknown as { value: string; label: string }[]}
               onChange={(v) => setTaskRecurrence(v as any)}
@@ -599,12 +598,12 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               styles={styles}
             />
 
-            <Text style={styles.label}>Échéance</Text>
+            <Text style={styles.label}>{t('tasks.dueDate')}</Text>
             <TouchableOpacity style={styles.dateBtn} onPress={() => {
               if (Platform.OS === 'ios') { setDatePickerTarget('task'); setTempDateValue(taskDueDate || new Date()); setShowDatePickerModal(true); }
               else setShowTaskDatePicker(true);
             }}>
-              <Text style={styles.dateBtnText}>📅 {taskDueDate ? format(taskDueDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
+              <Text style={styles.dateBtnText}>📅 {taskDueDate ? format(taskDueDate, 'dd/MM/yyyy') : t('tasks.chooseDate')}</Text>
             </TouchableOpacity>
             {Platform.OS === 'android' && showTaskDatePicker && (
               <DateTimePicker
@@ -616,7 +615,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             )}
 
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🔒 Privé</Text>
+              <Text style={styles.label}>🔒 {t('common.private')}</Text>
               <Switch
                 value={taskPrivate}
                 onValueChange={setTaskPrivate}
@@ -630,26 +629,26 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'note':
         return (
           <>
-            <Text style={styles.label}>Titre *</Text>
+            <Text style={styles.label}>{t('common.title')} *</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titre de la note"
+              placeholder={t('notes.titlePlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Contenu</Text>
+            <Text style={styles.label}>{t('notes.content')}</Text>
             <TextInput
               style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
               value={description}
               onChangeText={setDescription}
               multiline
               numberOfLines={4}
-              placeholder="Contenu de la note..."
+              placeholder={t('notes.contentPlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🔒 Privée</Text>
+              <Text style={styles.label}>🔒 {t('common.private')}</Text>
               <Switch
                 value={notePrivate}
                 onValueChange={setNotePrivate}
@@ -663,7 +662,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'expense':
         return (
           <>
-            <Text style={styles.label}>Type</Text>
+            <Text style={styles.label}>{t('budget.expense')}</Text>
             <View style={[styles.row, { marginBottom: 12 }]}>
               <TouchableOpacity
                 onPress={() => setExpenseType('expense')}
@@ -678,15 +677,15 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                 <Text style={[styles.typeBtnText, expenseType === 'income' && { color: '#fff' }]}>📈 Revenu</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>{t('common.description')}</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Description"
+              placeholder={t('budget.descriptionPlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Montant (CHF) *</Text>
+            <Text style={styles.label}>{t('budget.amount')} (CHF) *</Text>
             <TextInput
               style={styles.input}
               value={expenseAmount}
@@ -696,14 +695,14 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
             <Dropdown
-              label="Catégorie *"
+              label={`${t('budget.category')} *`}
               value={expenseCategory || ''}
               options={expenseType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
               onChange={setExpenseCategory}
               isDark={isDark}
               styles={styles}
             />
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>{t('budget.date')}</Text>
             <TouchableOpacity style={styles.dateBtn} onPress={() => {
               if (Platform.OS === 'ios') { setDatePickerTarget('expense'); setTempDateValue(expenseDate); setShowDatePickerModal(true); }
               else setShowExpenseDatePicker(true);
@@ -719,7 +718,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               />
             )}
             <View style={styles.switchRow}>
-              <Text style={styles.label}>🔒 Privé</Text>
+              <Text style={styles.label}>🔒 {t('common.private')}</Text>
               <Switch
                 value={expensePrivate}
                 onValueChange={setExpensePrivate}
@@ -733,7 +732,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
       case 'request':
         return (
           <>
-            <Text style={styles.label}>Type</Text>
+            <Text style={styles.label}>{t('requests.type')}</Text>
             <View style={[styles.row, { flexWrap: 'wrap', marginBottom: 12 }]}>
               {REQUEST_TYPES.map(rt => (
                 <TouchableOpacity
@@ -745,15 +744,15 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.label}>Titre *</Text>
+            <Text style={styles.label}>{t('common.title')} *</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titre de la requête"
+              placeholder={t('requests.titlePlaceholder')}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>{t('common.description')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={description}
@@ -764,12 +763,12 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             />
             {(requestType === 'outing' || requestType === 'permission') && (
               <>
-                <Text style={styles.label}>Date *</Text>
+                <Text style={styles.label}>{t('requests.requestedDate')} *</Text>
                 <TouchableOpacity style={styles.dateBtn} onPress={() => {
                   if (Platform.OS === 'ios') { setDatePickerTarget('request'); setTempDateValue(requestDate || new Date()); setShowDatePickerModal(true); }
                   else setShowRequestDatePicker(true);
                 }}>
-                  <Text style={styles.dateBtnText}>📅 {requestDate ? format(requestDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
+                  <Text style={styles.dateBtnText}>📅 {requestDate ? format(requestDate, 'dd/MM/yyyy') : t('requests.selectDate')}</Text>
                 </TouchableOpacity>
                 {Platform.OS === 'android' && showRequestDatePicker && (
                   <DateTimePicker
@@ -818,12 +817,12 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={handleClose}>
-              <Text style={styles.cancelBtnText}>Annuler</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={isPending}>
               {isPending
                 ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={styles.submitBtnText}>Créer</Text>}
+                : <Text style={styles.submitBtnText}>{t('common.create')}</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -833,7 +832,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
         <Modal visible={showDatePickerModal} transparent animationType="fade" onRequestClose={() => setShowDatePickerModal(false)}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 320, alignItems: 'center' }}>
-              <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>Choisir une date</Text>
+              <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>{t('tasks.chooseDate')}</Text>
               <DateTimePicker
                 value={tempDateValue}
                 mode="date"
@@ -847,7 +846,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   onPress={() => setShowDatePickerModal(false)}
                   style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
                 >
-                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => {
@@ -860,7 +859,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   }}
                   style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#7c3aed', alignItems: 'center' }}
                 >
-                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>Confirmer</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>{t('common.confirm') || 'Confirmer'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -873,7 +872,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
               <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
-                {timePickerTarget === 'start' ? 'Heure de début' : 'Heure de fin'}
+                {timePickerTarget === 'start' ? t('calendar.startTime') : t('calendar.endTime')}
               </Text>
               <DateTimePicker
                 value={tempTimeValue}
@@ -888,7 +887,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   onPress={() => setShowTimePickerModal(false)}
                   style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
                 >
-                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => {
@@ -905,7 +904,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
                   }}
                   style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
                 >
-                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>Confirmer</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>{t('common.confirm') || 'Confirmer'}</Text>
                 </TouchableOpacity>
               </View>
             </View>

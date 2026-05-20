@@ -86,9 +86,9 @@ export default function ReferralScreen({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return 'En attente';
-      case 'active': return 'Actif';
-      case 'premium': return 'Premium';
+      case 'pending': return t('referral.statusPending') || 'En attente';
+      case 'active': return t('referral.statusActive') || 'Actif';
+      case 'premium': return t('referral.statusPremium') || 'Premium';
       default: return '';
     }
   };
@@ -112,7 +112,7 @@ export default function ReferralScreen({
           <Text style={styles.heroEmoji}>🎁</Text>
           <Text style={styles.heroTitle}>{t('referral.tagline')}</Text>
           <Text style={styles.heroDescription}>
-            Invitez vos amis à rejoindre FRI2PLAN et recevez des récompenses pour chaque inscription réussie
+            {t('referral.heroDesc') || 'Invitez vos amis à rejoindre FRI2PLAN et recevez des récompenses pour chaque inscription réussie'}
           </Text>
         </View>
 
@@ -141,7 +141,7 @@ export default function ReferralScreen({
               style={styles.copyButton}
               onPress={() => copyToClipboard(referralCode)}
             >
-              <Text style={styles.copyButtonText}>📋 Copier</Text>
+              <Text style={styles.copyButtonText}>📋 {t('referral.copy')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -154,7 +154,7 @@ export default function ReferralScreen({
               style={styles.copyButton}
               onPress={() => copyToClipboard(referralLink)}
             >
-              <Text style={styles.copyButtonText}>📋 Copier</Text>
+              <Text style={styles.copyButtonText}>📋 {t('referral.copy')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -247,7 +247,7 @@ export default function ReferralScreen({
                 {referral.reward > 0 && (
                   <View style={styles.referralReward}>
                     <Text style={styles.referralRewardText}>
-                      🎁 Vous avez gagné {referral.reward}€
+                      🎁 {t('referral.earned', { amount: referral.reward }) || `Vous avez gagné ${referral.reward}€`}
                     </Text>
                   </View>
                 )}

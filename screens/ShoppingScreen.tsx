@@ -6,7 +6,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -402,9 +402,14 @@ export default function ShoppingScreen({
             {showDatePicker && (
               <DateTimePicker mode="date" value={targetDate || new Date()} onChange={(_, d) => { setShowDatePicker(false); if (d) setTargetDate(d); }} />
             )}
-            <TouchableOpacity style={s.privateToggle} onPress={() => setListForm(p => ({ ...p, isPrivate: !p.isPrivate }))}>
-              <Text style={s.privateToggleText}>{listForm.isPrivate ? '🔒' : '🔓'} {t('common.private') || 'Privé'}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8 }}>
+              <Text style={s.label}>🔒 {t('common.private') || 'Privé'}</Text>
+              <Switch
+                value={listForm.isPrivate}
+                onValueChange={v => setListForm(p => ({ ...p, isPrivate: v }))}
+                trackColor={{ true: '#7c3aed' }}
+              />
+            </View>
             <View style={s.modalActions}>
               <TouchableOpacity style={s.cancelBtn} onPress={() => setShowListForm(false)}><Text style={s.cancelBtnText}>✕</Text></TouchableOpacity>
               {editingList && (
