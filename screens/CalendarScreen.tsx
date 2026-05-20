@@ -595,7 +595,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       startTime: format(startTime, 'HH:mm'),
       endTime: format(endTime, 'HH:mm'),
       category: event.category || 'other',
-      reminder: (event.reminderMinutes ?? event.reminder)?.toString() || '15',
+      reminder: (event.reminderMinutes ?? event.reminder)?.toString() || defaultReminderStr,
       isPrivate: event.isPrivate || false});
     setEditModalOpen(true);
   };
@@ -1718,8 +1718,15 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  if (timePickerTarget === 'start') setStartTimeDate(tempTimeValue);
-                  else setEndTimeDate(tempTimeValue);
+                  if (timePickerTarget === 'start') {
+                    setStartTimeDate(tempTimeValue);
+                    // Heure de fin auto = début + 1h si fin <= début
+                    if (endTimeDate <= tempTimeValue) {
+                      setEndTimeDate(new Date(tempTimeValue.getTime() + 60 * 60 * 1000));
+                    }
+                  } else {
+                    setEndTimeDate(tempTimeValue);
+                  }
                   setShowTimePicker(false);
                 }}
                 style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}

@@ -3,7 +3,7 @@
  * Ouvre un formulaire léger par-dessus la page courante, sans navigation.
  * Types supportés : event | task | note | expense | request
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Modal, ScrollView,
   StyleSheet, ActivityIndicator, Switch, Alert, Platform, KeyboardAvoidingView,
@@ -124,6 +124,10 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const styles = getStyles(isDark);
 
+  // ── Settings utilisateur (rappel par défaut) ──
+  const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined, { enabled: visible }) || { data: null };
+  const defaultReminderStr = String((userSettings as any)?.eventReminderMinutes ?? 15);
+
   // ── Famille ──
   const { data: families = [] } = trpc.family.list.useQuery(undefined, { enabled: visible });
   const activeFamily = useMemo(() => {
@@ -170,6 +174,10 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [eventPrivate, setEventPrivate] = useState(false);
   const [eventReminder, setEventReminder] = useState('15');
+  // ── Time picker modal iOS robuste ──
+  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
+  const [tempTimeValue, setTempTimeValue] = useState(new Date());
 
   // ── Tâche ──
   const [taskPriority, setTaskPriority] = useState<'urgent' | 'high' | 'medium' | 'low'>('medium');
@@ -225,6 +233,11 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
   const isPending = createEvent.isPending || createTask.isPending || createNote.isPending || createTx.isPending || createRequest.isPending;
 
+  // ── Sync rappel depuis settings ──
+  useEffect(() => {
+    if (userSettings) setEventReminder(defaultReminderStr);
+  }, [defaultReminderStr]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Reset & fermeture ──
   const handleClose = () => {
     setTitle(''); setDescription('');
@@ -232,7 +245,7 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
     setIsAllDay(false); setIsMultiDay(false);
     const s = new Date(); s.setHours(9, 0, 0, 0); setStartTime(s);
     const e = new Date(); e.setHours(10, 0, 0, 0); setEndTime(e);
-    setEventPrivate(false); setEventReminder('15');
+    setEventPrivate(false); setEventReminder(defaultReminderStr);
     setTaskPriority('medium'); setTaskAssignedTo(undefined); setTaskDueDate(undefined);
     setTaskPrivate(false); setTaskRecurrence('none');
     setNotePrivate(false);
@@ -441,25 +454,57 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               <View style={styles.row}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.label}>Début</Text>
-                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowStartTimePicker(true)}>
+                  <TouchableOpacity
+                    style={styles.dateBtn}
+                    onPress={() => {
+                      setTempTimeValue(startTime);
+                      setTimePickerTarget('start');
+                      if (Platform.OS === 'ios') {
+                        setShowTimePickerModal(true);
+                      } else {
+                        setShowStartTimePicker(true);
+                      }
+                    }}
+                  >
                     <Text style={styles.dateBtnText}>🕐 {format(startTime, 'HH:mm')}</Text>
                   </TouchableOpacity>
-                  {showStartTimePicker && (
+                  {Platform.OS === 'android' && showStartTimePicker && (
                     <DateTimePicker
                       value={startTime}
                       mode="time"
                       is24Hour
                       display="default"
-                      onChange={(_, d) => { setShowStartTimePicker(false); if (d) setStartTime(d); }}
+                      onChange={(_, d) => {
+                        setShowStartTimePicker(false);
+                        if (d) {
+                          setStartTime(d);
+                          // Heure de fin auto = début + 1h si fin <= début
+                          if (endTime <= d) {
+                            const newEnd = new Date(d.getTime() + 60 * 60 * 1000);
+                            setEndTime(newEnd);
+                          }
+                        }
+                      }}
                     />
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Fin</Text>
-                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEndTimePicker(true)}>
+                  <TouchableOpacity
+                    style={styles.dateBtn}
+                    onPress={() => {
+                      setTempTimeValue(endTime);
+                      setTimePickerTarget('end');
+                      if (Platform.OS === 'ios') {
+                        setShowTimePickerModal(true);
+                      } else {
+                        setShowEndTimePicker(true);
+                      }
+                    }}
+                  >
                     <Text style={styles.dateBtnText}>🕐 {format(endTime, 'HH:mm')}</Text>
                   </TouchableOpacity>
-                  {showEndTimePicker && (
+                  {Platform.OS === 'android' && showEndTimePicker && (
                     <DateTimePicker
                       value={endTime}
                       mode="time"
@@ -773,6 +818,51 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           </View>
         </View>
       </KeyboardAvoidingView>
+      {/* ── Modal Time Picker iOS robuste ── */}
+      {Platform.OS === 'ios' && (
+        <Modal visible={showTimePickerModal} transparent animationType="fade" onRequestClose={() => setShowTimePickerModal(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
+              <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
+                {timePickerTarget === 'start' ? 'Heure de début' : 'Heure de fin'}
+              </Text>
+              <DateTimePicker
+                value={tempTimeValue}
+                mode="time"
+                is24Hour
+                display="spinner"
+                onChange={(_, d) => { if (d) setTempTimeValue(d); }}
+                textColor={isDark ? '#f9fafb' : '#111827'}
+              />
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <TouchableOpacity
+                  onPress={() => setShowTimePickerModal(false)}
+                  style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
+                >
+                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (timePickerTarget === 'start') {
+                      setStartTime(tempTimeValue);
+                      // Heure de fin auto = début + 1h si fin <= début
+                      if (endTime <= tempTimeValue) {
+                        setEndTime(new Date(tempTimeValue.getTime() + 60 * 60 * 1000));
+                      }
+                    } else {
+                      setEndTime(tempTimeValue);
+                    }
+                    setShowTimePickerModal(false);
+                  }}
+                  style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>Confirmer</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </Modal>
   );
 }
