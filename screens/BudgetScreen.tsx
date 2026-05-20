@@ -198,6 +198,10 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('month');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [showFilterTypeDropdown, setShowFilterTypeDropdown] = useState(false);
+  const [showFilterPeriodDropdown, setShowFilterPeriodDropdown] = useState(false);
+  const [showTxCatDropdown, setShowTxCatDropdown] = useState(false);
+  const [showTxPayerDropdown, setShowTxPayerDropdown] = useState(false);
 
   // ── Formulaire transaction ──
   const [txModalOpen, setTxModalOpen] = useState(false);
@@ -542,37 +546,57 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
           {/* Filtres */}
           <View style={styles.filtersSection}>
-            {/* Type */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-              {(['all', 'income', 'expense'] as FilterType[]).map(f => (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {/* Dropdown Type */}
+              <View style={{ flex: 1 }}>
                 <TouchableOpacity
-                  key={f}
-                  style={[styles.filterChip, filterType === f && styles.filterChipActive]}
-                  onPress={() => setFilterType(f)}
+                  style={styles.dropdownBtn}
+                  onPress={() => { setShowFilterTypeDropdown(v => !v); setShowFilterPeriodDropdown(false); }}
                 >
-                  <Text style={[styles.filterChipText, filterType === f && styles.filterChipTextActive]}>
-                    {f === 'all' ? t('budget.all') : f === 'income' ? `📈 ${t('budget.income')}` : `📉 ${t('budget.expenses')}`}
+                  <Text style={styles.dropdownBtnText}>
+                    {filterType === 'all' ? t('budget.all') : filterType === 'income' ? `📈 ${t('budget.income')}` : `📉 ${t('budget.expenses')}`}
                   </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-            {/* Période */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-              {([
-                { key: 'all', label: t('budget.allPeriods') },
-                { key: 'week', label: t('budget.thisWeek') },
-                { key: 'month', label: t('budget.thisMonth') },
-                { key: 'year', label: t('budget.thisYear') },
-              ] as { key: FilterPeriod; label: string }[]).map(f => (
+                {showFilterTypeDropdown && (
+                  <View style={styles.dropdownList}>
+                    {(['all', 'income', 'expense'] as FilterType[]).map(f => (
+                      <TouchableOpacity key={f} style={styles.dropdownItem} onPress={() => { setFilterType(f); setShowFilterTypeDropdown(false); }}>
+                        <Text style={[styles.dropdownItemText, filterType === f && { color: '#7c3aed', fontWeight: '700' }]}>
+                          {f === 'all' ? t('budget.all') : f === 'income' ? `📈 ${t('budget.income')}` : `📉 ${t('budget.expenses')}`}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+              {/* Dropdown Période */}
+              <View style={{ flex: 1 }}>
                 <TouchableOpacity
-                  key={f.key}
-                  style={[styles.filterChip, filterPeriod === f.key && styles.filterChipActive]}
-                  onPress={() => setFilterPeriod(f.key)}
+                  style={styles.dropdownBtn}
+                  onPress={() => { setShowFilterPeriodDropdown(v => !v); setShowFilterTypeDropdown(false); }}
                 >
-                  <Text style={[styles.filterChipText, filterPeriod === f.key && styles.filterChipTextActive]}>{f.label}</Text>
+                  <Text style={styles.dropdownBtnText}>
+                    {filterPeriod === 'all' ? t('budget.allPeriods') : filterPeriod === 'week' ? t('budget.thisWeek') : filterPeriod === 'month' ? t('budget.thisMonth') : t('budget.thisYear')}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+                {showFilterPeriodDropdown && (
+                  <View style={styles.dropdownList}>
+                    {([
+                      { key: 'all', label: t('budget.allPeriods') },
+                      { key: 'week', label: t('budget.thisWeek') },
+                      { key: 'month', label: t('budget.thisMonth') },
+                      { key: 'year', label: t('budget.thisYear') },
+                    ] as { key: FilterPeriod; label: string }[]).map(f => (
+                      <TouchableOpacity key={f.key} style={styles.dropdownItem} onPress={() => { setFilterPeriod(f.key); setShowFilterPeriodDropdown(false); }}>
+                        <Text style={[styles.dropdownItemText, filterPeriod === f.key && { color: '#7c3aed', fontWeight: '700' }]}>{f.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
           </View>
 
           {/* Bouton ajouter */}
@@ -813,18 +837,28 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
 
             {/* Catégorie */}
             <Text style={styles.fieldLabel}>{t('budget.category')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-              {(txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' })) : allCategories).map(cat => (
-                <TouchableOpacity
-                  key={cat.value}
-                  style={[styles.catChip, txForm.category === cat.value && styles.catChipActive]}
-                  onPress={() => setTxForm(f => ({ ...f, category: cat.value }))}
-                >
-                  <Text style={styles.catChipEmoji}>{cat.emoji}</Text>
-                  <Text style={[styles.catChipText, txForm.category === cat.value && styles.catChipTextActive]}>{cat.value}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TouchableOpacity
+              style={styles.dropdownBtn}
+              onPress={() => { setShowTxCatDropdown(v => !v); setShowTxPayerDropdown(false); }}
+            >
+              <Text style={styles.dropdownBtnText}>
+                {txForm.category
+                  ? (() => { const c = (txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵' })) : allCategories).find(x => x.value === txForm.category); return c ? `${c.emoji} ${c.value}` : txForm.category; })()
+                  : t('budget.selectCategory')}
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {showTxCatDropdown && (
+              <View style={[styles.dropdownList, { maxHeight: 200 }]}>
+                <ScrollView nestedScrollEnabled>
+                  {(txForm.type === 'income' ? INCOME_CATEGORIES.map(v => ({ value: v, emoji: '💵', color: '#10b981' })) : allCategories).map(cat => (
+                    <TouchableOpacity key={cat.value} style={styles.dropdownItem} onPress={() => { setTxForm(f => ({ ...f, category: cat.value })); setShowTxCatDropdown(false); }}>
+                      <Text style={[styles.dropdownItemText, txForm.category === cat.value && { color: '#7c3aed', fontWeight: '700' }]}>{cat.emoji} {cat.value}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Description */}
             <Text style={styles.fieldLabel}>{t('budget.description')}</Text>
@@ -853,23 +887,33 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
             {(members as any[]).length > 1 && (
               <>
                 <Text style={styles.fieldLabel}>{t('budget.paidBy')}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-                  {(members as any[]).map((m: any) => {
-                    const isSelected = txForm.payerId === m.id || (!txForm.payerId && m.id === user?.id);
-                    return (
-                      <TouchableOpacity
-                        key={m.id}
-                        style={[styles.catChip, isSelected && styles.catChipActive]}
-                        onPress={() => setTxForm(f => ({ ...f, payerId: m.id }))}
-                      >
-                        <Text style={styles.catChipEmoji}>
-                          {m.avatarType === 'emoji' || m.avatarType === 'icon' ? (m.avatarValue || '👤') : (m.name?.charAt(0) || '?')}
-                        </Text>
-                        <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]}>{m.name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                <TouchableOpacity
+                  style={styles.dropdownBtn}
+                  onPress={() => { setShowTxPayerDropdown(v => !v); setShowTxCatDropdown(false); }}
+                >
+                  <Text style={styles.dropdownBtnText}>
+                    {(() => {
+                      const selectedId = txForm.payerId ?? user?.id;
+                      const m = (members as any[]).find((x: any) => x.id === selectedId);
+                      return m ? `${m.avatarType === 'emoji' || m.avatarType === 'icon' ? (m.avatarValue || '👤') : '👤'} ${m.name}` : t('budget.paidBy');
+                    })()}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </TouchableOpacity>
+                {showTxPayerDropdown && (
+                  <View style={styles.dropdownList}>
+                    {(members as any[]).map((m: any) => {
+                      const isSelected = (txForm.payerId ?? user?.id) === m.id;
+                      return (
+                        <TouchableOpacity key={m.id} style={styles.dropdownItem} onPress={() => { setTxForm(f => ({ ...f, payerId: m.id })); setShowTxPayerDropdown(false); }}>
+                          <Text style={[styles.dropdownItemText, isSelected && { color: '#7c3aed', fontWeight: '700' }]}>
+                            {m.avatarType === 'emoji' || m.avatarType === 'icon' ? (m.avatarValue || '👤') : '👤'} {m.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </>
             )}
 

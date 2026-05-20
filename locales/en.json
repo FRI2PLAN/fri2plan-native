@@ -492,7 +492,8 @@
     "paid": "✅ Paid",
     "paidQuestion": "Paid?",
     "reimbursedQuestion": "Did {{from}} reimburse {{amount}} {{currency}} to {{to}}?",
-    "reimbursedBy": "✅ Reimbursed by {{from}} to {{to}}"
+    "reimbursedBy": "✅ Reimbursed by {{from}} to {{to}}",
+    "selectCategory": "Select a category"
   },
   "rewards": {
     "title": "Rewards",
@@ -594,7 +595,24 @@
     "statusActive": "Active",
     "statusPremium": "Premium",
     "heroDesc": "Invite your friends to join FRI2PLAN and receive rewards for each successful registration",
-    "earned": "You earned {{amount}}€"
+    "earned": "You earned {{amount}}€",
+    "levelsTitle": "Referral levels",
+    "levelsSubtitle": "The more you refer, the more you earn. Here's what you get at each level and how to use it.",
+    "youGain": "You earn",
+    "howToUse": "How to use",
+    "level1Label": "Bronze",
+    "level1Condition": "1 friend registered and active",
+    "level1Gain": "+€10 credit",
+    "level1Use": "Credit automatically applied to your next subscription",
+    "level2Label": "Silver",
+    "level2Condition": "3 friends registered and active",
+    "level2Gain": "+€30 cumulative credit",
+    "level2Use": "Credit usable to renew or gift a subscription",
+    "level3Label": "Gold",
+    "level3Condition": "5 friends registered and active",
+    "level3Gain": "1 free Premium month",
+    "level3Use": "Premium month automatically activated on your account",
+    "shareMessage": "Join me on FRI2PLAN, the family organizer! 🎉\n\nReferral code: {{code}}\n\nLink: {{link}}"
   },
   "settings": {
     "title": "Settings",

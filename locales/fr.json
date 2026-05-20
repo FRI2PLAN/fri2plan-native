@@ -492,7 +492,8 @@
     "paid": "✅ Payé",
     "paidQuestion": "Payé ?",
     "reimbursedQuestion": "{{from}} a remboursé {{amount}} {{currency}} à {{to}} ?",
-    "reimbursedBy": "✅ Remboursé par {{from}} à {{to}}"
+    "reimbursedBy": "✅ Remboursé par {{from}} à {{to}}",
+    "selectCategory": "Choisir une catégorie"
   },
   "rewards": {
     "title": "Récompenses",
@@ -594,7 +595,24 @@
     "statusActive": "Actif",
     "statusPremium": "Premium",
     "heroDesc": "Invitez vos amis à rejoindre FRI2PLAN et recevez des récompenses pour chaque inscription réussie",
-    "earned": "Vous avez gagné {{amount}}€"
+    "earned": "Vous avez gagné {{amount}}€",
+    "levelsTitle": "Niveaux de parrainage",
+    "levelsSubtitle": "Plus vous parrainez, plus vous gagnez. Voici ce que vous obtenez à chaque niveau et comment l'utiliser.",
+    "youGain": "Vous gagnez",
+    "howToUse": "Utilisation",
+    "level1Label": "Bronze",
+    "level1Condition": "1 ami inscrit et actif",
+    "level1Gain": "+10€ de crédit",
+    "level1Use": "Crédit appliqué automatiquement sur votre prochain abonnement",
+    "level2Label": "Argent",
+    "level2Condition": "3 amis inscrits et actifs",
+    "level2Gain": "+30€ de crédit cumulé",
+    "level2Use": "Crédit utilisable pour renouveler ou offrir un abonnement",
+    "level3Label": "Or",
+    "level3Condition": "5 amis inscrits et actifs",
+    "level3Gain": "1 mois Premium offert",
+    "level3Use": "Mois Premium activé automatiquement sur votre compte",
+    "shareMessage": "Rejoins-moi sur FRI2PLAN, l'organiseur familial ! 🎉\n\nCode de parrainage : {{code}}\n\nLien : {{link}}"
   },
   "settings": {
     "title": "Paramètres",

@@ -492,7 +492,8 @@
     "paid": "✅ Bezahlt",
     "paidQuestion": "Bezahlt?",
     "reimbursedQuestion": "Hat {{from}} {{amount}} {{currency}} an {{to}} erstattet?",
-    "reimbursedBy": "✅ Erstattet von {{from}} an {{to}}"
+    "reimbursedBy": "✅ Erstattet von {{from}} an {{to}}",
+    "selectCategory": "Kategorie wählen"
   },
   "rewards": {
     "title": "Belohnungen",
@@ -594,7 +595,24 @@
     "statusActive": "Aktiv",
     "statusPremium": "Premium",
     "heroDesc": "Laden Sie Ihre Freunde ein, FRI2PLAN beizutreten, und erhalten Sie Belohnungen für jede erfolgreiche Registrierung",
-    "earned": "Sie haben {{amount}}€ verdient"
+    "earned": "Sie haben {{amount}}€ verdient",
+    "levelsTitle": "Empfehlungsstufen",
+    "levelsSubtitle": "Je mehr Sie empfehlen, desto mehr verdienen Sie. Hier ist, was Sie auf jeder Stufe erhalten und wie Sie es nutzen können.",
+    "youGain": "Sie verdienen",
+    "howToUse": "Verwendung",
+    "level1Label": "Bronze",
+    "level1Condition": "1 registrierter und aktiver Freund",
+    "level1Gain": "+10€ Guthaben",
+    "level1Use": "Guthaben wird automatisch auf Ihr nächstes Abonnement angerechnet",
+    "level2Label": "Silber",
+    "level2Condition": "3 registrierte und aktive Freunde",
+    "level2Gain": "+30€ kumuliertes Guthaben",
+    "level2Use": "Guthaben zur Erneuerung oder zum Verschenken eines Abonnements verwendbar",
+    "level3Label": "Gold",
+    "level3Condition": "5 registrierte und aktive Freunde",
+    "level3Gain": "1 kostenloser Premium-Monat",
+    "level3Use": "Premium-Monat wird automatisch auf Ihrem Konto aktiviert",
+    "shareMessage": "Komm zu FRI2PLAN, dem Familienorganizer! 🎉\n\nEmpfehlungscode: {{code}}\n\nLink: {{link}}"
   },
   "settings": {
     "title": "Einstellungen",
