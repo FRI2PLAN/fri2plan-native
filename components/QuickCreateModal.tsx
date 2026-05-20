@@ -35,14 +35,21 @@ const EVENT_CATEGORIES = [
 ];
 
 const EXPENSE_CATEGORIES = [
-  { value: 'Alimentation', emoji: '🛒', color: '#10b981' },
-  { value: 'Transport', emoji: '🚗', color: '#3b82f6' },
-  { value: 'Loisirs', emoji: '😊', color: '#f59e0b' },
-  { value: 'Santé', emoji: '❤️', color: '#ef4444' },
-  { value: 'Éducation', emoji: '🎓', color: '#8b5cf6' },
-  { value: 'Logement', emoji: '🏠', color: '#6b7280' },
-  { value: 'Vêtements', emoji: '👕', color: '#ec4899' },
-  { value: 'Autre', emoji: '💼', color: '#64748b' },
+  { value: 'Alimentation', label: '🛒 Alimentation' },
+  { value: 'Transport', label: '🚗 Transport' },
+  { value: 'Loisirs', label: '😊 Loisirs' },
+  { value: 'Santé', label: '❤️ Santé' },
+  { value: 'Éducation', label: '🎓 Éducation' },
+  { value: 'Logement', label: '🏠 Logement' },
+  { value: 'Vêtements', label: '👕 Vêtements' },
+  { value: 'Autre', label: '💼 Autre' },
+];
+
+const INCOME_CATEGORIES = [
+  { value: 'Salaire', label: '💼 Salaire' },
+  { value: 'Allocation', label: '🏦 Allocation' },
+  { value: 'Cadeau', label: '🎁 Cadeau' },
+  { value: 'Autre', label: '💰 Autre' },
 ];
 
 const REQUEST_TYPES = [
@@ -150,12 +157,6 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
     { familyId: activeFamilyId },
     { enabled: visible && type === 'expense' && !!activeFamilyId }
   );
-  const allExpenseCats = useMemo(() => {
-    const dbCats = (customCats as any[]).map((c: any) => ({ value: c.name, emoji: c.icon || '💼', color: c.color || '#64748b' }));
-    const custom = dbCats.filter((d: any) => !EXPENSE_CATEGORIES.find(e => e.value === d.value));
-    return [...EXPENSE_CATEGORIES, ...custom];
-  }, [customCats]);
-
   // ── États communs ──
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -178,6 +179,10 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
   const [tempTimeValue, setTempTimeValue] = useState(new Date());
+  // ── Date picker modal iOS robuste ──
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [datePickerTarget, setDatePickerTarget] = useState<'event' | 'eventEnd' | 'task' | 'expense' | 'request'>('event');
+  const [tempDateValue, setTempDateValue] = useState(new Date());
 
   // ── Tâche ──
   const [taskPriority, setTaskPriority] = useState<'urgent' | 'high' | 'medium' | 'low'>('medium');
@@ -383,18 +388,14 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               numberOfLines={2}
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Catégorie</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
-              {EVENT_CATEGORIES.map(cat => (
-                <TouchableOpacity
-                  key={cat.value}
-                  onPress={() => setEventCategory(cat.value)}
-                  style={[styles.chip, eventCategory === cat.value && { backgroundColor: cat.color + '33', borderColor: cat.color }]}
-                >
-                  <Text style={styles.chipText}>{cat.icon} {cat.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Dropdown
+              label="Catégorie"
+              value={eventCategory}
+              options={EVENT_CATEGORIES.map(c => ({ value: c.value, label: `${c.icon} ${c.label}` }))}
+              onChange={setEventCategory}
+              isDark={isDark}
+              styles={styles}
+            />
 
             {/* Options jour entier + multi-jours */}
             <View style={styles.switchRow}>
@@ -418,10 +419,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
             {/* Date de début */}
             <Text style={styles.label}>Date {isMultiDay ? 'de début' : ''}</Text>
-            <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEventDatePicker(true)}>
+            <TouchableOpacity style={styles.dateBtn} onPress={() => {
+              if (Platform.OS === 'ios') { setDatePickerTarget('event'); setTempDateValue(eventDate); setShowDatePickerModal(true); }
+              else setShowEventDatePicker(true);
+            }}>
               <Text style={styles.dateBtnText}>📅 {format(eventDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
-            {showEventDatePicker && (
+            {Platform.OS === 'android' && showEventDatePicker && (
               <DateTimePicker
                 value={eventDate}
                 mode="date"
@@ -434,10 +438,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             {isMultiDay && (
               <>
                 <Text style={styles.label}>Date de fin</Text>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEventEndDatePicker(true)}>
+                <TouchableOpacity style={styles.dateBtn} onPress={() => {
+                  if (Platform.OS === 'ios') { setDatePickerTarget('eventEnd'); setTempDateValue(eventEndDate); setShowDatePickerModal(true); }
+                  else setShowEventEndDatePicker(true);
+                }}>
                   <Text style={styles.dateBtnText}>📅 {format(eventEndDate, 'dd/MM/yyyy')}</Text>
                 </TouchableOpacity>
-                {showEventEndDatePicker && (
+                {Platform.OS === 'android' && showEventEndDatePicker && (
                   <DateTimePicker
                     value={eventEndDate}
                     mode="date"
@@ -593,10 +600,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             />
 
             <Text style={styles.label}>Échéance</Text>
-            <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTaskDatePicker(true)}>
+            <TouchableOpacity style={styles.dateBtn} onPress={() => {
+              if (Platform.OS === 'ios') { setDatePickerTarget('task'); setTempDateValue(taskDueDate || new Date()); setShowDatePickerModal(true); }
+              else setShowTaskDatePicker(true);
+            }}>
               <Text style={styles.dateBtnText}>📅 {taskDueDate ? format(taskDueDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
             </TouchableOpacity>
-            {showTaskDatePicker && (
+            {Platform.OS === 'android' && showTaskDatePicker && (
               <DateTimePicker
                 value={taskDueDate || new Date()}
                 mode="date"
@@ -685,26 +695,22 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
               keyboardType="decimal-pad"
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Text style={styles.label}>Catégorie *</Text>
-            <View style={[styles.row, { flexWrap: 'wrap' }]}>
-              {(expenseType === 'income'
-                ? [{ value: 'Salaire', emoji: '💼', color: '#3b82f6' }, { value: 'Allocation', emoji: '🏛️', color: '#8b5cf6' }, { value: 'Cadeau', emoji: '🎁', color: '#ec4899' }, { value: 'Autre', emoji: '💰', color: '#6b7280' }]
-                : allExpenseCats
-              ).map((cat: any) => (
-                <TouchableOpacity
-                  key={cat.value}
-                  onPress={() => setExpenseCategory(cat.value)}
-                  style={[styles.chip, expenseCategory === cat.value && { backgroundColor: cat.color + '33', borderColor: cat.color }]}
-                >
-                  <Text style={styles.chipText}>{cat.emoji} {cat.value}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Dropdown
+              label="Catégorie *"
+              value={expenseCategory || ''}
+              options={expenseType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
+              onChange={setExpenseCategory}
+              isDark={isDark}
+              styles={styles}
+            />
             <Text style={styles.label}>Date</Text>
-            <TouchableOpacity style={styles.dateBtn} onPress={() => setShowExpenseDatePicker(true)}>
+            <TouchableOpacity style={styles.dateBtn} onPress={() => {
+              if (Platform.OS === 'ios') { setDatePickerTarget('expense'); setTempDateValue(expenseDate); setShowDatePickerModal(true); }
+              else setShowExpenseDatePicker(true);
+            }}>
               <Text style={styles.dateBtnText}>📅 {format(expenseDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
-            {showExpenseDatePicker && (
+            {Platform.OS === 'android' && showExpenseDatePicker && (
               <DateTimePicker
                 value={expenseDate}
                 mode="date"
@@ -759,10 +765,13 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
             {(requestType === 'outing' || requestType === 'permission') && (
               <>
                 <Text style={styles.label}>Date *</Text>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowRequestDatePicker(true)}>
+                <TouchableOpacity style={styles.dateBtn} onPress={() => {
+                  if (Platform.OS === 'ios') { setDatePickerTarget('request'); setTempDateValue(requestDate || new Date()); setShowDatePickerModal(true); }
+                  else setShowRequestDatePicker(true);
+                }}>
                   <Text style={styles.dateBtnText}>📅 {requestDate ? format(requestDate, 'dd/MM/yyyy') : 'Choisir une date'}</Text>
                 </TouchableOpacity>
-                {showRequestDatePicker && (
+                {Platform.OS === 'android' && showRequestDatePicker && (
                   <DateTimePicker
                     value={requestDate || new Date()}
                     mode="date"
@@ -780,8 +789,9 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.overlay}
+        keyboardVerticalOffset={0}
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={styles.sheet}>
@@ -818,6 +828,45 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
           </View>
         </View>
       </KeyboardAvoidingView>
+      {/* ── Modal Date Picker iOS robuste ── */}
+      {Platform.OS === 'ios' && (
+        <Modal visible={showDatePickerModal} transparent animationType="fade" onRequestClose={() => setShowDatePickerModal(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 320, alignItems: 'center' }}>
+              <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>Choisir une date</Text>
+              <DateTimePicker
+                value={tempDateValue}
+                mode="date"
+                display="spinner"
+                onChange={(_, d) => { if (d) setTempDateValue(d); }}
+                textColor={isDark ? '#f9fafb' : '#111827'}
+                style={{ width: 280 }}
+              />
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <TouchableOpacity
+                  onPress={() => setShowDatePickerModal(false)}
+                  style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
+                >
+                  <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (datePickerTarget === 'event') setEventDate(tempDateValue);
+                    else if (datePickerTarget === 'eventEnd') setEventEndDate(tempDateValue);
+                    else if (datePickerTarget === 'task') setTaskDueDate(tempDateValue);
+                    else if (datePickerTarget === 'expense') setExpenseDate(tempDateValue);
+                    else if (datePickerTarget === 'request') setRequestDate(tempDateValue);
+                    setShowDatePickerModal(false);
+                  }}
+                  style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#7c3aed', alignItems: 'center' }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '600' }}>Confirmer</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
       {/* ── Modal Time Picker iOS robuste ── */}
       {Platform.OS === 'ios' && (
         <Modal visible={showTimePickerModal} transparent animationType="fade" onRequestClose={() => setShowTimePickerModal(false)}>
