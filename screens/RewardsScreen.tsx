@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Alert, Modal,
@@ -174,12 +174,12 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   ];
   const claimedRewardIds = new Set((myClaims as any[]).filter((c: any) => c.status === "pending").map((c: any) => c.rewardId));
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { key: "catalog", label: "🎁 Catalogue" },
-    { key: "badges",  label: "🏅 Badges" },
+    { key: "badges",  label: "🎖️ Badges" },
     { key: "history", label: "📜 Historique" },
     ...(isAdmin ? [{ key: "admin", label: "⚙️ Admin" }] : []),
-  ] as const;
+  ], [isAdmin]);
 
   return (
     <View style={styles.container}>
