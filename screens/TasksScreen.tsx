@@ -335,6 +335,72 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <Text style={styles.pickerButtonText}>{data.dueDate ? format(data.dueDate, 'dd/MM/yyyy HH:mm') : '📅 Choisir une date'}</Text>
           <Text style={styles.pickerArrow}>▼</Text>
         </TouchableOpacity>
+        {/* Date picker inline dans le formulaire - même pattern que RequestsScreen */}
+        {showDatePicker && pickerTarget === (isEdit ? 'edit' : 'create') && (
+          <Modal transparent animationType="fade" visible={showDatePicker}>
+            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+              <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                <DateTimePicker
+                  value={data.dueDate || new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  textColor={isDark ? '#fff' : '#111827'}
+                  onChange={(_, d) => {
+                    if (Platform.OS === 'android') {
+                      setShowDatePicker(false);
+                      if (d) { setData({ ...data, dueDate: d }); setShowTimePicker(true); }
+                    } else if (d) {
+                      setData({ ...data, dueDate: d });
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowDatePicker(false)}>
+                      <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.datePickerConfirm} onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}>
+                      <Text style={styles.datePickerConfirmText}>{t('common.next') || 'Suivant'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </Modal>
+        )}
+        {showTimePicker && pickerTarget === (isEdit ? 'edit' : 'create') && (
+          <Modal transparent animationType="fade" visible={showTimePicker}>
+            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+              <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                <DateTimePicker
+                  value={data.dueDate || new Date()}
+                  mode="time"
+                  is24Hour
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  textColor={isDark ? '#fff' : '#111827'}
+                  onChange={(_, d) => {
+                    if (Platform.OS === 'android') {
+                      setShowTimePicker(false);
+                      if (d) setData({ ...data, dueDate: d });
+                    } else if (d) {
+                      setData({ ...data, dueDate: d });
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowTimePicker(false)}>
+                      <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.datePickerConfirm} onPress={() => setShowTimePicker(false)}>
+                      <Text style={styles.datePickerConfirmText}>{t('common.confirm') || 'Confirmer'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </Modal>
+        )}
       </View>
       {/* Récurrence */}
       <View style={styles.formGroup}>
@@ -552,14 +618,13 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* ══════════════════════════════════════════════════════
           MODAL — Créer une tâche
           ══════════════════════════════════════════════════════ */}
-      <Modal visible={createModalVisible} animationType="slide" transparent onRequestClose={() => setCreateModalVisible(false)}>
+      <Modal visible={createModalVisible} animationType="slide" transparent onRequestClose={() => { setCreateModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('tasks.newTask') || 'Nouvelle tâche'}</Text>
-              {/* Boutons icônes uniquement */}
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setCreateModalVisible(false); setFormData(emptyForm); }}>
+                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setCreateModalVisible(false); setFormData(emptyForm); setShowDatePicker(false); setShowTimePicker(false); }}>
                   <Text style={styles.iconBtnText}>✕</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleCreateTask} disabled={createMutation.isPending}>
@@ -569,13 +634,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </View>
             {renderTaskForm(formData, setFormData, false)}
           </View>
+
         </View>
       </Modal>
 
       {/* ══════════════════════════════════════════════════════
           MODAL — Modifier une tâche
           ══════════════════════════════════════════════════════ */}
-      <Modal visible={editModalVisible} animationType="slide" transparent onRequestClose={() => setEditModalVisible(false)}>
+      <Modal visible={editModalVisible} animationType="slide" transparent onRequestClose={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -584,7 +650,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#ef4444' }]} onPress={handleDeleteTask}>
                   <Text style={[styles.iconBtnText, { color: '#fff' }]}>🗑</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => setEditModalVisible(false)}>
+                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
                   <Text style={styles.iconBtnText}>✕</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleUpdateTask} disabled={updateMutation.isPending}>
@@ -594,6 +660,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </View>
             {renderTaskForm(editFormData, setEditFormData, true)}
           </View>
+
         </View>
       </Modal>
 
@@ -601,73 +668,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           PICKERS
           ══════════════════════════════════════════════════════ */}
 
-      {/* Date Picker Modal - pattern Requêtes, rendu en dehors des modaux pour passer au-dessus */}
-      {showDatePicker && (
-        <Modal transparent animationType="fade" visible={showDatePicker}>
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
-              <DateTimePicker
-                value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                textColor={isDark ? '#fff' : '#111827'}
-                onChange={(_, d) => {
-                  if (Platform.OS === 'android') {
-                    setShowDatePicker(false);
-                    if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); setShowTimePicker(true); }
-                  } else if (d) {
-                    if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d }));
-                  }
-                }}
-              />
-              {Platform.OS === 'ios' && (
-                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-                  <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowDatePicker(false)}>
-                    <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.datePickerConfirm} onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}>
-                    <Text style={styles.datePickerConfirmText}>{t('common.next') || 'Suivant'}</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
-      )}
-      {/* Time Picker Modal */}
-      {showTimePicker && (
-        <Modal transparent animationType="fade" visible={showTimePicker}>
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
-              <DateTimePicker
-                value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-                mode="time"
-                is24Hour
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                textColor={isDark ? '#fff' : '#111827'}
-                onChange={(_, d) => {
-                  if (Platform.OS === 'android') {
-                    setShowTimePicker(false);
-                    if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); }
-                  } else if (d) {
-                    if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d }));
-                  }
-                }}
-              />
-              {Platform.OS === 'ios' && (
-                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-                  <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowTimePicker(false)}>
-                    <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.datePickerConfirm} onPress={() => setShowTimePicker(false)}>
-                    <Text style={styles.datePickerConfirmText}>{t('common.confirm') || 'Confirmer'}</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
-      )}
+
 
       {/* Assigner à */}
       <Modal visible={showAssignPicker} animationType="fade" transparent onRequestClose={() => setShowAssignPicker(false)}>
