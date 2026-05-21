@@ -555,19 +555,19 @@ export default function LoginScreen() {
                 disabled={biometricLoading || loading}
               >
                 {biometricLoading ? (
-                  <View style={styles.oauthLoadingRow}>
-                    <ActivityIndicator color="#7c3aed" size="small" />
-                    <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#7c3aed' }]}>Vérification...</Text>
+                  <View style={[styles.oauthLoadingRow, { justifyContent: 'center' }]}>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#fff' }]}>Vérification...</Text>
                   </View>
                 ) : (
-                  <View style={styles.oauthLoadingRow}>
-                    <Text style={{ fontSize: 22, marginRight: 8 }}>
-                      {Platform.OS === 'ios' ? '🔒' : '👆'}
+                  <View style={[styles.oauthLoadingRow, { justifyContent: 'center' }]}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>
+                      {Platform.OS === 'ios' ? '🔐' : '👆'}
                     </Text>
-                    <Text style={[styles.oauthButtonText, { color: '#7c3aed' }]}>
+                    <Text style={[styles.oauthButtonText, { color: '#fff' }]} numberOfLines={1}>
                       {biometricEnabled
-                        ? (Platform.OS === 'ios' ? 'Se connecter avec Face ID / Touch ID' : 'Se connecter avec l\'empreinte')
-                        : (Platform.OS === 'ios' ? 'Activer Face ID / Touch ID' : 'Activer l\'empreinte digitale')}
+                        ? (Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Empreinte digitale')
+                        : (Platform.OS === 'ios' ? 'Activer Face ID / Touch ID' : 'Activer l\'empreinte')}
                     </Text>
                   </View>
                 )}
@@ -749,8 +749,9 @@ const styles = StyleSheet.create({
     padding: 12,
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
-    opacity: 0.5,
+    opacity: 1,
   },
   oauthButtonText: {
     color: '#fff',
@@ -768,9 +769,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   biometricButton: {
-    backgroundColor: '#f3f0ff',
-    borderWidth: 1.5,
-    borderColor: '#7c3aed',
+    backgroundColor: '#7c3aed',
+    borderWidth: 0,
+    opacity: 1,
   },
   oauthButtonApple: {
     backgroundColor: '#000',

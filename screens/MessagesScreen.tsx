@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useRef, useCallback } from 'react';
@@ -30,6 +31,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [reactingToMessageId, setReactingToMessageId] = useState<number | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const getLocale = () => {
@@ -131,6 +133,37 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     onError: () => {
       Alert.alert(t('common.error'), t('messages.sendError'));
     }});
+
+  const uploadFileMutation = trpc.messages.uploadFile.useMutation();
+
+  const handlePickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission requise', 'Veuillez autoriser l'accès à la galerie dans les paramètres.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    if (!asset.base64) { Alert.alert('Erreur', 'Impossible de lire l'image'); return; }
+    setUploadingAttachment(true);
+    try {
+      const fileName = asset.fileName || `photo_${Date.now()}.jpg`;
+      const fileType = asset.mimeType || 'image/jpeg';
+      const fileData = `data:${fileType};base64,${asset.base64}`;
+      const { url } = await uploadFileMutation.mutateAsync({ fileName, fileType, fileSize: asset.fileSize || 0, fileData });
+      sendMutation.mutate({ content: newMessage.trim() || '📷', attachmentUrl: url, attachmentType: fileType });
+      setNewMessage('');
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message || 'Impossible d'envoyer la photo');
+    } finally {
+      setUploadingAttachment(false);
+    }
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -294,7 +327,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
         <KeyboardAvoidingView
           style={styles.contentContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={90}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 110 : 0}
         >
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -321,6 +354,13 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
           {/* Zone de saisie */}
           <View style={styles.inputContainer}>
+            <TouchableOpacity
+              style={styles.emojiButton}
+              onPress={handlePickImage}
+              disabled={uploadingAttachment}
+            >
+              {uploadingAttachment ? <ActivityIndicator size="small" color="#7c3aed" /> : <Text style={styles.emojiButtonText}>📎</Text>}
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={() => {
@@ -570,7 +610,9 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 10,
     backgroundColor: isDark ? '#111827' : '#fff',
     borderTopWidth: 1,
     borderTopColor: isDark ? '#374151' : '#e5e7eb',

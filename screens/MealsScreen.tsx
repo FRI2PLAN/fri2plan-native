@@ -11,7 +11,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image, Share} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image, Share, KeyboardAvoidingView, Platform, Pressable} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
@@ -355,6 +355,7 @@ export default function MealsScreen({
   const [recipeSearch, setRecipeSearch] = useState('');
   const [recipeSuggestions, setRecipeSuggestions] = useState<SpoonacularResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [showMealTypeDropdown, setShowMealTypeDropdown] = useState(false);
 
   const searchRecipes = useCallback(async (query: string) => {
     if (query.length < 2) { setRecipeSuggestions([]); return; }
@@ -732,9 +733,11 @@ export default function MealsScreen({
   // ─── Formulaire repas (modal) ──────────────────────────────────────────────
   const renderForm = () => (
     <Modal visible={showForm} transparent animationType="slide">
-      <View style={s.overlay}>
-        <ScrollView contentContainerStyle={s.formScroll}>
-          <View style={s.modal}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setShowForm(false)} />
+        <View style={s.sheetContent}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View>
             <Text style={s.modalTitle}>
               {editingMeal ? (t('meals.editMeal') || 'Modifier le repas') : (t('meals.newMeal') || 'Nouveau repas')}
             </Text>
@@ -856,23 +859,21 @@ export default function MealsScreen({
               </View>
             )}
 
-            {/* Type de repas */}
+            {/* Type de repas — dropdown */}
             <Text style={s.label}>{t('meals.mealType') || 'Type'}</Text>
-            <View style={s.typeSelector}>
-              {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
-                <TouchableOpacity
-                  key={type}
-                  style={[s.typeBtn, form.mealType === type && s.typeBtnActive]}
-                  onPress={() => setForm(p => ({ ...p, mealType: type }))}
-                >
-                  <Text style={s.typeEmoji}>{MEAL_EMOJIS[type]}</Text>
-                  <Text style={[s.typeBtnText, form.mealType === type && s.typeBtnTextActive]}>
-                    {customLabels[type]}
-                  </Text>
-                  <Text style={s.typeTime}>{customTimes[type]}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={s.dropdownBtn} onPress={() => setShowMealTypeDropdown(v => !v)}>
+              <Text style={s.dropdownBtnText}>{MEAL_EMOJIS[form.mealType]} {customLabels[form.mealType]} · {customTimes[form.mealType]}</Text>
+              <Text style={s.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {showMealTypeDropdown && (
+              <View style={s.dropdownList}>
+                {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
+                  <TouchableOpacity key={type} style={s.dropdownItem} onPress={() => { setForm(p => ({ ...p, mealType: type })); setShowMealTypeDropdown(false); }}>
+                    <Text style={[s.dropdownItemText, form.mealType === type && { color: '#7c3aed', fontWeight: '700' }]}>{MEAL_EMOJIS[type]} {customLabels[type]} · {customTimes[type]}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             {/* Portions */}
             <Text style={s.label}>{t('meals.servings') || 'Portions'}</Text>
@@ -917,8 +918,9 @@ export default function MealsScreen({
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 
@@ -1078,6 +1080,15 @@ function getStyles(isDark: boolean) {
     saveSettingsBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
     // Formulaire
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center' },
+    sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+    sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+    sheetContent: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
+    dropdownBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 12, marginBottom: 4 },
+    dropdownBtnText: { fontSize: 14, color: isDark ? '#f9fafb' : '#111827', fontWeight: '500', flex: 1 },
+    dropdownArrow: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginLeft: 8 },
+    dropdownList: { backgroundColor: isDark ? '#374151' : '#fff', borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#e5e7eb', marginBottom: 8, overflow: 'hidden' },
+    dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: isDark ? '#4b5563' : '#f3f4f6' },
+    dropdownItemText: { fontSize: 14, color: isDark ? '#f9fafb' : '#111827' },
     formScroll: { flexGrow: 1, justifyContent: 'center', padding: 12 },
     modal: { backgroundColor: card, borderRadius: 16, padding: 20 },
     modalTitle: { fontSize: 18, fontWeight: '700', color: text, marginBottom: 12 },

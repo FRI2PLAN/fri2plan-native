@@ -62,6 +62,9 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [selectedFlow, setSelectedFlow] = useState<string>('');
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [showMoodDropdown, setShowMoodDropdown] = useState(false);
+  const [showFlowDropdown, setShowFlowDropdown] = useState(false);
+  const [showSymptomsDropdown, setShowSymptomsDropdown] = useState(false);
   const [cycleNotes, setCycleNotes] = useState('');
   const [cycleDate, setCycleDate] = useState(new Date().toISOString().slice(0, 10));
   const [settingsCycleDuration, setSettingsCycleDuration] = useState('28');
@@ -113,7 +116,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   };
 
   const handleToggleFeature = (value: boolean) => {
-    toggleMutation.mutate({ enabled: value });
+    toggleMutation.mutate({ isEnabled: value });
   };
 
   const handleSaveSettings = () => {
@@ -432,31 +435,54 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
               placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
             />
             <Text style={styles.fieldLabel}>{t('intimate.moodLabel')}</Text>
-            <View style={styles.optionsRow}>
-              {MOOD_OPTIONS.map(opt => (
-                <TouchableOpacity key={opt.value} style={[styles.optionBtn, selectedMood === opt.value && styles.optionBtnActive]} onPress={() => setSelectedMood(selectedMood === opt.value ? '' : opt.value)}>
-                  <Text style={styles.optionEmoji}>{opt.emoji}</Text>
-                  <Text style={[styles.optionLabel, selectedMood === opt.value && styles.optionLabelActive]}>{opt.label}</Text>
+            <TouchableOpacity style={styles.dropdownBtn} onPress={() => { setShowMoodDropdown(v => !v); setShowFlowDropdown(false); setShowSymptomsDropdown(false); }}>
+              <Text style={styles.dropdownBtnText}>{selectedMood ? `${MOOD_OPTIONS.find(m => m.value === selectedMood)?.emoji} ${MOOD_OPTIONS.find(m => m.value === selectedMood)?.label}` : '— Sélectionner —'}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {showMoodDropdown && (
+              <View style={styles.dropdownList}>
+                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSelectedMood(''); setShowMoodDropdown(false); }}>
+                  <Text style={styles.dropdownItemText}>— Aucune —</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+                {MOOD_OPTIONS.map(opt => (
+                  <TouchableOpacity key={opt.value} style={styles.dropdownItem} onPress={() => { setSelectedMood(opt.value); setShowMoodDropdown(false); }}>
+                    <Text style={[styles.dropdownItemText, selectedMood === opt.value && { color: '#ec4899', fontWeight: '700' }]}>{opt.emoji} {opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             <Text style={styles.fieldLabel}>{t('intimate.flowLabel')}</Text>
-            <View style={styles.optionsRow}>
-              {FLOW_OPTIONS.map(opt => (
-                <TouchableOpacity key={opt.value} style={[styles.optionBtn, selectedFlow === opt.value && styles.optionBtnActive]} onPress={() => setSelectedFlow(selectedFlow === opt.value ? '' : opt.value)}>
-                  <Text style={styles.optionEmoji}>{opt.emoji}</Text>
-                  <Text style={[styles.optionLabel, selectedFlow === opt.value && styles.optionLabelActive]}>{opt.label}</Text>
+            <TouchableOpacity style={styles.dropdownBtn} onPress={() => { setShowFlowDropdown(v => !v); setShowMoodDropdown(false); setShowSymptomsDropdown(false); }}>
+              <Text style={styles.dropdownBtnText}>{selectedFlow ? `${FLOW_OPTIONS.find(f => f.value === selectedFlow)?.emoji} ${FLOW_OPTIONS.find(f => f.value === selectedFlow)?.label}` : '— Sélectionner —'}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {showFlowDropdown && (
+              <View style={styles.dropdownList}>
+                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSelectedFlow(''); setShowFlowDropdown(false); }}>
+                  <Text style={styles.dropdownItemText}>— Aucun —</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+                {FLOW_OPTIONS.map(opt => (
+                  <TouchableOpacity key={opt.value} style={styles.dropdownItem} onPress={() => { setSelectedFlow(opt.value); setShowFlowDropdown(false); }}>
+                    <Text style={[styles.dropdownItemText, selectedFlow === opt.value && { color: '#ec4899', fontWeight: '700' }]}>{opt.emoji} {opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             <Text style={styles.fieldLabel}>{t('intimate.symptomsLabel')}</Text>
-            <View style={styles.symptomsGrid}>
-              {SYMPTOM_OPTIONS.map(symptom => (
-                <TouchableOpacity key={symptom} style={[styles.symptomChip, selectedSymptoms.includes(symptom) && styles.symptomChipActive]} onPress={() => toggleSymptom(symptom)}>
-                  <Text style={[styles.symptomChipText, selectedSymptoms.includes(symptom) && styles.symptomChipTextActive]}>{symptom}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={styles.dropdownBtn} onPress={() => { setShowSymptomsDropdown(v => !v); setShowMoodDropdown(false); setShowFlowDropdown(false); }}>
+              <Text style={styles.dropdownBtnText} numberOfLines={1}>{selectedSymptoms.length > 0 ? selectedSymptoms.join(', ') : '— Sélectionner —'}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+            {showSymptomsDropdown && (
+              <View style={styles.dropdownList}>
+                {SYMPTOM_OPTIONS.map(symptom => (
+                  <TouchableOpacity key={symptom} style={[styles.dropdownItem, { flexDirection: 'row', alignItems: 'center', gap: 8 }]} onPress={() => toggleSymptom(symptom)}>
+                    <Text style={{ fontSize: 16 }}>{selectedSymptoms.includes(symptom) ? '✅' : '⬜'}</Text>
+                    <Text style={[styles.dropdownItemText, selectedSymptoms.includes(symptom) && { color: '#ec4899', fontWeight: '700' }]}>{symptom}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             <Text style={styles.fieldLabel}>{t('intimate.notesLabel')}</Text>
             <TextInput
               style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
@@ -567,6 +593,12 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   optionLabel: { fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280' },
   optionLabelActive: { color: '#ec4899', fontWeight: '600' },
   symptomsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dropdownBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 10, padding: 12, marginBottom: 4 },
+  dropdownBtnText: { fontSize: 14, color: isDark ? '#f9fafb' : '#111827', fontWeight: '500', flex: 1 },
+  dropdownArrow: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginLeft: 8 },
+  dropdownList: { backgroundColor: isDark ? '#374151' : '#fff', borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#e5e7eb', marginBottom: 8, overflow: 'hidden' },
+  dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: isDark ? '#4b5563' : '#f3f4f6' },
+  dropdownItemText: { fontSize: 14, color: isDark ? '#f9fafb' : '#111827' },
   symptomChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: isDark ? '#374151' : '#f3f4f6', borderWidth: 1, borderColor: isDark ? '#4b5563' : '#e5e7eb' },
   symptomChipActive: { backgroundColor: isDark ? '#4b1535' : '#fce7f3', borderColor: '#ec4899' },
   symptomChipText: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' },

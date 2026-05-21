@@ -6,7 +6,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, KeyboardAvoidingView, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -384,46 +384,49 @@ export default function ShoppingScreen({
         />
       )}
 
-      {/* Modal formulaire liste */}
+      {/* Modal formulaire liste — bottom sheet */}
       <Modal visible={showListForm} transparent animationType="slide">
-        <View style={s.overlay}>
-          <View style={s.modal}>
-            <Text style={s.modalTitle}>{editingList ? (t('shopping.editList') || 'Modifier la liste') : (t('shopping.newList') || 'Nouvelle liste')}</Text>
-            <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
-            <TextInput style={s.input} value={listForm.name} onChangeText={n => setListForm(p => ({ ...p, name: n }))} placeholder={t('shopping.listName') || 'Nom de la liste'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-            <Text style={s.label}>{t('common.description') || 'Description'}</Text>
-            <TextInput style={[s.input, { height: 70 }]} value={listForm.description} onChangeText={d => setListForm(p => ({ ...p, description: d }))} placeholder={t('shopping.listDescription') || 'Description (optionnel)'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} multiline />
-            <Text style={s.label}>{t('shopping.targetDate') || 'Date cible'}</Text>
-            <TouchableOpacity style={s.input} onPress={() => setShowDatePicker(true)}>
-              <Text style={{ color: targetDate ? (isDark ? '#f9fafb' : '#111827') : (isDark ? '#6b7280' : '#9ca3af') }}>
-                {targetDate ? targetDate.toLocaleDateString(i18n.language) : (t('shopping.noDate') || 'Aucune date')}
-              </Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker mode="date" value={targetDate || new Date()} onChange={(_, d) => { setShowDatePicker(false); if (d) setTargetDate(d); }} />
-            )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8, paddingRight: 4 }}>
-              <Text style={[s.label, { flex: 1, marginRight: 8 }]} numberOfLines={1}>🔒 {t('common.private') || 'Privé'}</Text>
-              <Switch
-                value={listForm.isPrivate}
-                onValueChange={v => setListForm(p => ({ ...p, isPrivate: v }))}
-                trackColor={{ true: '#7c3aed' }}
-              />
-            </View>
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.cancelBtn} onPress={() => setShowListForm(false)}><Text style={s.cancelBtnText}>✕</Text></TouchableOpacity>
-              {editingList && (
-                <TouchableOpacity style={[s.cancelBtn, { backgroundColor: '#ef4444' }]} onPress={() => {
-                  Alert.alert(t('common.delete') || 'Supprimer', `${editingList.name} ?`, [
-                    { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                    { text: '🗑', style: 'destructive', onPress: () => { deleteList.mutate({ listId: editingList.id }); setShowListForm(false); } },
-                  ]);
-                }}><Text style={s.saveBtnText}>🗑</Text></TouchableOpacity>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
+          <Pressable style={s.sheetBackdrop} onPress={() => setShowListForm(false)} />
+          <View style={s.sheetContent}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <Text style={s.sheetTitle}>{editingList ? (t('shopping.editList') || 'Modifier la liste') : (t('shopping.newList') || 'Nouvelle liste')}</Text>
+              <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
+              <TextInput style={s.input} value={listForm.name} onChangeText={n => setListForm(p => ({ ...p, name: n }))} placeholder={t('shopping.listName') || 'Nom de la liste'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+              <Text style={s.label}>{t('common.description') || 'Description'}</Text>
+              <TextInput style={[s.input, { height: 70 }]} value={listForm.description} onChangeText={d => setListForm(p => ({ ...p, description: d }))} placeholder={t('shopping.listDescription') || 'Description (optionnel)'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} multiline />
+              <Text style={s.label}>{t('shopping.targetDate') || 'Date cible'}</Text>
+              <TouchableOpacity style={s.input} onPress={() => setShowDatePicker(true)}>
+                <Text style={{ color: targetDate ? (isDark ? '#f9fafb' : '#111827') : (isDark ? '#6b7280' : '#9ca3af') }}>
+                  {targetDate ? targetDate.toLocaleDateString(i18n.language) : (t('shopping.noDate') || 'Aucune date')}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker mode="date" value={targetDate || new Date()} onChange={(_, d) => { setShowDatePicker(false); if (d) setTargetDate(d); }} />
               )}
-              <TouchableOpacity style={s.saveBtn} onPress={saveList}><Text style={s.saveBtnText}>✓</Text></TouchableOpacity>
-            </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8, paddingRight: 4 }}>
+                <Text style={[s.label, { flex: 1, marginRight: 8 }]} numberOfLines={1}>🔒 {t('common.private') || 'Privé'}</Text>
+                <Switch
+                  value={listForm.isPrivate}
+                  onValueChange={v => setListForm(p => ({ ...p, isPrivate: v }))}
+                  trackColor={{ true: '#7c3aed' }}
+                />
+              </View>
+              <View style={s.modalActions}>
+                <TouchableOpacity style={s.cancelBtn} onPress={() => setShowListForm(false)}><Text style={s.cancelBtnText}>✕</Text></TouchableOpacity>
+                {editingList && (
+                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: '#ef4444' }]} onPress={() => {
+                    Alert.alert(t('common.delete') || 'Supprimer', `${editingList.name} ?`, [
+                      { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+                      { text: '🗑', style: 'destructive', onPress: () => { deleteList.mutate({ listId: editingList.id }); setShowListForm(false); } },
+                    ]);
+                  }}><Text style={s.saveBtnText}>🗑</Text></TouchableOpacity>
+                )}
+                <TouchableOpacity style={s.saveBtn} onPress={saveList}><Text style={s.saveBtnText}>✓</Text></TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal actions liste (depuis la liste principale) */}
@@ -528,6 +531,10 @@ function getStyles(isDark: boolean) {
     deleteBtn: { fontSize: 18, padding: 4 },
     // Modaux
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+    sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+    sheetContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '90%' },
+    sheetTitle: { fontSize: 20, fontWeight: '800', color: isDark ? '#fff' : '#111827', marginBottom: 16 },
     modal: { backgroundColor: card, borderRadius: 16, padding: 20, width: '90%', maxWidth: 400 },
     modalTitle: { fontSize: 18, fontWeight: '700', color: text, marginBottom: 16 },
     label: { fontSize: 13, fontWeight: '600', color: subtext, marginBottom: 4, marginTop: 8 },
