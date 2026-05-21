@@ -139,7 +139,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Veuillez autoriser l'accès à la galerie dans les paramètres.');
+      Alert.alert('Permission requise', "Veuillez autoriser l'accès à la galerie dans les paramètres.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -149,7 +149,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
-    if (!asset.base64) { Alert.alert('Erreur', 'Impossible de lire l'image'); return; }
+    if (!asset.base64) { Alert.alert('Erreur', "Impossible de lire l'image"); return; }
     setUploadingAttachment(true);
     try {
       const fileName = asset.fileName || `photo_${Date.now()}.jpg`;
@@ -159,7 +159,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       sendMutation.mutate({ content: newMessage.trim() || '📷', attachmentUrl: url, attachmentType: fileType });
       setNewMessage('');
     } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible d'envoyer la photo');
+      Alert.alert('Erreur', e.message || "Impossible d'envoyer la photo");
     } finally {
       setUploadingAttachment(false);
     }

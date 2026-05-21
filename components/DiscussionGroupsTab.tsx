@@ -221,7 +221,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
-    if (!asset.base64) { Alert.alert('Erreur', 'Impossible de lire l'image'); return; }
+    if (!asset.base64) { Alert.alert('Erreur', "Impossible de lire l'image"); return; }
     setUploadingAttachment(true);
     try {
       const fileName = asset.fileName || `photo_${Date.now()}.jpg`;
@@ -231,7 +231,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       sendMessage.mutate({ groupId: selectedGroup!, message: newMessage.trim() || '📷', attachmentUrl: url, attachmentType: fileType });
       setNewMessage('');
     } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible d'envoyer la photo');
+      Alert.alert('Erreur', e.message || "Impossible d'envoyer la photo");
     } finally {
       setUploadingAttachment(false);
     }
