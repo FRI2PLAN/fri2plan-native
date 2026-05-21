@@ -326,7 +326,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       {activeTab === 'general' ? (
         <KeyboardAvoidingView
           style={styles.contentContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 110 : 0}
         >
           {isLoading ? (

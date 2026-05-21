@@ -2,6 +2,7 @@ import { enableScreens } from 'react-native-screens';
 enableScreens(true);
 import 'react-native-gesture-handler';
 import './i18n'; // Initialize i18n
+import * as NativeSplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -17,6 +18,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
+
+// Empêcher le splash natif de se cacher automatiquement avant que React soit prêt
+NativeSplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Create QueryClient (stable, never recreated)
 const queryClient = new QueryClient({
@@ -92,7 +96,6 @@ function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(()
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
-  // isInitializing supprimé — plus de délai artificiel post-login
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
 
@@ -100,9 +103,13 @@ function AppContent() {
   const fcmLogoutRef = useRef<(() => Promise<void>) | null>(null);
 
   // Timer durée minimale splash (3000ms) — laisse le temps à l'app de se monter complètement
+  // Masque le splash natif dès que React est prêt (après 300ms pour laisser le temps au rendu)
   useEffect(() => {
+    const hideNative = setTimeout(() => {
+      NativeSplashScreen.hideAsync().catch(() => {});
+    }, 300);
     const timer = setTimeout(() => setSplashMinDone(true), 3000);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(hideNative); clearTimeout(timer); };
   }, []);
 
   // Ne recréer le client tRPC QUE quand le token change

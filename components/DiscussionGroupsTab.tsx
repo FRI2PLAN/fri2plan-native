@@ -486,7 +486,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 140 : 0}
     >
       {/* Header du groupe */}
