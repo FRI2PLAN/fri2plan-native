@@ -601,20 +601,72 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           PICKERS
           ══════════════════════════════════════════════════════ */}
 
-      {/* Date */}
+      {/* Date Picker Modal - pattern Requêtes, rendu en dehors des modaux pour passer au-dessus */}
       {showDatePicker && (
-        <DateTimePicker
-          value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-          mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => { setShowDatePicker(false); if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); setShowTimePicker(true); } }}
-        />
+        <Modal transparent animationType="fade" visible={showDatePicker}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+              <DateTimePicker
+                value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                textColor={isDark ? '#fff' : '#111827'}
+                onChange={(_, d) => {
+                  if (Platform.OS === 'android') {
+                    setShowDatePicker(false);
+                    if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); setShowTimePicker(true); }
+                  } else if (d) {
+                    if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d }));
+                  }
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                  <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.datePickerConfirm} onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}>
+                    <Text style={styles.datePickerConfirmText}>{t('common.next') || 'Suivant'}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
       )}
+      {/* Time Picker Modal */}
       {showTimePicker && (
-        <DateTimePicker
-          value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
-          mode="time" is24Hour display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => { setShowTimePicker(false); if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); } }}
-        />
+        <Modal transparent animationType="fade" visible={showTimePicker}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+              <DateTimePicker
+                value={(pickerTarget === 'edit' ? editFormData.dueDate : formData.dueDate) || new Date()}
+                mode="time"
+                is24Hour
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                textColor={isDark ? '#fff' : '#111827'}
+                onChange={(_, d) => {
+                  if (Platform.OS === 'android') {
+                    setShowTimePicker(false);
+                    if (d) { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d })); }
+                  } else if (d) {
+                    if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, dueDate: d })); else setFormData(p => ({ ...p, dueDate: d }));
+                  }
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                  <TouchableOpacity style={styles.datePickerCancel} onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.datePickerCancelText}>{t('common.cancel') || 'Annuler'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.datePickerConfirm} onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.datePickerConfirmText}>{t('common.confirm') || 'Confirmer'}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
       )}
 
       {/* Assigner à */}
@@ -790,6 +842,13 @@ function getStyles(isDark: boolean) {
     // Pickers modaux
     pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     pickerModal: { backgroundColor: card, borderRadius: 16, padding: 18, width: '85%', maxHeight: '70%' },
+    datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    datePickerContainer: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 16, paddingHorizontal: 16, paddingBottom: 32 },
+    datePickerButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, gap: 12 },
+    datePickerCancel: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' },
+    datePickerCancelText: { fontSize: 16, fontWeight: '600', color: isDark ? '#d1d5db' : '#6b7280' },
+    datePickerConfirm: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center' },
+    datePickerConfirmText: { fontSize: 16, fontWeight: '700', color: '#fff' },
     pickerTitle: { fontSize: 17, fontWeight: 'bold', color: text, marginBottom: 12 },
     pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 6, borderRadius: 8, marginBottom: 2 },
     pickerOptionText: { fontSize: 16, color: text }});

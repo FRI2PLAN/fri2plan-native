@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
@@ -19,6 +20,7 @@ interface MessagesScreenProps {
 }
 
 export default function MessagesScreen({ onNavigate, onPrevious, onNext }: MessagesScreenProps) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -327,7 +329,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
         <KeyboardAvoidingView
           style={styles.contentContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
         >
           {isLoading ? (
             <View style={styles.loadingContainer}>

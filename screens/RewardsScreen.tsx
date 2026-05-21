@@ -222,14 +222,14 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         )}
       </View>
 
-      {/* Onglets */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsRow} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
+      {/* Onglets - grille 2x2 */}
+      <View style={styles.tabsGrid}>
         {tabs.map(tab => (
           <TouchableOpacity key={tab.key} style={[styles.tabBtn, activeTab === tab.key && styles.tabBtnActive]} onPress={() => setActiveTab(tab.key as any)}>
             <Text style={[styles.tabBtnText, activeTab === tab.key && styles.tabBtnTextActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       {/* Contenu */}
       <ScrollView style={styles.content} contentContainerStyle={{ padding: 16, paddingHorizontal: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -434,8 +434,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   familyRankPos: { fontSize: 16, fontWeight: "700", color: "#fff" },
   familyRankName: { fontSize: 11, color: "#e9d5ff", maxWidth: 60 },
   familyRankPts: { fontSize: 11, fontWeight: "600", color: "#fff" },
-  tabsRow: { maxHeight: 52, overflow: 'hidden' },
-  tabBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: isDark ? "#1f2937" : "#fff", borderWidth: 1, borderColor: isDark ? "#374151" : "#e5e7eb" },
+  tabsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
+  tabBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: isDark ? "#1f2937" : "#fff", borderWidth: 1, borderColor: isDark ? "#374151" : "#e5e7eb", flexBasis: '47%', flexGrow: 1, alignItems: 'center' },
   tabBtnActive: { backgroundColor: "#7c3aed", borderColor: "#7c3aed" },
   tabBtnText: { fontSize: 13, fontWeight: "600", color: isDark ? "#d1d5db" : "#374151" },
   tabBtnTextActive: { color: "#fff" },

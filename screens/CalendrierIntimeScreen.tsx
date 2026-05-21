@@ -423,40 +423,10 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
         </>
       )}
 
-      {/* Date picker modal pour le cycle */}
-      {showCycleDatePicker && (
-        <Modal transparent animationType="fade" visible={showCycleDatePicker}>
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
-              <DateTimePicker
-                value={cycleDateObj}
-                mode="date"
-                display="spinner"
-                textColor={isDark ? '#fff' : '#111827'}
-                onChange={(event: any, date?: Date) => {
-                  if (date) {
-                    setCycleDateObj(date);
-                    setCycleDate(date.toISOString().slice(0, 10));
-                  }
-                }}
-              />
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-                <TouchableOpacity style={[styles.cancelBtn, { flex: 1 }]} onPress={() => setShowCycleDatePicker(false)}>
-                  <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.saveBtn, { flex: 1 }]} onPress={() => setShowCycleDatePicker(false)}>
-                  <Text style={styles.saveBtnText}>{t('common.confirm') || 'Confirmer'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-
       {/* Modal nouveau cycle */}
-      <Modal visible={newCycleOpen} transparent animationType="slide">
+      <Modal visible={newCycleOpen} transparent animationType="slide" onRequestClose={() => setNewCycleOpen(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setNewCycleOpen(false)} />
+          <Pressable style={styles.modalBackdrop} onPress={() => { setShowCycleDatePicker(false); setNewCycleOpen(false); }} />
           <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }} bounces={false}>
             <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>
             <Text style={styles.fieldLabel}>{t('intimate.dateLabel')}</Text>
@@ -530,6 +500,40 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
               </TouchableOpacity>
             </View>
           </ScrollView>
+          {/* Date picker cycle - à l'intérieur du modal pour apparaître devant */}
+          {showCycleDatePicker && (
+            <Modal transparent animationType="fade" visible={showCycleDatePicker}>
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                  <DateTimePicker
+                    value={cycleDateObj}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    textColor={isDark ? '#fff' : '#111827'}
+                    onChange={(event: any, date?: Date) => {
+                      if (Platform.OS === 'android') {
+                        setShowCycleDatePicker(false);
+                        if (date) { setCycleDateObj(date); setCycleDate(date.toISOString().slice(0, 10)); }
+                      } else if (date) {
+                        setCycleDateObj(date);
+                        setCycleDate(date.toISOString().slice(0, 10));
+                      }
+                    }}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                      <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowCycleDatePicker(false)}>
+                        <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.saveBtn} onPress={() => setShowCycleDatePicker(false)}>
+                        <Text style={styles.saveBtnText}>{t('common.confirm') || 'Confirmer'}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </Modal>
+          )}
         </KeyboardAvoidingView>
       </Modal>
     </View>
