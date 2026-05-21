@@ -230,13 +230,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Favorites (5 buttons with icon only) - persisted in AsyncStorage
-  const DEFAULT_FAVORITES = [
-    { id: 'calendar', name: t('navigation.calendar'), icon: '📅', pageIndex: 1 },
-    { id: 'notes', name: t('navigation.notes'), icon: '📝', pageIndex: 7 },
-    { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 9 },
-  ];
-  const [favorites, setFavorites] = useState(DEFAULT_FAVORITES);
+  // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
+  const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(DEFAULT_FAVORITE_IDS);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
   // Clé isolée par famille pour éviter le partage des raccourcis entre cercles
   const favoritesKey = activeFamilyId ? `dashboard_favorites_${activeFamilyId}` : 'dashboard_favorites';
@@ -249,15 +245,20 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setFavorites(parsed);
+            // Support legacy format (array of objects) and new format (array of IDs)
+            if (typeof parsed[0] === 'string') {
+              setFavoriteIds(parsed);
+            } else {
+              setFavoriteIds(parsed.map((f: any) => f.id));
+            }
           } else {
-            setFavorites(DEFAULT_FAVORITES);
+            setFavoriteIds(DEFAULT_FAVORITE_IDS);
           }
         } catch {
-          setFavorites(DEFAULT_FAVORITES);
+          setFavoriteIds(DEFAULT_FAVORITE_IDS);
         }
       } else {
-        setFavorites(DEFAULT_FAVORITES);
+        setFavoriteIds(DEFAULT_FAVORITE_IDS);
       }
       setFavoritesLoaded(true);
     });
@@ -266,9 +267,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Save favorites to AsyncStorage whenever they change (after initial load)
   useEffect(() => {
     if (favoritesLoaded) {
-      AsyncStorage.setItem(favoritesKey, JSON.stringify(favorites));
+      AsyncStorage.setItem(favoritesKey, JSON.stringify(favoriteIds));
     }
-  }, [favorites, favoritesLoaded, favoritesKey]);
+  }, [favoriteIds, favoritesLoaded, favoritesKey]);
 
   // All available pages for favorites selection
   const allPages = [
@@ -293,14 +294,18 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     if (onNavigate) onNavigate(pageIndex);
   };
 
+  // Derive favorites objects from IDs + allPages (names always up-to-date with current language)
+  const favorites = favoriteIds
+    .map(id => allPages.find(p => p.id === id))
+    .filter(Boolean) as Array<{ id: string; name: string; icon: string; pageIndex: number }>;
+
   const handleFavoriteSelect = (favoriteId: string) => {
-    const isAlreadyFavorite = favorites.some(f => f.id === favoriteId);
+    const isAlreadyFavorite = favoriteIds.includes(favoriteId);
     if (isAlreadyFavorite) {
-      setFavorites(favorites.filter(f => f.id !== favoriteId));
+      setFavoriteIds(favoriteIds.filter(id => id !== favoriteId));
     } else {
-      if (favorites.length < 5) {
-        const page = allPages.find(p => p.id === favoriteId);
-        if (page) setFavorites([...favorites, page]);
+      if (favoriteIds.length < 5) {
+        setFavoriteIds([...favoriteIds, favoriteId]);
       }
     }
   };
