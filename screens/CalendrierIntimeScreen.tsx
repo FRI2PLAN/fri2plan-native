@@ -457,7 +457,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
       <Modal visible={newCycleOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setNewCycleOpen(false)} />
-          <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }} bounces={false}>
             <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>
             <Text style={styles.fieldLabel}>{t('intimate.dateLabel')}</Text>
             <TouchableOpacity style={styles.dateButton} onPress={() => setShowCycleDatePicker(true)}>
@@ -611,7 +611,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   emptySubtext: { fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '90%', flexShrink: 1 },
+  modalContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '90%', flexGrow: 0 },
   modalTitle: { fontSize: 20, fontWeight: '800', color: isDark ? '#fff' : '#111827', marginBottom: 16 },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151', marginBottom: 6, marginTop: 12 },
   input: { backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 10, padding: 12, fontSize: 15, color: isDark ? '#fff' : '#111827', borderWidth: 1, borderColor: isDark ? '#4b5563' : '#e5e7eb' },
