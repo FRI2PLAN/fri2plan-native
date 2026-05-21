@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
+import * as Notifications from 'expo-notifications';
 
 // Empêcher le splash natif de se cacher automatiquement avant que React soit prêt
 NativeSplashScreen.preventAutoHideAsync().catch(() => {});
@@ -109,6 +110,8 @@ function AppContent() {
       NativeSplashScreen.hideAsync().catch(() => {});
     }, 300);
     const timer = setTimeout(() => setSplashMinDone(true), 3000);
+    // Remettre le badge iOS à 0 au démarrage de l'app
+    Notifications.setBadgeCountAsync(0).catch(() => {});
     return () => { clearTimeout(hideNative); clearTimeout(timer); };
   }, []);
 

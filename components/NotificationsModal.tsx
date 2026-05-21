@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 import {
   View,
   Text,
@@ -35,6 +36,13 @@ export default function NotificationsModal({
 
   const utils = trpc.useUtils();
   const { activeFamilyId } = useFamily();
+
+  // Remettre le badge iOS à 0 quand le modal s'ouvre
+  useEffect(() => {
+    if (visible) {
+      Notifications.setBadgeCountAsync(0).catch(() => {});
+    }
+  }, [visible]);
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = activeFamilyId
     ? (families as any[])?.find((f: any) => f.id === activeFamilyId) ?? families?.[0]
