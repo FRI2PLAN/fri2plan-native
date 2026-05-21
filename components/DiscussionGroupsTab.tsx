@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -482,12 +483,13 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   // Vue conversation du groupe
   const currentGroup = groups.find((g: any) => g.id === selectedGroup);
   const isCreator = currentGroup?.creatorId === user?.id;
+  const insets = useSafeAreaInsets();
   
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 140 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
     >
       {/* Header du groupe */}
       <View style={styles.groupConversationHeader}>
