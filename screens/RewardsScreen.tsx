@@ -204,7 +204,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                 return idx >= 0 ? idx + 1 : "—";
               })()}
             </Text>
-            <Text style={styles.rankLabel}>classement</Text>
+            <Text style={styles.rankLabel}>{t('rewards.ranking')}</Text>
           </View>
         </View>
         {(familyPoints as any[]).length > 0 && (
@@ -232,7 +232,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
       </ScrollView>
 
       {/* Contenu */}
-      <ScrollView style={styles.content} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <ScrollView style={styles.content} contentContainerStyle={{ padding: 16, paddingHorizontal: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
 
         {/* CATALOGUE */}
         {activeTab === "catalog" && (
@@ -293,7 +293,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         {/* BADGES */}
         {activeTab === "badges" && (
           <>
-            <Text style={styles.sectionTitle}>{earnedBadgeTypes.size} / {allBadgeTypes.length} badges obtenus</Text>
+            <Text style={styles.sectionTitle}>{t('rewards.badgesObtained', { earned: earnedBadgeTypes.size, total: allBadgeTypes.length })}</Text>
             {sortedBadgeTypes.map(badgeType => {
               const meta = BADGE_METADATA[badgeType];
               const earned = earnedBadgeTypes.has(badgeType);
@@ -314,7 +314,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                         <Text style={styles.progressText}>{progress.current}/{progress.target}</Text>
                       </View>
                     )}
-                    {earned && <Text style={[styles.earnedLabel, { color: meta.color }]}>✓ Obtenu</Text>}
+                    {earned && <Text style={[styles.earnedLabel, { color: meta.color }]}>✓ {t('rewards.obtained')}</Text>}
                   </View>
                 </View>
               );
@@ -354,7 +354,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         {/* ADMIN */}
         {activeTab === "admin" && isAdmin && (
           <>
-            <Text style={styles.sectionTitle}>Réclamations en attente ({(pendingClaims as any[]).length})</Text>
+            <Text style={styles.sectionTitle}>{t('rewards.pendingClaims', { count: (pendingClaims as any[]).length })}</Text>
             {(pendingClaims as any[]).length === 0 ? (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>✅</Text>

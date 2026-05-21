@@ -4,6 +4,7 @@ import {
   RefreshControl, Alert, Modal, TextInput,
   KeyboardAvoidingView, Platform, Pressable, Switch
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +60,8 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'settings'>('overview');
   const [refreshing, setRefreshing] = useState(false);
   const [newCycleOpen, setNewCycleOpen] = useState(false);
+  const [showCycleDatePicker, setShowCycleDatePicker] = useState(false);
+  const [cycleDateObj, setCycleDateObj] = useState(new Date());
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [selectedFlow, setSelectedFlow] = useState<string>('');
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
@@ -420,6 +423,36 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
         </>
       )}
 
+      {/* Date picker modal pour le cycle */}
+      {showCycleDatePicker && (
+        <Modal transparent animationType="fade" visible={showCycleDatePicker}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+              <DateTimePicker
+                value={cycleDateObj}
+                mode="date"
+                display="spinner"
+                textColor={isDark ? '#fff' : '#111827'}
+                onChange={(event: any, date?: Date) => {
+                  if (date) {
+                    setCycleDateObj(date);
+                    setCycleDate(date.toISOString().slice(0, 10));
+                  }
+                }}
+              />
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                <TouchableOpacity style={[styles.cancelBtn, { flex: 1 }]} onPress={() => setShowCycleDatePicker(false)}>
+                  <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.saveBtn, { flex: 1 }]} onPress={() => setShowCycleDatePicker(false)}>
+                  <Text style={styles.saveBtnText}>{t('common.confirm') || 'Confirmer'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Modal nouveau cycle */}
       <Modal visible={newCycleOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
@@ -427,13 +460,9 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
           <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }}>
             <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>
             <Text style={styles.fieldLabel}>{t('intimate.dateLabel')}</Text>
-            <TextInput
-              style={styles.input}
-              value={cycleDate}
-              onChangeText={setCycleDate}
-              {...{placeholder: t('intimate.datePlaceholder')}}
-              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
-            />
+            <TouchableOpacity style={styles.dateButton} onPress={() => setShowCycleDatePicker(true)}>
+              <Text style={styles.dateButtonText}>📅 {cycleDate}</Text>
+            </TouchableOpacity>
             <Text style={styles.fieldLabel}>{t('intimate.moodLabel')}</Text>
             <TouchableOpacity style={styles.dropdownBtn} onPress={() => { setShowMoodDropdown(v => !v); setShowFlowDropdown(false); setShowSymptomsDropdown(false); }}>
               <Text style={styles.dropdownBtnText}>{selectedMood ? `${MOOD_OPTIONS.find(m => m.value === selectedMood)?.emoji} ${MOOD_OPTIONS.find(m => m.value === selectedMood)?.label}` : '— Sélectionner —'}</Text>
@@ -608,4 +637,6 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   cancelBtnText: { fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' },
   saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: '#ec4899', alignItems: 'center' },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  dateButton: { backgroundColor: isDark ? '#374151' : '#f9fafb', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#e5e7eb' },
+  dateButtonText: { fontSize: 15, color: isDark ? '#fff' : '#111827' },
 });

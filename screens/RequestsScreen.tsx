@@ -395,30 +395,71 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                 </Text>
               </TouchableOpacity>
 
+              {/* Date picker modal */}
               {showDatePicker && (
-                <DateTimePicker
-                  value={formDate || new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                  onChange={(event, date) => {
-                    setShowDatePicker(false);
-                    if (date) {
-                      setFormDate(date);
-                      setShowTimePicker(true);
-                    }
-                  }}
-                />
+                <Modal transparent animationType="fade" visible={showDatePicker}>
+                  <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                    <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                      <DateTimePicker
+                        value={formDate || new Date()}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        textColor={isDark ? '#fff' : '#111827'}
+                        onChange={(event, date) => {
+                          if (Platform.OS === 'android') {
+                            setShowDatePicker(false);
+                            if (date) { setFormDate(date); setShowTimePicker(true); }
+                          } else if (date) {
+                            setFormDate(date);
+                          }
+                        }}
+                      />
+                      {Platform.OS === 'ios' && (
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                          <TouchableOpacity style={styles.cancelButton} onPress={() => setShowDatePicker(false)}>
+                            <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.primaryButton} onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}>
+                            <Text style={styles.primaryButtonText}>{t('common.confirm') || 'Confirmer'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </Modal>
               )}
+              {/* Time picker modal */}
               {showTimePicker && (
-                <DateTimePicker
-                  value={formDate || new Date()}
-                  mode="time"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                  onChange={(event, date) => {
-                    setShowTimePicker(false);
-                    if (date) setFormDate(date);
-                  }}
-                />
+                <Modal transparent animationType="fade" visible={showTimePicker}>
+                  <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                    <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                      <DateTimePicker
+                        value={formDate || new Date()}
+                        mode="time"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        textColor={isDark ? '#fff' : '#111827'}
+                        onChange={(event, date) => {
+                          if (Platform.OS === 'android') {
+                            setShowTimePicker(false);
+                            if (date) setFormDate(date);
+                          } else if (date) {
+                            setFormDate(date);
+                          }
+                        }}
+                      />
+                      {Platform.OS === 'ios' && (
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                          <TouchableOpacity style={styles.cancelButton} onPress={() => setShowTimePicker(false)}>
+                            <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.primaryButton} onPress={() => setShowTimePicker(false)}>
+                            <Text style={styles.primaryButtonText}>{t('common.confirm') || 'Confirmer'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </Modal>
               )}
 
               <View style={styles.modalActions}>

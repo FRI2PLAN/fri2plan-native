@@ -890,12 +890,42 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               <Text style={styles.dateButtonText}>📅 {format(txForm.date, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {showDatePicker && (
-              <DateTimePicker
-                value={txForm.date}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                onChange={(_, d) => { setShowDatePicker(false); if (d) setTxForm(f => ({ ...f, date: d })); }}
-              />
+              <Modal transparent animationType="fade" visible={showDatePicker}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                  <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                    <DateTimePicker
+                      value={txForm.date}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      textColor={isDark ? '#fff' : '#111827'}
+                      onChange={(_, d) => {
+                        if (Platform.OS === 'android') {
+                          setShowDatePicker(false);
+                          if (d) setTxForm(f => ({ ...f, date: d }));
+                        } else if (d) {
+                          setTxForm(f => ({ ...f, date: d }));
+                        }
+                      }}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                        <TouchableOpacity
+                          style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' }}
+                          onPress={() => setShowDatePicker(false)}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' }}>{t('common.cancel')}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center' }}
+                          onPress={() => setShowDatePicker(false)}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>{t('common.confirm') || 'Confirmer'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Modal>
             )}
 
             {/* Payé par */}
@@ -1256,12 +1286,42 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               <Text style={styles.dateButtonText}>📅 {format(projectTxForm.date, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {showProjectDatePicker && (
-              <DateTimePicker
-                value={projectTxForm.date}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                onChange={(_, d) => { setShowProjectDatePicker(false); if (d) setProjectTxForm(f => ({ ...f, date: d })); }}
-              />
+              <Modal transparent animationType="fade" visible={showProjectDatePicker}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                  <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+                    <DateTimePicker
+                      value={projectTxForm.date}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      textColor={isDark ? '#fff' : '#111827'}
+                      onChange={(_, d) => {
+                        if (Platform.OS === 'android') {
+                          setShowProjectDatePicker(false);
+                          if (d) setProjectTxForm(f => ({ ...f, date: d }));
+                        } else if (d) {
+                          setProjectTxForm(f => ({ ...f, date: d }));
+                        }
+                      }}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                        <TouchableOpacity
+                          style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center' }}
+                          onPress={() => setShowProjectDatePicker(false)}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#374151' }}>{t('common.cancel')}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center' }}
+                          onPress={() => setShowProjectDatePicker(false)}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>{t('common.confirm') || 'Confirmer'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Modal>
             )}
 
             <View style={styles.modalActions}>
