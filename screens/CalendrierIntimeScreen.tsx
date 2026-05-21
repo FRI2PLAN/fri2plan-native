@@ -424,7 +424,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
       <Modal visible={newCycleOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setNewCycleOpen(false)} />
-          <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 40 }}>
+          <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }}>
             <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>
             <Text style={styles.fieldLabel}>{t('intimate.dateLabel')}</Text>
             <TextInput

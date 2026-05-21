@@ -959,7 +959,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 12,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 16 : 12,
+    paddingBottom: 12,
     backgroundColor: isDark ? '#111827' : '#fff',
     borderTopWidth: 1,
     borderTopColor: isDark ? '#374151' : '#e5e7eb',

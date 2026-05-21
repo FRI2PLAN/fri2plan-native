@@ -893,7 +893,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               <DateTimePicker
                 value={txForm.date}
                 mode="date"
-                display="default"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={(_, d) => { setShowDatePicker(false); if (d) setTxForm(f => ({ ...f, date: d })); }}
               />
             )}
@@ -1259,7 +1259,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
               <DateTimePicker
                 value={projectTxForm.date}
                 mode="date"
-                display="default"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={(_, d) => { setShowProjectDatePicker(false); if (d) setProjectTxForm(f => ({ ...f, date: d })); }}
               />
             )}

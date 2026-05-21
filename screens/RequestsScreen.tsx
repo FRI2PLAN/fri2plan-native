@@ -399,7 +399,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                 <DateTimePicker
                   value={formDate || new Date()}
                   mode="date"
-                  display="default"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={(event, date) => {
                     setShowDatePicker(false);
                     if (date) {
@@ -413,7 +413,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                 <DateTimePicker
                   value={formDate || new Date()}
                   mode="time"
-                  display="default"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={(event, date) => {
                     setShowTimePicker(false);
                     if (date) setFormDate(date);

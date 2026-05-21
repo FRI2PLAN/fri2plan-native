@@ -434,7 +434,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   familyRankPos: { fontSize: 16, fontWeight: "700", color: "#fff" },
   familyRankName: { fontSize: 11, color: "#e9d5ff", maxWidth: 60 },
   familyRankPts: { fontSize: 11, fontWeight: "600", color: "#fff" },
-  tabsRow: { maxHeight: 52 },
+  tabsRow: { maxHeight: 52, overflow: 'hidden' },
   tabBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: isDark ? "#1f2937" : "#fff", borderWidth: 1, borderColor: isDark ? "#374151" : "#e5e7eb" },
   tabBtnActive: { backgroundColor: "#7c3aed", borderColor: "#7c3aed" },
   tabBtnText: { fontSize: 13, fontWeight: "600", color: isDark ? "#d1d5db" : "#374151" },
