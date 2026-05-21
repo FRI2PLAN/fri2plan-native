@@ -612,7 +612,19 @@
     "level3Condition": "5 registrierte und aktive Freunde",
     "level3Gain": "1 kostenloser Premium-Monat",
     "level3Use": "Premium-Monat wird automatisch auf Ihrem Konto aktiviert",
-    "shareMessage": "Komm zu FRI2PLAN, dem Familienorganizer! 🎉\n\nEmpfehlungscode: {{code}}\n\nLink: {{link}}"
+    "shareMessage": "Komm zu FRI2PLAN, dem Familienorganizer! 🎉\n\nEmpfehlungscode: {{code}}\n\nLink: {{link}}",
+    "rewardTitle": "1 Monat pro Empfehlung geschenkt",
+    "rewardDesc": "Jedes Mal, wenn sich ein Freund mit Ihrem Code anmeldet, erhalten Sie automatisch 1 kostenlosen Monat.",
+    "noCode": "Sie haben noch keinen Empfehlungscode.",
+    "generateCode": "Meinen Code generieren",
+    "step3Title": "Genießen Sie Ihren kostenlosen Monat",
+    "codeGenerated": "Empfehlungscode generiert!",
+    "codeCopied": "Code kopiert!",
+    "totalCodes": "Generierte Codes",
+    "usedCodes": "Erfolgreiche Empfehlungen",
+    "monthsEarned": "Geschenkte Monate",
+    "used": "Verwendet",
+    "history": "Verlauf"
   },
   "settings": {
     "title": "Einstellungen",

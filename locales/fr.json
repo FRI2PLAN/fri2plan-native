@@ -612,7 +612,19 @@
     "level3Condition": "5 amis inscrits et actifs",
     "level3Gain": "1 mois Premium offert",
     "level3Use": "Mois Premium activé automatiquement sur votre compte",
-    "shareMessage": "Rejoins-moi sur FRI2PLAN, l'organiseur familial ! 🎉\n\nCode de parrainage : {{code}}\n\nLien : {{link}}"
+    "shareMessage": "Rejoins-moi sur FRI2PLAN, l'organiseur familial ! 🎉\n\nCode de parrainage : {{code}}\n\nLien : {{link}}",
+    "rewardTitle": "1 mois offert par parrainage",
+    "rewardDesc": "Chaque fois qu'un ami s'abonne avec votre code, vous recevez automatiquement 1 mois d'abonnement gratuit.",
+    "noCode": "Vous n'avez pas encore de code de parrainage.",
+    "generateCode": "Générer mon code",
+    "step3Title": "Profitez de votre mois offert",
+    "codeGenerated": "Code de parrainage généré !",
+    "codeCopied": "Code copié !",
+    "totalCodes": "Codes générés",
+    "usedCodes": "Parrainages réussis",
+    "monthsEarned": "Mois offerts",
+    "used": "Utilisé",
+    "history": "Historique"
   },
   "settings": {
     "title": "Paramètres",

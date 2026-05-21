@@ -612,7 +612,19 @@
     "level3Condition": "5 friends registered and active",
     "level3Gain": "1 free Premium month",
     "level3Use": "Premium month automatically activated on your account",
-    "shareMessage": "Join me on FRI2PLAN, the family organizer! 🎉\n\nReferral code: {{code}}\n\nLink: {{link}}"
+    "shareMessage": "Join me on FRI2PLAN, the family organizer! 🎉\n\nReferral code: {{code}}\n\nLink: {{link}}",
+    "rewardTitle": "1 month offered per referral",
+    "rewardDesc": "Every time a friend subscribes with your code, you automatically receive 1 free month of subscription.",
+    "noCode": "You don't have a referral code yet.",
+    "generateCode": "Generate my code",
+    "step3Title": "Enjoy your free month",
+    "codeGenerated": "Referral code generated!",
+    "codeCopied": "Code copied!",
+    "totalCodes": "Codes generated",
+    "usedCodes": "Successful referrals",
+    "monthsEarned": "Months earned",
+    "used": "Used",
+    "history": "History"
   },
   "settings": {
     "title": "Settings",
