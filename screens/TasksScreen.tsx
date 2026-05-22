@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
+import { useFamily } from '../contexts/FamilyContext';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -52,6 +53,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { data: families } = trpc.family.list.useQuery();
+  const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const styles = getStyles(isDark);
 
   // ── Filtres ──
@@ -95,9 +99,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   // ── tRPC ──
   const utils = trpc.useUtils();
   const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery();
+  // Chargement permanent pour afficher les noms dans les cartes et les modaux
   const { data: members } = trpc.family.members.useQuery(
-    { familyId: 1 },
-    { enabled: createModalVisible || editModalVisible || showAssignPicker }
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
   );
 
   const createMutation = trpc.tasks.create.useMutation({
