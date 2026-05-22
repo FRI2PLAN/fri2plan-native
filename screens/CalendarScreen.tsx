@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking } from 'react-native';
+import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, type NativeCalendar } from '../hooks/useAppleCalendar';
 import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -402,6 +403,78 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [colorPickerSubId, setColorPickerSubId] = useState<number | null>(null);
 
   // ─── Calendriers Google synchronisés ────────────────────────────────────────
+  // ─── Calendrier natif (Apple / Android) ─────────────────────────────────────
+  const [nativeCalendarModal, setNativeCalendarModal] = useState(false);
+  const [nativeCalendars, setNativeCalendars] = useState<NativeCalendar[]>([]);
+  const [nativeCalendarLoading, setNativeCalendarLoading] = useState(false);
+  const [nativeCalendarImporting, setNativeCalendarImporting] = useState(false);
+  const [nativeManageModal, setNativeManageModal] = useState(false);
+  const [nativeSelectedCalendarId, setNativeSelectedCalendarId] = useState<string | null>(null);
+
+  const openNativeCalendarPicker = async () => {
+    setNativeCalendarLoading(true);
+    try {
+      const granted = await requestCalendarPermissions();
+      if (!granted) {
+        Alert.alert(
+          t('calendar.nativeCalendarPermission') || 'Accès calendrier',
+          t('calendar.nativeCalendarPermissionDenied') || 'Accès au calendrier refusé. Activez-le dans les réglages.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      const cals = await getLocalCalendars();
+      if (cals.length === 0) {
+        Alert.alert('', t('calendar.nativeCalendarNoCalendars') || 'Aucun calendrier trouvé sur cet appareil.');
+        return;
+      }
+      setNativeCalendars(cals);
+      setNativeCalendarModal(true);
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible d\'accéder au calendrier natif.');
+    } finally {
+      setNativeCalendarLoading(false);
+    }
+  };
+
+  const handleImportNativeCalendar = async (calendarId: string) => {
+    setNativeCalendarImporting(true);
+    try {
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 1);
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 3);
+      const nativeEvents = await importEventsFromNative(calendarId, startDate, endDate);
+      let successCount = 0;
+      for (const ev of nativeEvents) {
+        try {
+          const durationMinutes = Math.round((ev.endDate.getTime() - ev.startDate.getTime()) / (1000 * 60));
+          await createEvent.mutateAsync({
+            title: ev.title,
+            description: ev.notes || '',
+            startDate: format(ev.startDate, 'yyyy-MM-dd HH:mm:ss'),
+            endDate: format(ev.endDate, 'yyyy-MM-dd HH:mm:ss'),
+            durationMinutes: durationMinutes > 0 ? durationMinutes : 60,
+            category: 'other',
+            reminderMinutes: 15,
+            isPrivate: 0,
+          });
+          successCount++;
+        } catch {}
+      }
+      setNativeCalendarModal(false);
+      refetch();
+      Alert.alert(
+        '✓',
+        (t('calendar.nativeCalendarImportSuccess') || '{{count}} événement(s) importé(s) depuis le calendrier natif.').replace('{{count}}', String(successCount))
+      );
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible d\'importer les événements.');
+    } finally {
+      setNativeCalendarImporting(false);
+    }
+  };
+
   const [googleManageModal, setGoogleManageModal] = useState(false);
   const [googleColorPickerId, setGoogleColorPickerId] = useState<number | null>(null);
   const [googleSyncingId, setGoogleSyncingId] = useState<number | null>(null);
@@ -686,6 +759,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.calMenuIcon}>📤</Text>
               <Text style={styles.calMenuLabel}>{t('calendar.exportIcs') || 'Exporter le calendrier'}</Text>
             </TouchableOpacity>
+            {/* Bouton Calendrier Apple / Natif */}
+            {Platform.OS !== 'web' && (
+              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); openNativeCalendarPicker(); }}>
+                <Text style={styles.calMenuIcon}>{Platform.OS === 'ios' ? '📱' : '📅'}</Text>
+                <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.nativeCalendar') || 'Calendrier Apple / Natif'}</Text>
+                <Text style={{ fontSize: 11, color: '#6b7280' }}>{nativeCalendarLoading ? '...' : (t('calendar.nativeCalendarAdd') || '+ Ajouter')}</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.calMenuItem} onPress={async () => {
               setCalendarMenuVisible(false);
               // Générer un sessionId unique pour le polling
@@ -1145,6 +1226,41 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Événement privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
+            {/* Bouton export vers calendrier natif */}
+            {Platform.OS !== 'web' && selectedEvent && (
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, marginTop: 8, borderRadius: 8, backgroundColor: isDark ? '#1e3a5f' : '#eff6ff', gap: 8 }}
+                onPress={async () => {
+                  try {
+                    const cals = await getLocalCalendars(true);
+                    if (cals.length === 0) {
+                      Alert.alert('', t('calendar.nativeCalendarNoCalendars') || 'Aucun calendrier trouvé.');
+                      return;
+                    }
+                    const startTime = parseLocalDate(selectedEvent.startTime, !!selectedEvent.isUtc);
+                    const endTime = parseLocalDate(selectedEvent.endTime, !!selectedEvent.isUtc);
+                    // Si plusieurs calendriers, utiliser le premier modifiable
+                    const targetCal = cals[0];
+                    const eventId = await exportEventToNative(
+                      { title: selectedEvent.title, startDate: startTime, endDate: endTime, notes: selectedEvent.description },
+                      targetCal.id
+                    );
+                    if (eventId) {
+                      Alert.alert('✓', (t('calendar.nativeCalendarExportSuccess') || 'Événement ajouté au calendrier natif.'));
+                    } else {
+                      Alert.alert('Erreur', t('calendar.nativeCalendarExportError') || 'Impossible d\'ajouter l\''événement au calendrier.');
+                    }
+                  } catch (err) {
+                    Alert.alert('Erreur', 'Impossible d\'accéder au calendrier natif.');
+                  }
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>{Platform.OS === 'ios' ? '📱' : '📅'}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#93c5fd' : '#1d4ed8' }}>
+                  {t('calendar.nativeCalendarExport') || 'Ajouter au calendrier'}
+                </Text>
+              </TouchableOpacity>
+            )}
             {/* Boutons icônes : Supprimer | Annuler | Sauvegarder */}
             <View style={styles.iconBtnRow}>
               <ModalIconButton icon="🗑" color="#ef4444" onPress={handleDeleteEvent} />
@@ -1684,6 +1800,58 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             </TouchableOpacity>
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 12 }]}>
               <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setGoogleManageModal(false); setGoogleColorPickerId(null); }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Modal Calendrier Natif (Apple / Android) ── */}
+      <Modal visible={nativeCalendarModal} animationType="slide" transparent onRequestClose={() => setNativeCalendarModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{Platform.OS === 'ios' ? '📱 ' : '📅 '}{t('calendar.nativeCalendarTitle') || 'Calendriers natifs'}</Text>
+            <Text style={[styles.importInfoText, { marginBottom: 12 }]}>
+              {t('calendar.nativeCalendarDesc') || 'Sélectionnez un calendrier à synchroniser avec FRI2PLAN.'}
+            </Text>
+            <ScrollView style={{ maxHeight: 320 }}>
+              {nativeCalendars.length === 0 ? (
+                <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>
+                  {t('calendar.nativeCalendarNoCalendars') || 'Aucun calendrier trouvé sur cet appareil.'}
+                </Text>
+              ) : nativeCalendars.map((cal) => (
+                <TouchableOpacity
+                  key={cal.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 14,
+                    marginBottom: 8,
+                    borderRadius: 10,
+                    backgroundColor: isDark ? '#2a2a2a' : '#f9fafb',
+                    borderWidth: 1,
+                    borderColor: isDark ? '#374151' : '#e5e7eb',
+                    opacity: nativeCalendarImporting ? 0.6 : 1,
+                  }}
+                  onPress={() => handleImportNativeCalendar(cal.id)}
+                  disabled={nativeCalendarImporting}
+                >
+                  <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cal.color || '#7c3aed', marginRight: 12 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#ffffff' : '#1f2937' }}>
+                      {cal.title}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 2 }}>
+                      {cal.source}{!cal.allowsModifications ? ` • ${t('calendar.nativeCalendarReadOnly') || 'Lecture seule'}` : ''}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 18, color: '#7c3aed' }}>
+                    {nativeCalendarImporting ? '⏳' : '↓'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setNativeCalendarModal(false)} />
             </View>
           </View>
         </View>
