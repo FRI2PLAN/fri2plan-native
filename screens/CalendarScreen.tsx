@@ -1248,7 +1248,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                     if (eventId) {
                       Alert.alert('✓', (t('calendar.nativeCalendarExportSuccess') || 'Événement ajouté au calendrier natif.'));
                     } else {
-                      Alert.alert('Erreur', t('calendar.nativeCalendarExportError') || 'Impossible d\'ajouter l\''événement au calendrier.');
+                      Alert.alert('Erreur', t('calendar.nativeCalendarExportError') || "Impossible d'ajouter l'\u00e9v\u00e9nement au calendrier.");
                     }
                   } catch (err) {
                     Alert.alert('Erreur', 'Impossible d\'accéder au calendrier natif.');
