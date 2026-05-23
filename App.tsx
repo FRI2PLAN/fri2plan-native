@@ -17,6 +17,7 @@ import { StyleSheet, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as Updates from 'expo-updates';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
 import * as Notifications from 'expo-notifications';
 
@@ -93,6 +94,28 @@ function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(()
   return null;
 }
 
+// ─── Vérification OTA au démarrage ──────────────────────────────────────────
+async function checkAndApplyUpdate() {
+  try {
+    if (!Updates.isEmbeddedLaunch) {
+      // Déjà en train de tourner depuis une OTA, pas besoin de revérifier
+      console.log('[OTA] Running from update, skipping check');
+      return;
+    }
+    const update = await Updates.checkForUpdateAsync();
+    if (update.isAvailable) {
+      console.log('[OTA] Update available, fetching...');
+      await Updates.fetchUpdateAsync();
+      console.log('[OTA] Update fetched, reloading...');
+      await Updates.reloadAsync();
+    } else {
+      console.log('[OTA] No update available');
+    }
+  } catch (e) {
+    console.warn('[OTA] Check failed:', e);
+  }
+}
+
 // ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
@@ -112,6 +135,8 @@ function AppContent() {
     const timer = setTimeout(() => setSplashMinDone(true), 3000);
     // Remettre le badge iOS à 0 au démarrage de l'app
     Notifications.setBadgeCountAsync(0).catch(() => {});
+    // Vérifier et appliquer les mises à jour OTA au démarrage
+    checkAndApplyUpdate();
     return () => { clearTimeout(hideNative); clearTimeout(timer); };
   }, []);
 
