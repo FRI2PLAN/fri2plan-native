@@ -48,7 +48,14 @@
       ],
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
-      "expo-calendar"
+      "expo-calendar",
+      [
+        "expo-updates",
+        {
+          "checkAutomatically": "ON_LOAD",
+          "requestHeaders": {}
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -103,6 +110,7 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
     }
   }

@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -65,7 +65,18 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const messages: any[] = (messagesData as any)?.messages || [];
 
   // Marquer comme lus
-  const markAsRead = trpc.messages.markAsRead.useMutation();
+  const markAsRead = trpc.messages.markAsRead.useMutation({
+    onSuccess: () => utils.messages.list.invalidate(),
+  });
+  const utils = trpc.useUtils();
+
+  // Appeler markAsRead dès que l'onglet Messages est ouvert
+  useEffect(() => {
+    if (activeFamilyId && activeTab === 'general') {
+      markAsRead.mutate({ familyId: activeFamilyId });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFamilyId, activeTab]);
 
   // Réactions
   const addReaction = trpc.messages.addReaction.useMutation({
