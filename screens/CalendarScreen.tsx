@@ -1,12 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking } from 'react-native';
-import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, type NativeCalendar } from '../hooks/useAppleCalendar';
+import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, removeEventFromNative, getNativeEventId, saveConnectedCalendar, getConnectedCalendar, disconnectNativeCalendar, updateLastSync, type NativeCalendar, type ConnectedNativeCalendar } from '../hooks/useAppleCalendar';
 import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour, isWithinInterval } from 'date-fns';
@@ -410,6 +411,74 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [nativeCalendarImporting, setNativeCalendarImporting] = useState(false);
   const [nativeManageModal, setNativeManageModal] = useState(false);
   const [nativeSelectedCalendarId, setNativeSelectedCalendarId] = useState<string | null>(null);
+  const [connectedNativeCalendar, setConnectedNativeCalendar] = useState<ConnectedNativeCalendar | null>(null);
+  const [nativeSyncing, setNativeSyncing] = useState(false);
+  const [googleTokenStatus, setGoogleTokenStatus] = useState<'unknown' | 'valid' | 'expired'>('unknown');
+
+  // ─── Charger le calendrier natif connecté + vérifier token Google au focus ───
+  useFocusEffect(
+    useCallback(() => {
+      // Charger le calendrier natif connecté
+      getConnectedCalendar().then(cal => setConnectedNativeCalendar(cal));
+      // Vérifier le statut du token Google
+      AsyncStorage.getItem('googleOAuthToken').then(stored => {
+        if (!stored) { setGoogleTokenStatus('unknown'); return; }
+        try {
+          const tokenData = JSON.parse(stored);
+          if (tokenData.expiry_date && tokenData.expiry_date < Date.now()) {
+            setGoogleTokenStatus('expired');
+          } else {
+            setGoogleTokenStatus('valid');
+          }
+        } catch { setGoogleTokenStatus('unknown'); }
+      });
+    }, [])
+  );
+
+  // ─── Sync automatique Apple Calendar au focus (si calendrier connecté) ────────
+  useFocusEffect(
+    useCallback(() => {
+      const autoSync = async () => {
+        const connected = await getConnectedCalendar();
+        if (!connected) return;
+        // Vérifier si la dernière sync date de plus de 30 minutes
+        const lastSync = connected.lastSync ? new Date(connected.lastSync).getTime() : 0;
+        const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
+        if (lastSync > thirtyMinAgo) return; // Sync récente, pas besoin
+        // Lancer une sync silencieuse
+        try {
+          const granted = await requestCalendarPermissions();
+          if (!granted) return;
+          const startDate = new Date();
+          startDate.setMonth(startDate.getMonth() - 1);
+          const endDate = new Date();
+          endDate.setMonth(endDate.getMonth() + 3);
+          const nativeEvents = await importEventsFromNative(connected.calendarId, startDate, endDate);
+          for (const ev of nativeEvents) {
+            const existingId = await getNativeEventId(ev.id || '');
+            if (existingId) continue; // Déjà importé
+            try {
+              const durationMinutes = Math.round((ev.endDate.getTime() - ev.startDate.getTime()) / (1000 * 60));
+              await createEvent.mutateAsync({
+                title: ev.title,
+                description: ev.notes || '',
+                startDate: format(ev.startDate, 'yyyy-MM-dd HH:mm:ss'),
+                endDate: format(ev.endDate, 'yyyy-MM-dd HH:mm:ss'),
+                durationMinutes: durationMinutes > 0 ? durationMinutes : 60,
+                category: 'other',
+                reminderMinutes: 15,
+                isPrivate: 0,
+              });
+            } catch {}
+          }
+          await updateLastSync(connected.calendarId);
+          setConnectedNativeCalendar(await getConnectedCalendar());
+          refetch();
+        } catch {}
+      };
+      autoSync();
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const openNativeCalendarPicker = async () => {
     setNativeCalendarLoading(true);
@@ -447,6 +516,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const nativeEvents = await importEventsFromNative(calendarId, startDate, endDate);
       let successCount = 0;
       for (const ev of nativeEvents) {
+        // Vérifier si cet événement a déjà été importé (mapping IDs)
+        const existingFri2planId = await getNativeEventId(ev.id || '');
+        if (existingFri2planId) continue; // Déjà importé, on saute
         try {
           const durationMinutes = Math.round((ev.endDate.getTime() - ev.startDate.getTime()) / (1000 * 60));
           await createEvent.mutateAsync({
@@ -462,6 +534,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           successCount++;
         } catch {}
       }
+      // Sauvegarder le calendrier comme "connecté" avec le nom
+      const calInfo = nativeCalendars.find(c => c.id === calendarId);
+      await saveConnectedCalendar(calendarId, calInfo?.title || 'Calendrier natif');
+      await updateLastSync(calendarId);
+      setConnectedNativeCalendar(await getConnectedCalendar());
       setNativeCalendarModal(false);
       refetch();
       Alert.alert(
@@ -473,6 +550,91 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     } finally {
       setNativeCalendarImporting(false);
     }
+  };
+
+  // Sync manuelle du calendrier natif connecté
+  const handleSyncNativeCalendar = async () => {
+    if (!connectedNativeCalendar) return;
+    setNativeSyncing(true);
+    try {
+      const granted = await requestCalendarPermissions();
+      if (!granted) { Alert.alert('Erreur', 'Permission calendrier refusée.'); return; }
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 1);
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 3);
+      const nativeEvents = await importEventsFromNative(connectedNativeCalendar.calendarId, startDate, endDate);
+      let newCount = 0;
+      for (const ev of nativeEvents) {
+        const existingId = await getNativeEventId(ev.id || '');
+        if (existingId) continue;
+        try {
+          const durationMinutes = Math.round((ev.endDate.getTime() - ev.startDate.getTime()) / (1000 * 60));
+          await createEvent.mutateAsync({
+            title: ev.title,
+            description: ev.notes || '',
+            startDate: format(ev.startDate, 'yyyy-MM-dd HH:mm:ss'),
+            endDate: format(ev.endDate, 'yyyy-MM-dd HH:mm:ss'),
+            durationMinutes: durationMinutes > 0 ? durationMinutes : 60,
+            category: 'other',
+            reminderMinutes: 15,
+            isPrivate: 0,
+          });
+          newCount++;
+        } catch {}
+      }
+      await updateLastSync(connectedNativeCalendar.calendarId);
+      setConnectedNativeCalendar(await getConnectedCalendar());
+      refetch();
+      Alert.alert('✓', newCount > 0 ? `${newCount} nouvel(s) événement(s) importé(s).` : 'Calendrier à jour.');
+    } catch (err) {
+      Alert.alert('Erreur', 'Impossible de synchroniser le calendrier.');
+    } finally {
+      setNativeSyncing(false);
+    }
+  };
+
+  // Déconnecter le calendrier natif
+  const handleDisconnectNativeCalendar = async () => {
+    Alert.alert(
+      t('calendar.nativeCalendarDisconnect') || 'Déconnecter',
+      t('calendar.nativeCalendarDisconnectConfirm') || 'Déconnecter ce calendrier ? Les événements importés resteront dans FRI2PLAN.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Déconnecter', style: 'destructive', onPress: async () => {
+          await disconnectNativeCalendar();
+          setConnectedNativeCalendar(null);
+          Alert.alert('✓', t('calendar.nativeCalendarDisconnected') || 'Calendrier déconnecté.');
+        }}
+      ]
+    );
+  };
+
+  // Déconnecter Google Calendar (supprimer le token local + serveur)
+  const handleDisconnectGoogle = async () => {
+    Alert.alert(
+      'Déconnecter Google',
+      'Supprimer la connexion Google Calendar ? Les calendriers synchronisés resteront mais ne se mettront plus à jour automatiquement.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Déconnecter', style: 'destructive', onPress: async () => {
+          // Supprimer le token local
+          await AsyncStorage.removeItem('googleOAuthToken');
+          // Appeler l'endpoint serveur pour supprimer le token en base
+          try {
+            const authToken = await AsyncStorage.getItem('authToken');
+            if (authToken) {
+              await fetch('https://app.fri2plan.ch/api/google-calendar/disconnect', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+              });
+            }
+          } catch { /* ignorer les erreurs réseau */ }
+          setGoogleTokenStatus('unknown');
+          Alert.alert('✓', 'Connexion Google supprimée.');
+        }}
+      ]
+    );
   };
 
   const [googleManageModal, setGoogleManageModal] = useState(false);
@@ -764,7 +926,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); openNativeCalendarPicker(); }}>
                 <Text style={styles.calMenuIcon}>{Platform.OS === 'ios' ? '📱' : '📅'}</Text>
                 <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.nativeCalendar') || 'Calendrier Apple / Natif'}</Text>
-                <Text style={{ fontSize: 11, color: '#6b7280' }}>{nativeCalendarLoading ? '...' : (t('calendar.nativeCalendarAdd') || '+ Ajouter')}</Text>
+                {connectedNativeCalendar ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10b981' }} />
+                    <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '600' }}>Connecté</Text>
+                  </View>
+                ) : (
+                  <Text style={{ fontSize: 11, color: '#6b7280' }}>{nativeCalendarLoading ? '...' : '+ Ajouter'}</Text>
+                )}
+              </TouchableOpacity>
+            )}
+            {/* Bouton Gérer le calendrier natif (si connecté) */}
+            {Platform.OS !== 'web' && connectedNativeCalendar && (
+              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setNativeManageModal(true); }}>
+                <Text style={styles.calMenuIcon}>⚙️</Text>
+                <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.nativeCalendarManage') || 'Gérer le calendrier natif'}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.calMenuItem} onPress={async () => {
@@ -810,7 +986,19 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             }}>
               <Text style={styles.calMenuIcon}>🗓️</Text>
               <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
-              <Text style={{ fontSize: 11, color: '#6b7280' }}>+ Ajouter</Text>
+              {googleTokenStatus === 'valid' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10b981' }} />
+                  <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '600' }}>Connecté</Text>
+                </View>
+              ) : googleTokenStatus === 'expired' ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#f59e0b' }} />
+                  <Text style={{ fontSize: 11, color: '#f59e0b', fontWeight: '600' }}>Expiré</Text>
+                </View>
+              ) : (
+                <Text style={{ fontSize: 11, color: '#6b7280' }}>+ Ajouter</Text>
+              )}
             </TouchableOpacity>
             {(syncedCalendars as any[]).length > 0 && (
               <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setGoogleManageModal(true); }}>
@@ -819,6 +1007,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <View style={{ backgroundColor: '#4285f4', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, marginLeft: 4 }}>
                   <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{(syncedCalendars as any[]).length}</Text>
                 </View>
+              </TouchableOpacity>
+            )}
+            {/* Bouton Déconnecter Google (si token présent) */}
+            {googleTokenStatus !== 'unknown' && (
+              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); handleDisconnectGoogle(); }}>
+                <Text style={styles.calMenuIcon}>🔓</Text>
+                <Text style={[styles.calMenuLabel, { flex: 1, color: '#ef4444' }]}>Déconnecter Google</Text>
               </TouchableOpacity>
             )}
             <View style={styles.calMenuDivider} />
@@ -1711,6 +1906,18 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: '85%' }]}>
             <Text style={styles.modalTitle}>🗓️ Calendriers Google</Text>
+            {/* Statut token Google */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, padding: 10, borderRadius: 8, backgroundColor: googleTokenStatus === 'valid' ? (isDark ? '#064e3b' : '#d1fae5') : googleTokenStatus === 'expired' ? (isDark ? '#78350f' : '#fef3c7') : (isDark ? '#1f2937' : '#f3f4f6') }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: googleTokenStatus === 'valid' ? '#10b981' : googleTokenStatus === 'expired' ? '#f59e0b' : '#9ca3af', marginRight: 8 }} />
+              <Text style={{ fontSize: 13, color: googleTokenStatus === 'valid' ? '#10b981' : googleTokenStatus === 'expired' ? '#f59e0b' : (isDark ? '#9ca3af' : '#6b7280'), fontWeight: '600', flex: 1 }}>
+                {googleTokenStatus === 'valid' ? 'Connexion Google active' : googleTokenStatus === 'expired' ? 'Connexion expirée — reconnectez-vous' : 'Non connecté à Google'}
+              </Text>
+              {googleTokenStatus !== 'unknown' && (
+                <TouchableOpacity onPress={() => { setGoogleManageModal(false); handleDisconnectGoogle(); }}>
+                  <Text style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Déconnecter</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
               {(syncedCalendars as any[]).length === 0 ? (
                 <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier Google connecté</Text>
@@ -1852,6 +2059,59 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             </ScrollView>
             <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
               <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setNativeCalendarModal(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Modal Gérer le calendrier natif connecté ── */}
+      <Modal visible={nativeManageModal} animationType="slide" transparent onRequestClose={() => setNativeManageModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <Text style={styles.modalTitle}>{Platform.OS === 'ios' ? '📱' : '📅'} {t('calendar.nativeCalendarManage') || 'Calendrier natif'}</Text>
+            {connectedNativeCalendar ? (
+              <View style={{ marginBottom: 16 }}>
+                {/* Carte calendrier connecté */}
+                <View style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? '#1f2937' : '#f9fafb', borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10b981', marginRight: 8 }} />
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#ffffff' : '#1f2937', flex: 1 }}>{connectedNativeCalendar.calendarName}</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' }}>
+                    {connectedNativeCalendar.lastSync
+                      ? `Dernière sync : ${format(new Date(connectedNativeCalendar.lastSync), 'dd/MM/yyyy HH:mm')}`
+                      : 'Jamais synchronisé'}
+                  </Text>
+                </View>
+                {/* Actions */}
+                <TouchableOpacity
+                  style={{ padding: 14, borderRadius: 10, backgroundColor: '#7c3aed', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 10, opacity: nativeSyncing ? 0.6 : 1 }}
+                  onPress={handleSyncNativeCalendar}
+                  disabled={nativeSyncing}
+                >
+                  <Text style={{ fontSize: 16 }}>{nativeSyncing ? '⏳' : '🔄'}</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15 }}>{nativeSyncing ? 'Synchronisation...' : 'Synchroniser maintenant'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ padding: 14, borderRadius: 10, backgroundColor: isDark ? '#1f2937' : '#fef2f2', borderWidth: 1, borderColor: '#ef4444', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                  onPress={() => { setNativeManageModal(false); handleDisconnectNativeCalendar(); }}
+                >
+                  <Text style={{ fontSize: 16 }}>🔓</Text>
+                  <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 15 }}>{t('calendar.nativeCalendarDisconnect') || 'Déconnecter'}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier connecté</Text>
+            )}
+            {/* Bouton Ajouter un autre calendrier */}
+            <TouchableOpacity
+              style={{ padding: 14, borderRadius: 10, backgroundColor: isDark ? '#374151' : '#f3f4f6', alignItems: 'center', marginTop: 8 }}
+              onPress={() => { setNativeManageModal(false); openNativeCalendarPicker(); }}
+            >
+              <Text style={{ color: isDark ? '#d1d5db' : '#374151', fontWeight: '600', fontSize: 14 }}>+ Connecter un autre calendrier</Text>
+            </TouchableOpacity>
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 12 }]}>
+              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setNativeManageModal(false)} />
             </View>
           </View>
         </View>

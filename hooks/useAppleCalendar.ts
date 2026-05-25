@@ -3,11 +3,28 @@
  * Gère l'intégration avec le calendrier natif iOS (EventKit) et Android via expo-calendar.
  * Permet d'importer des événements natifs dans FRI2PLAN et d'exporter des événements FRI2PLAN
  * vers le calendrier natif de l'appareil.
+ *
+ * Fonctionnalités :
+ * - Permissions iOS/Android
+ * - Listing des calendriers disponibles
+ * - Import natif → FRI2PLAN (avec mapping IDs pour éviter les doublons)
+ * - Export FRI2PLAN → natif (avec mise à jour si déjà exporté)
+ * - Suppression d'événements natifs
+ * - Persistance du calendrier connecté (AsyncStorage)
+ * - Dernière date de sync
  */
 import * as Calendar from 'expo-calendar';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Clés AsyncStorage ────────────────────────────────────────────────────────
+
+const STORAGE_CONNECTED_CALENDAR = 'native_calendar_connected_id';
+const STORAGE_CONNECTED_CALENDAR_TITLE = 'native_calendar_connected_title';
+const STORAGE_LAST_SYNC = 'native_calendar_last_sync';
+const STORAGE_EVENT_MAPPING_PREFIX = 'native_event_map_'; // + fri2planEventId → nativeEventId
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface NativeCalendar {
   id: string;
@@ -30,47 +47,98 @@ export interface NativeEvent {
   calendarTitle?: string;
 }
 
-// ─── Permissions ─────────────────────────────────────────────────────────────
+export interface ConnectedNativeCalendar {
+  id: string;
+  title: string;
+  lastSync: string | null;
+}
 
-/**
- * Demande les permissions d'accès au calendrier natif.
- * Retourne true si accordées, false sinon.
- */
+// ─── Permissions ──────────────────────────────────────────────────────────────
+
 export async function requestCalendarPermissions(): Promise<boolean> {
   try {
-    if (Platform.OS === 'ios') {
-      const { status } = await Calendar.requestCalendarPermissionsAsync();
-      return status === 'granted';
-    } else if (Platform.OS === 'android') {
-      const { status } = await Calendar.requestCalendarPermissionsAsync();
-      return status === 'granted';
-    }
-    return false;
+    const { status } = await Calendar.requestCalendarPermissionsAsync();
+    return status === 'granted';
   } catch (error) {
-    console.error('[Calendar] Erreur demande permissions:', error);
+    console.error('[NativeCalendar] Erreur demande permissions:', error);
     return false;
   }
 }
 
-/**
- * Vérifie si les permissions calendrier sont déjà accordées.
- */
 export async function checkCalendarPermissions(): Promise<boolean> {
   try {
     const { status } = await Calendar.getCalendarPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('[Calendar] Erreur vérification permissions:', error);
+    console.error('[NativeCalendar] Erreur vérification permissions:', error);
     return false;
   }
 }
 
-// ─── Calendriers disponibles ─────────────────────────────────────────────────
+// ─── Calendrier connecté (persistance) ───────────────────────────────────────
 
 /**
- * Récupère la liste des calendriers natifs disponibles sur l'appareil.
- * Filtre pour ne garder que les calendriers modifiables (écriture possible).
+ * Sauvegarde le calendrier natif "connecté" dans AsyncStorage.
  */
+export async function saveConnectedCalendar(calendarId: string, calendarTitle: string): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_CONNECTED_CALENDAR, calendarId);
+  await AsyncStorage.setItem(STORAGE_CONNECTED_CALENDAR_TITLE, calendarTitle);
+}
+
+/**
+ * Récupère le calendrier natif connecté depuis AsyncStorage.
+ */
+export async function getConnectedCalendar(): Promise<ConnectedNativeCalendar | null> {
+  const id = await AsyncStorage.getItem(STORAGE_CONNECTED_CALENDAR);
+  const title = await AsyncStorage.getItem(STORAGE_CONNECTED_CALENDAR_TITLE);
+  const lastSync = await AsyncStorage.getItem(STORAGE_LAST_SYNC);
+  if (!id || !title) return null;
+  return { id, title, lastSync };
+}
+
+/**
+ * Supprime le calendrier natif connecté (déconnexion).
+ */
+export async function disconnectNativeCalendar(): Promise<void> {
+  await AsyncStorage.removeItem(STORAGE_CONNECTED_CALENDAR);
+  await AsyncStorage.removeItem(STORAGE_CONNECTED_CALENDAR_TITLE);
+  await AsyncStorage.removeItem(STORAGE_LAST_SYNC);
+  // On conserve les mappings pour éviter des doublons si reconnecté plus tard
+}
+
+/**
+ * Met à jour la date de dernière synchronisation.
+ */
+export async function updateLastSync(): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_LAST_SYNC, new Date().toISOString());
+}
+
+// ─── Mapping IDs (FRI2PLAN ↔ natif) ──────────────────────────────────────────
+
+/**
+ * Sauvegarde le mapping fri2planEventId → nativeEventId.
+ */
+export async function saveEventMapping(fri2planEventId: string | number, nativeEventId: string): Promise<void> {
+  await AsyncStorage.setItem(`${STORAGE_EVENT_MAPPING_PREFIX}${fri2planEventId}`, nativeEventId);
+}
+
+/**
+ * Récupère l'ID natif associé à un événement FRI2PLAN.
+ * Retourne null si aucun mapping.
+ */
+export async function getNativeEventId(fri2planEventId: string | number): Promise<string | null> {
+  return AsyncStorage.getItem(`${STORAGE_EVENT_MAPPING_PREFIX}${fri2planEventId}`);
+}
+
+/**
+ * Supprime le mapping d'un événement FRI2PLAN.
+ */
+export async function removeEventMapping(fri2planEventId: string | number): Promise<void> {
+  await AsyncStorage.removeItem(`${STORAGE_EVENT_MAPPING_PREFIX}${fri2planEventId}`);
+}
+
+// ─── Calendriers disponibles ──────────────────────────────────────────────────
+
 export async function getLocalCalendars(writableOnly = false): Promise<NativeCalendar[]> {
   try {
     const hasPermission = await checkCalendarPermissions();
@@ -78,14 +146,9 @@ export async function getLocalCalendars(writableOnly = false): Promise<NativeCal
       const granted = await requestCalendarPermissions();
       if (!granted) return [];
     }
-
     const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-
     return calendars
-      .filter(cal => {
-        if (writableOnly) return cal.allowsModifications;
-        return true;
-      })
+      .filter(cal => writableOnly ? cal.allowsModifications : true)
       .map(cal => ({
         id: cal.id,
         title: cal.title,
@@ -95,19 +158,13 @@ export async function getLocalCalendars(writableOnly = false): Promise<NativeCal
         type: cal.type || 'local',
       }));
   } catch (error) {
-    console.error('[Calendar] Erreur récupération calendriers:', error);
+    console.error('[NativeCalendar] Erreur récupération calendriers:', error);
     return [];
   }
 }
 
 // ─── Import d'événements natifs ───────────────────────────────────────────────
 
-/**
- * Importe les événements d'un calendrier natif pour une période donnée.
- * @param calendarId - ID du calendrier natif à lire
- * @param startDate - Date de début de la période
- * @param endDate - Date de fin de la période
- */
 export async function importEventsFromNative(
   calendarId: string,
   startDate: Date,
@@ -119,9 +176,7 @@ export async function importEventsFromNative(
       const granted = await requestCalendarPermissions();
       if (!granted) return [];
     }
-
     const events = await Calendar.getEventsAsync([calendarId], startDate, endDate);
-
     return events.map(event => ({
       id: event.id,
       title: event.title || '(Sans titre)',
@@ -133,7 +188,7 @@ export async function importEventsFromNative(
       calendarId: event.calendarId,
     }));
   } catch (error) {
-    console.error('[Calendar] Erreur import événements:', error);
+    console.error('[NativeCalendar] Erreur import événements:', error);
     return [];
   }
 }
@@ -141,10 +196,11 @@ export async function importEventsFromNative(
 // ─── Export vers le calendrier natif ─────────────────────────────────────────
 
 /**
- * Exporte un événement FRI2PLAN vers le calendrier natif de l'appareil.
- * @param event - Événement FRI2PLAN à exporter
+ * Exporte un événement FRI2PLAN vers le calendrier natif.
+ * Si un mapping existe déjà, met à jour l'événement existant (évite les doublons).
+ * @param fri2planEventId - ID de l'événement dans FRI2PLAN (pour le mapping)
+ * @param event - Données de l'événement
  * @param calendarId - ID du calendrier natif cible
- * @returns L'ID de l'événement créé dans le calendrier natif, ou null en cas d'erreur
  */
 export async function exportEventToNative(
   event: {
@@ -155,7 +211,8 @@ export async function exportEventToNative(
     notes?: string;
     location?: string;
   },
-  calendarId: string
+  calendarId: string,
+  fri2planEventId?: string | number
 ): Promise<string | null> {
   try {
     const hasPermission = await checkCalendarPermissions();
@@ -164,7 +221,7 @@ export async function exportEventToNative(
       if (!granted) return null;
     }
 
-    const eventId = await Calendar.createEventAsync(calendarId, {
+    const eventDetails = {
       title: event.title,
       startDate: event.startDate,
       endDate: event.endDate,
@@ -172,12 +229,37 @@ export async function exportEventToNative(
       notes: event.notes,
       location: event.location,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    });
+    };
 
-    console.log('[Calendar] Événement exporté, ID natif:', eventId);
-    return eventId;
+    // Vérifier si un mapping existe déjà
+    if (fri2planEventId !== undefined) {
+      const existingNativeId = await getNativeEventId(fri2planEventId);
+      if (existingNativeId) {
+        try {
+          // Tenter de mettre à jour l'événement existant
+          await Calendar.updateEventAsync(existingNativeId, eventDetails);
+          console.log('[NativeCalendar] Événement mis à jour, ID natif:', existingNativeId);
+          return existingNativeId;
+        } catch {
+          // L'événement n'existe plus dans le calendrier natif, on le recrée
+          console.log('[NativeCalendar] Événement natif introuvable, recréation...');
+          await removeEventMapping(fri2planEventId);
+        }
+      }
+    }
+
+    // Créer un nouvel événement
+    const newEventId = await Calendar.createEventAsync(calendarId, eventDetails);
+    console.log('[NativeCalendar] Événement créé, ID natif:', newEventId);
+
+    // Sauvegarder le mapping si un ID FRI2PLAN est fourni
+    if (fri2planEventId !== undefined) {
+      await saveEventMapping(fri2planEventId, newEventId);
+    }
+
+    return newEventId;
   } catch (error) {
-    console.error('[Calendar] Erreur export événement:', error);
+    console.error('[NativeCalendar] Erreur export événement:', error);
     return null;
   }
 }
@@ -185,33 +267,34 @@ export async function exportEventToNative(
 // ─── Suppression d'un événement natif ────────────────────────────────────────
 
 /**
- * Supprime un événement du calendrier natif via son ID.
- * @param eventId - ID de l'événement natif à supprimer
+ * Supprime un événement du calendrier natif.
+ * Si un fri2planEventId est fourni, supprime aussi le mapping.
  */
-export async function removeEventFromNative(eventId: string): Promise<boolean> {
+export async function removeEventFromNative(
+  eventId: string,
+  fri2planEventId?: string | number
+): Promise<boolean> {
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) return false;
-
     await Calendar.deleteEventAsync(eventId);
-    console.log('[Calendar] Événement natif supprimé:', eventId);
+    if (fri2planEventId !== undefined) {
+      await removeEventMapping(fri2planEventId);
+    }
+    console.log('[NativeCalendar] Événement natif supprimé:', eventId);
     return true;
   } catch (error) {
-    console.error('[Calendar] Erreur suppression événement:', error);
+    console.error('[NativeCalendar] Erreur suppression événement:', error);
     return false;
   }
 }
 
 // ─── Calendrier par défaut ────────────────────────────────────────────────────
 
-/**
- * Récupère le calendrier par défaut de l'appareil (iOS: iCloud/Local, Android: premier disponible).
- */
 export async function getDefaultCalendar(): Promise<NativeCalendar | null> {
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) return null;
-
     if (Platform.OS === 'ios') {
       const defaultCal = await Calendar.getDefaultCalendarAsync();
       if (defaultCal) {
@@ -225,12 +308,10 @@ export async function getDefaultCalendar(): Promise<NativeCalendar | null> {
         };
       }
     }
-
-    // Fallback : premier calendrier modifiable
     const calendars = await getLocalCalendars(true);
     return calendars.length > 0 ? calendars[0] : null;
   } catch (error) {
-    console.error('[Calendar] Erreur calendrier par défaut:', error);
+    console.error('[NativeCalendar] Erreur calendrier par défaut:', error);
     return null;
   }
 }
