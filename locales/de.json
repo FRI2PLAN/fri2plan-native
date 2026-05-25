@@ -33,7 +33,8 @@
     "notifications": "Benachrichtigungen",
     "validate": "Bestätigen",
     "familyOrganizer": "Familienorganisator",
-    "skip": "Überspringen"
+    "skip": "Überspringen",
+    "copy": "Kopieren"
   },
   "auth": {
     "login": "Anmelden",

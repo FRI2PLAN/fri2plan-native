@@ -33,7 +33,8 @@
     "notifications": "Notifications",
     "validate": "Valider",
     "familyOrganizer": "Organiseur Familial",
-    "skip": "Passer"
+    "skip": "Passer",
+    "copy": "Copier"
   },
   "auth": {
     "login": "Connexion",

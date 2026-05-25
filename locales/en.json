@@ -33,7 +33,8 @@
     "notifications": "Notifications",
     "validate": "Validate",
     "familyOrganizer": "Family Organizer",
-    "skip": "Skip"
+    "skip": "Skip",
+    "copy": "Copy"
   },
   "auth": {
     "login": "Login",
