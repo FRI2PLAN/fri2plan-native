@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
+import { useOffline } from '../contexts/OfflineContext';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import * as DocumentPicker from 'expo-document-picker';
@@ -115,16 +116,25 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
     setEditDialogOpen(true);
   };
 
+  const { isConnected, enqueue } = useOffline();
+
   const handleCreate = () => {
     if (!newTitle.trim()) {
       Alert.alert(t('common.error'), t('notes.titleRequired'));
       return;
     }
-    createMutation.mutate({
+    const payload = {
       title: newTitle.trim(),
       content: newContent.trim() || undefined,
       isPrivate: newIsPrivate,
-      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined});
+      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined
+    };
+    if (!isConnected) {
+      enqueue({ type: 'note.create', payload });
+      Alert.alert('📵', 'Note mise en file d\'attente (hors ligne). Elle sera créée à la reconnexion.');
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   const handleUpdate = () => {
@@ -147,7 +157,14 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       t('notes.deleteConfirmMessage'),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: () => deleteMutation.mutate({ noteId: selectedNote.id }) }
+        { text: t('common.delete'), style: 'destructive', onPress: () => {
+          if (!isConnected) {
+            enqueue({ type: 'note.delete', payload: { noteId: selectedNote.id } });
+            Alert.alert('📵', 'Suppression mise en file d\'attente (hors ligne)');
+          } else {
+            deleteMutation.mutate({ noteId: selectedNote.id });
+          }
+        }}
       ]
     );
   };

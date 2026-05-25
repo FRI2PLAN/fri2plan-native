@@ -3,7 +3,11 @@ enableScreens(true);
 import 'react-native-gesture-handler';
 import './i18n'; // Initialize i18n
 import * as NativeSplashScreen from 'expo-splash-screen';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import { trpc, createTRPCClient } from './lib/trpc';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -19,19 +23,42 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as Updates from 'expo-updates';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
+import { OfflineProvider } from './contexts/OfflineContext';
+import { OfflineBanner } from './components/OfflineBanner';
+import { useOfflineExecutor } from './hooks/useOfflineExecutor';
+import { useOffline } from './contexts/OfflineContext';
 import * as Notifications from 'expo-notifications';
 
 // Empêcher le splash natif de se cacher automatiquement avant que React soit prêt
 NativeSplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Configure onlineManager pour utiliser NetInfo
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(state.isConnected ?? false);
+  });
+});
+
 // Create QueryClient (stable, never recreated)
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      staleTime: 5000,
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 24 * 60 * 60 * 1000, // 24h (pour le cache hors ligne)
+      networkMode: 'offlineFirst',
+    },
+    mutations: {
+      networkMode: 'offlineFirst',
     },
   },
+});
+
+// Persister AsyncStorage pour le cache hors ligne
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: '@fri2plan:query_cache',
+  throttleTime: 1000,
 });
 
 // ─── Sous-composant PushRegistrar ─────────────────────────────────────────────
@@ -167,11 +194,15 @@ function AppContent() {
     }
   }, [logout]);
 
+  // Enregistrer l'exécuteur offline (doit être dans un composant avec accès tRPC)
+  // Note: useOfflineExecutor est appelé dans OfflineAwareContent ci-dessous
+
   // Le trpc.Provider enveloppe TOUT pour que LoginScreen puisse utiliser les hooks tRPC
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PushRegistrar />
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
+      <OfflineExecutorRegistrar />
 
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
       {(isLoading || !splashMinDone || (isAuthenticated && !user)) ? (
@@ -194,6 +225,18 @@ function AppContent() {
   );
 }
 
+// ─── Enregistrement de l'exécuteur offline (dans le contexte tRPC) ───────────
+function OfflineExecutorRegistrar() {
+  useOfflineExecutor();
+  return null;
+}
+
+// ─── Bannière hors ligne (dans le contexte Offline) ──────────────────────────
+function OfflineBannerWrapper() {
+  const { queueSize, processQueue } = useOffline();
+  return <OfflineBanner queueSize={queueSize} />;
+}
+
 export default function App() {
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -205,15 +248,21 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <FamilyProvider>
-              <PagerProvider>
-                <AppContent />
-              </PagerProvider>
-            </FamilyProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: asyncStoragePersister }}
+        >
+          <OfflineProvider>
+            <AuthProvider>
+              <FamilyProvider>
+                <PagerProvider>
+                  <AppContent />
+                  <OfflineBannerWrapper />
+                </PagerProvider>
+              </FamilyProvider>
+            </AuthProvider>
+          </OfflineProvider>
+        </PersistQueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

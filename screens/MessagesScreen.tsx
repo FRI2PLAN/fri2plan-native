@@ -9,6 +9,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
+import { useOffline } from '../contexts/OfflineContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
@@ -184,10 +185,18 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     setRefreshing(false);
   }, [refetch]);
 
+  const { isConnected, enqueue } = useOffline();
+
   const handleSendMessage = () => {
     const content = newMessage.trim();
     if (!content || sendMutation.isPending) return;
-    sendMutation.mutate({ content });
+    if (!isConnected) {
+      enqueue({ type: 'message.send', payload: { content } });
+      setNewMessage('');
+      Alert.alert('📵', 'Message mis en file d\'attente. Il sera envoyé à la reconnexion.');
+    } else {
+      sendMutation.mutate({ content });
+    }
   };
 
   const handleEmojiSelected = (emoji: any) => {

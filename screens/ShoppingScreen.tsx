@@ -13,6 +13,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
+import { useOffline } from '../contexts/OfflineContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShoppingList {
@@ -177,12 +178,22 @@ export default function ShoppingScreen({
     }
   };
 
+  const { isConnected, enqueue } = useOffline();
+
   const submitItem = async () => {
     if (!newItemName.trim() || !selectedList) return;
-    await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
-    setNewItemName('');
-    setNewItemQty('');
-    setAutocomplete([]);
+    if (!isConnected) {
+      await enqueue({ type: 'shopping.addItem', payload: { listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined } });
+      setNewItemName('');
+      setNewItemQty('');
+      setAutocomplete([]);
+      Alert.alert('📵', 'Article ajouté en file d\'attente (hors ligne)');
+    } else {
+      await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
+      setNewItemName('');
+      setNewItemQty('');
+      setAutocomplete([]);
+    }
   };
 
   const saveEditItem = async () => {
@@ -195,7 +206,13 @@ export default function ShoppingScreen({
   const renderItem = ({ item }: { item: ShoppingItem }) => (
     <TouchableOpacity
       style={[s.itemRow, item.checked && s.itemRowChecked]}
-      onPress={() => toggleItem.mutate({ itemId: item.id })}
+      onPress={() => {
+        if (!isConnected) {
+          enqueue({ type: 'shopping.toggleItem', payload: { itemId: item.id, checked: !item.checked } });
+        } else {
+          toggleItem.mutate({ itemId: item.id });
+        }
+      }}
       onLongPress={() => { setEditingItem(item); setEditItemName(item.name); setEditItemQty(item.quantity || ''); }}
     >
       <View style={[s.checkbox, item.checked && s.checkboxChecked]}>
@@ -207,7 +224,13 @@ export default function ShoppingScreen({
       </View>
       <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', `${item.name} ?`, [
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-        { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => deleteItem.mutate({ itemId: item.id }) },
+        { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => {
+          if (!isConnected) {
+            enqueue({ type: 'shopping.deleteItem', payload: { itemId: item.id } });
+          } else {
+            deleteItem.mutate({ itemId: item.id });
+          }
+        }},
       ])}>
         <Text style={s.deleteBtn}>🗑</Text>
       </TouchableOpacity>

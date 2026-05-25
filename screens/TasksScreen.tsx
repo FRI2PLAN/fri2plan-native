@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
+import { useOffline } from '../contexts/OfflineContext';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -95,6 +96,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     points: 10, priority: 'medium' as Priority, isPrivate: false};
   const [formData, setFormData] = useState(emptyForm);
   const [editFormData, setEditFormData] = useState(emptyForm);
+
+  // ── Offline ──
+  const { isConnected, enqueue } = useOffline();
 
   // ── tRPC ──
   const utils = trpc.useUtils();
@@ -212,7 +216,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (!selectedTask) return;
     Alert.alert('Supprimer ?', `"${selectedTask.title}"`, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteMutation.mutate({ taskId: selectedTask.id }) },
+      { text: 'Supprimer', style: 'destructive', onPress: () => {
+        if (!isConnected) {
+          enqueue({ type: 'task.delete', payload: { taskId: selectedTask.id } });
+          setQuickActionsVisible(false);
+          Alert.alert('📵', 'Suppression mise en file d\'attente (hors ligne)');
+        } else {
+          deleteMutation.mutate({ taskId: selectedTask.id });
+        }
+      }},
     ]);
   };
 
@@ -227,7 +239,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const handleCreateTask = () => {
     if (!formData.title.trim()) { Alert.alert('Erreur', 'Le titre est requis'); return; }
-    createMutation.mutate({
+    const payload = {
       title: formData.title,
       description: formData.description || undefined,
       assignedTo: formData.assignedTo,
@@ -235,7 +247,16 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       recurrence: formData.recurrence,
       points: formData.points,
       priority: formData.priority,
-      isPrivate: formData.isPrivate ? 1 : 0});
+      isPrivate: formData.isPrivate ? 1 : 0
+    };
+    if (!isConnected) {
+      enqueue({ type: 'task.create', payload });
+      setCreateModalVisible(false);
+      setFormData(emptyForm);
+      Alert.alert('📵', 'Tâche mise en file d\'attente (hors ligne). Elle sera créée à la reconnexion.');
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   const handleUpdateTask = () => {
