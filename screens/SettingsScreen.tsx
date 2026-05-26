@@ -15,6 +15,7 @@ import { usePager } from '../contexts/PagerContext';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { trpc } from '../lib/trpc';
+import { useIAP } from '../contexts/IAPContext';
 
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -331,8 +332,26 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   };
 
   // ─── Abonnement ────────────────────────────────────────────────────────────
+  const iap = useIAP();
+
   const handleSubscribe = (plan: 'MONTHLY' | 'YEARLY') => {
     if (!activeFamily) return;
+    // Sur iOS : utiliser Apple IAP (RevenueCat / StoreKit)
+    if (Platform.OS === 'ios' && iap.isIAPAvailable) {
+      const pkg = plan === 'MONTHLY' ? iap.monthlyPackage : iap.yearlyPackage;
+      if (pkg) {
+        iap.purchasePackage(pkg).then((success) => {
+          if (success) {
+            Alert.alert('🎉', t('settings.purchaseSuccess') || 'Abonnement activé ! Merci pour votre achat.');
+            refetchSub();
+          }
+        });
+      } else {
+        Alert.alert('⚠️', t('settings.iapNotAvailable') || 'Produit non disponible. Veuillez réessayer.');
+      }
+      return;
+    }
+    // Sur Android / Web : Stripe
     createCheckoutMutation.mutate({ familyId: activeFamily.id, plan }, {
       onSuccess: (data: any) => {
         if (data?.checkoutUrl) Linking.openURL(data.checkoutUrl);
@@ -949,6 +968,23 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 </>
               )}
             </View>
+          )}
+          {/* Restaurer les achats Apple IAP (iOS uniquement, non-Premium) */}
+          {Platform.OS === 'ios' && !hasPremium && (
+            <TouchableOpacity
+              style={[styles.settingItem, { marginTop: 8 }]}
+              onPress={() => iap.restorePurchases().then(ok => ok && refetchSub())}
+              disabled={iap.isLoading}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingIcon}>🔄</Text>
+                <Text style={styles.settingLabel}>{t('settings.restorePurchases') || 'Restaurer les achats'}</Text>
+              </View>
+              {iap.isLoading
+                ? <ActivityIndicator size="small" color="#7c3aed" />
+                : <Text style={styles.settingArrow}>›</Text>
+              }
+            </TouchableOpacity>
           )}
           {/* Gérer l'abonnement existant */}
           {hasPremium && (

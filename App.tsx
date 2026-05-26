@@ -27,6 +27,7 @@ import { OfflineProvider } from './contexts/OfflineContext';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineExecutor } from './hooks/useOfflineExecutor';
 import { useOffline } from './contexts/OfflineContext';
+import { IAPProvider } from './contexts/IAPContext';
 import * as Notifications from 'expo-notifications';
 
 // Empêcher le splash natif de se cacher automatiquement avant que React soit prêt
@@ -253,14 +254,16 @@ export default function App() {
           persistOptions={{ persister: asyncStoragePersister }}
         >
           <OfflineProvider>
-            <AuthProvider>
-              <FamilyProvider>
-                <PagerProvider>
-                  <AppContent />
-                  <OfflineBannerWrapper />
-                </PagerProvider>
-              </FamilyProvider>
-            </AuthProvider>
+            <IAPProvider>
+              <AuthProvider>
+                <FamilyProvider>
+                  <PagerProvider>
+                    <AppContent />
+                    <OfflineBannerWrapper />
+                  </PagerProvider>
+                </FamilyProvider>
+              </AuthProvider>
+            </IAPProvider>
           </OfflineProvider>
         </PersistQueryClientProvider>
       </ThemeProvider>

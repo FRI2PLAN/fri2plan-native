@@ -766,7 +766,16 @@
     "googleCalendarLastSync": "Letzte Sync",
     "googleCalendarNeverSynced": "Nie synchronisiert",
     "googleCalendarColor": "Farbe",
-    "googleCalendarActive": "Aktiv"
+    "googleCalendarActive": "Aktiv",
+    "restorePurchases": "Käufe wiederherstellen",
+    "purchaseSuccess": "Abonnement aktiviert! Danke für Ihren Kauf.",
+    "iapNotAvailable": "Produkt nicht verfügbar. Bitte versuchen Sie es erneut.",
+    "iapLoading": "Angebote werden geladen...",
+    "iapMonthly": "Monatlich",
+    "iapYearly": "Jährlich",
+    "iapBuyNow": "Jetzt kaufen",
+    "iapRestoreSuccess": "Käufe erfolgreich wiederhergestellt.",
+    "iapRestoreNothing": "Keine Käufe zum Wiederherstellen."
   },
   "help": {
     "title": "Hilfezentrum",
