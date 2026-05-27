@@ -61,7 +61,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
 
-      "buildNumber": "46",
+      "buildNumber": "47",
       
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {

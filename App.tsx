@@ -254,16 +254,16 @@ export default function App() {
           persistOptions={{ persister: asyncStoragePersister }}
         >
           <OfflineProvider>
-            <IAPProvider>
-              <AuthProvider>
+            <AuthProvider>
+              <IAPProvider>
                 <FamilyProvider>
                   <PagerProvider>
                     <AppContent />
                     <OfflineBannerWrapper />
                   </PagerProvider>
                 </FamilyProvider>
-              </AuthProvider>
-            </IAPProvider>
+              </IAPProvider>
+            </AuthProvider>
           </OfflineProvider>
         </PersistQueryClientProvider>
       </ThemeProvider>
