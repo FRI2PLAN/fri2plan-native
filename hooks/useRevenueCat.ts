@@ -17,7 +17,7 @@ import Purchases, {
 } from 'react-native-purchases';
 
 // Identifiants RevenueCat (à configurer dans le dashboard RevenueCat)
-const REVENUECAT_APPLE_API_KEY = 'appl_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // À remplacer
+const REVENUECAT_APPLE_API_KEY = 'appl_BroAoIDihZeckuxmoQSpceGphIo';
 const REVENUECAT_GOOGLE_API_KEY = 'goog_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // À remplacer
 
 // Identifiant de l'entitlement Premium dans RevenueCat
