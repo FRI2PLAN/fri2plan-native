@@ -67,13 +67,20 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
 
     const configure = async () => {
       try {
+        // Sur Android, RevenueCat n'est pas utilisé (Stripe à la place)
+        if (Platform.OS === 'android') {
+          setState(s => ({ ...s, isLoading: false, isConfigured: false }));
+          return;
+        }
+
         if (__DEV__) {
           Purchases.setLogLevel(LOG_LEVEL.DEBUG);
         }
 
-        const apiKey = Platform.OS === 'ios'
-          ? REVENUECAT_APPLE_API_KEY
-          : REVENUECAT_GOOGLE_API_KEY;
+        const apiKey = REVENUECAT_APPLE_API_KEY;
+
+        // Petit délai pour laisser le runtime natif s'initialiser
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         await Purchases.configure({ apiKey });
 
