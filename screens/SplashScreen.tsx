@@ -11,12 +11,16 @@ export default function SplashScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
+    const anim = Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start();
-  }, []);
+    });
+    anim.start();
+    // Cleanup: stop animation if component unmounts before completion
+    // Prevents use-after-free crash in RCTNativeAnimatedNodesManager
+    return () => anim.stop();
+  }, [fadeAnim]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

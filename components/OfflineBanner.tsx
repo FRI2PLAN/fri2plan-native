@@ -19,11 +19,13 @@ export function OfflineBanner({ onReconnect, queueSize = 0 }: OfflineBannerProps
   const slideAnim = useRef(new Animated.Value(-50)).current;
 
   useEffect(() => {
-    Animated.timing(slideAnim, {
+    const anim = Animated.timing(slideAnim, {
       toValue: isConnected ? -50 : 0,
       duration: 300,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => anim.stop();
   }, [isConnected, slideAnim]);
 
   if (isConnected) return null;
