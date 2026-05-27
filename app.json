@@ -53,7 +53,7 @@
       [
         "expo-updates",
         {
-          "checkAutomatically": "ON_LOAD",
+          "checkAutomatically": "NEVER",
           "requestHeaders": {}
         }
       ]
@@ -62,7 +62,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
 
-      "buildNumber": "42",
+      "buildNumber": "43",
       
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -113,7 +113,7 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "ON_LOAD",
+      "checkAutomatically": "NEVER",
       "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
     }
   }
