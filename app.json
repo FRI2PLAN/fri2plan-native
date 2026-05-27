@@ -49,6 +49,7 @@
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
       "expo-calendar",
+      "react-native-purchases",
       [
         "expo-updates",
         {
@@ -60,7 +61,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "36",
+      "buildNumber": "42",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
