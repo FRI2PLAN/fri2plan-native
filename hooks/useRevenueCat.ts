@@ -25,8 +25,8 @@ const PREMIUM_ENTITLEMENT_ID = 'premium';
 
 // Identifiants des produits dans App Store Connect / Google Play
 export const IAP_PRODUCT_IDS = {
-  MONTHLY: 'ch.fri2plan.premium.monthly',
-  YEARLY: 'ch.fri2plan.premium.yearly',
+  MONTHLY: 'fri2plan_monthly_v2',
+  YEARLY: 'fri2plan_yearly_v2',
 };
 
 export interface RevenueCatState {
