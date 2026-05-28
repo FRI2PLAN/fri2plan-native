@@ -48,7 +48,6 @@
       ],
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
-      "expo-calendar",
       [
         "expo-updates",
         {
@@ -61,7 +60,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
 
-      "buildNumber": "50",
+      "buildNumber": "52",
       
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -91,7 +90,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 49,
+      "versionCode": 52,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 35,

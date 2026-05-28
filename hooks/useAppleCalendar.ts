@@ -13,7 +13,14 @@
  * - Persistance du calendrier connecté (AsyncStorage)
  * - Dernière date de sync
  */
-import * as Calendar from 'expo-calendar';
+// expo-calendar: import protégé pour éviter le crash CalendarNext (New Architecture)
+// Le plugin expo-calendar est désactivé dans app.json pour éviter l'enregistrement du Turbo Module
+let Calendar: typeof import('expo-calendar') | null = null;
+try {
+  Calendar = require('expo-calendar');
+} catch (e) {
+  console.warn('[useAppleCalendar] expo-calendar non disponible:', e);
+}
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -56,6 +63,7 @@ export interface ConnectedNativeCalendar {
 // ─── Permissions ──────────────────────────────────────────────────────────────
 
 export async function requestCalendarPermissions(): Promise<boolean> {
+  if (!Calendar) return false;
   try {
     const { status } = await Calendar.requestCalendarPermissionsAsync();
     return status === 'granted';
@@ -66,6 +74,7 @@ export async function requestCalendarPermissions(): Promise<boolean> {
 }
 
 export async function checkCalendarPermissions(): Promise<boolean> {
+  if (!Calendar) return false;
   try {
     const { status } = await Calendar.getCalendarPermissionsAsync();
     return status === 'granted';
@@ -140,6 +149,7 @@ export async function removeEventMapping(fri2planEventId: string | number): Prom
 // ─── Calendriers disponibles ──────────────────────────────────────────────────
 
 export async function getLocalCalendars(writableOnly = false): Promise<NativeCalendar[]> {
+  if (!Calendar) return [];
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) {
@@ -170,6 +180,7 @@ export async function importEventsFromNative(
   startDate: Date,
   endDate: Date
 ): Promise<NativeEvent[]> {
+  if (!Calendar) return [];
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) {
@@ -214,6 +225,7 @@ export async function exportEventToNative(
   calendarId: string,
   fri2planEventId?: string | number
 ): Promise<string | null> {
+  if (!Calendar) return null;
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) {
@@ -274,6 +286,7 @@ export async function removeEventFromNative(
   eventId: string,
   fri2planEventId?: string | number
 ): Promise<boolean> {
+  if (!Calendar) return false;
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) return false;
@@ -292,6 +305,7 @@ export async function removeEventFromNative(
 // ─── Calendrier par défaut ────────────────────────────────────────────────────
 
 export async function getDefaultCalendar(): Promise<NativeCalendar | null> {
+  if (!Calendar) return null;
   try {
     const hasPermission = await checkCalendarPermissions();
     if (!hasPermission) return null;
