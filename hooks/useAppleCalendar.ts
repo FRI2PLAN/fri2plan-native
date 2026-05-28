@@ -13,14 +13,9 @@
  * - Persistance du calendrier connecté (AsyncStorage)
  * - Dernière date de sync
  */
-// expo-calendar: import protégé pour éviter le crash CalendarNext (New Architecture)
-// Le plugin expo-calendar est désactivé dans app.json pour éviter l'enregistrement du Turbo Module
-let Calendar: typeof import('expo-calendar') | null = null;
-try {
-  Calendar = require('expo-calendar');
-} catch (e) {
-  console.warn('[useAppleCalendar] expo-calendar non disponible:', e);
-}
+// expo-calendar: désactivé définitivement (crash CalendarModule.kt sur Android, CalendarNext sur iOS)
+// Le package est retiré de package.json - toutes les fonctions retournent des valeurs vides
+const Calendar: null = null;
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
