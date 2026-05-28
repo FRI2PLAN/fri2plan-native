@@ -48,6 +48,7 @@
       ],
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
+      "expo-calendar",
       [
         "expo-updates",
         {
@@ -70,6 +71,8 @@
         ],
         "NSUserNotificationsUsageDescription": "FRI2PLAN envoie des rappels et notifications pour votre famille.",
         "NSFaceIDUsageDescription": "FRI2PLAN utilise Face ID pour vous connecter rapidement et en toute sécurité.",
+        "NSCalendarsUsageDescription": "FRI2PLAN accède à votre calendrier pour synchroniser vos événements familiaux.",
+        "NSCalendarsFullAccessUsageDescription": "FRI2PLAN accède à votre calendrier pour synchroniser vos événements familiaux dans les deux sens.",
         "NSRemindersUsageDescription": "FRI2PLAN peut créer des rappels pour vos tâches familiales.",
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -95,7 +98,9 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
       ]
     },
     "extra": {

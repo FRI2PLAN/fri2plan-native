@@ -7,7 +7,7 @@
  * - Android + Web → Stripe (inchangé)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, Alert } from 'react-native';
 import Purchases, {
   PurchasesPackage,
@@ -58,58 +58,71 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
     error: null,
   });
 
-  // Initialiser RevenueCat
+  // Évite les setState après unmount
+  const isMounted = useRef(true);
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      setState(s => ({ ...s, isLoading: false, isConfigured: false }));
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
+  // Initialiser RevenueCat — uniquement sur iOS
+  useEffect(() => {
+    // Pas d'IAP sur Android (Stripe) ni Web
+    if (Platform.OS !== 'ios') {
+      if (isMounted.current) setState(s => ({ ...s, isLoading: false, isConfigured: false }));
       return;
     }
 
+    let listenerSub: { remove: () => void } | null = null;
+
     const configure = async () => {
       try {
-        // Sur Android, RevenueCat n'est pas utilisé (Stripe à la place)
-        if (Platform.OS === 'android') {
-          setState(s => ({ ...s, isLoading: false, isConfigured: false }));
-          return;
-        }
-
         if (__DEV__) {
           Purchases.setLogLevel(LOG_LEVEL.DEBUG);
         }
 
-        const apiKey = REVENUECAT_APPLE_API_KEY;
+        // Délai plus long pour laisser StoreKit s'initialiser complètement
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!isMounted.current) return;
 
-        // Petit délai pour laisser le runtime natif s'initialiser
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await Purchases.configure({ apiKey: REVENUECAT_APPLE_API_KEY });
+        if (!isMounted.current) return;
 
-        await Purchases.configure({ apiKey });
-
-        // Identifier l'utilisateur si connecté
+        // Identifier l'utilisateur si connecté (non-fatal si erreur)
         if (userId) {
-          await Purchases.logIn(userId.toString());
+          try { await Purchases.logIn(userId.toString()); } catch (e) {
+            console.warn('[RevenueCat] logIn non-fatal:', e);
+          }
         }
+        if (!isMounted.current) return;
 
-        // Charger les offres disponibles
-        const offerings = await Purchases.getOfferings();
-        const current = offerings.current;
-
+        // Charger les offres (non-fatal si erreur réseau)
         let monthlyPkg: PurchasesPackage | null = null;
         let yearlyPkg: PurchasesPackage | null = null;
         let allPackages: PurchasesPackage[] = [];
+        try {
+          const offerings = await Purchases.getOfferings();
+          const current = offerings.current;
+          if (current) {
+            allPackages = current.availablePackages;
+            monthlyPkg = current.monthly ?? allPackages.find(p =>
+              p.product.identifier === IAP_PRODUCT_IDS.MONTHLY
+            ) ?? null;
+            yearlyPkg = current.annual ?? allPackages.find(p =>
+              p.product.identifier === IAP_PRODUCT_IDS.YEARLY
+            ) ?? null;
+          }
+        } catch (e) { console.warn('[RevenueCat] getOfferings non-fatal:', e); }
+        if (!isMounted.current) return;
 
-        if (current) {
-          allPackages = current.availablePackages;
-          monthlyPkg = current.monthly ?? allPackages.find(p =>
-            p.product.identifier === IAP_PRODUCT_IDS.MONTHLY
-          ) ?? null;
-          yearlyPkg = current.annual ?? allPackages.find(p =>
-            p.product.identifier === IAP_PRODUCT_IDS.YEARLY
-          ) ?? null;
-        }
-
-        // Vérifier le statut Premium
-        const info = await Purchases.getCustomerInfo();
-        const hasPremium = info.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
+        // Vérifier le statut Premium (non-fatal si erreur)
+        let hasPremium = false;
+        let info: CustomerInfo | null = null;
+        try {
+          info = await Purchases.getCustomerInfo();
+          hasPremium = info.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
+        } catch (e) { console.warn('[RevenueCat] getCustomerInfo non-fatal:', e); }
+        if (!isMounted.current) return;
 
         setState({
           isConfigured: true,
@@ -121,31 +134,34 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
           customerInfo: info,
           error: null,
         });
+
+        // Écouter les changements de statut client
+        try {
+          listenerSub = Purchases.addCustomerInfoUpdateListener((updatedInfo) => {
+            if (!isMounted.current) return;
+            const updatedPremium = updatedInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
+            setState(s => ({ ...s, isPremium: updatedPremium, customerInfo: updatedInfo }));
+          });
+        } catch (e) { console.warn('[RevenueCat] listener non-fatal:', e); }
+
       } catch (err: any) {
-        console.error('[RevenueCat] Configuration error:', err);
-        setState(s => ({
-          ...s,
-          isConfigured: false,
-          isLoading: false,
-          error: err?.message || 'Erreur de configuration RevenueCat',
-        }));
+        // Erreur générale — l'app continue sans IAP
+        console.error('[RevenueCat] Configuration error (app continues):', err);
+        if (isMounted.current) {
+          setState(s => ({
+            ...s,
+            isConfigured: false,
+            isLoading: false,
+            error: err?.message || 'RevenueCat unavailable',
+          }));
+        }
       }
     };
 
     configure();
 
-    // Écouter les changements de statut client
-    const listener = Purchases.addCustomerInfoUpdateListener((info) => {
-      const hasPremium = info.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
-      setState(s => ({
-        ...s,
-        isPremium: hasPremium,
-        customerInfo: info,
-      }));
-    });
-
     return () => {
-      listener.remove();
+      if (listenerSub) { try { listenerSub.remove(); } catch (_) {} }
     };
   }, [userId]);
 
