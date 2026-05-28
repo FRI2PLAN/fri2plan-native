@@ -887,13 +887,8 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                     {t('settings.premiumPlan')}
                   </Text>
                   {pricingTab === 'annuel' && (
-                    <View style={{ flexDirection: 'row', gap: 4 }}>
-                      <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save33') || 'Économisez 33%'}</Text>
-                      </View>
-                      <View style={[styles.planBadge, { backgroundColor: '#fff' }]}>
-                        <Text style={[styles.planBadgeText, { color: '#7c3aed' }]}>{t('settings.bestValue')}</Text>
-                      </View>
+                    <View style={{ backgroundColor: '#22c55e', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{t('settings.save33') || 'Économisez 33%'}</Text>
                     </View>
                   )}
                   {pricingTab === 'mensuel' && (
