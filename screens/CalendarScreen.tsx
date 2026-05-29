@@ -164,10 +164,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   useEffect(() => {
     loadViewMode();
     loadFilters();
-    // Gérer le deep link fri2plan://google-calendar/callback?google_calendars=...
+    // Gérer le deep link fri2plan://google-calendar/callback?google_calendars=... (Android)
+    // et fri2plan://google-calendar/oauth-done?sessionId=... (iOS - polling)
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
       if (url && url.startsWith('fri2plan://google-calendar/callback')) {
+        // Android : les calendriers sont encodés directement dans le deep link
         try {
           const params = new URL(url).searchParams;
           const encoded = params.get('google_calendars');
@@ -175,6 +177,32 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             const calendars = JSON.parse(decodeURIComponent(encoded));
             setGoogleCalendars(calendars);
             setGoogleCalendarModal(true);
+          }
+        } catch {}
+      } else if (url && url.startsWith('fri2plan://google-calendar/oauth-done')) {
+        // iOS : le sessionId est dans le deep link, on fait un poll immédiat
+        try {
+          const params = new URL(url).searchParams;
+          const sessionId = params.get('sessionId');
+          if (sessionId) {
+            // Poll immédiat pour récupérer les calendriers
+            const doPoll = async () => {
+              try {
+                const token = await AsyncStorage.getItem('userToken');
+                const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, {
+                  headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                const pollData = await pollRes.json();
+                if (pollData.status === 'ready' && pollData.calendars) {
+                  setGoogleCalendars(pollData.calendars);
+                  if (pollData.tokenData) {
+                    await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
+                  }
+                  setGoogleCalendarModal(true);
+                }
+              } catch {}
+            };
+            doPoll();
           }
         } catch {}
       }
