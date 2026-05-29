@@ -704,6 +704,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         Alert.alert('Calendrier ajouté', `"${cal.summary}" a été synchronisé avec succès.`);
         setGoogleCalendarModal(false);
         refetch();
+        refetchSyncedCalendars();
+        refetchSubscriptions();
       } else {
         Alert.alert('Erreur', data.error || 'Impossible d\'ajouter ce calendrier.');
       }
