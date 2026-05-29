@@ -125,11 +125,9 @@ function FCMLogoutHandler({ logoutRef }: { logoutRef: React.MutableRefObject<(()
 // ─── Vérification OTA au démarrage ──────────────────────────────────────────
 async function checkAndApplyUpdate() {
   try {
-    if (!Updates.isEmbeddedLaunch) {
-      // Déjà en train de tourner depuis une OTA, pas besoin de revérifier
-      console.log('[OTA] Running from update, skipping check');
-      return;
-    }
+    // Vérifier toujours les OTAs, qu'on soit sur le build natif ou une OTA précédente.
+    // L'ancienne condition (!isEmbeddedLaunch → return) empêchait les OTAs successives
+    // car une fois une OTA installée, isEmbeddedLaunch = false → la vérification était skippée.
     const update = await Updates.checkForUpdateAsync();
     if (update.isAvailable) {
       console.log('[OTA] Update available, fetching...');
