@@ -16,8 +16,10 @@ import { PagerProvider } from './contexts/PagerContext';
 import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
+import FirstConnectionFlow from './screens/FirstConnectionFlow';
 import SplashScreen from './screens/SplashScreen';
 import { StyleSheet, Platform } from 'react-native';
+import { useFamily } from './contexts/FamilyContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -145,6 +147,7 @@ async function checkAndApplyUpdate() {
 // ─── Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
+  const { activeFamilyId } = useFamily();
   const [currentPage, setCurrentPage] = useState(0);
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
@@ -207,16 +210,24 @@ function AppContent() {
       {(isLoading || !splashMinDone || (isAuthenticated && !user)) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
-        <>
-          <AppNavigator onLogout={effectiveLogout} />
-          <OnboardingScreen
-            visible={!hasSeenOnboarding}
-            onComplete={completeOnboarding}
-            onNavigate={(pageIndex) => {
-              setCurrentPage(pageIndex);
-            }}
-          />
-        </>
+        // Nouvel utilisateur sans famille ET sans onboarding → wizard FirstConnectionFlow
+        (!activeFamilyId && !hasSeenOnboarding) ? (
+          <FirstConnectionFlow onComplete={completeOnboarding} />
+        ) : (
+          <>
+            <AppNavigator onLogout={effectiveLogout} />
+            {/* OnboardingScreen pour les utilisateurs existants qui n'ont pas encore vu l'onboarding */}
+            {!hasSeenOnboarding && !!activeFamilyId && (
+              <OnboardingScreen
+                visible={true}
+                onComplete={completeOnboarding}
+                onNavigate={(pageIndex) => {
+                  setCurrentPage(pageIndex);
+                }}
+              />
+            )}
+          </>
+        )
       ) : (
         <LoginScreen />
       )}
