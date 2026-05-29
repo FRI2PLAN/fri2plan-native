@@ -922,25 +922,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               <Text style={styles.calMenuLabel}>{t('calendar.exportIcs') || 'Exporter le calendrier'}</Text>
             </TouchableOpacity>
             {/* Bouton Calendrier Apple / Natif */}
-            {Platform.OS !== 'web' && (
-              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); openNativeCalendarPicker(); }}>
-                <Text style={styles.calMenuIcon}>{Platform.OS === 'ios' ? '📱' : '📅'}</Text>
-                <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.nativeCalendar') || 'Calendrier Apple / Natif'}</Text>
-                {connectedNativeCalendar ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10b981' }} />
-                    <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '600' }}>Connecté</Text>
-                  </View>
-                ) : (
-                  <Text style={{ fontSize: 11, color: '#6b7280' }}>{nativeCalendarLoading ? '...' : '+ Ajouter'}</Text>
-                )}
-              </TouchableOpacity>
-            )}
-            {/* Bouton Gérer le calendrier natif (si connecté) */}
-            {Platform.OS !== 'web' && connectedNativeCalendar && (
-              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setNativeManageModal(true); }}>
-                <Text style={styles.calMenuIcon}>⚙️</Text>
-                <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.nativeCalendarManage') || 'Gérer le calendrier natif'}</Text>
+            {/* Bouton Calendrier Apple - désactivé, bientôt disponible (iOS uniquement) */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={[styles.calMenuItem, { opacity: 0.45 }]} disabled>
+                <Text style={styles.calMenuIcon}>📱</Text>
+                <Text style={[styles.calMenuLabel, { flex: 1 }]}>Calendrier Apple</Text>
+                <Text style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Bientôt disponible</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.calMenuItem} onPress={async () => {
@@ -974,6 +961,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   const pollData = await pollRes.json();
                   if (pollData.status === 'ready') {
                     clearInterval(pollInterval);
+                    // Fermer le navigateur Android quand le polling réussit
+                    try { WebBrowser.dismissBrowser(); } catch {}
                     // Stocker le token Google pour l'utiliser lors de subscribe
                     if (pollData.tokenData) {
                       await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
@@ -1994,6 +1983,8 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                       const pollData = await pollRes.json();
                       if (pollData.status === 'ready') {
                         clearInterval(pollInterval);
+                        // Fermer le navigateur Android quand le polling réussit
+                        try { WebBrowser.dismissBrowser(); } catch {}
                         if (pollData.tokenData) await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
                         setGoogleCalendars(pollData.calendars || []);
                         setGoogleCalendarModal(true);
