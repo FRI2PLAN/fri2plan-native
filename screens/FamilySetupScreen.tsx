@@ -31,27 +31,63 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
   const queryClient = useQueryClient();
 
   // ── Mutation : créer une famille ──
+  // networkMode: 'always' force l'envoi au serveur même en mode offlineFirst global
+  // Cela évite que la création soit mise en cache local et affiche "succès" sans
+  // que la famille soit réellement créée en base de données.
   const createFamily = trpc.family.create.useMutation({
+    networkMode: 'always',
     onSuccess: (data) => {
+      if (!data?.familyId) {
+        Alert.alert('Erreur', 'La famille n\'a pas pu être créée. Veuillez réessayer.');
+        return;
+      }
       setActiveFamilyId(data.familyId);
       setCreatedInviteCode(data.inviteCode || '');
       setCreatedFamilyName(familyName.trim());
       queryClient.invalidateQueries();
       setMode('created');
     },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Impossible de créer la famille'),
+    onError: (e: any) => {
+      const msg = e?.message || 'Impossible de créer la famille';
+      if (msg.includes('network') || msg.includes('fetch') || msg.includes('connect')) {
+        Alert.alert(
+          'Pas de connexion',
+          'Impossible de créer la famille sans connexion internet. Veuillez vérifier votre réseau et réessayer.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Erreur', msg);
+      }
+    },
   });
 
   // ── Mutation : rejoindre une famille ──
+  // networkMode: 'always' pour la même raison — rejoindre doit être confirmé par le serveur
   const joinFamily = trpc.family.join.useMutation({
+    networkMode: 'always',
     onSuccess: (data) => {
+      if (!data?.familyId) {
+        Alert.alert('Erreur', 'Impossible de rejoindre la famille. Veuillez réessayer.');
+        return;
+      }
       setActiveFamilyId(data.familyId);
       queryClient.invalidateQueries();
       Alert.alert('✅ Famille rejointe !', 'Vous avez rejoint la famille avec succès.', [
         { text: 'Continuer', onPress: onComplete },
       ]);
     },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Code d\'invitation invalide'),
+    onError: (e: any) => {
+      const msg = e?.message || 'Code d\'invitation invalide';
+      if (msg.includes('network') || msg.includes('fetch') || msg.includes('connect')) {
+        Alert.alert(
+          'Pas de connexion',
+          'Impossible de rejoindre la famille sans connexion internet. Veuillez vérifier votre réseau et réessayer.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Erreur', msg);
+      }
+    },
   });
 
   const handleCreate = () => {
