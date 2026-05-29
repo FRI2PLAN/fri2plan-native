@@ -940,12 +940,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 Alert.alert('Erreur', 'Vous devez être connecté pour utiliser Google Calendar.');
                 return;
               }
-              // Passer le token dans l'URL car Linking.openURL ne peut pas envoyer de headers Authorization
-              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-              WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() =>
-                Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
-              );
+              // Sur iOS : Linking.openURL ouvre Safari sans bloquer le thread JS → le polling tourne en parallèle
+              // Sur Android : WebBrowser.openAuthSessionAsync ouvre Chrome Custom Tabs
+              const source = Platform.OS === 'ios' ? 'ios' : 'android';
+              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=${source}&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
+              if (Platform.OS === 'ios') {
+                Linking.openURL(connectUrl).catch(() =>
+                  Alert.alert('Erreur', "Impossible d'ouvrir Safari.")
+                );
+              } else {
+                WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() =>
+                  Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
+                );
+              }
               // Polling toutes les 2s pendant 3 minutes max
+              // Sur iOS : tourne en parallèle car Linking.openURL ne bloque pas le thread JS
+              // Sur Android : tourne en parallèle aussi
               let attempts = 0;
               const maxAttempts = 90;
               const pollInterval = setInterval(async () => {
@@ -961,7 +971,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   const pollData = await pollRes.json();
                   if (pollData.status === 'ready') {
                     clearInterval(pollInterval);
-                    // Fermer le navigateur Android quand le polling réussit
+                    // Fermer le navigateur quand le polling réussit
                     try { WebBrowser.dismissBrowser(); } catch {}
                     // Stocker le token Google pour l'utiliser lors de subscribe
                     if (pollData.tokenData) {
@@ -1972,8 +1982,15 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                   const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
                   const token = await AsyncStorage.getItem('authToken');
                   if (!token) { Alert.alert('Erreur', 'Vous devez être connecté.'); return; }
-                  const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=android&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-                  WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
+                  // Sur iOS : Linking.openURL ouvre Safari sans bloquer le thread JS → le polling tourne en parallèle
+                  // Sur Android : WebBrowser.openAuthSessionAsync ouvre Chrome Custom Tabs
+                  const source = Platform.OS === 'ios' ? 'ios' : 'android';
+                  const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=${source}&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL(connectUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir Safari."));
+                  } else {
+                    WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
+                  }
                   let attempts = 0;
                   const pollInterval = setInterval(async () => {
                     attempts++;
@@ -1983,7 +2000,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                       const pollData = await pollRes.json();
                       if (pollData.status === 'ready') {
                         clearInterval(pollInterval);
-                        // Fermer le navigateur Android quand le polling réussit
+                        // Fermer le navigateur quand le polling réussit
                         try { WebBrowser.dismissBrowser(); } catch {}
                         if (pollData.tokenData) await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
                         setGoogleCalendars(pollData.calendars || []);
