@@ -1,12 +1,12 @@
 /**
- * FirstConnectionFlow — Flux de première connexion en 3 étapes (natif)
+ * FirstConnectionFlow — Flux de première connexion en 2 étapes (natif)
  *
  * Étape 1 : Créer le cercle familial (nom)
- * Étape 2 : Inviter la famille (code + WhatsApp, SMS, Copier)
- * Étape 3 : Onboarding de découverte de l'app
+ * Étape 2 : Inviter la famille (code + WhatsApp, SMS, Copier) → Accéder à l'app
  *
  * S'affiche une seule fois lors de la première connexion d'un nouvel utilisateur
- * sans famille. Marque hasSeenOnboarding=true à la fin.
+ * sans famille. L'onboarding de découverte est géré par OnboardingScreen (overlay)
+ * dans App.tsx après l'accès à l'app (hasSeenOnboarding=false + activeFamilyId set).
  *
  * networkMode: 'always' sur createFamily pour garantir que la famille est bien
  * créée en base de données (évite le bug offlineFirst).
@@ -29,7 +29,7 @@ const APP_URL = 'https://app.fri2plan.ch';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type FlowStep = 'create-circle' | 'invite-family' | 'onboarding';
+type FlowStep = 'create-circle' | 'invite-family';
 
 interface OnboardingSlide {
   title: string;
@@ -113,7 +113,7 @@ export default function FirstConnectionFlow({ onComplete }: FirstConnectionFlowP
   const [step, setStep] = useState<FlowStep>('create-circle');
   const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [onboardingStep, setOnboardingStep] = useState(0);
+  // onboardingStep supprimé — l'onboarding est géré par OnboardingScreen dans App.tsx
   const { setActiveFamilyId } = useFamily();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -205,19 +205,7 @@ export default function FirstConnectionFlow({ onComplete }: FirstConnectionFlowP
     await Share.share({ message: inviteMessage, title: 'Invitation FRI2PLAN' });
   };
 
-  // ── Étape 3 : Onboarding ──────────────────────────────────────────────────
-
-  const currentSlide = ONBOARDING_SLIDES[onboardingStep];
-  const isLastSlide = onboardingStep === ONBOARDING_SLIDES.length - 1;
-  const onboardingProgress = ((onboardingStep + 1) / ONBOARDING_SLIDES.length) * 100;
-
-  const handleOnboardingNext = () => {
-    if (isLastSlide) {
-      onComplete();
-    } else {
-      setOnboardingStep((prev) => prev + 1);
-    }
-  };
+  // L'onboarding est géré par OnboardingScreen dans App.tsx après onComplete()
 
   // ─── Rendu ─────────────────────────────────────────────────────────────────
 
@@ -278,9 +266,8 @@ export default function FirstConnectionFlow({ onComplete }: FirstConnectionFlowP
               <View style={styles.stepIndicator}>
                 <View style={[styles.stepDot, styles.stepDotActive]} />
                 <View style={styles.stepDot} />
-                <View style={styles.stepDot} />
               </View>
-              <Text style={styles.stepLabel}>Étape 1 sur 3</Text>
+              <Text style={styles.stepLabel}>Étape 1 sur 2</Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -339,13 +326,13 @@ export default function FirstConnectionFlow({ onComplete }: FirstConnectionFlowP
             </View>
 
             {/* Bouton principal */}
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep('onboarding')}>
-              <Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.primaryBtnText}>Commencer</Text>
+            <TouchableOpacity style={styles.primaryBtn} onPress={onComplete}>
+              <Ionicons name="home" size={18} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryBtnText}>Accéder à l'app</Text>
             </TouchableOpacity>
 
             {/* Passer */}
-            <TouchableOpacity style={styles.skipBtn} onPress={() => setStep('onboarding')}>
+            <TouchableOpacity style={styles.skipBtn} onPress={onComplete}>
               <Text style={styles.skipBtnText}>Inviter plus tard</Text>
             </TouchableOpacity>
             <Text style={styles.skipHint}>
@@ -355,113 +342,17 @@ export default function FirstConnectionFlow({ onComplete }: FirstConnectionFlowP
 
             {/* Indicateur d'étape */}
             <View style={styles.stepIndicator}>
-              <View style={styles.stepDot} />
               <View style={[styles.stepDot, styles.stepDotActive]} />
-              <View style={styles.stepDot} />
             </View>
-            <Text style={styles.stepLabel}>Étape 2 sur 3</Text>
+            <Text style={styles.stepLabel}>Étape 2 sur 2</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // ── Étape 3 : Onboarding ──────────────────────────────────────────────────
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="light" />
-      <View style={{ flex: 1 }}>
-        {/* Barre de progression */}
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${onboardingProgress}%` }]} />
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            {/* Bouton retour */}
-            <TouchableOpacity style={styles.backBtn} onPress={() => setStep('invite-family')}>
-              <Ionicons name="arrow-back" size={18} color="#9ca3af" />
-              <Text style={styles.backBtnText}>Retour</Text>
-            </TouchableOpacity>
-
-            {/* Slide */}
-            <View style={styles.slideContent}>
-              <View style={[
-                styles.slideIconCircle,
-                currentSlide.category === 'premium' && styles.slideIconCirclePremium,
-              ]}>
-                <Ionicons
-                  name={currentSlide.icon}
-                  size={40}
-                  color={currentSlide.category === 'premium' ? '#a855f7' : '#7c3aed'}
-                />
-              </View>
-
-              {currentSlide.category === 'premium' && (
-                <View style={styles.premiumBadge}>
-                  <Text style={styles.premiumBadgeText}>✨ Premium</Text>
-                </View>
-              )}
-
-              <Text style={styles.slideTitle}>{currentSlide.title}</Text>
-              <Text style={styles.slideDesc}>{currentSlide.description}</Text>
-            </View>
-
-            {/* Navigation */}
-            <View style={styles.navRow}>
-              {onboardingStep > 0 && (
-                <TouchableOpacity
-                  style={styles.prevBtn}
-                  onPress={() => setOnboardingStep((p) => p - 1)}
-                >
-                  <Text style={styles.prevBtnText}>Précédent</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.primaryBtn, { flex: 1 }]}
-                onPress={handleOnboardingNext}
-              >
-                {isLastSlide ? (
-                  <>
-                    <Ionicons name="checkmark" size={18} color="#fff" style={{ marginRight: 8 }} />
-                    <Text style={styles.primaryBtnText}>Commencer !</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.primaryBtnText}>Suivant</Text>
-                    <Ionicons name="chevron-forward" size={18} color="#fff" style={{ marginLeft: 8 }} />
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Passer le tutoriel */}
-            {!isLastSlide && (
-              <TouchableOpacity style={styles.skipBtn} onPress={onComplete}>
-                <Text style={styles.skipBtnText}>Passer le tutoriel</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Indicateurs de slide */}
-            <View style={styles.slideIndicators}>
-              {ONBOARDING_SLIDES.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.slideIndicatorDot,
-                    i === onboardingStep && styles.slideIndicatorDotActive,
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.stepLabel}>
-              Slide {onboardingStep + 1} sur {ONBOARDING_SLIDES.length} · Étape 3 sur 3
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
-  );
+  // Ce return ne devrait jamais être atteint (FlowStep = 'create-circle' | 'invite-family')
+  return null;
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────────

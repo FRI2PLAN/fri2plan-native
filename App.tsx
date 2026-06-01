@@ -211,8 +211,11 @@ function AppContent() {
         <SplashScreen />
       ) : isAuthenticated ? (
         // Nouvel utilisateur sans famille ET sans onboarding → wizard FirstConnectionFlow
+        // onComplete ne marque PAS hasSeenOnboarding : après "Accéder à l'app",
+        // activeFamilyId est défini → la condition (!activeFamilyId && !hasSeenOnboarding) devient fausse
+        // → App.tsx bascule vers AppNavigator + OnboardingScreen overlay (l. 220)
         (!activeFamilyId && !hasSeenOnboarding) ? (
-          <FirstConnectionFlow onComplete={completeOnboarding} />
+          <FirstConnectionFlow onComplete={() => {}} />
         ) : (
           <>
             <AppNavigator onLogout={effectiveLogout} />
