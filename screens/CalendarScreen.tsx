@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking, Share, Clipboard } from 'react-native';
 import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, removeEventFromNative, getNativeEventId, saveConnectedCalendar, getConnectedCalendar, disconnectNativeCalendar, updateLastSync, type NativeCalendar, type ConnectedNativeCalendar } from '../hooks/useAppleCalendar';
 import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
@@ -160,6 +160,16 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [calendarMenuVisible, setCalendarMenuVisible] = useState(false);
+  const [icsUrlCopied, setIcsUrlCopied] = useState(false);
+
+  // Export ICS — récupérer le token existant ou en générer un
+  const { data: exportTokenData, refetch: refetchExportToken } = (trpc as any).calendar?.getExportToken?.useQuery(
+    undefined,
+    { enabled: exportModalOpen }
+  ) ?? { data: null, refetch: () => {} };
+  const generateExportTokenMutation = (trpc as any).calendar?.generateExportToken?.useMutation?.(
+    { onSuccess: () => refetchExportToken() }
+  ) ?? { mutate: () => {}, isPending: false };
 
   useEffect(() => {
     loadViewMode();
@@ -1825,17 +1835,74 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         </View>
       </Modal>
 
-      {/* ── Export ── */}
+      {/* ── Export ICS ── */}
       <Modal visible={exportModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('calendar.export') || 'Exporter'}</Text>
-            <Text style={styles.importInfoText}>{t('calendar.exportDesc') || 'Exportez vos événements au format ICS.'}</Text>
-            <TouchableOpacity style={[styles.importSelectButton, { marginTop: 16 }]} onPress={() => setExportModalOpen(false)}>
-              <Text style={styles.importSelectButtonText}>{t('calendar.exportICS') || '📤 Exporter en .ics'}</Text>
-            </TouchableOpacity>
-            {/* Bouton icône fermer */}
-            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 8 }]}>
+            <Text style={styles.modalTitle}>📤 {t('calendar.export') || 'Exporter le calendrier'}</Text>
+            <Text style={styles.importInfoText}>
+              {t('calendar.exportDesc') || 'Abonnez-vous à votre calendrier FRI2PLAN depuis n\'importe quelle application (Google Calendar, Apple Calendar, Outlook…). Seuls vos événements FRI2PLAN sont inclus — pas les événements importés depuis d\'autres sources.'}
+            </Text>
+
+            {exportTokenData?.exportUrl ? (
+              <>
+                {/* URL ICS */}
+                <View style={[styles.importInfoText, { backgroundColor: isDark ? '#1f2937' : '#f3f4f6', borderRadius: 8, padding: 10, marginTop: 12, marginBottom: 4 }]}>
+                  <Text style={{ color: isDark ? '#a78bfa' : '#7c3aed', fontSize: 12, fontFamily: 'monospace' }} numberOfLines={2} selectable>
+                    {exportTokenData.exportUrl}
+                  </Text>
+                </View>
+
+                {/* Bouton Copier */}
+                <TouchableOpacity
+                  style={[styles.importSelectButton, { marginTop: 10, backgroundColor: icsUrlCopied ? '#10b981' : '#7c3aed' }]}
+                  onPress={() => {
+                    Clipboard.setString(exportTokenData.exportUrl);
+                    setIcsUrlCopied(true);
+                    setTimeout(() => setIcsUrlCopied(false), 2500);
+                  }}
+                >
+                  <Text style={styles.importSelectButtonText}>
+                    {icsUrlCopied ? '✅ URL copiée !' : '📋 Copier l\'URL'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Bouton Partager */}
+                <TouchableOpacity
+                  style={[styles.importSelectButton, { marginTop: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }]}
+                  onPress={() => Share.share({ message: exportTokenData.exportUrl, title: 'Calendrier FRI2PLAN' })}
+                >
+                  <Text style={[styles.importSelectButtonText, { color: isDark ? '#f9fafb' : '#111827' }]}>🔗 Partager l\'URL</Text>
+                </TouchableOpacity>
+
+                {/* Régénérer le token */}
+                <TouchableOpacity
+                  style={{ marginTop: 12, alignItems: 'center' }}
+                  onPress={() => Alert.alert(
+                    'Régénérer le lien ?',
+                    'L\'ancien lien sera invalidé. Vous devrez mettre à jour vos abonnements existants.',
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Régénérer', style: 'destructive', onPress: () => generateExportTokenMutation.mutate() },
+                    ]
+                  )}
+                >
+                  <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}>🔄 Régénérer le lien</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity
+                style={[styles.importSelectButton, { marginTop: 16 }]}
+                onPress={() => generateExportTokenMutation.mutate()}
+                disabled={generateExportTokenMutation.isPending}
+              >
+                <Text style={styles.importSelectButtonText}>
+                  {generateExportTokenMutation.isPending ? '⏳ Génération…' : '🔑 Générer le lien ICS'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={[styles.iconBtnRow, { justifyContent: 'center', marginTop: 16 }]}>
               <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => setExportModalOpen(false)} />
             </View>
           </View>
