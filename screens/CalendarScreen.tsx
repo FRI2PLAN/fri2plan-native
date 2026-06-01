@@ -1450,8 +1450,8 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.checkboxLabel}>🔒 {t('common.private') || 'Événement privé'}</Text>
               </TouchableOpacity>
             </ScrollView>
-            {/* Bouton export vers calendrier natif */}
-            {Platform.OS !== 'web' && selectedEvent && (
+            {/* Bouton export vers calendrier natif - masqué (synchro Google Calendar bidirectionnelle suffisante) */}
+            {false && Platform.OS !== 'web' && selectedEvent && (
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, marginTop: 8, borderRadius: 8, backgroundColor: isDark ? '#1e3a5f' : '#eff6ff', gap: 8 }}
                 onPress={async () => {
