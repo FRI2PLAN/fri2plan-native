@@ -191,6 +191,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       ]);
       setToken(authToken);
       setUser(userData);
+
+      // Envoyer automatiquement la timezone de l'appareil au serveur
+      // Cela permet des rappels et emails à la bonne heure locale pour tous les fuseaux
+      try {
+        const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (deviceTimezone) {
+          await fetch(`${API_URL}/api/trpc/settings.update`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ json: { timezone: deviceTimezone } }),
+          });
+          console.log('[AuthContext] Timezone envoyée au serveur:', deviceTimezone);
+        }
+      } catch (tzErr) {
+        // Non bloquant — la timezone sera mise à jour au prochain login
+        console.warn('[AuthContext] Impossible d\'envoyer la timezone:', tzErr);
+      }
     } catch (error) {
       console.error('Error saving user data:', error);
       throw error;
