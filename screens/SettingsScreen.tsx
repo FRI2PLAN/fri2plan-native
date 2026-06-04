@@ -836,8 +836,17 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
           </View>
 
-          {/* Plans tarifaires (si pas premium) */}
-          {!hasPremium && (
+          {/* Message d'incitation pendant l'essai */}
+          {isTrialActive && (
+            <View style={{ marginHorizontal: 0, marginBottom: 8, padding: 12, backgroundColor: isDark ? '#1e1b4b' : '#ede9fe', borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#7c3aed' }}>
+              <Text style={{ fontSize: 13, color: isDark ? '#c4b5fd' : '#5b21b6', fontWeight: '600' }}>
+                💡 {t('settings.trialSubscribeNow') || 'Abonnez-vous maintenant pour continuer après votre période d’essai'}
+              </Text>
+            </View>
+          )}
+
+          {/* Plans tarifaires (si pas premium OU en période d'essai) */}
+          {(!hasPremium || isTrialActive) && (
             <View style={styles.section}>
 
               {/* Plan gratuit EN HAUT — uniquement ce qui est inclus */}
@@ -964,8 +973,8 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               )}
             </View>
           )}
-          {/* Restaurer les achats Apple IAP (iOS uniquement, non-Premium) */}
-          {Platform.OS === 'ios' && !hasPremium && (
+          {/* Restaurer les achats Apple IAP (iOS uniquement, non-Premium ou essai) */}
+          {Platform.OS === 'ios' && (!hasPremium || isTrialActive) && (
             <TouchableOpacity
               style={[styles.settingItem, { marginTop: 8 }]}
               onPress={() => iap.restorePurchases().then(ok => ok && refetchSub())}
