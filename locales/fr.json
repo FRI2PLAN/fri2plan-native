@@ -694,6 +694,7 @@
     "freePlan": "Plan gratuit",
     "freePlanDesc": "Passez à Premium pour débloquer toutes les fonctionnalités.",
     "trialDaysRemaining": "{{count}} jours restants dans votre essai",
+    "trialSubscribeNow": "Abonnez-vous maintenant pour continuer après votre période d’essai",
     "premiumFeatures": "Fonctionnalités Premium",
     "featureCalendar": "Calendrier partagé illimité",
     "featureMembers": "Membres de famille illimités",

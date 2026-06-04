@@ -694,6 +694,7 @@
     "freePlan": "Free plan",
     "freePlanDesc": "Upgrade to Premium to unlock all features.",
     "trialDaysRemaining": "{{count}} days remaining in your trial",
+    "trialSubscribeNow": "Subscribe now to continue after your trial period",
     "premiumFeatures": "Premium features",
     "featureCalendar": "Unlimited shared calendar",
     "featureMembers": "Unlimited family members",
