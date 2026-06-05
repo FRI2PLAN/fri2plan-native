@@ -615,7 +615,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
                   {/* ⏰ Reporter */}
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#f59e0b' }]}
-                    onPress={() => setShowPostponePicker(true)}>
+                    onPress={() => {
+                      setQuickActionsVisible(false);
+                      setTimeout(() => setShowPostponePicker(true), 300);
+                    }}>
                     <Text style={styles.quickBtnIcon}>⏰</Text>
                     <Text style={styles.quickBtnLabel}>Reporter</Text>
                   </TouchableOpacity>
