@@ -361,6 +361,12 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   };
 
   const handleManageSubscription = () => {
+    // Sur iOS : ouvrir la page Apple native de gestion des abonnements (obligatoire Apple IAP)
+    if (Platform.OS === 'ios') {
+      Linking.openURL('itms-apps://apps.apple.com/account/subscriptions');
+      return;
+    }
+    // Sur Android/Web : Stripe Customer Portal
     if (!activeFamily) {
       Alert.alert('❌', t('common.error'));
       return;
