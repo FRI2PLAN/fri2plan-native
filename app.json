@@ -51,7 +51,7 @@
       [
         "expo-updates",
         {
-          "checkAutomatically": "NEVER",
+          "checkAutomatically": "ON_LOAD",
           "requestHeaders": {}
         }
       ]
@@ -109,7 +109,7 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "NEVER",
+      "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
     }
   }
