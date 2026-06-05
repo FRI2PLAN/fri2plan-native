@@ -913,7 +913,9 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   )}
                 </View>
                 <Text style={[styles.planPrice, pricingTab === 'annuel' ? { color: '#e9d5ff' } : {}]}>
-                  {pricingTab === 'mensuel' ? `CHF 5.00 / ${t('settings.month')}` : `CHF 40.00 / ${t('settings.year')}`}
+                  {pricingTab === 'mensuel'
+                    ? (Platform.OS === 'ios' ? `CHF 5.00 / ${t('settings.month')}` : `CHF 4.99 / ${t('settings.month')}`)
+                    : (Platform.OS === 'ios' ? `CHF 40.00 / ${t('settings.year')}` : `CHF 39.99 / ${t('settings.year')}`)}
                 </Text>
                 {pricingTab === 'annuel' && (
                   <Text style={{ color: '#bbf7d0', fontSize: 11, marginBottom: 8 }}>{t('settings.monthlyEquiv') || '≈ CHF 3.33/mois'}</Text>
