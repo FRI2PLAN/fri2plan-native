@@ -776,7 +776,9 @@
     "iapYearly": "Annuel",
     "iapBuyNow": "Acheter",
     "iapRestoreSuccess": "Achats restaurés avec succès.",
-    "iapRestoreNothing": "Aucun achat à restaurer."
+    "iapRestoreNothing": "Aucun achat à restaurer.",
+    "iapPurchaseError": "L'achat a échoué. Veuillez réessayer.",
+    "iapRestoreError": "Impossible de restaurer les achats. Veuillez réessayer."
   },
   "help": {
     "title": "Centre d'aide",

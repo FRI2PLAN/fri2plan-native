@@ -776,7 +776,9 @@
     "iapYearly": "Yearly",
     "iapBuyNow": "Buy Now",
     "iapRestoreSuccess": "Purchases restored successfully.",
-    "iapRestoreNothing": "No purchases to restore."
+    "iapRestoreNothing": "No purchases to restore.",
+    "iapPurchaseError": "Purchase failed. Please try again.",
+    "iapRestoreError": "Unable to restore purchases. Please try again."
   },
   "help": {
     "title": "Help Center",

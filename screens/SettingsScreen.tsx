@@ -837,7 +837,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           </View>
 
           {/* Message d'incitation pendant l'essai */}
-          {isTrialActive && (
+          {isTrialActive && !hasPremium && (
             <View style={{ marginHorizontal: 0, marginBottom: 8, padding: 12, backgroundColor: isDark ? '#1e1b4b' : '#ede9fe', borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#7c3aed' }}>
               <Text style={{ fontSize: 13, color: isDark ? '#c4b5fd' : '#5b21b6', fontWeight: '600' }}>
                 💡 {t('settings.trialSubscribeNow') || 'Abonnez-vous maintenant pour continuer après votre période d’essai'}
@@ -845,8 +845,8 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
           )}
 
-          {/* Plans tarifaires (si pas premium OU en période d'essai) */}
-          {(!hasPremium || isTrialActive) && (
+          {/* Plans tarifaires — toujours visibles pour permettre l'abonnement ou le changement de plan */}
+          {(true) && (
             <View style={styles.section}>
 
               {/* Plan gratuit EN HAUT — uniquement ce qui est inclus */}

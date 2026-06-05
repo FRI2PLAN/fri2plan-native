@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, Alert } from 'react-native';
+import i18n from '../i18n';
 import Purchases, {
   PurchasesPackage,
   CustomerInfo,
@@ -190,7 +191,7 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
         isLoading: false,
         error: err?.message || 'Erreur lors de l\'achat',
       }));
-      Alert.alert('Erreur', err?.message || 'L\'achat a échoué. Veuillez réessayer.');
+      Alert.alert(i18n.t('common.error') || 'Erreur', err?.message || i18n.t('settings.iapPurchaseError') || 'L\'achat a échoué. Veuillez réessayer.');
       return false;
     }
   }, []);
@@ -208,9 +209,9 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
         customerInfo,
       }));
       if (hasPremium) {
-        Alert.alert('✅ Achats restaurés', 'Votre abonnement Premium a été restauré avec succès.');
+        Alert.alert('✅ ' + (i18n.t('settings.iapRestoreSuccess') || 'Achats restaurés avec succès.'), '');
       } else {
-        Alert.alert('ℹ️ Aucun achat trouvé', 'Aucun abonnement actif n\'a été trouvé pour ce compte Apple.');
+        Alert.alert('ℹ️ ' + (i18n.t('settings.iapRestoreNothing') || 'Aucun achat à restaurer.'), '');
       }
       return hasPremium;
     } catch (err: any) {
@@ -220,7 +221,7 @@ export function useRevenueCat(userId?: string): RevenueCatState & RevenueCatActi
         isLoading: false,
         error: err?.message || 'Erreur lors de la restauration',
       }));
-      Alert.alert('Erreur', 'Impossible de restaurer les achats. Veuillez réessayer.');
+      Alert.alert(i18n.t('common.error') || 'Erreur', i18n.t('settings.iapRestoreError') || 'Impossible de restaurer les achats. Veuillez réessayer.');
       return false;
     }
   }, []);

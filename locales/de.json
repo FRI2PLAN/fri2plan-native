@@ -776,7 +776,9 @@
     "iapYearly": "Jährlich",
     "iapBuyNow": "Jetzt kaufen",
     "iapRestoreSuccess": "Käufe erfolgreich wiederhergestellt.",
-    "iapRestoreNothing": "Keine Käufe zum Wiederherstellen."
+    "iapRestoreNothing": "Keine Käufe zum Wiederherstellen.",
+    "iapPurchaseError": "Kauf fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "iapRestoreError": "Käufe konnten nicht wiederhergestellt werden. Bitte versuchen Sie es erneut."
   },
   "help": {
     "title": "Hilfezentrum",
