@@ -59,7 +59,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "61",
+      "buildNumber": "62",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -109,7 +109,7 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "NEVER",
+      "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
     }
   }
