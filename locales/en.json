@@ -1118,7 +1118,7 @@
   },
   "register": {
     "accountCreatedTitle": "Account created!",
-    "accountCreatedMsg": "Your account has been created. Please log in.",
+    "accountCreatedMsg": "Your account has been created. A verification email has been sent to your address. Please check your inbox before logging in.",
     "passwordMinLength": "Minimum 8 characters"
   },
   "intimate": {
