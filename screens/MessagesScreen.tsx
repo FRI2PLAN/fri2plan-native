@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
@@ -78,6 +79,28 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFamilyId, activeTab]);
+
+  // ─── Polling 10s + rafraîchissement sur notification foreground ───────────
+  useEffect(() => {
+    if (activeTab !== 'general') return;
+    // Polling toutes les 10 secondes quand l'écran est actif
+    const interval = setInterval(() => {
+      refetch();
+    }, 10000);
+    // Rafraîchir quand l'app revient au premier plan
+    const appStateSub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') refetch();
+    });
+    // Rafraîchir quand une notification est reçue en foreground
+    const notifSub = Notifications.addNotificationReceivedListener(() => {
+      refetch();
+    });
+    return () => {
+      clearInterval(interval);
+      appStateSub.remove();
+      notifSub.remove();
+    };
+  }, [activeTab, refetch]);
 
   // Réactions
   const addReaction = trpc.messages.addReaction.useMutation({
