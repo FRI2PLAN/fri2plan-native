@@ -148,13 +148,13 @@ export default function MealsScreen({
   // ─── Historique ────────────────────────────────────────────────────────────
   const { data: historyMeals = [], isLoading: historyLoading } = trpc.meals.history.useQuery(
     { familyId: familyId!, limit: 50 },
-    { enabled: !!familyId && tab === 'history' }
+    { enabled: !!familyId }
   );
 
   // ─── Favoris ───────────────────────────────────────────────────────────────
   const { data: favoriteMeals = [] } = trpc.meals.favorites.useQuery(
     { familyId: familyId! },
-    { enabled: !!familyId && tab === 'history' }
+    { enabled: !!familyId }
   );
 
   // ─── Paramètres (AsyncStorage) ─────────────────────────────────────────────
@@ -208,7 +208,7 @@ export default function MealsScreen({
   const activeLists = useMemo(() => shoppingLists.filter((l: any) => !l.isArchived), [shoppingLists]);
 
   // ─── Autocomplétion depuis l'historique ─────────────────────────────────────
-  const [historySuggestions, setHistorySuggestions] = useState<string[]>([]);
+  const [historySuggestions, setHistorySuggestions] = useState<Meal[]>([]);
 
   const filterHistorySuggestions = useCallback((query: string) => {
     if (query.length < 2) { setHistorySuggestions([]); return; }
@@ -219,12 +219,12 @@ export default function MealsScreen({
       ...(weekMeals as Meal[]),
     ];
     const seen = new Set<string>();
-    const matches: string[] = [];
+    const matches: Meal[] = [];
     for (const m of allMeals) {
       const name = m.name?.trim();
       if (name && name.toLowerCase().includes(q) && !seen.has(name.toLowerCase())) {
         seen.add(name.toLowerCase());
-        matches.push(name);
+        matches.push(m);
         if (matches.length >= 6) break;
       }
     }
@@ -464,7 +464,7 @@ export default function MealsScreen({
 
   // ─── Ajout ingrédients aux courses ────────────────────────────────────────
   const [showAddToShopping, setShowAddToShopping] = useState(false);
-  const [ingredientsToAdd, setIngredientsToAdd] = useState<string[]>([]);
+  const [ingredientsToAdd, setIngredientsToAdd] = useState<Meal[]>([]);
   const [targetMealForShopping, setTargetMealForShopping] = useState<Meal | null>(null);
 
   const openAddToShopping = (meal: Meal) => {
@@ -756,17 +756,26 @@ export default function MealsScreen({
             />
             {historySuggestions.length > 0 && (
               <View style={s.historySuggestions}>
-                {historySuggestions.map((name, i) => (
+                {historySuggestions.map((meal, i) => (
                   <TouchableOpacity
                     key={i}
                     style={s.historySuggestionItem}
                     onPress={() => {
-                      setForm(p => ({ ...p, name }));
+                      setForm(p => ({
+                        ...p,
+                        name: meal.name,
+                        mealType: meal.mealType || p.mealType,
+                        servings: meal.servings || p.servings,
+                        notes: meal.notes || '',
+                        sourceUrl: meal.sourceUrl || '',
+                        imageUrl: meal.imageUrl || '',
+                        ingredients: p.ingredients,
+                      }));
                       setHistorySuggestions([]);
                     }}
                   >
                     <Text style={s.historySuggestionEmoji}>🕐</Text>
-                    <Text style={s.historySuggestionText}>{name}</Text>
+                    <Text style={s.historySuggestionText}>{meal.name}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

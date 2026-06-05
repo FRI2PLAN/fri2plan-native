@@ -51,7 +51,7 @@
       [
         "expo-updates",
         {
-          "checkAutomatically": "NEVER",
+          "checkAutomatically": "ON_LOAD",
           "requestHeaders": {}
         }
       ]
