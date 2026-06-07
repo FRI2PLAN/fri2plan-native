@@ -47,7 +47,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.familyRole === "admin" || user?.role === "admin";
 
   const [activeTab, setActiveTab] = useState<"catalog" | "badges" | "history" | "admin">("catalog");
   const [refreshing, setRefreshing] = useState(false);

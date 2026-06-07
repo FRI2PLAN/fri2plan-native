@@ -8,6 +8,7 @@ export interface User {
   name: string;
   email: string;
   role?: string;
+  familyRole?: string | null; // Rôle dans la famille (admin/member)
   avatar?: string;
   familyId?: number;
   // Champs avatar enrichis (retournés par user.me)
