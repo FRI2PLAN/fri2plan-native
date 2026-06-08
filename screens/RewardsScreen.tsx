@@ -47,7 +47,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.familyRole === "admin" || user?.role === "admin";
 
   const [activeTab, setActiveTab] = useState<"catalog" | "badges" | "history" | "admin">("catalog");
   const [refreshing, setRefreshing] = useState(false);
@@ -366,7 +366,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                   <View style={styles.claimBody}>
                     <Text style={styles.claimUser}>👤 {claim.userName || "Membre"}</Text>
                     <Text style={styles.claimReward}>🎁 {claim.rewardName}</Text>
-                    <Text style={styles.claimDate}>{new Date(claim.createdAt).toLocaleDateString("fr-FR")}</Text>
+                    <Text style={styles.claimDate}>{claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString("fr-FR") : "—"}</Text>
                   </View>
                   <View style={styles.claimActions}>
                     <TouchableOpacity style={styles.approveBtn} onPress={() => approveMutation.mutate({ claimId: claim.id })} disabled={approveMutation.isLoading}>

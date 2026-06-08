@@ -126,6 +126,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       if (data?.points) Alert.alert('🎉', `+${data.points} points !`);
       setQuickActionsVisible(false);
       utils.tasks.list.invalidate();
+      // Mettre à jour les points immédiatement sans déconnexion
+      utils.rewards.myPoints.invalidate();
+      utils.rewards.familyPoints.invalidate();
     },
     onError: (e) => Alert.alert('Erreur', e.message)});
 
