@@ -3,7 +3,7 @@ import { TasksSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -132,6 +132,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     },
     onError: (e) => Alert.alert('Erreur', e.message)});
 
+  const uncompleteMutation = trpc.tasks.uncomplete.useMutation({
+    onSuccess: () => {
+      setQuickActionsVisible(false);
+      utils.tasks.list.invalidate();
+      utils.rewards.myPoints.invalidate();
+      utils.rewards.familyPoints.invalidate();
+    },
+    onError: (e) => Alert.alert('Erreur', e.message)});
+
   const postponeMutation = trpc.tasks.postpone.useMutation({
     onSuccess: (data) => {
       const locale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
@@ -186,11 +195,22 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (g) g.tasks.push(t); else upcomingGroups.push({ label, dateStr: ds, tasks: [t] });
   });
 
-  const filteredTasks = (tasks || []).filter(t => {
-    // "Mes tâches" = assignées à moi ET non terminées (les terminées vont dans l'onglet Terminé)
-    if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed';
-    return t.status === filter;
-  });
+  const filteredTasks = useMemo(() => {
+    const filtered = (tasks || []).filter(t => {
+      // "Mes t\u00e2ches" = assign\u00e9es \u00e0 moi ET non termin\u00e9es (les termin\u00e9es vont dans l'onglet Termin\u00e9)
+      if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed';
+      return t.status === filter;
+    });
+    // Trier les t\u00e2ches termin\u00e9es du plus r\u00e9cent au plus ancien
+    if (filter === 'completed') {
+      return [...filtered].sort((a, b) => {
+        const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+    return filtered;
+  }, [tasks, filter, user?.id]);
 
   // ── Actions ──
   const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
@@ -603,12 +623,20 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
                 {/* Boutons actions — icônes uniquement */}
                 <View style={styles.quickActions}>
-                  {/* ✅ Valider */}
-                  <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#10b981' }]}
-                    onPress={() => completeMutation.mutate({ taskId: selectedTask.id })}>
-                    <Text style={styles.quickBtnIcon}>✅</Text>
-                    <Text style={styles.quickBtnLabel}>{t('common.validate')}</Text>
-                  </TouchableOpacity>
+                  {/* ✅ Valider / ↩️ Annuler validation selon statut */}
+                  {selectedTask.status !== 'completed' ? (
+                    <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#10b981' }]}
+                      onPress={() => completeMutation.mutate({ taskId: selectedTask.id })}>
+                      <Text style={styles.quickBtnIcon}>✅</Text>
+                      <Text style={styles.quickBtnLabel}>{t('common.validate')}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#6b7280' }]}
+                      onPress={() => uncompleteMutation.mutate({ taskId: selectedTask.id })}>
+                      <Text style={styles.quickBtnIcon}>↩️</Text>
+                      <Text style={styles.quickBtnLabel}>Annuler</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {/* ✏️ Modifier */}
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#3b82f6' }]} onPress={handleEditClick}>
@@ -855,7 +883,7 @@ function getStyles(isDark: boolean) {
     modalContent: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
     modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, borderBottomWidth: 1, borderBottomColor: border },
     modalTitle: { fontSize: 18, fontWeight: 'bold', color: text, flex: 1 },
-    modalBody: { paddingHorizontal: 18, paddingTop: 12, maxHeight: 520 },
+    modalBody: { paddingHorizontal: 18, paddingTop: 12, maxHeight: '75%' },
 
     // Boutons icônes header modal
     iconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
