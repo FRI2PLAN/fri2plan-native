@@ -79,7 +79,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { data: earnedRewards = [] } = trpc.rewards.myEarnedRewards.useQuery();
   const { data: myClaims = [] } = trpc.rewardClaims.listByUser.useQuery();
   const { data: pendingClaims = [] } = trpc.rewardClaims.listPending.useQuery(
-    { familyId: activeFamilyId }, { enabled: !!activeFamilyId && isAdmin }
+    { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true }
   );
   const { data: userStats } = trpc.tasks.statistics.useQuery();
 
