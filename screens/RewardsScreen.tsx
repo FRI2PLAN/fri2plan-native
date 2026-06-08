@@ -399,7 +399,18 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setCreateOpen(false)} />
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('rewards.newReward')}</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('rewards.newReward')}</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.actionIconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => setCreateOpen(false)}>
+                  <Text style={styles.actionIconBtnText}>✕</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionIconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleCreate} disabled={createMutation.isLoading}>
+                  <Text style={[styles.actionIconBtnText, { color: '#fff' }]}>{createMutation.isLoading ? '…' : '✓'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <ScrollView style={{ paddingHorizontal: 20 }} keyboardShouldPersistTaps="handled">
             <Text style={styles.fieldLabel}>Nom *</Text>
             <TextInput style={styles.input} value={formName} onChangeText={setFormName} {...{placeholder: t('rewards.rewardNamePlaceholder')}} placeholderTextColor={isDark ? "#6b7280" : "#9ca3af"} />
             <Text style={styles.fieldLabel}>Description</Text>
@@ -414,14 +425,8 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateOpen(false)}>
-                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleCreate} disabled={createMutation.isLoading}>
-                <Text style={styles.saveBtnText}>{createMutation.isLoading ? "..." : "Créer"}</Text>
-              </TouchableOpacity>
-            </View>
+            </ScrollView>
+
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -505,8 +510,11 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   emptySubtext: { fontSize: 13, color: isDark ? "#9ca3af" : "#6b7280", textAlign: "center" },
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
-  modalContent: { backgroundColor: isDark ? "#1f2937" : "#fff", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontWeight: "800", color: isDark ? "#fff" : "#111827", marginBottom: 16 },
+  modalContent: { backgroundColor: isDark ? "#1f2937" : "#fff", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#e5e7eb' },
+  modalTitle: { fontSize: 20, fontWeight: "800", color: isDark ? "#fff" : "#111827", flex: 1 },
+  actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  actionIconBtnText: { fontSize: 16, fontWeight: 'bold', color: '#374151' },
   fieldLabel: { fontSize: 13, fontWeight: "600", color: isDark ? "#d1d5db" : "#374151", marginBottom: 6, marginTop: 12 },
   input: { backgroundColor: isDark ? "#374151" : "#f9fafb", borderRadius: 10, padding: 12, fontSize: 15, color: isDark ? "#fff" : "#111827", borderWidth: 1, borderColor: isDark ? "#4b5563" : "#e5e7eb" },
   iconRow: { flexDirection: "row", gap: 12, marginTop: 4 },
