@@ -607,4 +607,3 @@ function getStyles(isDark: boolean) {
     modalSaveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   });
 }
-}
