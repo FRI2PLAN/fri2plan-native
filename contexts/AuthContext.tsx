@@ -98,20 +98,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Retry logic pour les 503 Cloud Run cold start (3 tentatives max)
           const fetchAuthMe = async (retryCount = 0): Promise<Response | null> => {
             try {
-              const resp = await fetch(`${API_URL}/api/trpc/auth.me`, {
-                headers: { Authorization: `Bearer ${storedToken}` },
-              });
-              if (resp.status === 503 && retryCount < 3) {
-                const delay = [1000, 2000, 4000][retryCount];
-                console.log(`[AuthContext] auth.me 503, retry ${retryCount + 1}/3 dans ${delay}ms`);
+              // Timeout 8s pour éviter le blocage Android au démarrage
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 8000);
+              let resp: Response;
+              try {
+                resp = await fetch(`${API_URL}/api/trpc/auth.me`, {
+                  headers: { Authorization: `Bearer ${storedToken}` },
+                  signal: controller.signal,
+                });
+              } finally {
+                clearTimeout(timeoutId);
+              }
+              if (resp.status === 503 && retryCount < 2) {
+                const delay = [1000, 2000][retryCount];
+                console.log(`[AuthContext] auth.me 503, retry ${retryCount + 1}/2 dans ${delay}ms`);
                 await new Promise(r => setTimeout(r, delay));
                 return fetchAuthMe(retryCount + 1);
               }
               return resp;
-            } catch (err) {
-              if (retryCount < 3) {
-                const delay = [1000, 2000, 4000][retryCount];
-                console.log(`[AuthContext] auth.me erreur réseau, retry ${retryCount + 1}/3 dans ${delay}ms`);
+            } catch (err: any) {
+              if (err?.name === 'AbortError') {
+                console.log('[AuthContext] auth.me timeout (8s), utilisation du cache local');
+                return null;
+              }
+              if (retryCount < 2) {
+                const delay = [1000, 2000][retryCount];
+                console.log(`[AuthContext] auth.me erreur réseau, retry ${retryCount + 1}/2 dans ${delay}ms`);
                 await new Promise(r => setTimeout(r, delay));
                 return fetchAuthMe(retryCount + 1);
               }
