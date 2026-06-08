@@ -89,6 +89,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         AsyncStorage.getItem('hasSeenOnboarding'),
       ]);
 
+      // Toujours lire hasSeenOnboarding, même si pas de token (l'onboarding est lié à l'appareil)
+      if (storedOnboarding === 'true') {
+        setHasSeenOnboarding(true);
+      }
+
       if (storedToken && storedUser) {
         // Valider le token auprès du serveur uniquement au démarrage à froid
         // Si l'app revient de l'arrière-plan, on utilise directement le cache
