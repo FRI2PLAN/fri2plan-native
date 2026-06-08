@@ -29,7 +29,7 @@ import { useOfflineExecutor } from './hooks/useOfflineExecutor';
 import { useOffline } from './contexts/OfflineContext';
 import { IAPProvider } from './contexts/IAPContext';
 import * as Notifications from 'expo-notifications';
-import * as Linking from 'expo-linking';
+import { Linking } from 'react-native';
 
 // ─── Store global pour les deep links Google Calendar ────────────────────────
 // Permet de capturer les deep links avant que CalendarScreen soit monté
