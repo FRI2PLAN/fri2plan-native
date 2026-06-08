@@ -292,7 +292,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { id: 'rewards', name: t('navigation.rewards'), icon: '🎁', pageIndex: 9 },
     { id: 'calendrier-intime', name: t('navigation.intimateCalendar'), icon: '🌸', pageIndex: 10 },
     { id: 'circles', name: t('navigation.circles'), icon: '👥', pageIndex: 11 },
-    { id: 'referral', name: t('navigation.referral'), icon: '🎯', pageIndex: 12 },
+    // { id: 'referral', name: t('navigation.referral'), icon: '🎯', pageIndex: 12 }, // Désactivé temporairement
     { id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 13 },
     { id: 'help', name: t('navigation.help'), icon: '❓', pageIndex: 14 },
   ];

@@ -55,7 +55,7 @@ export default function CustomDrawerContent({
     { index: 9, icon: '🎁', label: t('navigation.rewards') },
     { index: 10, icon: '🌸', label: t('navigation.intimateCalendar') },
     { index: 11, icon: '👥', label: t('navigation.circles') },
-    { index: 12, icon: '🔗', label: t('navigation.referral') },
+    // { index: 12, icon: '🔗', label: t('navigation.referral') }, // Désactivé temporairement
     { index: 13, icon: '⚙️', label: t('navigation.settings') },
     { index: 14, icon: '❓', label: t('navigation.help') },
   ];

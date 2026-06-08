@@ -52,7 +52,7 @@ const PAGES = [
   { key: '9', component: RewardsScreen, name: 'Rewards' },
   { key: '10', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
   { key: '11', component: MembersScreen, name: 'Members' },
-  { key: '12', component: ReferralScreen, name: 'Referral' },
+  // { key: '12', component: ReferralScreen, name: 'Referral' }, // Désactivé temporairement
   { key: '13', component: SettingsScreen, name: 'Settings' },
   { key: '14', component: HelpScreen, name: 'Help' },
 ];
