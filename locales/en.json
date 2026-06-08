@@ -790,7 +790,7 @@
     "myTickets": "My tickets",
     "noTickets": "No tickets yet.",
     "createTicket": "Create a ticket",
-    "rateApp": "Rate on Google Play",
+    "rateApp": "Leave a review",
     "contactSupport": "Contact support",
     "category": "Category",
     "sendTicket": "Send ticket",
@@ -801,7 +801,7 @@
     "searchPlaceholder": "🔍 Search the FAQ...",
     "noResults": "No results for",
     "rateBannerTitle": "⭐ Enjoying FRI2PLAN?",
-    "rateBannerText": "Your review on the Google Play Store helps us improve and reach more families!",
+    "rateBannerText": "Your review on the App Store or Google Play helps us improve and reach more families!",
     "subjectLabel": "Subject *",
     "subjectPlaceholder": "E.g.: Login issue...",
     "descriptionLabel": "Description *",
@@ -832,7 +832,7 @@
     "catSuggestion": "💡 Suggestion",
     "catClosedTest": "🧪 Closed beta",
     "catOther": "📋 Other",
-    "openStoreError": "Unable to open the Google Play Store.",
+    "openStoreError": "Unable to open the store.",
     "faqItems": [
       {
         "id": 1,

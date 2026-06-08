@@ -736,11 +736,17 @@ export default function MealsScreen({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
         <Pressable style={s.sheetBackdrop} onPress={() => setShowForm(false)} />
         <View style={s.sheetContent}>
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View>
-            <Text style={s.modalTitle}>
+          {/* Header modal */}
+          <View style={s.modalHeader}>
+            <Text style={s.modalHeaderTitle}>
               {editingMeal ? (t('meals.editMeal') || 'Modifier le repas') : (t('meals.newMeal') || 'Nouveau repas')}
             </Text>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowForm(false)}>
+              <Text style={s.modalCloseBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View>
 
             {/* Nom avec autocomplétion depuis l'historique */}
             <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
@@ -908,22 +914,22 @@ export default function MealsScreen({
             />
 
             {/* Actions */}
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.cancelBtn} onPress={() => setShowForm(false)}>
-                <Text style={s.cancelBtnText}>✕</Text>
+            <View style={s.modalFooter}>
+              <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowForm(false)}>
+                <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
               </TouchableOpacity>
               {editingMeal && (
-                <TouchableOpacity style={[s.cancelBtn, { backgroundColor: '#ef4444' }]} onPress={() => {
+                <TouchableOpacity style={s.modalDeleteBtn} onPress={() => {
                   Alert.alert(t('common.delete') || 'Supprimer', editingMeal.name, [
                     { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                    { text: '🗑', style: 'destructive', onPress: () => { deleteMeal.mutate({ mealId: editingMeal.id }); setShowForm(false); } },
+                    { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => { deleteMeal.mutate({ mealId: editingMeal.id }); setShowForm(false); } },
                   ]);
                 }}>
-                  <Text style={s.saveBtnText}>🗑</Text>
+                  <Text style={s.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={s.saveBtn} onPress={saveMeal}>
-                <Text style={s.saveBtnText}>✓</Text>
+              <TouchableOpacity style={s.modalSaveBtn} onPress={saveMeal}>
+                <Text style={s.modalSaveBtnText}>{t('common.save') || 'Enregistrer'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1115,6 +1121,18 @@ function getStyles(isDark: boolean) {
     cancelBtnText: { color: text, fontSize: 18, fontWeight: '700' },
     saveBtn: { backgroundColor: '#7c3aed', borderRadius: 10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     saveBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+    // Nouveau style modal (header + footer avec mots)
+    modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6', paddingBottom: 12 },
+    modalHeaderTitle: { fontSize: 18, fontWeight: '700', color: text, flex: 1 },
+    modalCloseBtn: { padding: 6 },
+    modalCloseBtnText: { fontSize: 20, color: '#6b7280', fontWeight: '600' },
+    modalFooter: { flexDirection: 'row', gap: 10, marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#f3f4f6' },
+    modalCancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center' },
+    modalCancelBtnText: { fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#6b7280' },
+    modalDeleteBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: '#ef4444', alignItems: 'center' },
+    modalDeleteBtnText: { fontSize: 15, fontWeight: '600', color: '#ef4444' },
+    modalSaveBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center' },
+    modalSaveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
     // Recherche recettes
     suggestions: { backgroundColor: card, borderWidth: 1, borderColor: border, borderRadius: 10, marginBottom: 4 },
     suggestionItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: border },

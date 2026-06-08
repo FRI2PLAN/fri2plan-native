@@ -65,10 +65,10 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     || user?.familyRole === 'admin' || user?.role === 'admin';
 
   const { data: myPoints } = trpc.rewards.myPoints.useQuery(
-    { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
+    { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true }
   );
   const { data: familyPointsRaw = [] } = trpc.rewards.familyPoints.useQuery(
-    { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
+    { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true }
   );
   // Toujours trier par points décroissants côté client (sécurité en cas de backend non trié)
   const familyPoints = [...(familyPointsRaw as any[])].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));

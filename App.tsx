@@ -17,7 +17,7 @@ import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -71,6 +71,12 @@ onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
     setOnline(state.isConnected ?? false);
   });
+});
+
+// Configure focusManager pour React Native (AppState)
+// Permet à React Query de refetch les données stale quand l'app reprend le focus
+AppState.addEventListener('change', (status) => {
+  focusManager.setFocused(status === 'active');
 });
 
 // Create QueryClient (stable, never recreated)

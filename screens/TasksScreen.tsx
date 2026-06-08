@@ -683,16 +683,19 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('tasks.newTask') || 'Nouvelle tâche'}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setCreateModalVisible(false); setFormData(emptyForm); setShowDatePicker(false); setShowTimePicker(false); }}>
-                  <Text style={styles.iconBtnText}>✕</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleCreateTask} disabled={createMutation.isPending}>
-                  <Text style={[styles.iconBtnText, { color: '#fff' }]}>{createMutation.isPending ? '…' : '✓'}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setCreateModalVisible(false); setFormData(emptyForm); setShowDatePicker(false); setShowTimePicker(false); }}>
+                <Text style={styles.modalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
             </View>
             {renderTaskForm(formData, setFormData, false)}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setCreateModalVisible(false); setFormData(emptyForm); setShowDatePicker(false); setShowTimePicker(false); }}>
+                <Text style={styles.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSubmitBtn} onPress={handleCreateTask} disabled={createMutation.isPending}>
+                <Text style={styles.modalSubmitBtnText}>{createMutation.isPending ? '…' : (t('common.create') || 'Créer')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
         </View>
@@ -706,19 +709,22 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('tasks.editTask') || 'Modifier'}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#ef4444' }]} onPress={handleDeleteTask}>
-                  <Text style={[styles.iconBtnText, { color: '#fff' }]}>🗑</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#f3f4f6' }]} onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
-                  <Text style={styles.iconBtnText}>✕</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#7c3aed' }]} onPress={handleUpdateTask} disabled={updateMutation.isPending}>
-                  <Text style={[styles.iconBtnText, { color: '#fff' }]}>{updateMutation.isPending ? '…' : '✓'}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
+                <Text style={styles.modalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
             </View>
             {renderTaskForm(editFormData, setEditFormData, true)}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
+                <Text style={styles.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalDeleteBtn} onPress={handleDeleteTask}>
+                <Text style={styles.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSubmitBtn} onPress={handleUpdateTask} disabled={updateMutation.isPending}>
+                <Text style={styles.modalSubmitBtnText}>{updateMutation.isPending ? '…' : (t('common.save') || 'Enregistrer')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
         </View>
@@ -885,9 +891,34 @@ function getStyles(isDark: boolean) {
     modalTitle: { fontSize: 18, fontWeight: 'bold', color: text, flex: 1 },
     modalBody: { paddingHorizontal: 18, paddingTop: 12, maxHeight: '75%' },
 
-    // Boutons icônes header modal
+    // Boutons icônes header modal (conservés pour compatibilité)
     iconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
     iconBtnText: { fontSize: 16, fontWeight: 'bold', color: '#374151' },
+
+    // Nouveau style modal (titre + ✕ en haut, boutons mots en bas)
+    modalCloseBtn: { padding: 6 },
+    modalCloseBtnText: { fontSize: 20, color: '#6b7280', fontWeight: '600' },
+    modalFooter: {
+      flexDirection: 'row', gap: 10,
+      paddingHorizontal: 18, paddingTop: 12,
+      paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+      borderTopWidth: 1, borderTopColor: border,
+    },
+    modalCancelBtn: {
+      flex: 1, paddingVertical: 13, borderRadius: 12,
+      borderWidth: 1.5, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center',
+    },
+    modalCancelBtnText: { fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#6b7280' },
+    modalDeleteBtn: {
+      flex: 1, paddingVertical: 13, borderRadius: 12,
+      borderWidth: 1.5, borderColor: '#ef4444', alignItems: 'center',
+    },
+    modalDeleteBtnText: { fontSize: 15, fontWeight: '600', color: '#ef4444' },
+    modalSubmitBtn: {
+      flex: 2, paddingVertical: 13, borderRadius: 12,
+      backgroundColor: '#7c3aed', alignItems: 'center',
+    },
+    modalSubmitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
     // Formulaire
     formGroup: { marginBottom: 14 },

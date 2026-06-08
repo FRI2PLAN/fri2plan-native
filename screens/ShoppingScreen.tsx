@@ -339,12 +339,21 @@ export default function ShoppingScreen({
         <Modal visible={!!editingItem} transparent animationType="fade">
           <View style={s.overlay}>
             <View style={s.modal}>
-              <Text style={s.modalTitle}>{t('shopping.editItem') || 'Modifier l\'article'}</Text>
+              <View style={s.modalHeader}>
+                <Text style={s.modalHeaderTitle}>{t('shopping.editItem') || 'Modifier l\'article'}</Text>
+                <TouchableOpacity style={s.modalCloseBtn} onPress={() => setEditingItem(null)}>
+                  <Text style={s.modalCloseBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
               <TextInput style={s.input} value={editItemName} onChangeText={setEditItemName} placeholder={t('shopping.itemName') || 'Nom'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
               <TextInput style={s.input} value={editItemQty} onChangeText={setEditItemQty} placeholder={t('shopping.quantity') || 'Quantité'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
-              <View style={s.modalActions}>
-                <TouchableOpacity style={s.cancelBtn} onPress={() => setEditingItem(null)}><Text style={s.cancelBtnText}>✕</Text></TouchableOpacity>
-                <TouchableOpacity style={s.saveBtn} onPress={saveEditItem}><Text style={s.saveBtnText}>✓</Text></TouchableOpacity>
+              <View style={s.modalFooter}>
+                <TouchableOpacity style={s.modalCancelBtn} onPress={() => setEditingItem(null)}>
+                  <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.modalSaveBtn} onPress={saveEditItem}>
+                  <Text style={s.modalSaveBtnText}>{t('common.save') || 'Enregistrer'}</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -412,8 +421,13 @@ export default function ShoppingScreen({
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
           <Pressable style={s.sheetBackdrop} onPress={() => setShowListForm(false)} />
           <View style={s.sheetContent}>
+            <View style={s.modalHeader}>
+              <Text style={s.modalHeaderTitle}>{editingList ? (t('shopping.editList') || 'Modifier la liste') : (t('shopping.newList') || 'Nouvelle liste')}</Text>
+              <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowListForm(false)}>
+                <Text style={s.modalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={s.sheetTitle}>{editingList ? (t('shopping.editList') || 'Modifier la liste') : (t('shopping.newList') || 'Nouvelle liste')}</Text>
               <Text style={s.label}>{t('common.name') || 'Nom'}</Text>
               <TextInput style={s.input} value={listForm.name} onChangeText={n => setListForm(p => ({ ...p, name: n }))} placeholder={t('shopping.listName') || 'Nom de la liste'} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
               <Text style={s.label}>{t('common.description') || 'Description'}</Text>
@@ -435,17 +449,23 @@ export default function ShoppingScreen({
                   trackColor={{ true: '#7c3aed' }}
                 />
               </View>
-              <View style={s.modalActions}>
-                <TouchableOpacity style={s.cancelBtn} onPress={() => setShowListForm(false)}><Text style={s.cancelBtnText}>✕</Text></TouchableOpacity>
+              <View style={s.modalFooter}>
+                <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowListForm(false)}>
+                  <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+                </TouchableOpacity>
                 {editingList && (
-                  <TouchableOpacity style={[s.cancelBtn, { backgroundColor: '#ef4444' }]} onPress={() => {
+                  <TouchableOpacity style={s.modalDeleteBtn} onPress={() => {
                     Alert.alert(t('common.delete') || 'Supprimer', `${editingList.name} ?`, [
                       { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                      { text: '🗑', style: 'destructive', onPress: () => { deleteList.mutate({ listId: editingList.id }); setShowListForm(false); } },
+                      { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => { deleteList.mutate({ listId: editingList.id }); setShowListForm(false); } },
                     ]);
-                  }}><Text style={s.saveBtnText}>🗑</Text></TouchableOpacity>
+                  }}>
+                    <Text style={s.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
+                  </TouchableOpacity>
                 )}
-                <TouchableOpacity style={s.saveBtn} onPress={saveList}><Text style={s.saveBtnText}>✓</Text></TouchableOpacity>
+                <TouchableOpacity style={s.modalSaveBtn} onPress={saveList}>
+                  <Text style={s.modalSaveBtnText}>{editingList ? (t('common.save') || 'Enregistrer') : (t('common.create') || 'Créer')}</Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
@@ -572,5 +592,19 @@ function getStyles(isDark: boolean) {
     actionsModal: { backgroundColor: card, borderRadius: 16, padding: 8, width: '80%', maxWidth: 320 },
     actionItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
     actionIcon: { fontSize: 20 },
-    actionText: { fontSize: 15, fontWeight: '500', color: text }});
+    actionText: { fontSize: 15, fontWeight: '500', color: text },
+    // Nouveau style modal (header + footer avec mots)
+    modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: isDark ? '#374151' : '#f3f4f6', paddingBottom: 12 },
+    modalHeaderTitle: { fontSize: 18, fontWeight: '700', color: text, flex: 1 },
+    modalCloseBtn: { padding: 6 },
+    modalCloseBtnText: { fontSize: 20, color: '#6b7280', fontWeight: '600' },
+    modalFooter: { flexDirection: 'row', gap: 10, marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#f3f4f6' },
+    modalCancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center' },
+    modalCancelBtnText: { fontSize: 15, fontWeight: '600', color: isDark ? '#d1d5db' : '#6b7280' },
+    modalDeleteBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: '#ef4444', alignItems: 'center' },
+    modalDeleteBtnText: { fontSize: 15, fontWeight: '600', color: '#ef4444' },
+    modalSaveBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center' },
+    modalSaveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  });
+}
 }

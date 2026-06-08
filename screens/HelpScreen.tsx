@@ -10,6 +10,7 @@ import {
   Alert,
   Linking,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
@@ -21,6 +22,7 @@ interface HelpScreenProps {
 }
 
 const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=space.manus.fri2plan.twa';
+const APP_STORE_URL = 'https://apps.apple.com/app/id6766338121';
 
 type TicketCategory = 'technique' | 'facturation' | 'fonctionnalite' | 'test_ferme' | 'autre';
 
@@ -90,6 +92,12 @@ export default function HelpScreen({
   };
 
   const handleRateApp = async () => {
+    if (Platform.OS === 'ios') {
+      Linking.openURL(APP_STORE_URL).catch(() =>
+        Alert.alert(t('common.error'), t('help.openStoreError'))
+      );
+      return;
+    }
     const marketUrl = 'market://details?id=space.manus.fri2plan.twa';
     try {
       const canOpenMarket = await Linking.canOpenURL(marketUrl);
