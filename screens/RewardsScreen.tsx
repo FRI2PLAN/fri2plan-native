@@ -59,10 +59,10 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { data: families } = trpc.family.list.useQuery();
   const activeFamilyId = ctxFamilyId ?? (families as any[])?.[0]?.id ?? 0;
 
-  // Query auth.me fraîche pour isAdmin fiable (ne dépend pas du cache AsyncStorage)
+  // isAdmin : user cache (dispo immédiatement) + freshMe comme confirmation après chargement
   const { data: freshMe } = trpc.auth.me.useQuery(undefined, { staleTime: 30_000 });
-  const isAdmin = freshMe?.familyRole === 'admin' || freshMe?.role === 'admin'
-    || user?.familyRole === 'admin' || user?.role === 'admin';
+  const isAdmin = user?.familyRole === 'admin' || user?.role === 'admin'
+    || freshMe?.familyRole === 'admin' || freshMe?.role === 'admin';
 
   const { data: myPoints } = trpc.rewards.myPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true }
@@ -79,7 +79,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { data: earnedRewards = [] } = trpc.rewards.myEarnedRewards.useQuery();
   const { data: myClaims = [] } = trpc.rewardClaims.listByUser.useQuery();
   const { data: pendingClaims = [] } = trpc.rewardClaims.listPending.useQuery(
-    { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true }
+    { familyId: activeFamilyId }, { enabled: !!activeFamilyId && isAdmin, staleTime: 0, refetchOnMount: true }
   );
   const { data: userStats } = trpc.tasks.statistics.useQuery();
 
