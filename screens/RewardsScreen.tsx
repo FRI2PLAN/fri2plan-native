@@ -226,7 +226,18 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
       <View style={styles.tabsGrid}>
         {tabs.map(tab => (
           <TouchableOpacity key={tab.key} style={[styles.tabBtn, activeTab === tab.key && styles.tabBtnActive]} onPress={() => setActiveTab(tab.key as any)}>
-            <Text style={[styles.tabBtnText, activeTab === tab.key && styles.tabBtnTextActive]}>{tab.label}</Text>
+            <View style={{ position: 'relative', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[styles.tabBtnText, activeTab === tab.key && styles.tabBtnTextActive]}>{tab.label}</Text>
+              {tab.key === 'admin' && (pendingClaims as any[]).length > 0 && (
+                <View style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: '#ef4444',
+                  marginLeft: 4,
+                }} />
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>

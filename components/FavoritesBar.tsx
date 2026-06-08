@@ -17,13 +17,15 @@ interface FavoritesBarProps {
   onFavoritePress: (pageIndex: number) => void;
   onFavoriteSelect?: (favoriteId: string) => void;
   allPages?: Array<{ id: string; name: string; icon: string; pageIndex: number }>;
+  badgeIds?: string[];
 }
 
 export default function FavoritesBar({
   favorites, 
   onFavoritePress, 
   onFavoriteSelect,
-  allPages = []
+  allPages = [],
+  badgeIds = []
 }: FavoritesBarProps) {
   const { isDark } = useTheme();
   const styles = getStyles(isDark); 
@@ -80,15 +82,30 @@ export default function FavoritesBar({
               onLongPress={() => handleLongPress(index)}
               delayLongPress={500}
             >
-              <View style={[
-                styles.iconContainer, 
-                favorite?.color && { backgroundColor: favorite.color },
-                !favorite && styles.emptySlot
-              ]}>
-                {favorite ? (
-                  <Text style={styles.iconEmoji}>{favorite.icon}</Text>
-                ) : (
-                  <Ionicons name="add" size={24} color="#9ca3af" />
+              <View style={{ position: 'relative' }}>
+                <View style={[
+                  styles.iconContainer, 
+                  favorite?.color && { backgroundColor: favorite.color },
+                  !favorite && styles.emptySlot
+                ]}>
+                  {favorite ? (
+                    <Text style={styles.iconEmoji}>{favorite.icon}</Text>
+                  ) : (
+                    <Ionicons name="add" size={24} color="#9ca3af" />
+                  )}
+                </View>
+                {favorite && badgeIds.includes(favorite.id) && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: '#ef4444',
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                  }} />
                 )}
               </View>
               {favorite && (

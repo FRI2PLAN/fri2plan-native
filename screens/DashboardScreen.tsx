@@ -125,6 +125,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { familyId: activeFamily?.id || 0, startDate: todayStr + 'T00:00:00', endDate: todayStr + 'T23:59:59' },
     { enabled: !!activeFamily }
   );
+  // Badge récompenses admin
+  const isAdmin = user?.familyRole === 'admin' || user?.role === 'admin';
+  const { data: pendingClaims = [] } = trpc.rewardClaims.listPending.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily && isAdmin }
+  );
+  const rewardBadgeIds = isAdmin && (pendingClaims as any[]).length > 0 ? ['rewards'] : [];
 
   const handleLogout = async () => {
     await logout();
@@ -388,6 +395,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         onFavoritePress={handleFavoritePress}
         onFavoriteSelect={handleFavoriteSelect}
         allPages={allPages}
+        badgeIds={rewardBadgeIds}
       />
       
       {/* Content */}
