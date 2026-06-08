@@ -47,8 +47,6 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);
-  const isAdmin = user?.familyRole === "admin" || user?.role === "admin";
-
   const [activeTab, setActiveTab] = useState<"catalog" | "badges" | "history" | "admin">("catalog");
   const [refreshing, setRefreshing] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -60,6 +58,14 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamilyId = ctxFamilyId ?? (families as any[])?.[0]?.id ?? 0;
+
+  // Détecter isAdmin via family.members (données fraîches serveur, pas le cache user)
+  const { data: members = [] } = trpc.family.members.useQuery(
+    { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
+  );
+  const currentMember = (members as any[]).find((m: any) => m.id === user?.id);
+  const isAdmin = currentMember?.familyRole === 'admin' || currentMember?.role === 'admin'
+    || user?.familyRole === 'admin' || user?.role === 'admin';
 
   const { data: myPoints } = trpc.rewards.myPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
