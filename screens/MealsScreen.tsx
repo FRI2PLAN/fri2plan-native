@@ -913,27 +913,27 @@ export default function MealsScreen({
               multiline
             />
 
-            {/* Actions */}
-            <View style={s.modalFooter}>
-              <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowForm(false)}>
-                <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
-              </TouchableOpacity>
-              {editingMeal && (
-                <TouchableOpacity style={s.modalDeleteBtn} onPress={() => {
-                  Alert.alert(t('common.delete') || 'Supprimer', editingMeal.name, [
-                    { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-                    { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => { deleteMeal.mutate({ mealId: editingMeal.id }); setShowForm(false); } },
-                  ]);
-                }}>
-                  <Text style={s.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity style={s.modalSaveBtn} onPress={saveMeal}>
-                <Text style={s.modalSaveBtnText}>{t('common.save') || 'Enregistrer'}</Text>
-              </TouchableOpacity>
-            </View>
           </View>
           </ScrollView>
+          {/* Footer fixe en bas — hors du ScrollView */}
+          <View style={s.modalFooter}>
+            <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowForm(false)}>
+              <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+            </TouchableOpacity>
+            {editingMeal && (
+              <TouchableOpacity style={s.modalDeleteBtn} onPress={() => {
+                Alert.alert(t('common.delete') || 'Supprimer', editingMeal.name, [
+                  { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+                  { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => { deleteMeal.mutate({ mealId: editingMeal.id }); setShowForm(false); } },
+                ]);
+              }}>
+                <Text style={s.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={s.modalSaveBtn} onPress={saveMeal}>
+              <Text style={s.modalSaveBtnText}>{t('common.save') || 'Enregistrer'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
