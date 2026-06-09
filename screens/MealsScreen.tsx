@@ -787,48 +787,9 @@ export default function MealsScreen({
               </View>
             )}
 
-            {/* Recherche Spoonacular — multilingue FR/EN/DE */}
+            {/* Recherche Spoonacular — désactivée temporairement (coût API + multilinguisme perfectible)
             <Text style={s.label}>🔍 {t('meals.searchRecipe') || 'Rechercher une recette'}</Text>
-            <TextInput
-              style={s.input}
-              value={recipeSearch}
-              onChangeText={setRecipeSearch}
-              placeholder={
-                i18n.language === 'de' ? 'z.B. Apfelkuchen, Pasta...' :
-                i18n.language === 'fr' ? 'Ex: tarte aux pommes, pasta...' :
-                'E.g. apple pie, pasta...'
-              }
-              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
-            />
-            <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 4, marginTop: -4 }}>
-              {i18n.language === 'de' ? '🌐 Suche auf Deutsch, Englisch oder Französisch (Spoonacular)' :
-               i18n.language === 'fr' ? '🌐 Recherche en français, anglais ou allemand (Spoonacular)' :
-               '🌐 Search in English, French or German (Spoonacular)'}
-            </Text>
-            {searchLoading && <ActivityIndicator size="small" color="#7c3aed" />}
-            {translating && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                <ActivityIndicator size="small" color="#7c3aed" />
-                <Text style={{ color: '#7c3aed', fontSize: 13 }}>
-                  {i18n.language === 'de' ? 'Übersetzung...' : i18n.language === 'fr' ? 'Traduction en cours...' : 'Translating...'}
-                </Text>
-              </View>
-            )}
-            {recipeSuggestions.length > 0 && (
-              <View style={s.suggestions}>
-                {recipeSuggestions.map(r => (
-                  <TouchableOpacity key={r.id} style={s.suggestionItem} onPress={() => importFromSpoonacular(r)}>
-                    <View style={s.suggestionInfo}>
-                      <Text style={s.suggestionName}>{r.title}</Text>
-                      {r.image ? (
-                        <Image source={{ uri: r.image }} style={{ width: 40, height: 40, borderRadius: 6, marginTop: 2 }} />
-                      ) : null}
-                    </View>
-                    <Text style={s.importBtn}>⬇️</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+            ... */}
 
             {/* Import depuis URL */}
             <Text style={s.label}>🔗 {t('meals.importUrl') || 'Importer depuis une URL'}</Text>

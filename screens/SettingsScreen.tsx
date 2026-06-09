@@ -279,6 +279,41 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   // ─── Modals CGU / Politique ────────────────────────────────────────────────
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+
+  // ─── Changement d'email ────────────────────────────────────────────────────
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const changeEmailMutation = (trpc.user as any).changeEmail?.useMutation?.({
+    onSuccess: () => {
+      setShowEmailModal(false);
+      setNewEmail('');
+      setConfirmEmail('');
+      setEmailPassword('');
+      Alert.alert('✅', t('settings.changeEmailSent'));
+    },
+    onError: (err: any) => {
+      const msg = err?.message === 'WRONG_PASSWORD' ? t('settings.changeEmailWrongPassword')
+        : err?.message === 'EMAIL_ALREADY_USED' ? t('settings.changeEmailAlreadyUsed')
+        : t('common.error');
+      Alert.alert('❌', msg);
+    },
+  });
+  const handleChangeEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newEmail.trim() || !emailRegex.test(newEmail.trim())) {
+      Alert.alert('❌', t('settings.changeEmailInvalid')); return;
+    }
+    if (newEmail.trim() !== confirmEmail.trim()) {
+      Alert.alert('❌', t('settings.changeEmailMismatch')); return;
+    }
+    if (!emailPassword.trim()) {
+      Alert.alert('❌', t('auth.fillAllFields')); return;
+    }
+    changeEmailMutation?.mutate({ newEmail: newEmail.trim(), currentPassword: emailPassword });
+  };
 
 
   const handleSaveColor = () => {
@@ -329,6 +364,27 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
         },
       ]
     );
+  };
+
+
+  // ─── Export données ──────────────────────────────────────────────────────────
+  const exportDataQuery = trpc.user.exportData.useQuery(undefined, { enabled: false });
+  const handleExportData = async () => {
+    try {
+      setExportLoading(true);
+      const result = await exportDataQuery.refetch();
+      if (!result.data) throw new Error("Aucune donnée");
+      const json = JSON.stringify(result.data, null, 2);
+      const { Share } = require("react-native");
+      await Share.share({
+        message: json,
+        title: `fri2plan_export_${new Date().toISOString().split("T")[0]}.json`,
+      });
+    } catch (e: any) {
+      Alert.alert("❌", e.message || t("common.error"));
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   // ─── Abonnement ────────────────────────────────────────────────────────────
@@ -645,10 +701,10 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
-            {/* Couleur */}
+            {/* Couleur & Avatar — renvoi vers Cercles (MembersScreen) où toutes les options sont disponibles */}
             <TouchableOpacity
               style={styles.settingItem}
-              onPress={() => { setSelectedColor(user?.userColor || '#8B5CF6'); setShowColorModal(true); }}
+              onPress={() => onNavigate?.('11')}
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>🎨</Text>
@@ -671,10 +727,15 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
               <Text style={styles.settingValue} numberOfLines={1}>{user?.email || '—'}</Text>
             </View>
-            {/* Changer email → WebView */}
+            {/* Changer email → modale native */}
             <TouchableOpacity
               style={styles.settingItem}
-              onPress={() => Linking.openURL('https://app.fri2plan.ch/settings?tab=account')}
+              onPress={() => {
+                setNewEmail('');
+                setConfirmEmail('');
+                setEmailPassword('');
+                setShowEmailModal(true);
+              }}
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>✉️</Text>
@@ -690,17 +751,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
-            {/* Méthodes de connexion → WebView */}
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => Linking.openURL('https://app.fri2plan.ch/settings?tab=account')}
-            >
-              <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>🔗</Text>
-                <Text style={styles.settingLabel}>{t('settings.loginMethods')}</Text>
-              </View>
-              <Text style={styles.settingArrow}>›</Text>
-            </TouchableOpacity>
+            {/* Méthodes de connexion — géré nativement (Face ID, Touch ID, email) — masqué */}
           </View>
 
           {/* Données */}
@@ -708,13 +759,17 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             <Text style={styles.sectionTitle}>{t('settings.data')}</Text>
             <TouchableOpacity
               style={styles.settingItem}
-              onPress={() => Linking.openURL('https://app.fri2plan.ch/settings?tab=data')}
+              onPress={handleExportData}
+              disabled={exportLoading}
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>📥</Text>
                 <Text style={styles.settingLabel}>{t('settings.downloadData')}</Text>
               </View>
-              <Text style={styles.settingArrow}>›</Text>
+              {exportLoading
+                ? <ActivityIndicator size="small" color="#8B5CF6" />
+                : <Text style={styles.settingArrow}>›</Text>
+              }
             </TouchableOpacity>
           </View>
 
@@ -800,11 +855,69 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             </View>
           </View>
         </Modal>
+
+        {/* Modal changement d'email */}
+        <Modal visible={showEmailModal} transparent animationType="fade" onRequestClose={() => setShowEmailModal(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setShowEmailModal(false)} />
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{t('settings.changeEmail')}</Text>
+                <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 12, textAlign: 'center' }}>
+                  {t('settings.emailAddress')} : {user?.email || '—'}
+                </Text>
+                <TextInput
+                  style={[styles.textInput, { marginBottom: 10 }]}
+                  value={newEmail}
+                  onChangeText={setNewEmail}
+                  placeholder={t('settings.changeEmailNewEmail')}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TextInput
+                  style={[styles.textInput, { marginBottom: 10 }]}
+                  value={confirmEmail}
+                  onChangeText={setConfirmEmail}
+                  placeholder={t('settings.changeEmailConfirm')}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TextInput
+                  style={[styles.textInput, { marginBottom: 16 }]}
+                  value={emailPassword}
+                  onChangeText={setEmailPassword}
+                  placeholder={t('settings.changeEmailPassword')}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  secureTextEntry
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowEmailModal(false)}>
+                    <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalSaveBtn, changeEmailMutation?.isLoading && { opacity: 0.6 }]}
+                    onPress={handleChangeEmail}
+                    disabled={changeEmailMutation?.isLoading}
+                  >
+                    {changeEmailMutation?.isLoading
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={styles.modalSaveText}>{t('common.save')}</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     );
   }
 
-  // ─── Sous-écran : Abonnement ───────────────────────────────────────────────
+  // ─── Sous-écran : Abonnement ────────────────────────────────────────────────────
   if (subScreen === 'subscription') {
     const hasPremium = subscriptionData?.hasPremium ?? false;
     const isTrialActive = subscriptionData?.isTrialActive ?? false;
