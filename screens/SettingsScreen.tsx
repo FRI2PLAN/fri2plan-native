@@ -380,7 +380,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       const json = JSON.stringify(data, null, 2);
       const fileName = `fri2plan_export_${new Date().toISOString().split('T')[0]}.json`;
       const fileUri = FileSystem.cacheDirectory + fileName;
-      await FileSystem.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 });
+      await FileSystem.writeAsStringAsync(fileUri, json, { encoding: 'utf8' as any });
       const { Share } = require('react-native');
       await Share.share(
         Platform.OS === 'ios'
