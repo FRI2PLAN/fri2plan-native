@@ -368,7 +368,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
 
 
   // ─── Export données ──────────────────────────────────────────────────────────
-  const exportDataQuery = trpc.user.exportData.useQuery(undefined, { enabled: false });
+  const exportDataQuery = trpc.gdpr.exportData.useQuery(undefined, { enabled: false });
   const handleExportData = async () => {
     try {
       setExportLoading(true);
