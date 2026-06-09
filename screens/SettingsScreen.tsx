@@ -373,15 +373,17 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
     try {
       setExportLoading(true);
       const result = await exportDataQuery.refetch();
-      if (!result.data) throw new Error("Aucune donnée");
-      const json = JSON.stringify(result.data, null, 2);
+      if (result.error) throw result.error;
+      const data = result.data;
+      if (!data) throw new Error(t('common.error'));
+      const json = JSON.stringify(data, null, 2);
       const { Share } = require("react-native");
       await Share.share({
         message: json,
         title: `fri2plan_export_${new Date().toISOString().split("T")[0]}.json`,
       });
     } catch (e: any) {
-      Alert.alert("❌", e.message || t("common.error"));
+      Alert.alert("❌", e?.message || t("common.error"));
     } finally {
       setExportLoading(false);
     }
@@ -704,7 +706,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             {/* Couleur & Avatar — renvoi vers Cercles (MembersScreen) où toutes les options sont disponibles */}
             <TouchableOpacity
               style={styles.settingItem}
-              onPress={() => onNavigate?.('11')}
+              onPress={() => onNavigate?.(11 as any)}
             >
               <View style={styles.settingLeft}>
                 <Text style={styles.settingIcon}>🎨</Text>
