@@ -929,7 +929,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
             <Text style={styles.premiumBannerIcon}>{hasPremium ? '⭐' : '🔓'}</Text>
             <View style={{ flex: 1 }}>
               {activeFamily?.name && (
-                <Text style={{ fontSize: 11, color: hasPremium ? '#e9d5ff' : '#6b7280', marginBottom: 2 }}>
+                <Text style={{ fontSize: 11, color: hasPremium ? (isDark ? '#e9d5ff' : '#5b21b6') : '#6b7280', marginBottom: 2, fontWeight: '600' }}>
                   👨‍👩‍👧 {activeFamily.name}
                 </Text>
               )}
