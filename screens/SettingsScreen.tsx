@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as Updates from 'expo-updates';
+import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import { API_URL } from '../lib/trpc';
 import {
@@ -377,11 +378,15 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       const data = result.data;
       if (!data) throw new Error(t('common.error'));
       const json = JSON.stringify(data, null, 2);
-      const { Share } = require("react-native");
-      await Share.share({
-        message: json,
-        title: `fri2plan_export_${new Date().toISOString().split("T")[0]}.json`,
-      });
+      const fileName = `fri2plan_export_${new Date().toISOString().split('T')[0]}.json`;
+      const fileUri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 });
+      const { Share } = require('react-native');
+      await Share.share(
+        Platform.OS === 'ios'
+          ? { url: fileUri, title: fileName }
+          : { message: fileUri, title: fileName }
+      );
     } catch (e: any) {
       Alert.alert("❌", e?.message || t("common.error"));
     } finally {
