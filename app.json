@@ -59,7 +59,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "63",
+      "buildNumber": "62",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
