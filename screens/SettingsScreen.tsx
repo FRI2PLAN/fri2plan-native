@@ -703,18 +703,6 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </View>
               <Text style={styles.settingArrow}>›</Text>
             </TouchableOpacity>
-            {/* Couleur & Avatar — renvoi vers Cercles (MembersScreen) où toutes les options sont disponibles */}
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => onNavigate?.(11 as any)}
-            >
-              <View style={styles.settingLeft}>
-                <Text style={styles.settingIcon}>🎨</Text>
-                <Text style={styles.settingLabel}>{t('settings.colorAvatar')}</Text>
-              </View>
-              <View style={[styles.colorDot, { backgroundColor: user?.userColor || '#7c3aed' }]} />
-              <Text style={styles.settingArrow}>›</Text>
-            </TouchableOpacity>
 
           </View>
 
