@@ -1496,10 +1496,16 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               </TouchableOpacity>
             )}
             {/* Boutons icônes : Supprimer | Annuler | Sauvegarder */}
-            <View style={styles.iconBtnRow}>
-              <ModalIconButton icon="🗑" color="#ef4444" onPress={handleDeleteEvent} />
-              <ModalIconButton icon="✕" color={isDark ? '#374151' : '#e5e7eb'} onPress={() => { setEditModalOpen(false); setSelectedEvent(null); resetForm(); }} />
-              <ModalIconButton icon="✓" color="#10b981" onPress={handleUpdateEvent} />
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, paddingVertical: 16 }}>
+              <TouchableOpacity onPress={handleDeleteEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 24 }}>🗑️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setEditModalOpen(false); setSelectedEvent(null); resetForm(); }} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#6b7280', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold' }}>✕</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleUpdateEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 24 }}>✓</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -2494,8 +2500,8 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   dayEventDescription: { fontSize: 11, color: isDark ? '#d1d5db' : '#6b7280', marginTop: 2 },
 
   // ── Modaux ──
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 16, padding: 20, width: '90%', maxHeight: '85%' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: isDark ? '#1a1a1a' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '92%' },
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#ffffff' : '#1f2937', marginBottom: 16 },
   modalForm: { maxHeight: 400 },
   label: { fontSize: 13, fontWeight: '600', color: isDark ? '#ffffff' : '#374151', marginTop: 10, marginBottom: 4 },
