@@ -714,15 +714,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               </TouchableOpacity>
             </View>
             {renderTaskForm(editFormData, setEditFormData, true)}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
-                <Text style={styles.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, paddingVertical: 16 }}>
+              <TouchableOpacity onPress={handleDeleteTask} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 24 }}>🗑️</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalDeleteBtn} onPress={handleDeleteTask}>
-                <Text style={styles.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
+              <TouchableOpacity onPress={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#6b7280', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold' }}>✕</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmitBtn} onPress={handleUpdateTask} disabled={updateMutation.isPending}>
-                <Text style={styles.modalSubmitBtnText}>{updateMutation.isPending ? '…' : (t('common.save') || 'Enregistrer')}</Text>
+              <TouchableOpacity onPress={handleUpdateTask} disabled={updateMutation.isPending} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 24 }}>{updateMutation.isPending ? '…' : '✓'}</Text>
               </TouchableOpacity>
             </View>
           </View>
