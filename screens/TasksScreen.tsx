@@ -109,6 +109,38 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     { enabled: !!activeFamily }
   );
 
+  // ── Sélection multiple (taches terminées) ──
+  const [taskSelectionMode, setTaskSelectionMode] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<number>>(new Set());
+  const deleteManyTasksMutation = trpc.tasks.deleteMany.useMutation({
+    onSuccess: () => {
+      utils.tasks.list.invalidate();
+      setTaskSelectionMode(false);
+      setSelectedTaskIds(new Set());
+    },
+    onError: (e) => Alert.alert('Erreur', e.message),
+  });
+
+  const toggleTaskSelection = (id: number) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDeleteSelectedTasks = () => {
+    if (selectedTaskIds.size === 0) return;
+    Alert.alert(
+      'Supprimer la sélection',
+      `Supprimer ${selectedTaskIds.size} tâche${selectedTaskIds.size > 1 ? 's' : ''} ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: () => deleteManyTasksMutation.mutate({ taskIds: Array.from(selectedTaskIds) }) },
+      ]
+    );
+  };
+
   // ── Suggestions depuis l'historique ──
   const [taskSuggestions, setTaskSuggestions] = useState<string[]>([]);
   const { data: taskTitlesHistory = [] } = trpc.tasks.suggestions.useQuery();
@@ -530,7 +562,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <TouchableOpacity
             key={key}
             style={[styles.filterTab, filter === key && styles.filterTabActive]}
-            onPress={() => setFilter(key)}
+            onPress={() => { setFilter(key); if (key !== 'completed') { setTaskSelectionMode(false); setSelectedTaskIds(new Set()); } }}
             onLongPress={() => { setFavoriteFilter(key); Alert.alert('⭐', `Vue "${label}" définie comme favorite !`); }}
             delayLongPress={500}
           >
@@ -543,6 +575,37 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <Text style={styles.filterAddBtnText}>+</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Barre sélection multiple (visible uniquement sur l'onglet Terminé) */}
+      {filter === 'completed' && (
+        taskSelectionMode ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#1f2937' : '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
+            <TouchableOpacity onPress={() => { setTaskSelectionMode(false); setSelectedTaskIds(new Set()); }} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+              <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+              const completedIds = new Set((tasks || []).filter(t => t.status === 'completed').map(t => t.id));
+              setSelectedTaskIds(selectedTaskIds.size === completedIds.size ? new Set() : completedIds);
+            }} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+              <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>
+                {selectedTaskIds.size === (tasks || []).filter(t => t.status === 'completed').length ? 'Désélectionner tout' : 'Tout sélectionner'}
+              </Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            {selectedTaskIds.size > 0 && (
+              <TouchableOpacity onPress={handleDeleteSelectedTasks} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#ef4444' }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>🗑 Supprimer ({selectedTaskIds.size})</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 12, paddingVertical: 6 }}>
+            <TouchableOpacity onPress={() => setTaskSelectionMode(true)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+              <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>✏️ Sélectionner</Text>
+            </TouchableOpacity>
+          </View>
+        )
+      )}
 
       {/* Liste */}
       <ScrollView style={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}>
@@ -579,7 +642,19 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             {todayExpanded && todayTasks.map(t => <TaskCard key={t.id} task={t} />)}
 
             {/* Liste filtrée */}
-            {filteredTasks.length > 0 && filteredTasks.map(t => <TaskCard key={t.id} task={t} />)}
+            {filteredTasks.length > 0 && filteredTasks.map(task => (
+              <View key={task.id}>
+                {taskSelectionMode && filter === 'completed' && (
+                  <TouchableOpacity onPress={() => toggleTaskSelection(task.id)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingTop: 6 }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selectedTaskIds.has(task.id) ? '#7c3aed' : (isDark ? '#4b5563' : '#d1d5db'), backgroundColor: selectedTaskIds.has(task.id) ? '#7c3aed' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                      {selectedTaskIds.has(task.id) && <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>✓</Text>}
+                    </View>
+                    <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}>{selectedTaskIds.has(task.id) ? 'Sélectionnée' : 'Sélectionner'}</Text>
+                  </TouchableOpacity>
+                )}
+                <TaskCard key={task.id} task={task} />
+              </View>
+            ))}
 
             {/* Section À venir */}
             {upcomingTasks.length > 0 && (
