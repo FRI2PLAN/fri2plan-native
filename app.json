@@ -2,7 +2,7 @@
   "expo": {
     "name": "FRI2PLAN",
     "slug": "fri2plan-native",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -59,7 +59,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "62",
+      "buildNumber": "63",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
