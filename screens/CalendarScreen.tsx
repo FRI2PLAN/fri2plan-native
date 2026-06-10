@@ -329,8 +329,28 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return eventsArr;
   };
 
-  // Retourne une string 'yyyy-MM-dd HH:mm:ss' en heure locale (pas de conversion UTC)
+  // Retourne une string 'yyyy-MM-dd HH:mm:ss' en heure LOCALE de l'appareil.
+  // Si la date ICS se termine par Z (UTC), on convertit en heure locale via new Date().
+  // Si pas de Z (heure locale flottante ou TZID), on prend les chiffres tels quels.
   const parseICSDateToString = (dateStr: string): string => {
+    const hasZ = dateStr.endsWith('Z');
+    if (hasZ) {
+      // Date UTC → convertir en heure locale de l'appareil
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(4, 6)) - 1;
+      const day = parseInt(dateStr.substring(6, 8));
+      const hour = dateStr.length >= 13 ? parseInt(dateStr.substring(9, 11)) : 0;
+      const minute = dateStr.length >= 13 ? parseInt(dateStr.substring(11, 13)) : 0;
+      const utcDate = new Date(Date.UTC(year, month, day, hour, minute));
+      // Convertir en heure locale de l'appareil
+      const localYear = utcDate.getFullYear();
+      const localMonth = String(utcDate.getMonth() + 1).padStart(2, '0');
+      const localDay = String(utcDate.getDate()).padStart(2, '0');
+      const localHour = String(utcDate.getHours()).padStart(2, '0');
+      const localMinute = String(utcDate.getMinutes()).padStart(2, '0');
+      return `${localYear}-${localMonth}-${localDay} ${localHour}:${localMinute}:00`;
+    }
+    // Pas de Z → heure locale flottante ou TZID → prendre les chiffres tels quels
     const year = dateStr.substring(0, 4);
     const month = dateStr.substring(4, 6);
     const day = dateStr.substring(6, 8);
