@@ -307,6 +307,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       } else if (currentEvent) {
         if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8);
         else if (line.startsWith('DESCRIPTION:')) currentEvent.description = cleanDescription(line.substring(12));
+        else if (line.startsWith('UID:')) currentEvent.icalUid = line.substring(4).trim();
         else if (line.startsWith('DTSTART')) {
           // Extraire la partie valeur après ':' (peut être DTSTART;TZID=...:20260505T173000)
           const colonIdx = line.lastIndexOf(':');
