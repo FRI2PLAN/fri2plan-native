@@ -593,8 +593,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
             {selectedTaskIds.size > 0 && (
-              <TouchableOpacity onPress={handleDeleteSelectedTasks} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#ef4444' }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>🗑 Supprimer ({selectedTaskIds.size})</Text>
+              <TouchableOpacity onPress={handleDeleteSelectedTasks} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#fff', fontSize: 18 }}>🗑</Text>
               </TouchableOpacity>
             )}
           </View>

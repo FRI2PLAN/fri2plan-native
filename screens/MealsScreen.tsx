@@ -674,8 +674,8 @@ export default function MealsScreen({
           </TouchableOpacity>
           <View style={{ flex: 1 }} />
           {selectedMealIds.size > 0 && (
-            <TouchableOpacity onPress={handleDeleteSelected} style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#ef4444' }}>
-              <Text style={{ color: '#fff', fontWeight: '700' }}>🗑 Supprimer ({selectedMealIds.size})</Text>
+            <TouchableOpacity onPress={handleDeleteSelected} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 18 }}>🗑</Text>
             </TouchableOpacity>
           )}
         </View>
