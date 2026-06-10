@@ -109,6 +109,19 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     { enabled: !!activeFamily }
   );
 
+  // ── Suggestions depuis l'historique ──
+  const [taskSuggestions, setTaskSuggestions] = useState<string[]>([]);
+  const { data: taskTitlesHistory = [] } = trpc.tasks.suggestions.useQuery();
+
+  const filterTaskSuggestions = (query: string) => {
+    if (query.length < 2) { setTaskSuggestions([]); return; }
+    const q = query.toLowerCase();
+    const matches = (taskTitlesHistory as string[])
+      .filter(t => t.toLowerCase().includes(q))
+      .slice(0, 6);
+    setTaskSuggestions(matches);
+  };
+
   const createMutation = trpc.tasks.create.useMutation({
     onSuccess: () => { setCreateModalVisible(false); setFormData(emptyForm); utils.tasks.list.invalidate(); },
     onError: (e) => Alert.alert('Erreur', e.message)});
@@ -356,7 +369,21 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t('common.title') || 'Titre'} *</Text>
         <TextInput style={styles.input} placeholder={t('tasks.titlePlaceholder')} placeholderTextColor={isDark ? '#9ca3af' : '#9ca3af'}
-          value={data.title} onChangeText={text => setData({ ...data, title: text })} />
+          value={data.title} onChangeText={text => { setData({ ...data, title: text }); filterTaskSuggestions(text); }} />
+        {taskSuggestions.length > 0 && (
+          <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb', marginTop: 2, overflow: 'hidden' }}>
+            {taskSuggestions.map((suggestion, i) => (
+              <TouchableOpacity
+                key={i}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: i < taskSuggestions.length - 1 ? 1 : 0, borderBottomColor: isDark ? '#374151' : '#f3f4f6' }}
+                onPress={() => { setData({ ...data, title: suggestion }); setTaskSuggestions([]); }}
+              >
+                <Text style={{ fontSize: 14, marginRight: 8 }}>🕐</Text>
+                <Text style={{ fontSize: 14, color: isDark ? '#f9fafb' : '#111827', flex: 1 }}>{suggestion}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
       {/* Description */}
       <View style={styles.formGroup}>

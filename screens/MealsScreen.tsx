@@ -200,6 +200,39 @@ export default function MealsScreen({
   const [translating, setTranslating] = useState(false);
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
 
+  // ── Sélection multiple (historique) ──
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMealIds, setSelectedMealIds] = useState<Set<number>>(new Set());
+  const deleteManyMutation = trpc.meals.deleteMany.useMutation({
+    onSuccess: () => {
+      utils.meals.history.invalidate();
+      utils.meals.favorites.invalidate();
+      setSelectionMode(false);
+      setSelectedMealIds(new Set());
+    },
+    onError: (e) => Alert.alert('Erreur', e.message),
+  });
+
+  const toggleMealSelection = (id: number) => {
+    setSelectedMealIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedMealIds.size === 0) return;
+    Alert.alert(
+      'Supprimer la sélection',
+      `Supprimer ${selectedMealIds.size} repas de l'historique ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: () => deleteManyMutation.mutate({ mealIds: Array.from(selectedMealIds) }) },
+      ]
+    );
+  };
+
   // ─── Listes de courses (pour ajouter ingrédients) ─────────────────────────
   const { data: shoppingLists = [] } = trpc.shopping.listsByFamily.useQuery(
     { familyId: familyId! },
@@ -624,7 +657,36 @@ export default function MealsScreen({
 
   // ─── Vue historique ────────────────────────────────────────────────────────
   const renderHistoryView = () => (
-    <ScrollView contentContainerStyle={{ padding: 12 }}>
+    <View style={{ flex: 1 }}>
+      {/* Barre d'actions sélection */}
+      {selectionMode ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#1f2937' : '#f3f4f6', padding: 10, gap: 8 }}>
+          <TouchableOpacity onPress={() => { setSelectionMode(false); setSelectedMealIds(new Set()); }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+            <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>Annuler</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+            const allIds = new Set((historyMeals as Meal[]).map(m => m.id));
+            setSelectedMealIds(selectedMealIds.size === allIds.size ? new Set() : allIds);
+          }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+            <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>
+              {selectedMealIds.size === (historyMeals as Meal[]).length ? 'Désélectionner tout' : 'Tout sélectionner'}
+            </Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1 }} />
+          {selectedMealIds.size > 0 && (
+            <TouchableOpacity onPress={handleDeleteSelected} style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#ef4444' }}>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>🗑 Supprimer ({selectedMealIds.size})</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 10 }}>
+          <TouchableOpacity onPress={() => setSelectionMode(true)} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
+            <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>✏️ Sélectionner</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      <ScrollView contentContainerStyle={{ padding: 12 }}>
       {favoriteMeals.length > 0 && (
         <>
           <Text style={s.sectionTitle}>❤️ {t('meals.favorites') || 'Favoris'}</Text>
@@ -637,6 +699,14 @@ export default function MealsScreen({
           ? <Text style={s.emptyText}>{t('meals.noHistory') || 'Aucun repas dans l\'historique'}</Text>
           : (historyMeals as Meal[]).map(m => (
             <View key={m.id}>
+              {selectionMode && (
+                <TouchableOpacity onPress={() => toggleMealSelection(m.id)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 4 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selectedMealIds.has(m.id) ? '#7c3aed' : (isDark ? '#4b5563' : '#d1d5db'), backgroundColor: selectedMealIds.has(m.id) ? '#7c3aed' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                    {selectedMealIds.has(m.id) && <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>✓</Text>}
+                  </View>
+                  <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 13 }}>{selectedMealIds.has(m.id) ? 'Sélectionné' : 'Sélectionner'}</Text>
+                </TouchableOpacity>
+              )}
               {renderMealCard(m)}
               <TouchableOpacity style={s.reuseBtn} onPress={() => {
                 setEditingMeal(null);
@@ -677,7 +747,8 @@ export default function MealsScreen({
             </View>
           ))
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 
   // ─── Vue paramètres ────────────────────────────────────────────────────────
