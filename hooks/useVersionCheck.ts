@@ -67,7 +67,7 @@ export function useVersionCheck(): VersionCheckResult {
         const currentVersion: string =
           Constants.expoConfig?.version ?? '0.0.0';
 
-        const response = await fetch(`${SERVER_URL}/api/app-version`, {
+        const response = await fetch(`${SERVER_URL}/api/app-version?platform=${Platform.OS}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           // Timeout de 5s pour ne pas bloquer l'app si le serveur est lent
