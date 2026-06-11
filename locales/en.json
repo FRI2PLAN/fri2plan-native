@@ -1209,5 +1209,16 @@
     "daysRange": "Days {{start}}–{{end}}",
     "cyclesRecorded": "{{count}} cycle(s) recorded",
     "cycleNumber": "Cycle #{{num}}"
+  },
+  "updateModal": {
+    "titleForce": "Update required",
+    "titleRecommended": "Update available",
+    "descriptionForce": "A new version of fri2plan is available on {{store}}. You must update the app to continue using it.",
+    "descriptionRecommended": "A new version of fri2plan is available on {{store}}. We recommend updating to enjoy the latest improvements.",
+    "version": "Version {{version}}",
+    "storeNameIos": "the App Store",
+    "storeNameAndroid": "Google Play",
+    "updateButton": "Update on {{store}}",
+    "laterButton": "Later"
   }
 }

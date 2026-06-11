@@ -23,6 +23,8 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as Updates from 'expo-updates';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
+import { useVersionCheck } from './hooks/useVersionCheck';
+import { UpdateModal } from './components/UpdateModal';
 import { OfflineProvider } from './contexts/OfflineContext';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineExecutor } from './hooks/useOfflineExecutor';
@@ -187,6 +189,9 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(0);
   // Durée minimale du splash : 3000ms pour que l'animation soit visible
   const [splashMinDone, setSplashMinDone] = useState(false);
+  // Vérification de version au démarrage
+  const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
+  const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
 
   // Ref vers la fonction logout enrichie (avec suppression FCM) — pas de re-render
   const fcmLogoutRef = useRef<(() => Promise<void>) | null>(null);
@@ -258,6 +263,17 @@ function AppContent() {
         </>
       ) : (
         <LoginScreen />
+      )}
+
+      {/* Modale de mise à jour — affichée après le splash, indépendamment de l'auth */}
+      {!versionLoading && needsUpdate && !updateModalDismissed && (
+        <UpdateModal
+          visible={true}
+          forceUpdate={forceUpdate}
+          storeUrl={storeUrl}
+          latestVersion={latestVersion}
+          onDismiss={() => setUpdateModalDismissed(true)}
+        />
       )}
     </trpc.Provider>
   );

@@ -1209,5 +1209,16 @@
     "daysRange": "Jours {{start}}–{{end}}",
     "cyclesRecorded": "{{count}} cycle(s) enregistré(s)",
     "cycleNumber": "Cycle #{{num}}"
+  },
+  "updateModal": {
+    "titleForce": "Mise à jour requise",
+    "titleRecommended": "Mise à jour disponible",
+    "descriptionForce": "Une nouvelle version de fri2plan est disponible sur {{store}}. Vous devez mettre à jour l'application pour continuer à l'utiliser.",
+    "descriptionRecommended": "Une nouvelle version de fri2plan est disponible sur {{store}}. Nous vous recommandons de mettre à jour pour profiter des dernières améliorations.",
+    "version": "Version {{version}}",
+    "storeNameIos": "l'App Store",
+    "storeNameAndroid": "Google Play",
+    "updateButton": "Mettre à jour sur {{store}}",
+    "laterButton": "Plus tard"
   }
 }
