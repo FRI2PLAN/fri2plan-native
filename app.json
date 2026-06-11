@@ -77,6 +77,10 @@
         "aps-environment": "production",
         "com.apple.developer.applesignin": [
           "Default"
+        ],
+        "com.apple.developer.associated-domains": [
+          "applinks:app.fri2plan.ch",
+          "webcredentials:app.fri2plan.ch"
         ]
       },
       "usesAppleSignIn": true
