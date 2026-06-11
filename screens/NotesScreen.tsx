@@ -28,6 +28,12 @@ interface Attachment {
   fileType: string;
 }
 
+const parseUTCDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const normalized = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+  return new Date(normalized);
+};
+
 export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScreenProps) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
@@ -288,8 +294,8 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
           )}
           <Text style={styles.noteDate}>
             {note.updatedAt
-              ? format(new Date(note.updatedAt), 'd MMM yyyy HH:mm', { locale: getLocale() })
-              : formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: getLocale() })
+              ? format(parseUTCDate(note.updatedAt), 'd MMM yyyy HH:mm', { locale: getLocale() })
+              : formatDistanceToNow(parseUTCDate(note.createdAt), { addSuffix: true, locale: getLocale() })
             }
           </Text>
         </View>

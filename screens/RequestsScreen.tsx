@@ -31,6 +31,12 @@ const STATUS_CONFIG = {
 type RequestType = 'outing' | 'purchase' | 'permission' | 'other';
 type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
 
+const parseUTCDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const normalized = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+  return new Date(normalized);
+};
+
 export default function RequestsScreen({ onNavigate, onPrevious, onNext }: RequestsScreenProps) {
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
@@ -249,7 +255,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
         </View>
 
         <Text style={styles.requestTime}>
-          {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true, locale: getLocale() })}
+          {formatDistanceToNow(parseUTCDate(request.createdAt), { addSuffix: true, locale: getLocale() })}
         </Text>
       </TouchableOpacity>
     );
@@ -576,7 +582,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                         <View style={styles.commentHeader}>
                           <Text style={styles.commentAuthor}>{comment.userName || t('common.unknown')}</Text>
                           <Text style={styles.commentTime}>
-                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: getLocale() })}
+                            {formatDistanceToNow(parseUTCDate(comment.createdAt), { addSuffix: true, locale: getLocale() })}
                           </Text>
                         </View>
                         <Text style={styles.commentMessage}>{comment.message}</Text>
