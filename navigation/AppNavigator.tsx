@@ -53,8 +53,8 @@ const PAGES = [
   { key: '10', component: CalendrierIntimeScreen, name: 'CalendrierIntime' },
   { key: '11', component: MembersScreen, name: 'Members' },
   // { key: '12', component: ReferralScreen, name: 'Referral' }, // Désactivé temporairement
-  { key: '13', component: SettingsScreen, name: 'Settings' },
-  { key: '14', component: HelpScreen, name: 'Help' },
+  { key: '12', component: SettingsScreen, name: 'Settings' },
+  { key: '13', component: HelpScreen, name: 'Help' },
 ];
 
 // Mémoïsé pour éviter les re-renders inutiles qui réinitialisent CircularPager

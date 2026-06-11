@@ -56,8 +56,8 @@ export default function CustomDrawerContent({
     { index: 10, icon: '🌸', label: t('navigation.intimateCalendar') },
     { index: 11, icon: '👥', label: t('navigation.circles') },
     // { index: 12, icon: '🔗', label: t('navigation.referral') }, // Désactivé temporairement
-    { index: 13, icon: '⚙️', label: t('navigation.settings') },
-    { index: 14, icon: '❓', label: t('navigation.help') },
+    { index: 12, icon: '⚙️', label: t('navigation.settings') },
+    { index: 13, icon: '❓', label: t('navigation.help') },
   ];
 
   const handlePagePress = (pageIndex: number) => {
