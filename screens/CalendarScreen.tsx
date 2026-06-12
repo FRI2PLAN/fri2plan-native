@@ -795,15 +795,19 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
       const endDateTime = new Date(`${dateStr}T${format(endTimeDate, 'HH:mm')}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
+      // Envoyer en UTC (ISO string sans millisecondes) pour un stockage cohérent en base
+      const startDateUtc = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
+      const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
       await createEvent.mutateAsync({
         title: formData.title,
         description: formData.description,
-        startDate: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),
-        endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
+        startDate: startDateUtc,
+        endDate: endDateUtc,
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate ? 1 : 0});
+        isPrivate: formData.isPrivate ? 1 : 0,
+        isUtc: 1});
       setCreateModalOpen(false);
       resetForm();
       refetch();
@@ -819,16 +823,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
       const endDateTime = new Date(`${dateStr}T${format(endTimeDate, 'HH:mm')}:00`);
       const durationMinutes = Math.round((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60));
+      // Envoyer en UTC (ISO string sans millisecondes) pour un stockage cohérent en base
+      const startDateUtc = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
+      const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
       await updateEvent.mutateAsync({
         eventId: selectedEvent.id,
         title: formData.title,
         description: formData.description,
-        startDate: format(startDateTime, 'yyyy-MM-dd HH:mm:ss'),
-        endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
+        startDate: startDateUtc,
+        endDate: endDateUtc,
         durationMinutes,
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
-        isPrivate: formData.isPrivate ? 1 : 0});
+        isPrivate: formData.isPrivate ? 1 : 0,
+        isUtc: 1});
       setEditModalOpen(false);
       setSelectedEvent(null);
       resetForm();

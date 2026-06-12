@@ -133,6 +133,16 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   );
   const rewardBadgeIds = isAdmin && (pendingClaims as any[]).length > 0 ? ['rewards'] : [];
 
+  // Badge requêtes ouvertes (admin : pending, non-admin : commentaires non lus)
+  const { data: requestBadgeData } = trpc.requests.hasOpenBadge.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily, refetchInterval: 60000 }
+  );
+  const requestBadgeIds = requestBadgeData?.hasBadge ? ['requests'] : [];
+
+  // Fusionner tous les badges
+  const allBadgeIds = [...rewardBadgeIds, ...requestBadgeIds];
+
   const handleLogout = async () => {
     await logout();
     onLogout();
@@ -395,7 +405,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         onFavoritePress={handleFavoritePress}
         onFavoriteSelect={handleFavoriteSelect}
         allPages={allPages}
-        badgeIds={rewardBadgeIds}
+        badgeIds={allBadgeIds}
       />
       
       {/* Content */}
