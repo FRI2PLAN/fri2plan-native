@@ -253,32 +253,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
 
   // Load favorites from DB via settings.get
-  const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined, {
-    onSuccess: (data: any) => {
-      if (!favoritesLoaded) {
-        try {
-          const stored = data?.dashboardFavorites;
-          if (stored && stored.length > 0) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              if (typeof parsed[0] === 'string') {
-                setFavoriteIds(parsed);
-              } else {
-                setFavoriteIds(parsed.map((f: any) => f.id));
-              }
-            } else {
-              setFavoriteIds(DEFAULT_FAVORITE_IDS);
-            }
-          } else {
-            setFavoriteIds(DEFAULT_FAVORITE_IDS);
-          }
-        } catch {
-          setFavoriteIds(DEFAULT_FAVORITE_IDS);
-        }
-        setFavoritesLoaded(true);
-      }
-    }
-  }) || {};
+  const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || {};
 
   // Charger les favoris depuis userSettings quand disponibles
   useEffect(() => {
@@ -348,7 +323,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     }
     setFavoriteIds(newIds);
     // Sauvegarder en DB
-    updateFavoritesMutation?.mutate?.({ favorites: newIds });
+    updateFavoritesMutation?.mutate?.({ favorites: newIds }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [['settings', 'get']] });
+      }
+    });
   };
 
   const joinFamilyMutation = trpc.family.join.useMutation({
