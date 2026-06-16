@@ -247,22 +247,47 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const isLoading = tasksLoading || eventsLoading || messagesLoading;
 
-  // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
+  // Favorites (5 buttons with icon only) - persisted in DB via settings.updateDashboardFavorites
   const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
   const [favoriteIds, setFavoriteIds] = useState<string[]>(DEFAULT_FAVORITE_IDS);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
-  // Clé isolée par famille pour éviter le partage des raccourcis entre cercles
-  const favoritesKey = activeFamilyId ? `dashboard_favorites_${activeFamilyId}` : 'dashboard_favorites';
 
-  // Load favorites from AsyncStorage (réinitialise quand la famille change)
-  useEffect(() => {
-    setFavoritesLoaded(false);
-    AsyncStorage.getItem(favoritesKey).then((stored) => {
-      if (stored) {
+  // Load favorites from DB via settings.get
+  const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined, {
+    onSuccess: (data: any) => {
+      if (!favoritesLoaded) {
         try {
+          const stored = data?.dashboardFavorites;
+          if (stored && stored.length > 0) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              if (typeof parsed[0] === 'string') {
+                setFavoriteIds(parsed);
+              } else {
+                setFavoriteIds(parsed.map((f: any) => f.id));
+              }
+            } else {
+              setFavoriteIds(DEFAULT_FAVORITE_IDS);
+            }
+          } else {
+            setFavoriteIds(DEFAULT_FAVORITE_IDS);
+          }
+        } catch {
+          setFavoriteIds(DEFAULT_FAVORITE_IDS);
+        }
+        setFavoritesLoaded(true);
+      }
+    }
+  }) || {};
+
+  // Charger les favoris depuis userSettings quand disponibles
+  useEffect(() => {
+    if (userSettings && !favoritesLoaded) {
+      try {
+        const stored = (userSettings as any)?.dashboardFavorites;
+        if (stored && stored.length > 0) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Support legacy format (array of objects) and new format (array of IDs)
             if (typeof parsed[0] === 'string') {
               setFavoriteIds(parsed);
             } else {
@@ -271,22 +296,18 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
           } else {
             setFavoriteIds(DEFAULT_FAVORITE_IDS);
           }
-        } catch {
+        } else {
           setFavoriteIds(DEFAULT_FAVORITE_IDS);
         }
-      } else {
+      } catch {
         setFavoriteIds(DEFAULT_FAVORITE_IDS);
       }
       setFavoritesLoaded(true);
-    });
-  }, [favoritesKey]);
-
-  // Save favorites to AsyncStorage whenever they change (after initial load)
-  useEffect(() => {
-    if (favoritesLoaded) {
-      AsyncStorage.setItem(favoritesKey, JSON.stringify(favoriteIds));
     }
-  }, [favoriteIds, favoritesLoaded, favoritesKey]);
+  }, [userSettings, favoritesLoaded]);
+
+  // Mutation pour sauvegarder les favoris en DB
+  const updateFavoritesMutation = (trpc.settings as any).updateDashboardFavorites?.useMutation?.();
 
   // All available pages for favorites selection
   const allPages = [
@@ -318,13 +339,16 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const handleFavoriteSelect = (favoriteId: string) => {
     const isAlreadyFavorite = favoriteIds.includes(favoriteId);
+    let newIds: string[];
     if (isAlreadyFavorite) {
-      setFavoriteIds(favoriteIds.filter(id => id !== favoriteId));
+      newIds = favoriteIds.filter(id => id !== favoriteId);
     } else {
-      if (favoriteIds.length < 5) {
-        setFavoriteIds([...favoriteIds, favoriteId]);
-      }
+      if (favoriteIds.length >= 5) return;
+      newIds = [...favoriteIds, favoriteId];
     }
+    setFavoriteIds(newIds);
+    // Sauvegarder en DB
+    updateFavoritesMutation?.mutate?.({ favorites: newIds });
   };
 
   const joinFamilyMutation = trpc.family.join.useMutation({
