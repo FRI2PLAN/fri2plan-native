@@ -49,6 +49,12 @@
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
       [
+        "expo-calendar",
+        {
+          "calendarPermission": "FRI2PLAN accède à votre calendrier pour synchroniser vos événements familiaux dans les deux sens."
+        }
+      ],
+      [
         "expo-updates",
         {
           "checkAutomatically": "ON_LOAD",
