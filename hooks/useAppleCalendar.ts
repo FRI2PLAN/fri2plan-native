@@ -13,9 +13,7 @@
  * - Persistance du calendrier connecté (AsyncStorage)
  * - Dernière date de sync
  */
-// expo-calendar: désactivé définitivement (crash CalendarModule.kt sur Android, CalendarNext sur iOS)
-// Le package est retiré de package.json - toutes les fonctions retournent des valeurs vides
-const Calendar: null = null;
+import * as Calendar from 'expo-calendar';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
