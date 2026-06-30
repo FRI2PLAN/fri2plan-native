@@ -83,11 +83,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery(
     undefined,
-    { staleTime: 2 * 60 * 1000 } // 2 min — utilise le cache au lieu de refetch à chaque ouverture
+    { staleTime: 5 * 60 * 1000 } // 5 min — utilise le cache au lieu de refetch à chaque ouverture
   );
   const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery(
     undefined,
-    { enabled: !!activeFamily, staleTime: 2 * 60 * 1000 }
+    { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
   // Normaliser les dates retournées par tRPC vers une string locale sans Z
   // tRPC peut retourner soit '2026-05-07 10:00:00' (string MySQL, heure locale)
@@ -118,7 +118,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   }));
   const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = trpc.messages.list.useQuery(
     { familyId: activeFamily?.id || 0, limit: 50, offset: 0 },
-    { enabled: !!activeFamily, staleTime: 2 * 60 * 1000 }
+    { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
   const messages = messagesData?.messages || [];
 
@@ -126,7 +126,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const { data: todayMeals = [], isLoading: mealsLoading, refetch: refetchMeals } = trpc.meals.list.useQuery(
     { familyId: activeFamily?.id || 0, startDate: todayStr + 'T00:00:00', endDate: todayStr + 'T23:59:59' },
-    { enabled: !!activeFamily, staleTime: 2 * 60 * 1000 }
+    { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
   // Badge récompenses admin
   const isAdmin = user?.familyRole === 'admin' || user?.role === 'admin';
