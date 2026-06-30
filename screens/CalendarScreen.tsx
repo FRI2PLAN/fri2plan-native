@@ -2257,54 +2257,78 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         </View>
       </Modal>
 
-      {/* ── Modal TimePicker centralisé — évite le bug Android double onChange ── */}
-      <Modal
-        visible={showTimePicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => { setShowTimePicker(false); }}
-      >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
-            <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
-              {timePickerTarget === 'start' ? (t('calendar.startTime') || 'Heure de début') : (t('calendar.endTime') || 'Heure de fin')}
-            </Text>
-            <DateTimePicker
-              value={tempTimeValue}
-              mode="time"
-              is24Hour
-              display="spinner"
-              onChange={(_, d) => { if (d) setTempTimeValue(d); }}
-              textColor={isDark ? '#f9fafb' : '#111827'}
-            />
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-              <TouchableOpacity
-                onPress={() => { setShowTimePicker(false); }}
-                style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
-              >
-                <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel') || 'Annuler'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  if (timePickerTarget === 'start') {
-                    setStartTimeDate(tempTimeValue);
-                    // Heure de fin auto = début + 1h si fin <= début
-                    if (endTimeDate <= tempTimeValue) {
-                      setEndTimeDate(new Date(tempTimeValue.getTime() + 60 * 60 * 1000));
-                    }
-                  } else {
-                    setEndTimeDate(tempTimeValue);
-                  }
-                  setShowTimePicker(false);
-                }}
-                style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '600' }}>{t('common.confirm') || 'Confirmer'}</Text>
-              </TouchableOpacity>
+      {/* ── TimePicker natif — Android: dialog native avec OK/Annuler intégrés, iOS: spinner inline ── */}
+      {showTimePicker && (
+        Platform.OS === 'ios' ? (
+          <Modal
+            visible={showTimePicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => { setShowTimePicker(false); }}
+          >
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', borderRadius: 16, padding: 20, width: 300, alignItems: 'center' }}>
+                <Text style={{ color: isDark ? '#f9fafb' : '#111827', fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
+                  {timePickerTarget === 'start' ? (t('calendar.startTime') || 'Heure de début') : (t('calendar.endTime') || 'Heure de fin')}
+                </Text>
+                <DateTimePicker
+                  value={tempTimeValue}
+                  mode="time"
+                  is24Hour
+                  display="spinner"
+                  onChange={(_, d) => { if (d) setTempTimeValue(d); }}
+                  textColor={isDark ? '#f9fafb' : '#111827'}
+                />
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                  <TouchableOpacity
+                    onPress={() => { setShowTimePicker(false); }}
+                    style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb', alignItems: 'center' }}
+                  >
+                    <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600' }}>{t('common.cancel') || 'Annuler'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (timePickerTarget === 'start') {
+                        setStartTimeDate(tempTimeValue);
+                        if (endTimeDate <= tempTimeValue) {
+                          setEndTimeDate(new Date(tempTimeValue.getTime() + 60 * 60 * 1000));
+                        }
+                      } else {
+                        setEndTimeDate(tempTimeValue);
+                      }
+                      setShowTimePicker(false);
+                    }}
+                    style={{ flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#10b981', alignItems: 'center' }}
+                  >
+                    <Text style={{ color: '#ffffff', fontWeight: '600' }}>{t('common.confirm') || 'Confirmer'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      </Modal>
+          </Modal>
+        ) : (
+          // Android : picker natif avec ses propres boutons OK/Annuler — pas de modale par-dessus
+          <DateTimePicker
+            value={tempTimeValue}
+            mode="time"
+            is24Hour
+            display="default"
+            onChange={(event, d) => {
+              setShowTimePicker(false);
+              if (event.type === 'set' && d) {
+                if (timePickerTarget === 'start') {
+                  setStartTimeDate(d);
+                  if (endTimeDate <= d) {
+                    setEndTimeDate(new Date(d.getTime() + 60 * 60 * 1000));
+                  }
+                } else {
+                  setEndTimeDate(d);
+                }
+              }
+            }}
+          />
+        )
+      )}
     </View>
   );
 }
