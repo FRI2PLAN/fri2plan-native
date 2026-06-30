@@ -187,7 +187,7 @@ async function checkAndApplyUpdate() {
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
-  // Durée minimale du splash : 3000ms pour que l'animation soit visible
+  // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
   // Vérification de version au démarrage
   const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
@@ -196,13 +196,13 @@ function AppContent() {
   // Ref vers la fonction logout enrichie (avec suppression FCM) — pas de re-render
   const fcmLogoutRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Timer durée minimale splash (3000ms) — laisse le temps à l'app de se monter complètement
+  // Timer durée minimale splash (800ms) — laisse le temps au logo d'apparaître sans bloquer
   // Masque le splash natif dès que React est prêt (après 300ms pour laisser le temps au rendu)
   useEffect(() => {
     const hideNative = setTimeout(() => {
       NativeSplashScreen.hideAsync().catch(() => {});
     }, 300);
-    const timer = setTimeout(() => setSplashMinDone(true), 3000);
+    const timer = setTimeout(() => setSplashMinDone(true), 800);
     // Remettre le badge iOS à 0 au démarrage de l'app
     Notifications.setBadgeCountAsync(0).catch(() => {});
     // Vérifier et appliquer les mises à jour OTA au démarrage
