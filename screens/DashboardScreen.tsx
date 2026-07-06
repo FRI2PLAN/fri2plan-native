@@ -55,7 +55,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const queryClient = useQueryClient();
 
   // Fetch active family
-  const { data: families } = trpc.family.list.useQuery();
+  const { data: families, isLoading: familiesLoading } = trpc.family.list.useQuery();
   // Trouver la famille active par ID (ou la première par défaut)
   const activeFamily = useMemo(() => {
     if (!families || families.length === 0) return undefined;
@@ -249,7 +249,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   }, [events]);
 
   // Attendre TOUTES les requêtes principales pour éviter les apparitions en cascade
-  const isLoading = tasksLoading || eventsLoading || messagesLoading || mealsLoading;
+  // familiesLoading inclus pour éviter l'écran "Créer une famille" lors du chargement initial
+  const isLoading = familiesLoading || tasksLoading || eventsLoading || messagesLoading || mealsLoading;
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
   const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
@@ -420,7 +421,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         }
       >
 
-        {!activeFamily ? (
+        {/* Skeleton pendant le chargement initial (familles + données) */}
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : !activeFamily ? (
           <View style={styles.noFamilyCard}>
             <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>
             <Text style={styles.noFamilyText}>
@@ -435,10 +439,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
           </View>
         ) : (
           <>
-            {isLoading ? (
-              <DashboardSkeleton />
-            ) : (
-              <>
                 {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
@@ -587,8 +587,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   </View>
                 )}
 
-              </>
-            )}
           </>
         )}
         <View style={{ height: 40 }} />
