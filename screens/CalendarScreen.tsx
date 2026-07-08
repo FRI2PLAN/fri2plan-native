@@ -1196,7 +1196,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   style={styles.addEventBtn}
                   onPress={() => requirePremium(() => setCreateModalOpen(true))}
                 >
-                  <Text style={styles.addEventBtnText}>+
+                  <Text style={styles.addEventBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
 
