@@ -50,7 +50,7 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType>({
   hasPremium: true, // défaut safe : pas de blocage si contexte non disponible
   isTrialActive: true,
-  trialDaysRemaining: 14,
+  trialDaysRemaining: 21,
   requirePremium: (fn) => fn(),
   refreshSubscription: () => {},
 });
@@ -76,7 +76,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const hasPremium = subscriptionData?.hasPremium ?? true;
   const isTrialActive = subscriptionData?.isTrialActive ?? true;
-  const trialDaysRemaining = subscriptionData?.trialDaysRemaining ?? 14;
+  const trialDaysRemaining = subscriptionData?.trialDaysRemaining ?? 21;
 
   const requirePremium = useCallback(
     (fn: () => void) => {
