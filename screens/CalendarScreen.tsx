@@ -15,6 +15,7 @@ import { fr, de, enUS } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -130,6 +131,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const styles = getStyles(isDark);
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { requirePremium } = useSubscription();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -1160,7 +1162,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         setSelectedDate(day);
                         const dayEvents = (events || []).filter(e => isEventOnDay(e, day));
                         if (dayEvents.length > 0) setDropdownModalOpen(true);
-                        else setCreateModalOpen(true);
+                        else requirePremium(() => setCreateModalOpen(true));
                       }}
                     >
                       <Text style={[
@@ -1192,9 +1194,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </Text>
                 <TouchableOpacity
                   style={styles.addEventBtn}
-                  onPress={() => setCreateModalOpen(true)}
+                  onPress={() => requirePremium(() => setCreateModalOpen(true))}
                 >
-                  <Text style={styles.addEventBtnText}>+</Text>
+                  <Text style={styles.addEventBtnText}>+
                 </TouchableOpacity>
               </View>
 
@@ -1241,7 +1243,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               ) : (
                 <TouchableOpacity
                   style={styles.noEvents}
-                  onPress={() => setCreateModalOpen(true)}
+                  onPress={() => requirePremium(() => setCreateModalOpen(true))}
                 >
                   <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
                   <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
@@ -1547,7 +1549,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             <Text style={styles.dropdownTitle}>
               {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
             </Text>
-            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); setCreateModalOpen(true); }}>
+            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); requirePremium(() => setCreateModalOpen(true)); }}>
               <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
             <ScrollView style={styles.dropdownEventsList}>

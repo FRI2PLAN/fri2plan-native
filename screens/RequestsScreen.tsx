@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
@@ -41,6 +42,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { requirePremium } = useSubscription();
   const styles = getStyles(isDark);
 
   const getLocale = () => {
@@ -320,7 +322,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
           )}
          </View>
         {/* Bouton + */}
-        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => setCreateDialogOpen(true))}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>

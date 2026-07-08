@@ -9,6 +9,7 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useOffline } from '../contexts/OfflineContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -55,6 +56,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { requirePremium } = useSubscription();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const styles = getStyles(isDark);
@@ -571,7 +573,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
+        <TouchableOpacity style={styles.filterAddBtn} onPress={() => requirePremium(() => setCreateModalVisible(true))}>
           <Text style={styles.filterAddBtnText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -686,7 +688,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>📋</Text>
                 <Text style={styles.emptyStateText}>{t('tasks.empty') || 'Aucune tâche pour le moment'}</Text>
-                <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
+                <TouchableOpacity style={styles.filterAddBtn} onPress={() => requirePremium(() => setCreateModalVisible(true))}>
                   <Text style={styles.filterAddBtnText}>+</Text>
                 </TouchableOpacity>
               </View>

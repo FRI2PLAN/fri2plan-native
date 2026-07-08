@@ -30,6 +30,7 @@ import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineExecutor } from './hooks/useOfflineExecutor';
 import { useOffline } from './contexts/OfflineContext';
 import { IAPProvider } from './contexts/IAPContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import * as Notifications from 'expo-notifications';
 import { Linking } from 'react-native';
 
@@ -310,10 +311,12 @@ export default function App() {
             <AuthProvider>
               <IAPProvider>
                 <FamilyProvider>
-                  <PagerProvider>
-                    <AppContent />
-                    <OfflineBannerWrapper />
-                  </PagerProvider>
+                  <SubscriptionProvider>
+                    <PagerProvider>
+                      <AppContent />
+                      <OfflineBannerWrapper />
+                    </PagerProvider>
+                  </SubscriptionProvider>
                 </FamilyProvider>
               </IAPProvider>
             </AuthProvider>

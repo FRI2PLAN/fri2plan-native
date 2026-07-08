@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShoppingList {
@@ -54,6 +55,7 @@ export default function ShoppingScreen({
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
   const utils = trpc.useUtils();
+  const { requirePremium } = useSubscription();
 
   // ─── Famille ─────────────────────────────────────────────────────────────────────────────
   const { activeFamilyId: ctxFamilyId } = useFamily();
@@ -119,10 +121,12 @@ export default function ShoppingScreen({
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const openCreateList = () => {
-    setEditingList(null);
-    setListForm({ name: '', description: '', isPrivate: false });
-    setTargetDate(undefined);
-    setShowListForm(true);
+    requirePremium(() => {
+      setEditingList(null);
+      setListForm({ name: '', description: '', isPrivate: false });
+      setTargetDate(undefined);
+      setShowListForm(true);
+    });
   };
 
   // Trigger create from parent action bar

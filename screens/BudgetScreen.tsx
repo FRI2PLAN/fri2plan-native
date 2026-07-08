@@ -8,6 +8,7 @@ import { useSafeAreaInsets} from 'react-native-safe-area-context';
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
@@ -140,6 +141,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { requirePremium } = useSubscription();
   const styles = getStyles(isDark);
   const insets = useSafeAreaInsets();
 
@@ -615,7 +617,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           </View>
 
           {/* Bouton ajouter */}
-          <TouchableOpacity style={styles.addButton} onPress={() => { resetTxForm(); setEditingTxId(null); setTxModalOpen(true); }}>
+          <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => { resetTxForm(); setEditingTxId(null); setTxModalOpen(true); })}>
             <Text style={styles.addButtonText}>+ {t('budget.addTransaction')}</Text>
           </TouchableOpacity>
 
@@ -666,7 +668,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           style={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <TouchableOpacity style={styles.addButton} onPress={() => { resetProjectForm(); setProjectModalOpen(true); }}>
+          <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => { resetProjectForm(); setProjectModalOpen(true); })}>
             <Text style={styles.addButtonText}>+ {t('budget.newOnPartage')}</Text>
           </TouchableOpacity>
 

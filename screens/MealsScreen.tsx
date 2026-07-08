@@ -18,6 +18,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useFamily } from '../contexts/FamilyContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -94,6 +95,7 @@ export default function MealsScreen({
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
   const utils = trpc.useUtils();
+  const { requirePremium } = useSubscription();
 
   // ─── Locale date-fns ───────────────────────────────────────────────────────
   const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
@@ -278,6 +280,7 @@ export default function MealsScreen({
     ingredients: [] as string[]});
 
   const openCreate = (day?: Date) => {
+    requirePremium(() => {
     setEditingMeal(null);
     setSelectedDay(day || new Date());
     setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', sourceUrl: '', imageUrl: '', ingredients: [] });
@@ -287,6 +290,7 @@ export default function MealsScreen({
     setHistorySuggestions([]);
     setImportUrl('');
     setImportResult(null);
+    }); // end requirePremium
   };
 
   // Trigger create from parent action bar

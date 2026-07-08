@@ -10,6 +10,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import * as DocumentPicker from 'expo-document-picker';
@@ -38,6 +39,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { requirePremium } = useSubscription();
   const styles = getStyles(isDark);
 
   const getLocale = () => {
@@ -342,7 +344,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => setCreateDialogOpen(true))}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>

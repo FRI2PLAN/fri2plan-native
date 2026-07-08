@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
@@ -24,6 +25,7 @@ interface MessagesScreenProps {
 export default function MessagesScreen({ onNavigate, onPrevious, onNext }: MessagesScreenProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
+  const { requirePremium } = useSubscription();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const styles = getStyles(isDark);
@@ -429,7 +431,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
             <TouchableOpacity
               style={[styles.sendButton, (!newMessage.trim() || sendMutation.isPending) && styles.sendButtonDisabled]}
-              onPress={handleSendMessage}
+              onPress={() => requirePremium(() => handleSendMessage())}
               disabled={!newMessage.trim() || sendMutation.isPending}
             >
               {sendMutation.isPending ? (
