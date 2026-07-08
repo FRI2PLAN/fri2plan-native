@@ -248,6 +248,7 @@ function AppContent() {
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
       <OfflineExecutorRegistrar />
 
+      <SubscriptionProvider>
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
       {(isLoading || !splashMinDone || (isAuthenticated && !user)) ? (
         <SplashScreen />
@@ -265,6 +266,7 @@ function AppContent() {
       ) : (
         <LoginScreen />
       )}
+      </SubscriptionProvider>
 
       {/* Modale de mise à jour — affichée après le splash, indépendamment de l'auth */}
       {!versionLoading && needsUpdate && !updateModalDismissed && (
@@ -311,12 +313,10 @@ export default function App() {
             <AuthProvider>
               <IAPProvider>
                 <FamilyProvider>
-                  <SubscriptionProvider>
-                    <PagerProvider>
-                      <AppContent />
-                      <OfflineBannerWrapper />
-                    </PagerProvider>
-                  </SubscriptionProvider>
+                  <PagerProvider>
+                    <AppContent />
+                    <OfflineBannerWrapper />
+                  </PagerProvider>
                 </FamilyProvider>
               </IAPProvider>
             </AuthProvider>
