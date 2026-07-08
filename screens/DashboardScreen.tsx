@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Modal } from 'react-native';
 import FamilySetupScreen from './FamilySetupScreen';
+import { TrialBanner } from '../components/TrialBanner';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
@@ -135,6 +136,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { enabled: !!activeFamily && isAdmin }
   );
   const rewardBadgeIds = isAdmin && (pendingClaims as any[]).length > 0 ? ['rewards'] : [];
+
+  // Subscription / trial status
+  const utils = trpc.useUtils();
+  const { data: subscriptionData } = trpc.subscription.checkAccess.useQuery(
+    { familyId: activeFamily?.id ?? 0 },
+    { enabled: !!activeFamily?.id, staleTime: 5 * 60 * 1000 }
+  );
 
   // Badge requêtes ouvertes (admin : pending, non-admin : commentaires non lus)
   const { data: requestBadgeData } = trpc.requests.hasOpenBadge.useQuery(
@@ -439,6 +447,14 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
           </View>
         ) : (
           <>
+                {/* Trial / Paywall Banner */}
+                <TrialBanner
+                  familyId={activeFamily?.id ?? 0}
+                  hasPremium={subscriptionData?.hasPremium ?? true}
+                  isTrialActive={subscriptionData?.isTrialActive ?? true}
+                  trialDaysRemaining={subscriptionData?.trialDaysRemaining ?? 14}
+                  onSubscribed={() => utils.subscription.checkAccess.invalidate()}
+                />
                 {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>

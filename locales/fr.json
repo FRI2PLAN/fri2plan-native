@@ -787,7 +787,15 @@
     "iapRestoreSuccess": "Achats restaurés avec succès.",
     "iapRestoreNothing": "Aucun achat à restaurer.",
     "iapPurchaseError": "L'achat a échoué. Veuillez réessayer.",
-    "iapRestoreError": "Impossible de restaurer les achats. Veuillez réessayer."
+    "iapRestoreError": "Impossible de restaurer les achats. Veuillez réessayer.",
+    "trialExpiredTitle": "Période d'essai terminée",
+    "trialExpiredDesc": "Votre essai gratuit de 14 jours est terminé. Abonnez-vous pour continuer à utiliser toutes les fonctionnalités de FRI2PLAN.",
+    "trialExpiredReadOnly": "Mode lecture seule — vous pouvez consulter vos données mais pas les modifier.",
+    "trialExpiredCta": "S'abonner — CHF 3.33/mois",
+    "trialExpiredContinueReadOnly": "Continuer en lecture seule",
+    "trialBannerDays": "Il vous reste {{count}} jour(s) d'essai gratuit.",
+    "trialBannerExpired": "Votre essai est terminé. Passez à Premium pour continuer.",
+    "trialBannerCta": "S'abonner"
   },
   "help": {
     "title": "Centre d'aide",

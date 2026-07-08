@@ -787,7 +787,15 @@
     "iapRestoreSuccess": "Purchases restored successfully.",
     "iapRestoreNothing": "No purchases to restore.",
     "iapPurchaseError": "Purchase failed. Please try again.",
-    "iapRestoreError": "Unable to restore purchases. Please try again."
+    "iapRestoreError": "Unable to restore purchases. Please try again.",
+    "trialExpiredTitle": "Free trial ended",
+    "trialExpiredDesc": "Your 14-day free trial has ended. Subscribe to continue using all FRI2PLAN features.",
+    "trialExpiredReadOnly": "Read-only mode — you can view your data but not modify it.",
+    "trialExpiredCta": "Subscribe — CHF 3.33/month",
+    "trialExpiredContinueReadOnly": "Continue in read-only mode",
+    "trialBannerDays": "{{count}} day(s) left in your free trial.",
+    "trialBannerExpired": "Your trial has ended. Upgrade to Premium to continue.",
+    "trialBannerCta": "Subscribe"
   },
   "help": {
     "title": "Help Center",

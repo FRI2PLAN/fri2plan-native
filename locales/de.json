@@ -787,7 +787,15 @@
     "iapRestoreSuccess": "Käufe erfolgreich wiederhergestellt.",
     "iapRestoreNothing": "Keine Käufe zum Wiederherstellen.",
     "iapPurchaseError": "Kauf fehlgeschlagen. Bitte versuchen Sie es erneut.",
-    "iapRestoreError": "Käufe konnten nicht wiederhergestellt werden. Bitte versuchen Sie es erneut."
+    "iapRestoreError": "Käufe konnten nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.",
+    "trialExpiredTitle": "Testzeitraum beendet",
+    "trialExpiredDesc": "Ihr 14-tägiger kostenloser Test ist beendet. Abonnieren Sie, um alle FRI2PLAN-Funktionen weiterhin nutzen zu können.",
+    "trialExpiredReadOnly": "Nur-Lese-Modus — Sie können Ihre Daten ansehen, aber nicht ändern.",
+    "trialExpiredCta": "Abonnieren — CHF 3.33/Monat",
+    "trialExpiredContinueReadOnly": "Im Nur-Lese-Modus fortfahren",
+    "trialBannerDays": "Noch {{count}} Tag(e) in Ihrem kostenlosen Test.",
+    "trialBannerExpired": "Ihr Test ist beendet. Wechseln Sie zu Premium, um fortzufahren.",
+    "trialBannerCta": "Abonnieren"
   },
   "help": {
     "title": "Hilfezentrum",
