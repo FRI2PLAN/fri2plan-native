@@ -34,7 +34,10 @@
     "validate": "Valider",
     "familyOrganizer": "Organiseur Familial",
     "skip": "Passer",
-    "copy": "Copier"
+    "copy": "Copier",
+    "selectAll": "Tout cocher",
+    "deselectAll": "Tout décocher",
+    "ignore": "Ignorer"
   },
   "auth": {
     "login": "Connexion",
@@ -962,6 +965,14 @@
     "notesPlaceholder": "Ingrédients, instructions...",
     "addToShopping": "Ajouter aux courses",
     "noIngredients": "Aucun ingrédient trouvé dans les notes",
+    "ingredientsFound": "ingrédient(s) trouvé(s) dans la recette",
+    "adaptFor": "Adapter les quantités pour",
+    "convives": "convive(s)",
+    "recipeFor": "Recette prévue pour",
+    "persons": "personne(s)",
+    "selectIngredients": "Sélectionner les ingrédients",
+    "createNewList": "Créer une nouvelle liste",
+    "coursesFor": "Courses pour",
     "moveTo": "Déplacer vers",
     "breakfast": "Petit-déjeuner",
     "lunch": "Déjeuner",

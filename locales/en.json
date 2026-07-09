@@ -34,7 +34,10 @@
     "validate": "Validate",
     "familyOrganizer": "Family Organizer",
     "skip": "Skip",
-    "copy": "Copy"
+    "copy": "Copy",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "ignore": "Ignore"
   },
   "auth": {
     "login": "Login",
@@ -971,7 +974,15 @@
     "preparation": "preparation",
     "step": "step",
     "shareRecipe": "Share recipe",
-    "shareRecipeMessage": "Recipe shared from FRI2PLAN"
+    "shareRecipeMessage": "Recipe shared from FRI2PLAN",
+    "ingredientsFound": "ingredient(s) found in recipe",
+    "adaptFor": "Adapt quantities for",
+    "convives": "guest(s)",
+    "recipeFor": "Recipe serves",
+    "persons": "person(s)",
+    "selectIngredients": "Select ingredients",
+    "createNewList": "Create a new list",
+    "coursesFor": "Shopping for"
   },
   "quickActions": {
     "title": "Quick actions",

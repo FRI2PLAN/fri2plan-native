@@ -34,7 +34,10 @@
     "validate": "Bestätigen",
     "familyOrganizer": "Familienorganisator",
     "skip": "Überspringen",
-    "copy": "Kopieren"
+    "copy": "Kopieren",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "ignore": "Ignorieren"
   },
   "auth": {
     "login": "Anmelden",
@@ -971,7 +974,15 @@
     "preparation": "Zubereitung",
     "step": "Schritt",
     "shareRecipe": "Rezept teilen",
-    "shareRecipeMessage": "Rezept geteilt von FRI2PLAN"
+    "shareRecipeMessage": "Rezept geteilt von FRI2PLAN",
+    "ingredientsFound": "Zutat(en) im Rezept gefunden",
+    "adaptFor": "Mengen anpassen für",
+    "convives": "Person(en)",
+    "recipeFor": "Rezept für",
+    "persons": "Person(en)",
+    "selectIngredients": "Zutaten auswählen",
+    "createNewList": "Neue Liste erstellen",
+    "coursesFor": "Einkauf für"
   },
   "quickActions": {
     "title": "Schnellaktionen",

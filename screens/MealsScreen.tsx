@@ -501,12 +501,27 @@ export default function MealsScreen({
 
   // ─── Ajout ingrédients aux courses ────────────────────────────────────────
   const [showAddToShopping, setShowAddToShopping] = useState(false);
-  const [ingredientsToAdd, setIngredientsToAdd] = useState<Meal[]>([]);
+  const [ingredientsToAdd, setIngredientsToAdd] = useState<string[]>([]);
   const [targetMealForShopping, setTargetMealForShopping] = useState<Meal | null>(null);
+  const [shoppingServings, setShoppingServings] = useState(1);
+  const [baseServings, setBaseServings] = useState(1);
+  const [selectedIngredients, setSelectedIngredients] = useState<Set<number>>(new Set());
+  const createShoppingListMutation = (trpc as any).shopping?.createList?.useMutation?.({ onSuccess: () => (trpc as any).shopping?.listsByFamily?.useQuery?.invalidate?.() }) ?? { mutateAsync: async () => {} };
+
+  // ─── Utilitaire : recalculer une quantité dans une chaîne d'ingrédient
+  const scaleIngredient = (ing: string, ratio: number): string => {
+    if (ratio === 1) return ing;
+    return ing.replace(/(\d+(?:[.,]\d+)?)/g, (match) => {
+      const num = parseFloat(match.replace(',', '.'));
+      const scaled = num * ratio;
+      // Arrondir à 1 décimale si nécessaire
+      const result = Math.round(scaled * 10) / 10;
+      return result % 1 === 0 ? String(result) : String(result).replace('.', ',');
+    });
+  };
 
   const openAddToShopping = (meal: Meal) => {
     // Parser les ingrédients depuis les notes (toutes formes possibles)
-    // Note: les ingrédients sont toujours stockés dans notes au format "Ingrédients :\n• ..."
     const notes = meal.notes || '';
     const lines = notes.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     let ingLines: string[] = [];
@@ -542,24 +557,48 @@ export default function MealsScreen({
 
     // 3. Fallback : toutes les lignes non vides (si pas de marqueurs)
     if (ingLines.length === 0 && lines.length > 0) {
-      // Prendre toutes les lignes courtes (< 60 chars) qui ressemblent à des ingrédients
       ingLines = lines
         .filter(l => l.length < 60 && !l.endsWith(':') && !l.toLowerCase().includes('préparation'))
         .slice(0, 20);
     }
 
+    const base = meal.servings || defaultServings || 1;
     setIngredientsToAdd(ingLines);
+    setBaseServings(base);
+    setShoppingServings(base);
+    setSelectedIngredients(new Set(ingLines.map((_, i) => i)));
     setTargetMealForShopping(meal);
     setShowAddToShopping(true);
   };
 
   const doAddToShopping = async (listId: number) => {
-    if (!ingredientsToAdd.length) return;
+    const ratio = shoppingServings / baseServings;
+    const selected = ingredientsToAdd
+      .filter((_, i) => selectedIngredients.has(i))
+      .map(ing => scaleIngredient(ing, ratio));
+    if (!selected.length) return;
     await addItemsMerged.mutateAsync({
       listId,
-      items: ingredientsToAdd.map(name => ({ name }))});
+      items: selected.map(name => ({ name }))});
     setShowAddToShopping(false);
-    Alert.alert('✓', `${ingredientsToAdd.length} ingrédient(s) ajouté(s) à la liste`);
+    Alert.alert('✓', `${selected.length} ingrédient(s) ajouté(s) à la liste`);
+  };
+
+  const handleCreateNewListForShopping = async () => {
+    const listName = targetMealForShopping?.name
+      ? `${t('meals.coursesFor') || 'Courses pour'} ${targetMealForShopping.name}`
+      : t('shopping.newList') || 'Nouvelle liste';
+    try {
+      const result = await (trpc as any).shopping.createList.mutateAsync({
+        familyId: activeFamilyId,
+        name: listName,
+      });
+      if (result?.id) {
+        await doAddToShopping(result.id);
+      }
+    } catch {
+      Alert.alert(t('common.error') || 'Erreur', t('shopping.createListError') || 'Impossible de créer la liste');
+    }
   };
 
   const renderMealCard = (meal: Meal) => (
@@ -976,38 +1015,135 @@ export default function MealsScreen({
   );
 
   // ─── Modal ajout aux courses ───────────────────────────────────────────────
-  const renderAddToShoppingModal = () => (
+  const renderAddToShoppingModal = () => {
+    const ratio = shoppingServings / baseServings;
+    return (
     <Modal visible={showAddToShopping} transparent animationType="slide">
       <View style={s.overlay}>
-        <View style={s.modal}>
-          <Text style={s.modalTitle}>🛒 {t('meals.addToShopping') || 'Ajouter aux courses'}</Text>
+        <View style={[s.modal, { maxHeight: '85%' }]}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={s.modalTitle}>🛒 {t('meals.addToShopping') || 'Ajouter aux courses'}</Text>
+            <TouchableOpacity onPress={() => setShowAddToShopping(false)}>
+              <Text style={{ fontSize: 18, color: isDark ? '#9ca3af' : '#6b7280', paddingLeft: 8 }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 10 }}>
+            {ingredientsToAdd.length} {t('meals.ingredientsFound') || 'ingrédient(s) trouvé(s) dans la recette'}
+          </Text>
+
           {ingredientsToAdd.length === 0 ? (
             <Text style={s.emptyText}>{t('meals.noIngredients') || 'Aucun ingrédient trouvé dans les notes'}</Text>
           ) : (
             <>
-              <Text style={s.label}>{ingredientsToAdd.length} ingrédient(s) :</Text>
-              <ScrollView style={{ maxHeight: 150 }}>
-                {ingredientsToAdd.map((ing, i) => <Text key={i} style={s.ingredientItem}>• {ing}</Text>)}
+              {/* Sélecteur de convives */}
+              <View style={{ backgroundColor: isDark ? '#1f2937' : '#f5f3ff', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e5e7eb' : '#374151', marginBottom: 8 }}>
+                  {t('meals.adaptFor') || 'Adapter les quantités pour'}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <TouchableOpacity
+                    onPress={() => setShoppingServings(v => Math.max(1, v - 1))}
+                    style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 20, lineHeight: 22 }}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 22, fontWeight: '700', color: isDark ? '#e5e7eb' : '#111827', minWidth: 28, textAlign: 'center' }}>{shoppingServings}</Text>
+                  <TouchableOpacity
+                    onPress={() => setShoppingServings(v => v + 1)}
+                    style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 20, lineHeight: 22 }}>+</Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 13, color: isDark ? '#9ca3af' : '#6b7280' }}>{t('meals.convives') || 'convive(s)'}</Text>
+                </View>
+                <Text style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af', marginTop: 4 }}>
+                  {t('meals.recipeFor') || 'Recette prévue pour'} {baseServings} {t('meals.persons') || 'personne(s)'}
+                </Text>
+              </View>
+
+              {/* Cases à cocher ingrédients */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <Text style={s.label}>{t('meals.selectIngredients') || 'Sélectionner les ingrédients'}</Text>
+                <TouchableOpacity onPress={() => {
+                  if (selectedIngredients.size === ingredientsToAdd.length) {
+                    setSelectedIngredients(new Set());
+                  } else {
+                    setSelectedIngredients(new Set(ingredientsToAdd.map((_, i) => i)));
+                  }
+                }}>
+                  <Text style={{ fontSize: 12, color: '#7c3aed' }}>
+                    {selectedIngredients.size === ingredientsToAdd.length
+                      ? (t('common.deselectAll') || 'Tout décocher')
+                      : (t('common.selectAll') || 'Tout cocher')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={{ maxHeight: 160, marginBottom: 10 }}>
+                {ingredientsToAdd.map((ing, i) => {
+                  const scaled = scaleIngredient(ing, ratio);
+                  const checked = selectedIngredients.has(i);
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => {
+                        setSelectedIngredients(prev => {
+                          const next = new Set(prev);
+                          if (next.has(i)) next.delete(i); else next.add(i);
+                          return next;
+                        });
+                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 4 }}
+                    >
+                      <View style={{
+                        width: 20, height: 20, borderRadius: 4, borderWidth: 2,
+                        borderColor: checked ? '#7c3aed' : (isDark ? '#4b5563' : '#d1d5db'),
+                        backgroundColor: checked ? '#7c3aed' : 'transparent',
+                        alignItems: 'center', justifyContent: 'center', marginRight: 10
+                      }}>
+                        {checked && <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>✓</Text>}
+                      </View>
+                      <Text style={{ fontSize: 14, color: isDark ? (checked ? '#e5e7eb' : '#6b7280') : (checked ? '#111827' : '#9ca3af'), flex: 1 }}>
+                        {scaled}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
-              <Text style={[s.label, { marginTop: 12 }]}>{t('shopping.selectList') || 'Choisir une liste'} :</Text>
+
+              {/* Choisir une liste */}
+              <Text style={[s.label, { marginBottom: 6 }]}>{t('shopping.selectList') || 'Ajouter à une liste'} :</Text>
               {activeLists.length === 0 ? (
                 <Text style={s.emptyText}>{t('shopping.noLists') || 'Aucune liste active'}</Text>
               ) : (
-                activeLists.map((list: any) => (
-                  <TouchableOpacity key={list.id} style={s.listChoiceBtn} onPress={() => doAddToShopping(list.id)}>
-                    <Text style={s.listChoiceBtnText}>📋 {list.name}</Text>
-                  </TouchableOpacity>
-                ))
+                <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false}>
+                  {activeLists.map((list: any) => (
+                    <TouchableOpacity key={list.id} style={s.listChoiceBtn} onPress={() => doAddToShopping(list.id)}>
+                      <Text style={s.listChoiceBtnText}>🛒 {list.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               )}
+              {/* Créer une nouvelle liste */}
+              <TouchableOpacity onPress={handleCreateNewListForShopping} style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 13, color: '#7c3aed', fontWeight: '600' }}>
+                  + {t('meals.createNewList') || 'Créer une nouvelle liste'}
+                </Text>
+              </TouchableOpacity>
             </>
           )}
-          <TouchableOpacity style={[s.cancelBtn, { alignSelf: 'flex-end', marginTop: 12 }]} onPress={() => setShowAddToShopping(false)}>
-            <Text style={s.cancelBtnText}>✕</Text>
-          </TouchableOpacity>
+
+          {/* Boutons bas */}
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 14, gap: 10 }}>
+            <TouchableOpacity onPress={() => setShowAddToShopping(false)} style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 14 }}>{t('common.ignore') || 'Ignorer'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
-  );
+    );
+  };
 
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
