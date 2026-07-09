@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { AddToShoppingModal } from '../components/AddToShoppingModal';
 import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -975,38 +976,18 @@ export default function MealsScreen({
     </Modal>
   );
 
-  // ─── Modal ajout aux courses ───────────────────────────────────────────────
+  // ─── Modal ajout aux courses ─────────────────────────────────────────────
   const renderAddToShoppingModal = () => (
-    <Modal visible={showAddToShopping} transparent animationType="slide">
-      <View style={s.overlay}>
-        <View style={s.modal}>
-          <Text style={s.modalTitle}>🛒 {t('meals.addToShopping') || 'Ajouter aux courses'}</Text>
-          {ingredientsToAdd.length === 0 ? (
-            <Text style={s.emptyText}>{t('meals.noIngredients') || 'Aucun ingrédient trouvé dans les notes'}</Text>
-          ) : (
-            <>
-              <Text style={s.label}>{ingredientsToAdd.length} ingrédient(s) :</Text>
-              <ScrollView style={{ maxHeight: 150 }}>
-                {ingredientsToAdd.map((ing, i) => <Text key={i} style={s.ingredientItem}>• {ing}</Text>)}
-              </ScrollView>
-              <Text style={[s.label, { marginTop: 12 }]}>{t('shopping.selectList') || 'Choisir une liste'} :</Text>
-              {activeLists.length === 0 ? (
-                <Text style={s.emptyText}>{t('shopping.noLists') || 'Aucune liste active'}</Text>
-              ) : (
-                activeLists.map((list: any) => (
-                  <TouchableOpacity key={list.id} style={s.listChoiceBtn} onPress={() => doAddToShopping(list.id)}>
-                    <Text style={s.listChoiceBtnText}>📋 {list.name}</Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </>
-          )}
-          <TouchableOpacity style={[s.cancelBtn, { alignSelf: 'flex-end', marginTop: 12 }]} onPress={() => setShowAddToShopping(false)}>
-            <Text style={s.cancelBtnText}>✕</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
+    <AddToShoppingModal
+      visible={showAddToShopping}
+      onClose={() => setShowAddToShopping(false)}
+      mealName={targetMealForShopping?.name || ''}
+      mealServings={targetMealForShopping?.servings || 2}
+      ingredients={ingredientsToAdd as unknown as string[]}
+      activeLists={activeLists}
+      familyId={familyId || 0}
+      onListCreated={() => utils.shopping.listsByFamily.invalidate()}
+    />
   );
 
   // ─── Rendu principal ───────────────────────────────────────────────────────
