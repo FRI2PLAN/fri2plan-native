@@ -49,12 +49,6 @@
       "./plugins/withRNSTabBarPatch",
       "expo-apple-authentication",
       [
-        "expo-calendar",
-        {
-          "calendarPermission": "FRI2PLAN accède à votre calendrier pour synchroniser vos événements familiaux dans les deux sens."
-        }
-      ],
-      [
         "expo-updates",
         {
           "checkAutomatically": "ON_LOAD",
@@ -98,7 +92,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 65,
+      "versionCode": 66,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 35,
@@ -118,9 +112,7 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.READ_CALENDAR",
-        "android.permission.WRITE_CALENDAR"
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "extra": {
