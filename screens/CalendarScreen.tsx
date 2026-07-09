@@ -1438,6 +1438,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
       <QuickCreateModal
         visible={createModalOpen}
         type="event"
+        initialDate={selectedDate}
         onClose={() => { setCreateModalOpen(false); refetch(); }}
       />
 

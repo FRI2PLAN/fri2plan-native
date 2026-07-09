@@ -22,6 +22,7 @@ interface QuickCreateModalProps {
   visible: boolean;
   type: QuickCreateType;
   onClose: () => void;
+  initialDate?: Date;
 }
 
 // ── Constantes ───────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ function Dropdown({ label, value, options, onChange, isDark, styles }: DropdownP
 }
 
 // ── Composant principal ───────────────────────────────────────────────────────
-export default function QuickCreateModal({ visible, type, onClose }: QuickCreateModalProps) {
+export default function QuickCreateModal({ visible, type, onClose, initialDate }: QuickCreateModalProps) {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const { user } = useAuth();
@@ -163,8 +164,8 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
 
   // ── Événement ──
   const [eventCategory, setEventCategory] = useState('other');
-  const [eventDate, setEventDate] = useState(new Date());
-  const [eventEndDate, setEventEndDate] = useState(new Date()); // pour multi-jours
+  const [eventDate, setEventDate] = useState(() => initialDate ?? new Date());
+  const [eventEndDate, setEventEndDate] = useState(() => initialDate ?? new Date()); // pour multi-jours
   const [isAllDay, setIsAllDay] = useState(false);
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [startTime, setStartTime] = useState(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; });
@@ -243,10 +244,18 @@ export default function QuickCreateModal({ visible, type, onClose }: QuickCreate
     if (userSettings) setEventReminder(defaultReminderStr);
   }, [defaultReminderStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Sync date initiale quand le modal s'ouvre ──
+  useEffect(() => {
+    if (visible && initialDate) {
+      setEventDate(initialDate);
+      setEventEndDate(initialDate);
+    }
+  }, [visible, initialDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Reset & fermeture ──
   const handleClose = () => {
     setTitle(''); setDescription('');
-    setEventCategory('other'); setEventDate(new Date()); setEventEndDate(new Date());
+    setEventCategory('other'); setEventDate(initialDate ?? new Date()); setEventEndDate(initialDate ?? new Date());
     setIsAllDay(false); setIsMultiDay(false);
     const s = new Date(); s.setHours(9, 0, 0, 0); setStartTime(s);
     const e = new Date(); e.setHours(10, 0, 0, 0); setEndTime(e);
