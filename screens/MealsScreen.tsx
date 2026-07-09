@@ -1014,9 +1014,10 @@ export default function MealsScreen({
     </Modal>
   );
 
-  // ─── Modal ajout aux courses (JSX inline pour éviter remount) ──────────────
-  const _shoppingRatio = shoppingServings / baseServings;
-  const _addToShoppingJSX = (
+  // ─── Modal ajout aux courses ───────────────────────────────────────────────
+  const renderAddToShoppingModal = () => {
+    const ratio = shoppingServings / baseServings;
+    return (
     <Modal visible={showAddToShopping} transparent animationType="slide">
       <View style={s.overlay}>
         <View style={[s.modal, { maxHeight: '85%' }]}>
@@ -1078,9 +1079,9 @@ export default function MealsScreen({
                   </Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView style={{ flex: 1, minHeight: 80, marginBottom: 10 }} nestedScrollEnabled>
+              <ScrollView style={{ maxHeight: 160, marginBottom: 10 }}>
                 {ingredientsToAdd.map((ing, i) => {
-                  const scaled = scaleIngredient(ing, _shoppingRatio);
+                  const scaled = scaleIngredient(ing, ratio);
                   const checked = selectedIngredients.has(i);
                   return (
                     <TouchableOpacity
@@ -1141,7 +1142,9 @@ export default function MealsScreen({
         </View>
       </View>
     </Modal>
-      );
+    );
+  };
+
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
@@ -1154,7 +1157,7 @@ export default function MealsScreen({
       </View>
 
       {renderForm()}
-      {_addToShoppingJSX}
+      {renderAddToShoppingModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
