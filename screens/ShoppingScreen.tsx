@@ -77,8 +77,8 @@ export default function ShoppingScreen({
     { familyId: familyId! },
     { enabled: !!familyId }
   );
-  const activeLists = useMemo(() => allLists.filter((l: ShoppingList) => !l.isArchived), [allLists]);
-  const archivedLists = useMemo(() => allLists.filter((l: ShoppingList) => !!l.isArchived), [allLists]);
+  const activeLists = useMemo(() => allLists.filter((l: any) => l.isActive !== 0 && !l.archivedAt), [allLists]);
+  const archivedLists = useMemo(() => allLists.filter((l: any) => l.isActive === 0 || !!l.archivedAt), [allLists]);
 
   const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
 
@@ -276,18 +276,21 @@ export default function ShoppingScreen({
         {/* Actions rapides */}
         <View style={s.quickActions}>
           <TouchableOpacity style={s.quickBtn} onPress={() => setHideChecked(!hideChecked)}>
-            <Text style={s.quickBtnText}>{hideChecked ? '👁' : '🙈'}</Text>
+            <Text style={s.quickBtnIcon}>{hideChecked ? '👁' : '🙈'}</Text>
+            <Text style={s.quickBtnLabel}>{hideChecked ? (t('shopping.showChecked') || 'Afficher cochés') : (t('shopping.hideChecked') || 'Masquer cochés')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.quickBtn} onPress={() => {
-            Alert.alert(t('shopping.deleteChecked') || 'Supprimer cochés', '', [
+            Alert.alert(t('shopping.deleteChecked') || 'Supprimer cochés', t('shopping.deleteCheckedConfirm') || 'Supprimer tous les articles cochés ?', [
               { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-              { text: '🗑', style: 'destructive', onPress: () => deleteChecked.mutate({ listId: selectedList.id }) },
+              { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => deleteChecked.mutate({ listId: selectedList.id }) },
             ]);
           }}>
-            <Text style={s.quickBtnText}>🗑✓</Text>
+            <Text style={s.quickBtnIcon}>🗑</Text>
+            <Text style={s.quickBtnLabel}>{t('shopping.deleteDone') || 'Suppr. cochés'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.quickBtn} onPress={() => deduplicate.mutate({ listId: selectedList.id })}>
-            <Text style={s.quickBtnText}>⚡</Text>
+            <Text style={s.quickBtnIcon}>⚡</Text>
+            <Text style={s.quickBtnLabel}>{t('shopping.deduplicate') || 'Dédoublonner'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -455,7 +458,7 @@ export default function ShoppingScreen({
               </View>
               <View style={s.modalFooter}>
                 <TouchableOpacity style={s.modalCancelBtn} onPress={() => setShowListForm(false)}>
-                  <Text style={s.modalCancelBtnText}>{t('common.cancel') || 'Annuler'}</Text>
+                  <Text style={s.modalCancelBtnText}>✕</Text>
                 </TouchableOpacity>
                 {editingList && (
                   <TouchableOpacity style={s.modalDeleteBtn} onPress={() => {
@@ -464,11 +467,11 @@ export default function ShoppingScreen({
                       { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => { deleteList.mutate({ listId: editingList.id }); setShowListForm(false); } },
                     ]);
                   }}>
-                    <Text style={s.modalDeleteBtnText}>{t('common.delete') || 'Supprimer'}</Text>
+                    <Text style={s.modalDeleteBtnText}>🗑</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity style={s.modalSaveBtn} onPress={saveList}>
-                  <Text style={s.modalSaveBtnText}>{editingList ? (t('common.save') || 'Enregistrer') : (t('common.create') || 'Créer')}</Text>
+                  <Text style={s.modalSaveBtnText}>✓</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -557,7 +560,9 @@ function getStyles(isDark: boolean) {
     backBtnText: { color: '#7c3aed', fontWeight: '600', fontSize: 15 },
     detailTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: text, textAlign: 'center' },
     quickActions: { flexDirection: 'row', padding: 8, gap: 8, borderBottomWidth: 1, borderBottomColor: border },
-    quickBtn: { flex: 1, backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+    quickBtn: { flex: 1, backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingVertical: 8, alignItems: 'center', gap: 2 },
+    quickBtnIcon: { fontSize: 16 },
+    quickBtnLabel: { fontSize: 10, color: subtext, textAlign: 'center', fontWeight: '500' },
     quickBtnText: { fontSize: 16 },
     addItemRow: { flexDirection: 'row', padding: 10, gap: 8, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: border },
     addItemInputs: { flex: 1, flexDirection: 'row' },
