@@ -46,7 +46,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
   // Initialiser Google Sign-In
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '846470017457-qh90rioca6oujshvm05p23b5do8fbv6t.apps.googleusercontent.com',
+      webClientId: '582461718885-5iljpjod1n958ch09ptr9ij55e4j7544.apps.googleusercontent.com',
       offlineAccess: true,
     });
   }, []);
