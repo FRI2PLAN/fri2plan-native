@@ -240,6 +240,16 @@ export type AppRouter = {
       query: () => Promise<User>;
       useQuery: (opts?: any) => any;
     };
+    verifyEmail: {
+      mutate: (input: { token: string }) => Promise<{ success: boolean; user?: User; token?: string }>;
+      useMutation: (opts?: any) => any;
+      mutateAsync: (input: { token: string }) => Promise<{ success: boolean; user?: User; token?: string }>;
+    };
+    resendVerificationEmail: {
+      mutate: (input: { email: string }) => Promise<{ success: boolean }>;
+      useMutation: (opts?: any) => any;
+      mutateAsync: (input: { email: string }) => Promise<{ success: boolean }>;
+    };
   };
   user: {
     me: {
