@@ -255,50 +255,6 @@ function AppContent() {
     }
   }, [logout]);
 
-  // ─── Gestion du deep link verify-email ─────────────────────────────────────
-  // Quand l'app est ouverte via https://app.fri2plan.ch/verify-email?token=xxx
-  // on appelle l'API verifyEmail et on connecte l'utilisateur automatiquement
-  const verifyEmailMutation = trpc.auth.verifyEmail.useMutation();
-  const verifyEmailTokenRef = useRef<string | null>(null);
-
-  const handleVerifyEmailUrl = useCallback(async (url: string | null) => {
-    const emailToken = extractVerifyEmailToken(url);
-    if (!emailToken) return;
-    if (verifyEmailTokenRef.current === emailToken) return; // déjà traité
-    verifyEmailTokenRef.current = emailToken;
-    try {
-      console.log('[DeepLink] verify-email token détecté, appel API...');
-      const result = await verifyEmailMutation.mutateAsync({ token: emailToken });
-      if (result?.user && result?.user?.id) {
-        // Le serveur retourne l'user mais pas de token JWT — on doit faire login
-        // Le token JWT est retourné dans result.token si disponible
-        const authToken = (result as any).token;
-        if (authToken) {
-          await login(result.user as any, authToken);
-          console.log('[DeepLink] verify-email → connexion automatique réussie');
-        } else {
-          // Pas de token → email vérifié mais pas connecté, afficher message
-          console.log('[DeepLink] verify-email → email vérifié, reconnexion manuelle requise');
-        }
-      }
-    } catch (err) {
-      console.warn('[DeepLink] verify-email error:', err);
-    }
-  }, [verifyEmailMutation, login]);
-
-  useEffect(() => {
-    // Vérifier l'URL initiale (app ouverte depuis un lien)
-    Linking.getInitialURL().then((url) => {
-      handleVerifyEmailUrl(url);
-    }).catch(() => {});
-
-    // Écouter les deep links quand l'app est déjà ouverte
-    const subscription = Linking.addEventListener('url', (event) => {
-      handleVerifyEmailUrl(event.url);
-    });
-    return () => subscription.remove();
-  }, [handleVerifyEmailUrl]);
-
   // Enregistrer l'exécuteur offline (doit être dans un composant avec accès tRPC)
   // Note: useOfflineExecutor est appelé dans OfflineAwareContent ci-dessous
 
@@ -307,6 +263,7 @@ function AppContent() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PushRegistrar />
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
+      <VerifyEmailHandler login={login} />
       <OfflineExecutorRegistrar />
 
       <SubscriptionProvider>
@@ -341,6 +298,31 @@ function AppContent() {
       )}
     </trpc.Provider>
   );
+}
+
+// ─── Gestion du deep link verify-email (dans le contexte tRPC) ───────────────
+function VerifyEmailHandler({ login }: { login: (user: any, token: string) => Promise<void> }) {
+  const verifyEmailMutation = trpc.auth.verifyEmail.useMutation();
+  const verifyEmailTokenRef = useRef<string | null>(null);
+  const handleVerifyEmailUrl = useCallback(async (url: string | null) => {
+    const emailToken = extractVerifyEmailToken(url);
+    if (!emailToken) return;
+    if (verifyEmailTokenRef.current === emailToken) return;
+    verifyEmailTokenRef.current = emailToken;
+    try {
+      const result = await verifyEmailMutation.mutateAsync({ token: emailToken });
+      if (result?.user && (result.user as any)?.id) {
+        const authToken = (result as any).token;
+        if (authToken) { await login(result.user as any, authToken); }
+      }
+    } catch (err) { console.warn("[DeepLink] verify-email error:", err); }
+  }, [verifyEmailMutation, login]);
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => { handleVerifyEmailUrl(url); }).catch(() => {});
+    const subscription = Linking.addEventListener("url", (event) => { handleVerifyEmailUrl(event.url); });
+    return () => subscription.remove();
+  }, [handleVerifyEmailUrl]);
+  return null;
 }
 
 // ─── Enregistrement de l'exécuteur offline (dans le contexte tRPC) ───────────
