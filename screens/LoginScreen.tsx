@@ -85,6 +85,9 @@ export default function LoginScreen() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   // Initialisation biométrie au démarrage
   useEffect(() => {
@@ -357,9 +360,32 @@ export default function LoginScreen() {
     onError: (error) => {
       console.error('Login error:', error);
       setLoading(false);
-      Alert.alert('Erreur', error.message || 'Identifiants incorrects');
+      // Détecter l'erreur "email non vérifié" pour afficher le bouton de renvoi
+      const msg = error.message || '';
+      if (msg.includes('vérifier votre email') || msg.includes('verify your email') || msg.includes('bestätigen Sie Ihre E-Mail')) {
+        setEmailNotVerified(true);
+        setResendSent(false);
+      } else {
+        setEmailNotVerified(false);
+        Alert.alert(t('common.error'), msg || t('auth.invalidCredentials'));
+      }
     },
   });
+
+  const resendVerificationMutation = trpc.auth.resendVerificationEmail.useMutation();
+
+  const handleResendVerification = async () => {
+    if (!email) return;
+    setResendLoading(true);
+    try {
+      await resendVerificationMutation.mutateAsync({ email });
+      setResendSent(true);
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e.message || t('auth.resendError'));
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -476,6 +502,28 @@ export default function LoginScreen() {
                 <Text style={styles.buttonText}>Se connecter</Text>
               )}
             </TouchableOpacity>
+
+            {/* Bloc email non vérifié */}
+            {emailNotVerified && (
+              <View style={styles.resendContainer}>
+                <Text style={styles.resendMessage}>{t('auth.emailNotVerifiedMessage')}</Text>
+                {resendSent ? (
+                  <Text style={styles.resendSuccess}>{t('auth.resendSuccess')}</Text>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.resendButton, resendLoading && styles.buttonDisabled]}
+                    onPress={handleResendVerification}
+                    disabled={resendLoading}
+                  >
+                    {resendLoading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={styles.resendButtonText}>{t('auth.resendVerificationEmail')}</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
 
             {/* Pas encore de compte */}
             <TouchableOpacity onPress={() => setScreenMode('register')} disabled={loading}>
@@ -722,6 +770,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9ca3af',
     marginBottom: 14,
+  },
+  resendContainer: {
+    width: '100%',
+    backgroundColor: '#1f2937',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  resendMessage: {
+    color: '#fbbf24',
+    fontSize: 13,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  resendButton: {
+    backgroundColor: '#7c3aed',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  resendButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  resendSuccess: {
+    color: '#34d399',
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   registerLink: {
     color: '#c084fc',

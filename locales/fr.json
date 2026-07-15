@@ -76,7 +76,12 @@
     "invalidEmail": "Adresse email invalide",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "passwordMustContain": "Le mot de passe doit contenir :",
-    "emailRequired": "Veuillez entrer votre adresse email"
+    "emailRequired": "Veuillez entrer votre adresse email",
+    "invalidCredentials": "Identifiants incorrects",
+    "emailNotVerifiedMessage": "Votre email n'est pas encore vérifié. Cliquez ci-dessous pour recevoir un nouvel email de confirmation.",
+    "resendVerificationEmail": "Renvoyer l'email de confirmation",
+    "resendSuccess": "Email envoyé ! Vérifiez votre boîte de réception.",
+    "resendError": "Erreur lors de l'envoi. Veuillez réessayer."
   },
   "navigation": {
     "dashboard": "Tableau de bord",

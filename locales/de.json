@@ -76,7 +76,12 @@
     "invalidEmail": "Ungültige E-Mail-Adresse",
     "passwordMismatch": "Passwörter stimmen nicht überein",
     "passwordMustContain": "Passwort muss enthalten:",
-    "emailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein"
+    "emailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein",
+    "invalidCredentials": "Ungültige Anmeldedaten",
+    "emailNotVerifiedMessage": "Ihre E-Mail-Adresse wurde noch nicht bestätigt. Klicken Sie unten, um eine neue Bestätigungs-E-Mail zu erhalten.",
+    "resendVerificationEmail": "Bestätigungs-E-Mail erneut senden",
+    "resendSuccess": "E-Mail gesendet! Überprüfen Sie Ihren Posteingang.",
+    "resendError": "Fehler beim Senden. Bitte versuchen Sie es erneut."
   },
   "navigation": {
     "dashboard": "Dashboard",

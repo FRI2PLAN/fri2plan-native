@@ -76,7 +76,12 @@
     "invalidEmail": "Invalid email address",
     "passwordMismatch": "Passwords do not match",
     "passwordMustContain": "Password must contain:",
-    "emailRequired": "Please enter your email address"
+    "emailRequired": "Please enter your email address",
+    "invalidCredentials": "Invalid credentials",
+    "emailNotVerifiedMessage": "Your email is not yet verified. Click below to receive a new confirmation email.",
+    "resendVerificationEmail": "Resend confirmation email",
+    "resendSuccess": "Email sent! Check your inbox.",
+    "resendError": "Error sending email. Please try again."
   },
   "navigation": {
     "dashboard": "Dashboard",
