@@ -184,9 +184,26 @@ async function checkAndApplyUpdate() {
   }
 }
 
-// ─── Composant principal AppContent ──────────────────────────────────────────
+// ─── Store global pour le deep link verify-email ────────────────────────────
+// Capturé avant que React soit monté (getInitialURL est async)
+export const pendingVerifyEmailToken = { token: null as string | null };
+
+// Extraire le token verify-email d'une URL
+function extractVerifyEmailToken(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    // Supporte https://app.fri2plan.ch/verify-email?token=xxx
+    const match = url.match(/[?&]token=([^&]+)/);
+    if (match && (url.includes('/verify-email') || url.includes('verify-email'))) {
+      return decodeURIComponent(match[1]);
+    }
+  } catch {}
+  return null;
+}
+
+// Composant principal AppContent ──────────────────────────────────────────
 function AppContent() {
-  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user } = useAuth();
+  const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user, login } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
@@ -237,6 +254,50 @@ function AppContent() {
       await logout();
     }
   }, [logout]);
+
+  // ─── Gestion du deep link verify-email ─────────────────────────────────────
+  // Quand l'app est ouverte via https://app.fri2plan.ch/verify-email?token=xxx
+  // on appelle l'API verifyEmail et on connecte l'utilisateur automatiquement
+  const verifyEmailMutation = trpc.auth.verifyEmail.useMutation();
+  const verifyEmailTokenRef = useRef<string | null>(null);
+
+  const handleVerifyEmailUrl = useCallback(async (url: string | null) => {
+    const emailToken = extractVerifyEmailToken(url);
+    if (!emailToken) return;
+    if (verifyEmailTokenRef.current === emailToken) return; // déjà traité
+    verifyEmailTokenRef.current = emailToken;
+    try {
+      console.log('[DeepLink] verify-email token détecté, appel API...');
+      const result = await verifyEmailMutation.mutateAsync({ token: emailToken });
+      if (result?.user && result?.user?.id) {
+        // Le serveur retourne l'user mais pas de token JWT — on doit faire login
+        // Le token JWT est retourné dans result.token si disponible
+        const authToken = (result as any).token;
+        if (authToken) {
+          await login(result.user as any, authToken);
+          console.log('[DeepLink] verify-email → connexion automatique réussie');
+        } else {
+          // Pas de token → email vérifié mais pas connecté, afficher message
+          console.log('[DeepLink] verify-email → email vérifié, reconnexion manuelle requise');
+        }
+      }
+    } catch (err) {
+      console.warn('[DeepLink] verify-email error:', err);
+    }
+  }, [verifyEmailMutation, login]);
+
+  useEffect(() => {
+    // Vérifier l'URL initiale (app ouverte depuis un lien)
+    Linking.getInitialURL().then((url) => {
+      handleVerifyEmailUrl(url);
+    }).catch(() => {});
+
+    // Écouter les deep links quand l'app est déjà ouverte
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleVerifyEmailUrl(event.url);
+    });
+    return () => subscription.remove();
+  }, [handleVerifyEmailUrl]);
 
   // Enregistrer l'exécuteur offline (doit être dans un composant avec accès tRPC)
   // Note: useOfflineExecutor est appelé dans OfflineAwareContent ci-dessous
