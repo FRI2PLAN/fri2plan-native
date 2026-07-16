@@ -87,10 +87,17 @@ export default function ShoppingScreen({
     { listId: selectedList?.id! },
     { enabled: !!selectedList?.id }
   );
-  const { data: history = [] } = trpc.shopping.itemsHistory.useQuery(
+  const { data: history = [], refetch: refetchHistory } = trpc.shopping.itemsHistory.useQuery(
     { familyId: familyId! },
-    { enabled: !!familyId, staleTime: 0 }
+    { enabled: !!familyId, staleTime: 0, refetchOnMount: 'always', gcTime: 0 }
   );
+
+  // Recharger l'historique quand on sélectionne une liste
+  useEffect(() => {
+    if (selectedList && familyId) {
+      refetchHistory();
+    }
+  }, [selectedList?.id, familyId]);
 
   const [hideChecked, setHideChecked] = useState(false);
   const visibleItems = useMemo(
