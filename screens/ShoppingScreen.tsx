@@ -181,10 +181,12 @@ export default function ShoppingScreen({
 
   const onItemNameChange = (text: string) => {
     setNewItemName(text);
-    if (text.length >= 2) {
+    console.log('[Shopping] history length:', history.length, 'familyId:', familyId, 'text:', text);
+    if (text.length >= 1) {
       const suggestions = (history as Array<{ name: string; quantity?: string; count?: number }>)
         .filter(h => h.name.toLowerCase().includes(text.toLowerCase()))
         .slice(0, 5);
+      console.log('[Shopping] suggestions:', suggestions.length, suggestions.map((s: any) => s.name));
       setAutocomplete(suggestions as any);
     } else {
       setAutocomplete([]);
