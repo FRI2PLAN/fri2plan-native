@@ -188,13 +188,25 @@ export default function ShoppingScreen({
 
   const onItemNameChange = (text: string) => {
     setNewItemName(text);
-    console.log('[Shopping] history length:', history.length, 'familyId:', familyId, 'text:', text);
     if (text.length >= 1) {
-      const suggestions = (history as Array<{ name: string; quantity?: string; count?: number }>)
-        .filter(h => h.name.toLowerCase().includes(text.toLowerCase()))
-        .slice(0, 5);
-      console.log('[Shopping] suggestions:', suggestions.length, suggestions.map((s: any) => s.name));
-      setAutocomplete(suggestions as any);
+      const q = text.toLowerCase();
+      // Combiner l'historique serveur + les items de la liste courante
+      const fromHistory = (history as Array<{ name: string; quantity?: string; count?: number }>)
+        .map(h => ({ name: h.name, quantity: h.quantity }));
+      const fromCurrentList = (items as ShoppingItem[])
+        .map(i => ({ name: i.name, quantity: i.quantity }));
+      const allSuggestions = [...fromHistory, ...fromCurrentList];
+      const seen = new Set<string>();
+      const matches: Array<{ name: string; quantity?: string }> = [];
+      for (const s of allSuggestions) {
+        const name = s.name?.trim();
+        if (name && name.toLowerCase().includes(q) && !seen.has(name.toLowerCase())) {
+          seen.add(name.toLowerCase());
+          matches.push(s);
+          if (matches.length >= 6) break;
+        }
+      }
+      setAutocomplete(matches as any);
     } else {
       setAutocomplete([]);
     }
