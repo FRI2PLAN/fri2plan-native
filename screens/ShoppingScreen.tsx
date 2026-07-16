@@ -89,7 +89,7 @@ export default function ShoppingScreen({
   );
   const { data: history = [] } = trpc.shopping.itemsHistory.useQuery(
     { familyId: familyId! },
-    { enabled: !!familyId }
+    { enabled: !!familyId, staleTime: 0 }
   );
 
   const [hideChecked, setHideChecked] = useState(false);
@@ -109,6 +109,7 @@ export default function ShoppingScreen({
     onSuccess: () => {
       utils.shopping.itemsByList.invalidate({ listId: selectedList?.id });
       utils.shopping.itemsByList.invalidate();
+      utils.shopping.itemsHistory.invalidate();
     },
     onError: (err: any) => {
       Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article. Vérifiez votre connexion.');
@@ -181,10 +182,10 @@ export default function ShoppingScreen({
   const onItemNameChange = (text: string) => {
     setNewItemName(text);
     if (text.length >= 2) {
-      const suggestions = (history as ShoppingItem[]).filter(h =>
-        h.name.toLowerCase().includes(text.toLowerCase())
-      ).slice(0, 5);
-      setAutocomplete(suggestions);
+      const suggestions = (history as Array<{ name: string; quantity?: string; count?: number }>)
+        .filter(h => h.name.toLowerCase().includes(text.toLowerCase()))
+        .slice(0, 5);
+      setAutocomplete(suggestions as any);
     } else {
       setAutocomplete([]);
     }
@@ -333,8 +334,8 @@ export default function ShoppingScreen({
         {/* Autocomplétion */}
         {autocomplete.length > 0 && (
           <View style={s.autocomplete}>
-            {autocomplete.map(s2 => (
-              <TouchableOpacity key={s2.id} style={s.autocompleteItem} onPress={() => { setNewItemName(s2.name); setAutocomplete([]); }}>
+            {autocomplete.map((s2, idx) => (
+              <TouchableOpacity key={s2.name + idx} style={s.autocompleteItem} onPress={() => { setNewItemName(s2.name); setAutocomplete([]); }}>
                 <Text style={s.autocompleteText}>{s2.name}</Text>
               </TouchableOpacity>
             ))}
