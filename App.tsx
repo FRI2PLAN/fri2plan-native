@@ -238,6 +238,8 @@ function AppContent() {
   const [inviteCodeFromLink, setInviteCodeFromLink] = useState<string | undefined>(
     pendingInviteCode.code || undefined
   );
+  // Email associé à l'invitation (récupéré via invitations.getByCode)
+  const [inviteEmailFromLink, setInviteEmailFromLink] = useState<string | undefined>(undefined);
   // Vérification de version au démarrage
   const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
   const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
@@ -265,6 +267,7 @@ function AppContent() {
       const code = extractInviteCode(event.url);
       if (code) {
         setInviteCodeFromLink(code);
+        setInviteEmailFromLink(undefined); // sera rechargé via useEffect
         console.log('[DeepLink] invitation code mis à jour dans AppContent:', code);
       }
     });
@@ -307,6 +310,15 @@ function AppContent() {
       <PushRegistrar />
       <FCMLogoutHandler logoutRef={fcmLogoutRef} />
       <VerifyEmailHandler login={login} />
+      <InvitationHandler
+        inviteCode={inviteCodeFromLink}
+        isAuthenticated={isAuthenticated}
+        onEmailFound={(email) => setInviteEmailFromLink(email)}
+        onFamilyJoined={() => {
+          setInviteCodeFromLink(undefined);
+          setInviteEmailFromLink(undefined);
+        }}
+      />
       <OfflineExecutorRegistrar />
 
       <SubscriptionProvider>
@@ -328,6 +340,8 @@ function AppContent() {
         <LoginScreen
           initialInviteCode={inviteCodeFromLink}
           initialScreenMode={inviteCodeFromLink ? 'register' : undefined}
+          isEmailInvitation={!!inviteCodeFromLink}
+          initialEmail={inviteEmailFromLink}
         />
       )}
       </SubscriptionProvider>
@@ -370,6 +384,61 @@ function VerifyEmailHandler({ login }: { login: (user: any, token: string) => Pr
   }, [handleVerifyEmailUrl]);
   return null;
 }
+// ─── Gestion du deep link invitation (dans le contexte tRPC) ─────────────────
+function InvitationHandler({
+  inviteCode,
+  isAuthenticated,
+  onEmailFound,
+  onFamilyJoined,
+}: {
+  inviteCode: string | undefined;
+  isAuthenticated: boolean;
+  onEmailFound: (email: string) => void;
+  onFamilyJoined: () => void;
+}) {
+  const getByCodeQuery = trpc.invitations.getByCode.useQuery(
+    { code: inviteCode! },
+    {
+      enabled: !!inviteCode,
+      retry: false,
+      networkMode: 'always',
+    }
+  );
+  const acceptByCodeMutation = trpc.invitations.acceptByCode.useMutation();
+  const utils = trpc.useUtils();
+
+  // Quand on récupère l'invitation, pré-remplir l'email
+  useEffect(() => {
+    if ((getByCodeQuery.data as any)?.email) {
+      onEmailFound((getByCodeQuery.data as any).email);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(getByCodeQuery.data as any)?.email]);
+
+  // Si l'utilisateur est déjà connecté et qu'un code d'invitation arrive
+  const acceptedRef = useRef(false);
+  useEffect(() => {
+    if (!inviteCode || !isAuthenticated || acceptedRef.current) return;
+    if (!getByCodeQuery.data) return;
+    const inv = getByCodeQuery.data as any;
+    if (inv.status !== 'pending') return;
+    acceptedRef.current = true;
+    acceptByCodeMutation.mutateAsync({ code: inviteCode })
+      .then(() => {
+        utils.family.list.invalidate();
+        onFamilyJoined();
+        console.log('[Invitation] Famille rejointe automatiquement (utilisateur déjà connecté)');
+      })
+      .catch((err: any) => {
+        acceptedRef.current = false;
+        console.warn('[Invitation] Erreur acceptation automatique:', err.message);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteCode, isAuthenticated, getByCodeQuery.data]);
+
+  return null;
+}
+
 
 // ─── Enregistrement de l'exécuteur offline (dans le contexte tRPC) ───────────
 function OfflineExecutorRegistrar() {

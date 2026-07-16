@@ -25,14 +25,16 @@ interface RegisterScreenProps {
   onBackToLogin: () => void;
   onRegistered?: () => void; // auto-login après inscription
   initialInviteCode?: string; // pré-remplir le code d'invitation (depuis deep link)
+  initialEmail?: string; // pré-remplir l'email (depuis invitation email)
+  isEmailInvitation?: boolean; // true si le code vient d'un email d'invitation (table invitations)
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function RegisterScreen({ onBackToLogin, onRegistered, initialInviteCode }: RegisterScreenProps) {
+export default function RegisterScreen({ onBackToLogin, onRegistered, initialInviteCode, initialEmail, isEmailInvitation }: RegisterScreenProps) {
   const { t } = useTranslation();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [emailError, setEmailError] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -87,10 +89,29 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
     }
   };
 
+  // Mutation pour accepter l'invitation par code (table invitations) après inscription
+  const acceptInvitationMutation = trpc.invitations.acceptByCodeWithUserId.useMutation({
+    onSuccess: (data) => {
+      console.log('[Invitation] Famille rejointe après inscription:', data.familyId);
+    },
+    onError: (error) => {
+      console.error('[Invitation] Erreur acceptation invitation:', error);
+      // Ne pas bloquer — l'utilisateur est quand même inscrit
+    },
+  });
+
   // tRPC mutation for auto-login after registration
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
       if (data?.user && data?.token) {
+        // Si invitation email, accepter l'invitation avec l'userId nouvellement créé
+        if (isEmailInvitation && inviteCode && data.user?.id) {
+          try {
+            await acceptInvitationMutation.mutateAsync({ code: inviteCode, userId: data.user.id });
+          } catch (e) {
+            console.error('[Invitation] Erreur acceptation:', e);
+          }
+        }
         await login(data.user, data.token);
       }
       setLoading(false);
@@ -108,6 +129,9 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
   // tRPC mutation for registration
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
+      // Pour les invitations email, ne pas passer inviteCode à register
+      // (register utilise families.inviteCode, pas invitations.invitationCode)
+      // L'acceptation se fait dans loginMutation.onSuccess via acceptByCodeWithUserId
       loginMutation.mutate({ email, password, rememberMe: true });
     },
     onError: (error) => {

@@ -38,6 +38,8 @@ type ScreenMode = 'login' | 'register' | 'forgotPassword';
 interface LoginScreenProps {
   initialInviteCode?: string; // code d'invitation pré-rempli (depuis deep link)
   initialScreenMode?: ScreenMode; // démarrer directement sur l'écran d'inscription
+  isEmailInvitation?: boolean; // true si le code vient d'un email d'invitation (table invitations)
+  initialEmail?: string; // email pré-rempli depuis l'invitation
 }
 
 const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
@@ -74,7 +76,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0)
   }
 }
 
-export default function LoginScreen({ initialInviteCode, initialScreenMode }: LoginScreenProps = {}) {
+export default function LoginScreen({ initialInviteCode, initialScreenMode, isEmailInvitation, initialEmail }: LoginScreenProps = {}) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const { setActiveFamilyId } = useFamily();
@@ -406,7 +408,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode }: Lo
 
   // Show Register screen
   if (screenMode === 'register') {
-    return <RegisterScreen onBackToLogin={() => setScreenMode('login')} initialInviteCode={pendingInviteCode} />;
+    return <RegisterScreen onBackToLogin={() => setScreenMode('login')} initialInviteCode={pendingInviteCode} initialEmail={initialEmail} isEmailInvitation={isEmailInvitation} />;
   }
 
   // Show Forgot Password screen

@@ -214,17 +214,19 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
   // Handlers
   const handleCopyCode = async (code: string) => {
+    const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
     try {
-      await Share.share({ message: code, title: "Code d'invitation" });
+      await Share.share({ message: inviteLink, title: "Lien d'invitation" });
     } catch {
-      Alert.alert('Code', code);
+      Alert.alert('Lien', inviteLink);
     }
   };
 
   const handleShareCode = async (code: string) => {
+    const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
     try {
       await Share.share({
-        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nCode d'invitation : ${code}`,
+        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nClique sur ce lien pour nous rejoindre directement :\n${inviteLink}`,
         title: 'Invitation FRI2PLAN',
       });
     } catch (e) {}
