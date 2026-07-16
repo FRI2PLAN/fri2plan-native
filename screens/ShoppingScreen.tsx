@@ -105,7 +105,15 @@ export default function ShoppingScreen({
   const archiveList = trpc.shopping.archiveList.useMutation({ onSuccess: () => { utils.shopping.listsByFamily.invalidate(); setSelectedList(null); } });
   const unarchiveList = trpc.shopping.unarchiveList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
   const duplicateList = trpc.shopping.duplicateList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
-  const addItem = trpc.shopping.addItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
+  const addItem = trpc.shopping.addItem.useMutation({
+    onSuccess: () => {
+      utils.shopping.itemsByList.invalidate({ listId: selectedList?.id });
+      utils.shopping.itemsByList.invalidate();
+    },
+    onError: (err: any) => {
+      Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article. Vérifiez votre connexion.');
+    },
+  });
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
   const toggleItem = trpc.shopping.toggleItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
   const updateItem = trpc.shopping.updateItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
@@ -193,10 +201,14 @@ export default function ShoppingScreen({
       setAutocomplete([]);
       Alert.alert('📵', 'Article ajouté en file d\'attente (hors ligne)');
     } else {
-      await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
-      setNewItemName('');
-      setNewItemQty('');
-      setAutocomplete([]);
+      try {
+        await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
+        setNewItemName('');
+        setNewItemQty('');
+        setAutocomplete([]);
+      } catch (err: any) {
+        Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article.');
+      }
     }
   };
 
