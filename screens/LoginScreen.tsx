@@ -35,6 +35,11 @@ const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 
 type ScreenMode = 'login' | 'register' | 'forgotPassword';
 
+interface LoginScreenProps {
+  initialInviteCode?: string; // code d'invitation pré-rempli (depuis deep link)
+  initialScreenMode?: ScreenMode; // démarrer directement sur l'écran d'inscription
+}
+
 const REMEMBER_ME_EMAIL_KEY = 'rememberMe_email';
 const REMEMBER_ME_ENABLED_KEY = 'rememberMe_enabled';
 
@@ -69,7 +74,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0)
   }
 }
 
-export default function LoginScreen() {
+export default function LoginScreen({ initialInviteCode, initialScreenMode }: LoginScreenProps = {}) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const { setActiveFamilyId } = useFamily();
@@ -78,7 +83,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [screenMode, setScreenMode] = useState<ScreenMode>('login');
+  const [screenMode, setScreenMode] = useState<ScreenMode>(initialScreenMode || 'login');
+  const [pendingInviteCode, setPendingInviteCode] = useState<string | undefined>(initialInviteCode);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
@@ -400,7 +406,7 @@ export default function LoginScreen() {
 
   // Show Register screen
   if (screenMode === 'register') {
-    return <RegisterScreen onBackToLogin={() => setScreenMode('login')} />;
+    return <RegisterScreen onBackToLogin={() => setScreenMode('login')} initialInviteCode={pendingInviteCode} />;
   }
 
   // Show Forgot Password screen

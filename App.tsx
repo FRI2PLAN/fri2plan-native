@@ -42,6 +42,22 @@ export const pendingGoogleCalendarDeepLink = { url: null as string | null };
 // Déclenche un refetch du statut abonnement quand l'app est rouverte après paiement
 export const pendingSubscriptionSuccess = { triggered: false };
 
+// ─── Store global pour le deep link invitation ────────────────────────────────
+// Capturé avant que React soit monté (getInitialURL est async)
+export const pendingInviteCode = { code: null as string | null };
+
+// Extraire le code d'invitation d'une URL
+function extractInviteCode(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    // Supporte https://app.fri2plan.ch/invitation/{code}
+    // et fri2plan://invitation/{code}
+    const match = url.match(/\/invitation\/([^/?#]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  } catch {}
+  return null;
+}
+
 // Intercepter les deep links dès le démarrage de l'app (avant le splash)
 Linking.getInitialURL().then((url) => {
   if (url && (url.startsWith('fri2plan://google-calendar/oauth-done') || url.startsWith('fri2plan://google-calendar/callback'))) {
@@ -49,6 +65,11 @@ Linking.getInitialURL().then((url) => {
   }
   if (url && url.startsWith('fri2plan://subscription/success')) {
     pendingSubscriptionSuccess.triggered = true;
+  }
+  const inviteCode = extractInviteCode(url);
+  if (inviteCode) {
+    pendingInviteCode.code = inviteCode;
+    console.log('[DeepLink] invitation code capturé au démarrage:', inviteCode);
   }
 }).catch(() => {});
 
@@ -63,6 +84,12 @@ Linking.addEventListener('url', (event) => {
     queryClient.invalidateQueries({ queryKey: [['subscription', 'getSubscriptionDetails']] });
     queryClient.invalidateQueries({ queryKey: [['subscription', 'getPaymentHistory']] });
     console.log('[DeepLink] subscription/success → cache abonnement invalidé');
+  }
+  // Invitation deep link (app en arrière-plan ou ouverte)
+  const inviteCode = extractInviteCode(event.url);
+  if (inviteCode) {
+    pendingInviteCode.code = inviteCode;
+    console.log('[DeepLink] invitation code reçu (app active):', inviteCode);
   }
 });
 
@@ -207,6 +234,10 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(0);
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
+  // Code d'invitation depuis deep link (capturé avant le montage React)
+  const [inviteCodeFromLink, setInviteCodeFromLink] = useState<string | undefined>(
+    pendingInviteCode.code || undefined
+  );
   // Vérification de version au démarrage
   const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
   const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
@@ -226,6 +257,18 @@ function AppContent() {
     // Vérifier et appliquer les mises à jour OTA au démarrage
     checkAndApplyUpdate();
     return () => { clearTimeout(hideNative); clearTimeout(timer); };
+  }, []);
+
+  // Écouter les deep links d'invitation quand l'app est déjà ouverte (arrière-plan)
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', (event) => {
+      const code = extractInviteCode(event.url);
+      if (code) {
+        setInviteCodeFromLink(code);
+        console.log('[DeepLink] invitation code mis à jour dans AppContent:', code);
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   // Ne recréer le client tRPC QUE quand le token change
@@ -282,7 +325,10 @@ function AppContent() {
           />
         </>
       ) : (
-        <LoginScreen />
+        <LoginScreen
+          initialInviteCode={inviteCodeFromLink}
+          initialScreenMode={inviteCodeFromLink ? 'register' : undefined}
+        />
       )}
       </SubscriptionProvider>
 

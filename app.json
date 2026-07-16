@@ -2,7 +2,7 @@
   "expo": {
     "name": "FRI2PLAN",
     "slug": "fri2plan-native",
-    "version": "1.1.3",
+    "version": "1.1.2",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -92,7 +92,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 68,
+      "versionCode": 67,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 35,

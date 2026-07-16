@@ -24,11 +24,12 @@ import { API_URL } from '../lib/trpc';
 interface RegisterScreenProps {
   onBackToLogin: () => void;
   onRegistered?: () => void; // auto-login après inscription
+  initialInviteCode?: string; // pré-remplir le code d'invitation (depuis deep link)
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function RegisterScreen({ onBackToLogin, onRegistered }: RegisterScreenProps) {
+export default function RegisterScreen({ onBackToLogin, onRegistered, initialInviteCode }: RegisterScreenProps) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -36,8 +37,8 @@ export default function RegisterScreen({ onBackToLogin, onRegistered }: Register
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [showInviteCode, setShowInviteCode] = useState(false);
+  const [inviteCode, setInviteCode] = useState(initialInviteCode || '');
+  const [showInviteCode, setShowInviteCode] = useState(!!initialInviteCode);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
