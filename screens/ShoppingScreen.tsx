@@ -215,20 +215,25 @@ export default function ShoppingScreen({
   const { isConnected, enqueue } = useOffline();
 
   const submitItem = async () => {
-    if (!newItemName.trim() || !selectedList) return;
+    console.log('[submitItem] name:', newItemName.trim(), 'listId:', selectedList?.id, 'isConnected:', isConnected);
+    if (!newItemName.trim() || !selectedList) { console.log('[submitItem] ABORT: no name or no list'); return; }
     if (!isConnected) {
+      console.log('[submitItem] OFFLINE: enqueue');
       await enqueue({ type: 'shopping.addItem', payload: { listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined } });
       setNewItemName('');
       setNewItemQty('');
       setAutocomplete([]);
-      Alert.alert('📵', 'Article ajouté en file d\'attente (hors ligne)');
+      Alert.alert('\ud83d\udcf5', 'Article ajout\u00e9 en file d\'attente (hors ligne)');
     } else {
       try {
-        await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
+        console.log('[submitItem] ONLINE: mutateAsync listId=', selectedList.id);
+        const result = await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
+        console.log('[submitItem] SUCCESS:', result);
         setNewItemName('');
         setNewItemQty('');
         setAutocomplete([]);
       } catch (err: any) {
+        console.log('[submitItem] ERROR:', err?.message, err);
         Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article.');
       }
     }
