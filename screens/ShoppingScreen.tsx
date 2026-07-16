@@ -83,9 +83,9 @@ export default function ShoppingScreen({
   const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
 
   // ─── Articles ──────────────────────────────────────────────────────────────
-  const { data: items = [], isLoading: itemsLoading } = trpc.shopping.itemsByList.useQuery(
+  const { data: items = [], isLoading: itemsLoading, refetch: refetchItems } = trpc.shopping.itemsByList.useQuery(
     { listId: selectedList?.id! },
-    { enabled: !!selectedList?.id }
+    { enabled: !!selectedList?.id, staleTime: 0, refetchOnMount: 'always' }
   );
   const { data: history = [], refetch: refetchHistory } = trpc.shopping.itemsHistory.useQuery(
     { familyId: familyId! },
@@ -114,6 +114,8 @@ export default function ShoppingScreen({
   const duplicateList = trpc.shopping.duplicateList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
   const addItem = trpc.shopping.addItem.useMutation({
     onSuccess: () => {
+      // Forcer un refetch immédiat (networkMode offlineFirst bloque l'invalidation seule)
+      refetchItems();
       utils.shopping.itemsByList.invalidate({ listId: selectedList?.id });
       utils.shopping.itemsByList.invalidate();
       utils.shopping.itemsHistory.invalidate();
@@ -122,12 +124,12 @@ export default function ShoppingScreen({
       Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article. Vérifiez votre connexion.');
     },
   });
-  const addItemsMerged = trpc.shopping.addItemsMerged.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
-  const toggleItem = trpc.shopping.toggleItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
-  const updateItem = trpc.shopping.updateItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
-  const deleteItem = trpc.shopping.deleteItem.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
-  const deleteChecked = trpc.shopping.deleteCheckedItems.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
-  const deduplicate = trpc.shopping.deduplicateItems.useMutation({ onSuccess: () => utils.shopping.itemsByList.invalidate() });
+  const addItemsMerged = trpc.shopping.addItemsMerged.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const toggleItem = trpc.shopping.toggleItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const updateItem = trpc.shopping.updateItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const deleteItem = trpc.shopping.deleteItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const deleteChecked = trpc.shopping.deleteCheckedItems.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const deduplicate = trpc.shopping.deduplicateItems.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
 
   // ─── Formulaire liste ──────────────────────────────────────────────────────
   const [showListForm, setShowListForm] = useState(false);
