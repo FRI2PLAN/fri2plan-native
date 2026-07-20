@@ -9,6 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import PremiumOverlay from '../components/PremiumOverlay';
 
 interface CalendrierIntimeScreenProps {
   onNavigate?: (screen: string) => void;
@@ -56,6 +58,8 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   const FLOW_OPTIONS = getFlowOptions(t);
   const SYMPTOM_OPTIONS = getSymptomOptions(t);
   const styles = getStyles(isDark);
+  const { hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
 
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'settings'>('overview');
   const [refreshing, setRefreshing] = useState(false);
@@ -207,6 +211,9 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
   return (
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
+
+      {/* Premium Overlay */}
+      <PremiumOverlay visible={isFree} />
 
       {/* Titre */}
       <View style={styles.header}>

@@ -14,6 +14,8 @@ import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import FreemiumLimitModal from '../components/FreemiumLimitModal';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
@@ -31,6 +33,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   const { user } = useAuth();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
+  const { hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
+  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
 
   // Vue principale : liste des cercles ou détail d'un cercle
   const [mainView, setMainView] = useState<MainView>('circles');
@@ -234,6 +239,15 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
   const handleInvite = () => {
     if (!inviteEmail.trim() || !activeFamily) return;
+    // Vérification limite freemium : 2 membres actifs max
+    if (isFree) {
+      const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
+      if (activeMembers.length >= 2) {
+        setShowInviteModal(false);
+        setFreemiumLimitVisible(true);
+        return;
+      }
+    }
     inviteMutation.mutate({ email: inviteEmail.trim(), familyId: activeFamily.id, role: inviteRole });
   };
 
@@ -921,6 +935,13 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           </View>
         </View>
       </Modal>
+
+      {/* Freemium Limit Modal */}
+      <FreemiumLimitModal
+        visible={freemiumLimitVisible}
+        messageKey="freemium.limitMembersBody"
+        onClose={() => setFreemiumLimitVisible(false)}
+      />
     </View>
   );
 }

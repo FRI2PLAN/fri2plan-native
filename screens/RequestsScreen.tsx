@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import PremiumOverlay from '../components/PremiumOverlay';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
@@ -42,7 +43,8 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { requirePremium } = useSubscription();
+  const { requirePremium, hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
   const styles = getStyles(isDark);
 
   const getLocale = () => {
@@ -266,6 +268,9 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   return (
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
+
+      {/* Premium Overlay */}
+      <PremiumOverlay visible={isFree} />
 
       {/* Titre centré */}
       <View style={styles.header}>

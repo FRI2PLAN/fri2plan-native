@@ -1612,3 +1612,17 @@ components/
 - [ ] Fix onboarding : au relancement depuis Paramètres, scroll commence par la fin au lieu du début
 - [ ] Fix Messages Groupes : style bulles différent de Général (avatar extérieur, message collé bord)
 - [ ] Fix Messages Groupes : réactions style différent de Général
+
+## Freemium — Restrictions plan gratuit (session 2026-07-20)
+- [x] Créer composant FreemiumLimitModal (pop-up limite atteinte + bouton upgrade)
+- [x] Créer composant PremiumOverlay (overlay modules premium-only)
+- [x] Ajouter traductions freemium dans fr.json, en.json, de.json
+- [x] TasksScreen : limite 5 tâches actives sur plan gratuit
+- [x] NotesScreen : limite 5 notes sur plan gratuit
+- [x] ShoppingScreen : limite 20 articles actifs sur plan gratuit
+- [x] MembersScreen : limite 2 membres actifs sur plan gratuit
+- [x] BudgetScreen : PremiumOverlay (module premium-only)
+- [x] MealsScreen : PremiumOverlay (module premium-only)
+- [x] RewardsScreen : PremiumOverlay (module premium-only)
+- [x] RequestsScreen : PremiumOverlay (module premium-only)
+- [x] CalendrierIntimeScreen : PremiumOverlay (module premium-only)

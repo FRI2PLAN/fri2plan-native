@@ -1249,5 +1249,25 @@
     "storeNameAndroid": "Google Play",
     "updateButton": "Update on {{store}}",
     "laterButton": "Later"
+  },
+  "freemium": {
+    "limitTitle": "Free plan limit reached",
+    "limitTasksBody": "You have reached the limit of 5 active tasks on the free plan.",
+    "limitNotesBody": "You have reached the limit of 5 notes on the free plan.",
+    "limitShoppingBody": "You have reached the limit of 20 active items on the free plan.",
+    "limitMembersBody": "You have reached the limit of 2 members on the free plan.",
+    "limitEventsBody": "You have reached the limit of 10 events this month on the free plan.",
+    "limitMessagesPhotoBody": "Sending photos is reserved for the Premium plan.",
+    "limitMessagesGroupBody": "Group messaging is reserved for the Premium plan.",
+    "limitCalendarRecurringBody": "Recurring events are reserved for the Premium plan.",
+    "limitCalendarReminderBody": "Event reminders are reserved for the Premium plan.",
+    "limitCalendarIcalBody": "iCal export/import is reserved for the Premium plan.",
+    "upgradeBtn": "Upgrade to Premium",
+    "stayFreeBtn": "Stay on free plan",
+    "premiumModuleTitle": "Premium Feature",
+    "premiumModuleBody": "This feature is only available with the Premium plan.",
+    "premiumModuleBtn": "Discover Premium",
+    "freeLimits": "Free plan limits",
+    "freeLimitsDesc": "5 tasks · 5 notes · 20 items · 10 events/month · 2 members · 7 days message history"
   }
 }

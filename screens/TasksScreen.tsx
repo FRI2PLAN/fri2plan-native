@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useOffline } from '../contexts/OfflineContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import FreemiumLimitModal from '../components/FreemiumLimitModal';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -56,7 +57,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
-  const { requirePremium } = useSubscription();
+  const { requirePremium, hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
+  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const styles = getStyles(isDark);
@@ -309,6 +312,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const handleCreateTask = () => {
     if (!formData.title.trim()) { Alert.alert('Erreur', 'Le titre est requis'); return; }
+    // Vérification limite freemium : 5 tâches actives max
+    if (isFree) {
+      const activeTasks = (tasks || []).filter((task: any) => task.status !== 'completed');
+      if (activeTasks.length >= 5) {
+        setCreateModalVisible(false);
+        setFreemiumLimitVisible(true);
+        return;
+      }
+    }
     const payload = {
       title: formData.title,
       description: formData.description || undefined,
@@ -888,6 +900,13 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Freemium Limit Modal */}
+      <FreemiumLimitModal
+        visible={freemiumLimitVisible}
+        messageKey="freemium.limitTasksBody"
+        onClose={() => setFreemiumLimitVisible(false)}
+      />
 
       {/* Reporter */}
       <Modal visible={showPostponePicker} animationType="fade" transparent onRequestClose={() => setShowPostponePicker(false)}>

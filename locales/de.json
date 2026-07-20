@@ -1249,5 +1249,25 @@
     "storeNameAndroid": "Google Play",
     "updateButton": "Auf {{store}} aktualisieren",
     "laterButton": "Später"
+  },
+  "freemium": {
+    "limitTitle": "Limit des kostenlosen Plans erreicht",
+    "limitTasksBody": "Sie haben das Limit von 5 aktiven Aufgaben im kostenlosen Plan erreicht.",
+    "limitNotesBody": "Sie haben das Limit von 5 Notizen im kostenlosen Plan erreicht.",
+    "limitShoppingBody": "Sie haben das Limit von 20 aktiven Artikeln im kostenlosen Plan erreicht.",
+    "limitMembersBody": "Sie haben das Limit von 2 Mitgliedern im kostenlosen Plan erreicht.",
+    "limitEventsBody": "Sie haben das Limit von 10 Ereignissen diesen Monat im kostenlosen Plan erreicht.",
+    "limitMessagesPhotoBody": "Das Senden von Fotos ist dem Premium-Plan vorbehalten.",
+    "limitMessagesGroupBody": "Gruppen-Messaging ist dem Premium-Plan vorbehalten.",
+    "limitCalendarRecurringBody": "Wiederkehrende Ereignisse sind dem Premium-Plan vorbehalten.",
+    "limitCalendarReminderBody": "Ereigniserinnerungen sind dem Premium-Plan vorbehalten.",
+    "limitCalendarIcalBody": "iCal-Export/Import ist dem Premium-Plan vorbehalten.",
+    "upgradeBtn": "Auf Premium upgraden",
+    "stayFreeBtn": "Beim kostenlosen Plan bleiben",
+    "premiumModuleTitle": "Premium-Funktion",
+    "premiumModuleBody": "Diese Funktion ist nur mit dem Premium-Plan verfügbar.",
+    "premiumModuleBtn": "Premium entdecken",
+    "freeLimits": "Limits des kostenlosen Plans",
+    "freeLimitsDesc": "5 Aufgaben · 5 Notizen · 20 Artikel · 10 Ereignisse/Monat · 2 Mitglieder · 7 Tage Nachrichtenverlauf"
   }
 }

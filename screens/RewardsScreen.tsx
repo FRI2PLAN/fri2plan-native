@@ -10,6 +10,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useTranslation } from 'react-i18next';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import PremiumOverlay from '../components/PremiumOverlay';
 
 interface RewardsScreenProps {
   onNavigate?: (screen: string) => void;
@@ -47,6 +49,8 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { isDark } = useTheme();
   const { user } = useAuth();
   const styles = getStyles(isDark);
+  const { hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
   const [activeTab, setActiveTab] = useState<"catalog" | "badges" | "history" | "admin">("catalog");
   const [refreshing, setRefreshing] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -187,6 +191,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   return (
     <View style={styles.container}>
       <StatusBar style={isDark ? "light" : "dark"} />
+
+      {/* Premium Overlay */}
+      <PremiumOverlay visible={isFree} />
 
       {/* Titre centré */}
       <View style={styles.header}>

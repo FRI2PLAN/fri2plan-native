@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import FreemiumLimitModal from '../components/FreemiumLimitModal';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import * as DocumentPicker from 'expo-document-picker';
@@ -39,7 +40,9 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { requirePremium } = useSubscription();
+  const { requirePremium, hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
+  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
   const styles = getStyles(isDark);
 
   const getLocale = () => {
@@ -127,6 +130,12 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   const { isConnected, enqueue } = useOffline();
 
   const handleCreate = () => {
+    // Vérification limite freemium : 5 notes max
+    if (isFree && (notes || []).length >= 5) {
+      setCreateDialogOpen(false);
+      setFreemiumLimitVisible(true);
+      return;
+    }
     if (!newTitle.trim()) {
       Alert.alert(t('common.error'), t('notes.titleRequired'));
       return;
@@ -542,6 +551,13 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Freemium Limit Modal */}
+      <FreemiumLimitModal
+        visible={freemiumLimitVisible}
+        messageKey="freemium.limitNotesBody"
+        onClose={() => setFreemiumLimitVisible(false)}
+      />
     </View>
   );
 }

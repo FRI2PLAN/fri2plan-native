@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import PremiumOverlay from '../components/PremiumOverlay';
 import { AddToShoppingModal } from '../components/AddToShoppingModal';
 import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
@@ -96,7 +97,8 @@ export default function MealsScreen({
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
   const utils = trpc.useUtils();
-  const { requirePremium } = useSubscription();
+  const { requirePremium, hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
 
   // ─── Locale date-fns ───────────────────────────────────────────────────────
   const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
@@ -993,6 +995,8 @@ export default function MealsScreen({
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
+      {/* Premium Overlay */}
+      <PremiumOverlay visible={isFree} />
 
       {/* Contenu selon onglet */}
       <View style={{ flex: 1 }}>

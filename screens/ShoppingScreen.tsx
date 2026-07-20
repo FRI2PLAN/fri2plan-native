@@ -15,6 +15,7 @@ import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import FreemiumLimitModal from '../components/FreemiumLimitModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ShoppingList {
@@ -55,7 +56,9 @@ export default function ShoppingScreen({
   const { t, i18n } = useTranslation();
   const s = getStyles(isDark);
   const utils = trpc.useUtils();
-  const { requirePremium } = useSubscription();
+  const { requirePremium, hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
+  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
 
   // ─── Famille ─────────────────────────────────────────────────────────────────────────────
   const { activeFamilyId: ctxFamilyId } = useFamily();
@@ -219,6 +222,14 @@ export default function ShoppingScreen({
   const submitItem = async () => {
     console.log('[submitItem] name:', newItemName.trim(), 'listId:', selectedList?.id, 'isConnected:', isConnected);
     if (!newItemName.trim() || !selectedList) { console.log('[submitItem] ABORT: no name or no list'); return; }
+    // Vérification limite freemium : 20 articles actifs max
+    if (isFree) {
+      const activeItems = (items || []).filter((item: any) => !item.checked);
+      if (activeItems.length >= 20) {
+        setFreemiumLimitVisible(true);
+        return;
+      }
+    }
     if (!isConnected) {
       console.log('[submitItem] OFFLINE: enqueue');
       await enqueue({ type: 'shopping.addItem', payload: { listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined } });
@@ -552,6 +563,13 @@ export default function ShoppingScreen({
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Freemium Limit Modal */}
+      <FreemiumLimitModal
+        visible={freemiumLimitVisible}
+        messageKey="freemium.limitShoppingBody"
+        onClose={() => setFreemiumLimitVisible(false)}
+      />
     </View>
   );
 
