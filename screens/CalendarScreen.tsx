@@ -802,6 +802,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const endOfMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
       const thisMonthEvents = (eventsQuery.data || []).filter((e: any) => {
         if (e.calendarSubscriptionId || e.syncedCalendarId) return false; // ignorer les événements importés
+        if (e.userId !== user?.id) return false; // compter uniquement les événements créés par l'utilisateur connecté
         const d = new Date(e.startDate);
         return d >= startOfMonthDate && d <= endOfMonthDate;
       });
