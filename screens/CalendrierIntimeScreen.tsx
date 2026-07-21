@@ -212,9 +212,6 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Premium Overlay */}
-      <PremiumOverlay visible={isFree} />
-
       {/* Titre */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>🌸 {t('intimate.title') || 'Calendrier Intime'}</Text>
@@ -543,6 +540,8 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
           )}
         </KeyboardAvoidingView>
       </Modal>
+      {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
+      <PremiumOverlay visible={isFree} pageName={`🌸 ${t('intimate.title') || 'Calendrier Intime'}`} />
     </View>
   );
 }

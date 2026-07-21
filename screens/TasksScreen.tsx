@@ -585,7 +585,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={styles.filterAddBtn} onPress={() => requirePremium(() => setCreateModalVisible(true))}>
+        <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
           <Text style={styles.filterAddBtnText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -700,7 +700,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>📋</Text>
                 <Text style={styles.emptyStateText}>{t('tasks.empty') || 'Aucune tâche pour le moment'}</Text>
-                <TouchableOpacity style={styles.filterAddBtn} onPress={() => requirePremium(() => setCreateModalVisible(true))}>
+                <TouchableOpacity style={styles.filterAddBtn} onPress={() => setCreateModalVisible(true)}>
                   <Text style={styles.filterAddBtnText}>+</Text>
                 </TouchableOpacity>
               </View>

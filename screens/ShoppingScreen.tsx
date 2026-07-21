@@ -142,12 +142,10 @@ export default function ShoppingScreen({
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const openCreateList = () => {
-    requirePremium(() => {
-      setEditingList(null);
-      setListForm({ name: '', description: '', isPrivate: false });
-      setTargetDate(undefined);
-      setShowListForm(true);
-    });
+    setEditingList(null);
+    setListForm({ name: '', description: '', isPrivate: false });
+    setTargetDate(undefined);
+    setShowListForm(true);
   };
 
   // Trigger create from parent action bar

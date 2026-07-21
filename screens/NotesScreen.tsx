@@ -353,7 +353,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => setCreateDialogOpen(true))}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>

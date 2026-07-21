@@ -995,8 +995,6 @@ export default function MealsScreen({
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
-      {/* Premium Overlay */}
-      <PremiumOverlay visible={isFree} />
 
       {/* Contenu selon onglet */}
       <View style={{ flex: 1 }}>
@@ -1040,6 +1038,8 @@ export default function MealsScreen({
           </View>
         </View>
       </Modal>
+      {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
+      <PremiumOverlay visible={isFree} pageName={`🍽️ ${t('meals.title') || 'Repas'}`} />
     </View>
   );
 

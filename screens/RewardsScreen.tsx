@@ -192,9 +192,6 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     <View style={styles.container}>
       <StatusBar style={isDark ? "light" : "dark"} />
 
-      {/* Premium Overlay */}
-      <PremiumOverlay visible={isFree} />
-
       {/* Titre centré */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>{t('rewards.title')}</Text>
@@ -440,6 +437,8 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
+      <PremiumOverlay visible={isFree} pageName={`🏆 ${t('rewards.title')}`} />
     </View>
   );
 }

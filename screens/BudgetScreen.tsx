@@ -518,9 +518,6 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
         <Text style={styles.pageTitle}>💰 {t('budget.title')}</Text>
       </View>
 
-      {/* Premium Overlay */}
-      <PremiumOverlay visible={isFree} />
-
       {/* Onglets */}
       <View style={styles.tabsContainer}>
         {([
@@ -1427,6 +1424,8 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
+      <PremiumOverlay visible={isFree} pageName={`💰 ${t('budget.title')}`} />
     </View>
   );
 }

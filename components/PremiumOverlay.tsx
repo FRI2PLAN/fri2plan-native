@@ -1,11 +1,9 @@
 /**
  * PremiumOverlay
  *
- * Overlay affiché sur les modules réservés au plan Premium
- * (Budget, Repas, Récompenses, Requêtes, Calendrier intime).
- *
- * Stratégie : si visible=true, on remplace TOUT le contenu de l'écran
- * par un écran de verrouillage premium (plus fiable sur Android que absoluteFill).
+ * Overlay affiché sur les modules réservés au plan Premium.
+ * Utilise position absolute + elevation 9999 pour couvrir tout l'écran.
+ * Doit être placé en dernier enfant du View container principal du screen.
  */
 import React from 'react';
 import {
@@ -16,7 +14,7 @@ import {
   Platform,
   Alert,
   Linking,
-  SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -27,9 +25,11 @@ import { useIAP } from '../contexts/IAPContext';
 interface PremiumOverlayProps {
   /** Si true, affiche l'overlay (plan gratuit) */
   visible: boolean;
+  /** Nom de la page affiché dans l'overlay (ex: "💰 Budget") */
+  pageName?: string;
 }
 
-export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
+export default function PremiumOverlay({ visible, pageName }: PremiumOverlayProps) {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const { activeFamilyId } = useFamily();
@@ -73,8 +73,23 @@ export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
   };
 
   return (
-    <View style={[styles.fullScreen, { backgroundColor: pageBg }]}>
-      <SafeAreaView style={styles.safeArea}>
+    <View
+      style={[
+        StyleSheet.absoluteFillObject,
+        styles.overlay,
+        { backgroundColor: pageBg },
+      ]}
+      pointerEvents="box-none"
+    >
+      {/* Titre de la page si fourni */}
+      {pageName ? (
+        <View style={styles.pageHeader}>
+          <Text style={[styles.pageTitle, { color: textColor }]}>{pageName}</Text>
+        </View>
+      ) : null}
+
+      {/* Carte centrale */}
+      <View style={styles.centerContent} pointerEvents="auto">
         <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
           {/* Badge Premium */}
           <View style={styles.premiumBadge}>
@@ -94,7 +109,7 @@ export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
             {t('freemium.premiumModuleBody')}
           </Text>
 
-          {/* Bouton Découvrir Premium */}
+          {/* Bouton Passer au Premium */}
           <TouchableOpacity
             style={styles.upgradeButton}
             onPress={handleUpgrade}
@@ -105,29 +120,32 @@ export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fullScreen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  overlay: {
     zIndex: 9999,
     elevation: 9999,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+  },
+  pageHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
     alignItems: 'center',
   },
-  safeArea: {
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    width: '100%',
   },
   card: {
     width: '100%',

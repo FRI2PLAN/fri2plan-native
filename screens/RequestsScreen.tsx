@@ -269,9 +269,6 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Premium Overlay */}
-      <PremiumOverlay visible={isFree} />
-
       {/* Titre centré */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>🙏 {t('requests.title')}</Text>
@@ -628,6 +625,8 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
+      <PremiumOverlay visible={isFree} pageName={`🙏 ${t('requests.title')}`} />
     </View>
   );
 }
