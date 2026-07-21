@@ -930,6 +930,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
+    <>
     <View style={styles.container}>
       <StatusBar style="dark" />
 
@@ -2356,6 +2357,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         messageKey="freemium.limitEventsBody"
         onClose={() => setFreemiumLimitVisible(false)}
       />
+    </>
   );
 }
 // ─── Styless ────────────────────────────────────────────────────────────────────
