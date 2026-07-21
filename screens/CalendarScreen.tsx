@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
+import FreemiumLimitModal from '../components/FreemiumLimitModal';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
@@ -131,7 +132,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const styles = getStyles(isDark);
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
-  const { } = useSubscription();
+  const { hasPremium, isTrialActive } = useSubscription();
+  const isFree = !hasPremium && !isTrialActive;
+  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -792,6 +795,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const handleCreateEvent = async () => {
+    // Vérification limite freemium : 10 événements créés ce mois-ci max
+    if (isFree) {
+      const now = new Date();
+      const startOfMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const thisMonthEvents = (eventsQuery.data || []).filter((e: any) => {
+        if (e.calendarSubscriptionId || e.syncedCalendarId) return false; // ignorer les événements importés
+        const d = new Date(e.startDate);
+        return d >= startOfMonthDate && d <= endOfMonthDate;
+      });
+      if (thisMonthEvents.length >= 10) {
+        setFreemiumLimitVisible(true);
+        return;
+      }
+    }
     try {
       const dateStr = format(eventDate, 'yyyy-MM-dd');
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
@@ -2333,6 +2351,11 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         )
       )}
     </View>
+      <FreemiumLimitModal
+        visible={freemiumLimitVisible}
+        messageKey="freemium.limitEventsBody"
+        onClose={() => setFreemiumLimitVisible(false)}
+      />
   );
 }
 // ─── Styless ────────────────────────────────────────────────────────────────────

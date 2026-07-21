@@ -1039,7 +1039,7 @@ export default function MealsScreen({
         </View>
       </Modal>
       {/* Premium Overlay - en dernier pour couvrir tout le contenu */}
-      <PremiumOverlay visible={isFree} pageName={`🍽️ ${t('meals.title') || 'Repas'}`} />
+      <PremiumOverlay visible={isFree} />
     </View>
   );
 
