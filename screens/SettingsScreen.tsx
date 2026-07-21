@@ -970,6 +970,8 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                   {[
                     { icon: '📅', text: t('settings.featureCalendar') },
                     { icon: '✅', text: t('settings.featureTasks') },
+                    { icon: '📝', text: t('settings.featureNotes') },
+                    { icon: '🛒', text: t('settings.featureShopping') },
                     { icon: '💬', text: t('settings.featureMessages') },
                     { icon: '👥', text: t('settings.featureMembersLimit') },
                   ].map((f, i) => (

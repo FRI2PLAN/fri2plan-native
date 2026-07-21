@@ -3,7 +3,9 @@
  *
  * Overlay affiché sur les modules réservés au plan Premium
  * (Budget, Repas, Récompenses, Requêtes, Calendrier intime).
- * Le contenu de l'écran reste visible en arrière-plan (flou/opacité).
+ *
+ * Stratégie : si visible=true, on remplace TOUT le contenu de l'écran
+ * par un écran de verrouillage premium (plus fiable sur Android que absoluteFill).
  */
 import React from 'react';
 import {
@@ -14,6 +16,7 @@ import {
   Platform,
   Alert,
   Linking,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -35,6 +38,7 @@ export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
 
   if (!visible) return null;
 
+  const pageBg = isDark ? '#111827' : '#f9fafb';
   const cardBg = isDark ? '#1f2937' : '#ffffff';
   const textColor = isDark ? '#f9fafb' : '#111827';
   const subtextColor = isDark ? '#9ca3af' : '#6b7280';
@@ -69,59 +73,61 @@ export default function PremiumOverlay({ visible }: PremiumOverlayProps) {
   };
 
   return (
-    <View style={styles.overlay} pointerEvents="box-none">
-      {/* Fond semi-transparent */}
-      <View style={styles.backdrop} pointerEvents="auto" />
+    <View style={[styles.fullScreen, { backgroundColor: pageBg }]}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+          {/* Badge Premium */}
+          <View style={styles.premiumBadge}>
+            <Text style={styles.premiumBadgeText}>⭐ PREMIUM</Text>
+          </View>
 
-      {/* Carte centrale */}
-      <View
-        style={[styles.card, { backgroundColor: cardBg, borderColor }]}
-        pointerEvents="auto"
-      >
-        {/* Badge Premium */}
-        <View style={styles.premiumBadge}>
-          <Text style={styles.premiumBadgeText}>⭐ PREMIUM</Text>
-        </View>
+          {/* Icône cadenas */}
+          <Text style={styles.lockIcon}>🔒</Text>
 
-        {/* Icône cadenas */}
-        <Text style={styles.lockIcon}>🔒</Text>
-
-        {/* Titre */}
-        <Text style={[styles.title, { color: textColor }]}>
-          {t('freemium.premiumModuleTitle')}
-        </Text>
-
-        {/* Description */}
-        <Text style={[styles.desc, { color: subtextColor }]}>
-          {t('freemium.premiumModuleBody')}
-        </Text>
-
-        {/* Bouton Découvrir Premium */}
-        <TouchableOpacity
-          style={styles.upgradeButton}
-          onPress={handleUpgrade}
-          disabled={createCheckoutMutation.isLoading}
-        >
-          <Text style={styles.upgradeButtonText}>
-            {createCheckoutMutation.isLoading ? '...' : t('freemium.premiumModuleBtn')}
+          {/* Titre */}
+          <Text style={[styles.title, { color: textColor }]}>
+            {t('freemium.premiumModuleTitle')}
           </Text>
-        </TouchableOpacity>
-      </View>
+
+          {/* Description */}
+          <Text style={[styles.desc, { color: subtextColor }]}>
+            {t('freemium.premiumModuleBody')}
+          </Text>
+
+          {/* Bouton Découvrir Premium */}
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleUpgrade}
+            disabled={createCheckoutMutation.isLoading}
+          >
+            <Text style={styles.upgradeButtonText}>
+              {createCheckoutMutation.isLoading ? '...' : t('freemium.premiumModuleBtn')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 100,
+  fullScreen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  safeArea: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    width: '100%',
   },
   card: {
     width: '100%',
@@ -130,7 +136,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 28,
     alignItems: 'center',
-    zIndex: 101,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   premiumBadge: {
     backgroundColor: '#7c3aed',

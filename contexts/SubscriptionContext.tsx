@@ -50,7 +50,7 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType>({
   hasPremium: true, // défaut safe : pas de blocage si contexte non disponible
   isTrialActive: true,
-  trialDaysRemaining: 21,
+  trialDaysRemaining: 0,
   requirePremium: (fn) => fn(),
   refreshSubscription: () => {},
 });
@@ -74,9 +74,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   );
 
-  const hasPremium = subscriptionData?.hasPremium ?? true;
-  const isTrialActive = subscriptionData?.isTrialActive ?? true;
-  const trialDaysRemaining = subscriptionData?.trialDaysRemaining ?? 21;
+  // isLoaded = true dès que le serveur a répondu (même avec une erreur via onError)
+  // Tant que pas chargé → premium=true pour éviter les faux blocages au démarrage
+  const isLoaded = subscriptionData !== undefined;
+  const hasPremium = isLoaded ? (subscriptionData?.hasPremium ?? false) : true;
+  const isTrialActive = isLoaded ? (subscriptionData?.isTrialActive ?? false) : true;
+  const trialDaysRemaining = subscriptionData?.trialDaysRemaining ?? 0;
 
   const requirePremium = useCallback(
     (fn: () => void) => {

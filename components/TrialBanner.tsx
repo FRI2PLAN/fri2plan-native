@@ -1,12 +1,13 @@
 /**
  * TrialBanner — Bannière non bloquante affichée dans le Dashboard
- * - Pendant le trial : compte à rebours des jours restants
- * - Après expiration sans abo : message + bouton S'abonner + option lecture seule
+ * - Pendant le trial (≤3 jours restants) : compte à rebours + bouton S'abonner
+ * - En mode gratuit (trial expiré ou compte free) : "Vous êtes en mode Gratuit"
+ *   + bouton "S'abonner" + bouton "Me rappeler dans 7 jours" (snooze AsyncStorage)
  *
  * OTA-compatible (pas de code natif).
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,10 +17,13 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { trpc } from '../lib/trpc';
 import { useIAP } from '../contexts/IAPContext';
+
+const SNOOZE_KEY = 'trial_banner_snooze_until';
 
 interface TrialBannerProps {
   familyId: number;
@@ -40,12 +44,35 @@ export function TrialBanner({
   const { isDark } = useTheme();
   const iap = useIAP();
   const [dismissed, setDismissed] = useState(false);
-  const [readOnlyMode, setReadOnlyMode] = useState(false);
+  const [snoozed, setSnoozed] = useState(false);
+  const [snoozeLoaded, setSnoozeLoaded] = useState(false);
 
   const createCheckoutMutation = trpc.subscription.createCheckout.useMutation();
 
-  // Ne rien afficher si premium actif ou si bannière fermée en lecture seule
-  if (hasPremium || readOnlyMode) return null;
+  // Vérifier si l'utilisateur a snoozé la bannière
+  useEffect(() => {
+    AsyncStorage.getItem(SNOOZE_KEY).then((val) => {
+      if (val) {
+        const snoozeUntil = parseInt(val, 10);
+        if (Date.now() < snoozeUntil) {
+          setSnoozed(true);
+        } else {
+          // Snooze expiré, supprimer
+          AsyncStorage.removeItem(SNOOZE_KEY);
+        }
+      }
+      setSnoozeLoaded(true);
+    });
+  }, []);
+
+  // Ne rien afficher si premium actif
+  if (hasPremium) return null;
+
+  // Attendre le chargement du snooze
+  if (!snoozeLoaded) return null;
+
+  // Ne rien afficher si snoozé
+  if (snoozed) return null;
 
   // Ne rien afficher pendant le trial si plus de 3 jours restants
   if (isTrialActive && trialDaysRemaining > 3) return null;
@@ -53,7 +80,8 @@ export function TrialBanner({
   // Bannière fermée manuellement (pendant trial seulement)
   if (dismissed && isTrialActive) return null;
 
-  const isExpired = !isTrialActive && !hasPremium;
+  const isFreeMode = !isTrialActive && !hasPremium;
+  const isExpiredTrial = isFreeMode; // même chose, alias plus clair
 
   const handleSubscribe = () => {
     if (Platform.OS === 'ios' && iap.isIAPAvailable) {
@@ -82,39 +110,45 @@ export function TrialBanner({
     );
   };
 
+  const handleSnooze = async () => {
+    const snoozeUntil = Date.now() + 7 * 24 * 60 * 60 * 1000; // +7 jours
+    await AsyncStorage.setItem(SNOOZE_KEY, String(snoozeUntil));
+    setSnoozed(true);
+  };
+
   const colors = {
-    bg: isExpired
-      ? isDark ? '#3b1a1a' : '#fef2f2'
+    bg: isExpiredTrial
+      ? isDark ? '#1a1a2e' : '#f5f3ff'
       : isDark ? '#1a2a3b' : '#eff6ff',
-    border: isExpired
-      ? isDark ? '#7f1d1d' : '#fca5a5'
+    border: isExpiredTrial
+      ? isDark ? '#4c1d95' : '#c4b5fd'
       : isDark ? '#1e3a5f' : '#93c5fd',
-    text: isExpired
-      ? isDark ? '#fca5a5' : '#991b1b'
+    text: isExpiredTrial
+      ? isDark ? '#c4b5fd' : '#5b21b6'
       : isDark ? '#93c5fd' : '#1e40af',
     subtext: isDark ? '#9ca3af' : '#6b7280',
     ctaBg: '#7c3aed',
     ctaText: '#ffffff',
-    readOnlyText: isDark ? '#6b7280' : '#9ca3af',
+    snoozeText: isDark ? '#6b7280' : '#9ca3af',
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, borderColor: colors.border }]}>
       <View style={styles.row}>
-        <Text style={[styles.icon]}>{isExpired ? '🔒' : '⏳'}</Text>
+        <Text style={styles.icon}>{isExpiredTrial ? '🆓' : '⏳'}</Text>
         <View style={styles.textContainer}>
           <Text style={[styles.message, { color: colors.text }]}>
-            {isExpired
-              ? t('settings.trialBannerExpired')
+            {isExpiredTrial
+              ? t('settings.freeModeTitle')
               : t('settings.trialBannerDays', { count: trialDaysRemaining })}
           </Text>
-          {isExpired && (
+          {isExpiredTrial && (
             <Text style={[styles.subtext, { color: colors.subtext }]}>
-              {t('settings.trialExpiredReadOnly')}
+              {t('settings.freeModeDesc')}
             </Text>
           )}
         </View>
-        {!isExpired && (
+        {!isExpiredTrial && (
           <TouchableOpacity onPress={() => setDismissed(true)} style={styles.closeBtn}>
             <Text style={{ color: colors.subtext, fontSize: 16 }}>✕</Text>
           </TouchableOpacity>
@@ -132,13 +166,13 @@ export function TrialBanner({
           </Text>
         </TouchableOpacity>
 
-        {isExpired && (
+        {isExpiredTrial && (
           <TouchableOpacity
-            style={styles.readOnlyBtn}
-            onPress={() => setReadOnlyMode(true)}
+            style={styles.snoozeBtn}
+            onPress={handleSnooze}
           >
-            <Text style={[styles.readOnlyText, { color: colors.readOnlyText }]}>
-              {t('settings.trialExpiredContinueReadOnly')}
+            <Text style={[styles.snoozeText, { color: colors.snoozeText }]}>
+              {t('settings.freeModeSnooze')}
             </Text>
           </TouchableOpacity>
         )}
@@ -187,6 +221,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexWrap: 'wrap',
   },
   ctaButton: {
     paddingHorizontal: 16,
@@ -197,10 +232,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  readOnlyBtn: {
+  snoozeBtn: {
     paddingVertical: 8,
   },
-  readOnlyText: {
+  snoozeText: {
     fontSize: 12,
     textDecorationLine: 'underline',
   },
