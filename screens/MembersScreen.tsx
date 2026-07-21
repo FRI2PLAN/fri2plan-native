@@ -715,7 +715,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               </>
             )}
           </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* ── MODAL ÉDITION PROFIL (tous les users) ── */}
