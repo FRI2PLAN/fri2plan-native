@@ -25,8 +25,8 @@
             "useFrameworks": "static"
           },
           "android": {
-            "targetSdkVersion": 35,
-            "compileSdkVersion": 35
+            "targetSdkVersion": 36,
+            "compileSdkVersion": 36
           }
         }
       ],
@@ -95,7 +95,7 @@
       "versionCode": 69,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
-      "targetSdkVersion": 35,
+      "targetSdkVersion": 36,
       "intentFilters": [
         {
           "action": "VIEW",

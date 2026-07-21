@@ -287,6 +287,10 @@ export type AppRouter = {
     list: {
       query: () => Promise<Event[]>;
     };
+    countThisMonth: {
+      query: () => Promise<{ count: number }>;
+      useQuery: (input?: any, opts?: any) => { data: { count: number } | undefined; isLoading: boolean; refetch: () => void };
+    };
     create: {
       mutate: (input: Partial<Event>) => Promise<Event>;
     };
@@ -346,6 +350,10 @@ export type AppRouter = {
     };
   };
   shopping: {
+    countActiveItems: {
+      query: (input: { familyId: number }) => Promise<{ count: number }>;
+      useQuery: (input?: any, opts?: any) => { data: { count: number } | undefined; isLoading: boolean; refetch: () => void };
+    };
     lists: {
       query: () => Promise<ShoppingList[]>;
     };
