@@ -212,7 +212,15 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
+        // Utiliser fetch pour lire l'URI (compatible content:// Android)
+        const response = await fetch(asset.uri);
+        const arrayBuffer = await response.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
         await uploadFileFromBase64(base64, asset.name, asset.mimeType || 'application/octet-stream', isEdit);
       }
     } catch (err) {
