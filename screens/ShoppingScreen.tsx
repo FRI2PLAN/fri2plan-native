@@ -94,6 +94,11 @@ export default function ShoppingScreen({
     { familyId: familyId! },
     { enabled: !!familyId, staleTime: 0, refetchOnMount: 'always', gcTime: 0 }
   );
+  // Compter tous les articles actifs de toutes les listes (pour limite freemium globale)
+  const { data: activeItemsCount, refetch: refetchActiveCount } = trpc.shopping.countActiveItems.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId && isFree, staleTime: 0, refetchOnMount: 'always' }
+  );
 
   // Recharger l'historique quand on sélectionne une liste
   useEffect(() => {
@@ -220,10 +225,10 @@ export default function ShoppingScreen({
   const submitItem = async () => {
     console.log('[submitItem] name:', newItemName.trim(), 'listId:', selectedList?.id, 'isConnected:', isConnected);
     if (!newItemName.trim() || !selectedList) { console.log('[submitItem] ABORT: no name or no list'); return; }
-    // Vérification limite freemium : 20 articles actifs max
+    // Vérification limite freemium : 20 articles actifs max (toutes listes confondues)
     if (isFree) {
-      const activeItems = (items || []).filter((item: any) => !item.checked);
-      if (activeItems.length >= 20) {
+      const totalActive = activeItemsCount?.count ?? (items || []).filter((item: any) => !item.checked).length;
+      if (totalActive >= 20) {
         setFreemiumLimitVisible(true);
         return;
       }
