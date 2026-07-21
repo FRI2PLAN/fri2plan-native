@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   Share,
+  Pressable,
 } from 'react-native';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
