@@ -485,7 +485,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         {currentUserIsAdmin && detailTab === 'members' && (
           <TouchableOpacity
             style={styles.addBtn}
-            onPress={() => { setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true); }}
+            onPress={() => {
+              if (isFree) {
+                const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
+                if (activeMembers.length >= 2) {
+                  setFreemiumLimitVisible(true);
+                  return;
+                }
+              }
+              setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true);
+            }}
           >
             <Text style={styles.addBtnText}>+</Text>
           </TouchableOpacity>
@@ -578,7 +587,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 {currentUserIsAdmin && (
                   <TouchableOpacity
                     style={styles.emptyBtn}
-                    onPress={() => { setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true); }}
+                    onPress={() => {
+              if (isFree) {
+                const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
+                if (activeMembers.length >= 2) {
+                  setFreemiumLimitVisible(true);
+                  return;
+                }
+              }
+              setGeneratedCode(null); setInviteEmail(''); setShowInviteModal(true);
+            }}
                   >
                     <Text style={styles.emptyBtnText}>{t('members.inviteMember')}</Text>
                   </TouchableOpacity>
@@ -632,8 +650,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       </ScrollView>
 
       {/* ── MODAL INVITATION ── */}
-      <Modal visible={showInviteModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+      <Modal visible={showInviteModal} transparent animationType="slide" onRequestClose={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
+        <Pressable style={styles.modalOverlay} onPress={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
+          <Pressable onPress={e => e.stopPropagation()}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('members.inviteMember')}</Text>
             {!generatedCode ? (

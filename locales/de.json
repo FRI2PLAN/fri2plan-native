@@ -957,6 +957,7 @@
     "cuisine": "Küche"
   },
   "meals": {
+    "title": "Mahlzeiten",
     "newMeal": "Neue Mahlzeit",
     "editMeal": "Mahlzeit bearbeiten",
     "mealName": "Name der Mahlzeit",

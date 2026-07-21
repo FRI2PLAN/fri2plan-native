@@ -131,7 +131,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const styles = getStyles(isDark);
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
-  const { requirePremium } = useSubscription();
+  const { } = useSubscription();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -1162,7 +1162,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                         setSelectedDate(day);
                         const dayEvents = (events || []).filter(e => isEventOnDay(e, day));
                         if (dayEvents.length > 0) setDropdownModalOpen(true);
-                        else requirePremium(() => setCreateModalOpen(true));
+                        else setCreateModalOpen(true);
                       }}
                     >
                       <Text style={[
@@ -1194,7 +1194,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 </Text>
                 <TouchableOpacity
                   style={styles.addEventBtn}
-                  onPress={() => requirePremium(() => setCreateModalOpen(true))}
+                  onPress={() => setCreateModalOpen(true)}
                 >
                   <Text style={styles.addEventBtnText}>+</Text>
                 </TouchableOpacity>
@@ -1243,7 +1243,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               ) : (
                 <TouchableOpacity
                   style={styles.noEvents}
-                  onPress={() => requirePremium(() => setCreateModalOpen(true))}
+                  onPress={() => setCreateModalOpen(true)}
                 >
                   <Text style={styles.noEventsText}>{t('calendar.noEvents') || 'Aucun événement'}</Text>
                   <Text style={styles.noEventsHint}>{t('calendar.tapToAdd') || 'Appuyez pour ajouter'}</Text>
@@ -1550,7 +1550,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
             <Text style={styles.dropdownTitle}>
               {format(selectedDate, 'EEEE d MMMM', { locale: getLocale() })}
             </Text>
-            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); requirePremium(() => setCreateModalOpen(true)); }}>
+            <TouchableOpacity style={styles.dropdownAddButton} onPress={() => { setDropdownModalOpen(false); setCreateModalOpen(true); }}>
               <Text style={styles.dropdownAddButtonText}>+ {t('calendar.addEvent') || 'Ajouter'}</Text>
             </TouchableOpacity>
             <ScrollView style={styles.dropdownEventsList}>
