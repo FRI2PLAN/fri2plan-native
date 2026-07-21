@@ -243,7 +243,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     // Vérification limite freemium : 2 membres actifs max
     if (isFree) {
       const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
-      if (activeMembers.length >= 2) {
+      const totalSlots = activeMembers.length + pendingInvitations.length;
+      if (totalSlots >= 2) {
         setShowInviteModal(false);
         setFreemiumLimitVisible(true);
         return;
@@ -489,7 +490,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             onPress={() => {
               if (isFree) {
                 const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
-                if (activeMembers.length >= 2) {
+                const totalSlots = activeMembers.length + pendingInvitations.length;
+                if (totalSlots >= 2) {
                   setFreemiumLimitVisible(true);
                   return;
                 }
@@ -591,7 +593,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                     onPress={() => {
               if (isFree) {
                 const activeMembers = (members as any[]).filter((m: any) => m.status === 'active');
-                if (activeMembers.length >= 2) {
+                const totalSlots = activeMembers.length + pendingInvitations.length;
+                if (totalSlots >= 2) {
                   setFreemiumLimitVisible(true);
                   return;
                 }
