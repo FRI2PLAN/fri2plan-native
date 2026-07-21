@@ -422,6 +422,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const eventsQuery = trpc.events.list.useQuery(undefined, { refetchOnWindowFocus: false });
+  // Compter les événements de l'utilisateur ce mois-ci (côté serveur, pour limite freemium fiable)
+  const { data: eventCountData, refetch: refetchEventCount } = trpc.events.countThisMonth.useQuery(undefined, {
+    enabled: isFree,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
   const isLoadingEvents = eventsQuery.isLoading;
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
@@ -797,16 +803,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const handleCreateEvent = async () => {
     // Vérification limite freemium : 10 événements créés ce mois-ci max
     if (isFree) {
-      const now = new Date();
-      const startOfMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      const thisMonthEvents = (eventsQuery.data || []).filter((e: any) => {
-        if (e.calendarSubscriptionId || e.syncedCalendarId) return false; // ignorer les événements importés
-        if (Number(e.userId) !== Number(user?.id)) return false; // compter uniquement les événements créés par l'utilisateur connecté
-        const d = new Date(e.startDate);
-        return d >= startOfMonthDate && d <= endOfMonthDate;
-      });
-      if (thisMonthEvents.length >= 10) {
+      // Vérification côté serveur (fiable) : compter les événements de l'utilisateur ce mois
+      const currentCount = eventCountData?.count ?? 0;
+      if (currentCount >= 10) {
         setFreemiumLimitVisible(true);
         return;
       }
@@ -832,6 +831,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       setCreateModalOpen(false);
       resetForm();
       refetch();
+      refetchEventCount(); // Mettre à jour le compteur freemium
     } catch (error) {
       console.error('Error creating event:', error);
     }
