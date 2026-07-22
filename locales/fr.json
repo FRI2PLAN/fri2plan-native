@@ -1260,18 +1260,14 @@
     "limitNotesBody": "Vous avez atteint la limite de 5 notes sur le plan gratuit.",
     "limitShoppingBody": "Vous avez atteint la limite de 20 articles actifs sur le plan gratuit.",
     "limitMembersBody": "Vous avez atteint la limite de 2 membres sur le plan gratuit.",
-    "limitEventsBody": "Vous avez atteint la limite de 10 événements ce mois-ci sur le plan gratuit.",
     "limitMessagesPhotoBody": "L'envoi de photos est réservé au plan Premium.",
     "limitMessagesGroupBody": "La messagerie de groupe est réservée au plan Premium.",
-    "limitCalendarRecurringBody": "Les événements récurrents sont réservés au plan Premium.",
-    "limitCalendarReminderBody": "Les rappels d'événements sont réservés au plan Premium.",
-    "limitCalendarIcalBody": "L'export/import iCal est réservé au plan Premium.",
     "upgradeBtn": "Passer à Premium",
     "stayFreeBtn": "Rester sur le plan gratuit",
     "premiumModuleTitle": "Fonction Premium",
     "premiumModuleBody": "Cette fonctionnalité est disponible uniquement avec le plan Premium.",
     "premiumModuleBtn": "Passer au Premium",
     "freeLimits": "Limites du plan gratuit",
-    "freeLimitsDesc": "5 tâches · 5 notes · 20 articles · 10 événements/mois · 2 membres · 7 jours d'historique messages"
+    "freeLimitsDesc": "5 tâches · 5 notes · 20 articles · 2 membres · 7 jours d'historique messages"
   }
 }

@@ -17,7 +17,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
-import FreemiumLimitModal from '../components/FreemiumLimitModal';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
@@ -134,7 +133,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const { hasPremium, isTrialActive } = useSubscription();
   const isFree = !hasPremium && !isTrialActive;
-  const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
   const { data: families } = trpc.family.list.useQuery();
   const activeFamily = ctxFamilyId ? (families as any[])?.find((f: any) => f.id === ctxFamilyId) ?? families?.[0] : families?.[0];
   const { data: familyMembers = [] } = trpc.family.members.useQuery(
@@ -422,12 +420,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const eventsQuery = trpc.events.list.useQuery(undefined, { refetchOnWindowFocus: false });
-  // Compter les événements de l'utilisateur ce mois-ci (côté serveur, pour limite freemium fiable)
-  const { data: eventCountData, refetch: refetchEventCount } = trpc.events.countThisMonth.useQuery(undefined, {
-    enabled: isFree,
-    staleTime: 0,
-    refetchOnMount: 'always',
-  });
+
   const isLoadingEvents = eventsQuery.isLoading;
   const events = (eventsQuery.data || []).map((e: any) => ({
     ...e,
@@ -801,15 +794,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const handleCreateEvent = async () => {
-    // Vérification limite freemium : 10 événements créés ce mois-ci max
-    if (isFree) {
-      // Vérification côté serveur (fiable) : compter les événements de l'utilisateur ce mois
-      const currentCount = eventCountData?.count ?? 0;
-      if (currentCount >= 10) {
-        setFreemiumLimitVisible(true);
-        return;
-      }
-    }
+
     try {
       const dateStr = format(eventDate, 'yyyy-MM-dd');
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
@@ -831,7 +816,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       setCreateModalOpen(false);
       resetForm();
       refetch();
-      refetchEventCount(); // Mettre à jour le compteur freemium
     } catch (error) {
       console.error('Error creating event:', error);
     }
@@ -2353,11 +2337,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         )
       )}
     </View>
-      <FreemiumLimitModal
-        visible={freemiumLimitVisible}
-        messageKey="freemium.limitEventsBody"
-        onClose={() => setFreemiumLimitVisible(false)}
-      />
+
     </>
   );
 }
