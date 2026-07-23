@@ -2,7 +2,7 @@
   "expo": {
     "name": "FRI2PLAN",
     "slug": "fri2plan-native",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -59,7 +59,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -92,7 +92,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 69,
+      "versionCode": 70,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 36,
