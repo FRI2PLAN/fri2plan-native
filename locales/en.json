@@ -811,7 +811,10 @@
     "trialBannerCta": "Subscribe",
     "freeModeTitle": "You are on the Free plan",
     "freeModeDesc": "Upgrade to Premium to unlock all features.",
-    "freeModeSnooze": "Remind me in 7 days"
+    "freeModeSnooze": "Remind me in 7 days",
+    "subscriptionLegalPrefix": "By subscribing, you agree to our",
+    "subscriptionLegalAnd": "and our",
+    "subscriptionAutoRenew": "Subscription renews automatically. Cancel anytime from Settings."
   },
   "help": {
     "title": "Help Center",

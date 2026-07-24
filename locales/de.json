@@ -811,7 +811,10 @@
     "trialBannerCta": "Abonnieren",
     "freeModeTitle": "Sie nutzen den kostenlosen Plan",
     "freeModeDesc": "Wechseln Sie zu Premium, um alle Funktionen freizuschalten.",
-    "freeModeSnooze": "In 7 Tagen erinnern"
+    "freeModeSnooze": "In 7 Tagen erinnern",
+    "subscriptionLegalPrefix": "Mit dem Abonnieren stimmen Sie unseren",
+    "subscriptionLegalAnd": "und unserer",
+    "subscriptionAutoRenew": "Das Abonnement verlängert sich automatisch. Jederzeit in den Einstellungen kündigen."
   },
   "help": {
     "title": "Hilfezentrum",

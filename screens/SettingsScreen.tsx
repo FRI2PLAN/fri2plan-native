@@ -1033,6 +1033,24 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 <Text style={[styles.planCta, pricingTab === 'annuel' ? { color: '#fff' } : {}]}>{t('settings.subscribeCta')}</Text>
               </TouchableOpacity>
 
+              {/* ── Bloc légal requis Apple Guideline 3.1.2(c) ── */}
+              <View style={{ marginTop: 12, paddingHorizontal: 4, alignItems: 'center' }}>
+                <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center', lineHeight: 18 }}>
+                  {t('settings.subscriptionAutoRenew')}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 4, gap: 2 }}>
+                  <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280' }}>{t('settings.subscriptionLegalPrefix')} </Text>
+                  <TouchableOpacity onPress={() => setShowTermsModal(true)}>
+                    <Text style={{ fontSize: 11, color: '#7c3aed', textDecorationLine: 'underline' }}>{t('settings.termsOfUse')}</Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280' }}> {t('settings.subscriptionLegalAnd')} </Text>
+                  <TouchableOpacity onPress={() => setShowPrivacyModal(true)}>
+                    <Text style={{ fontSize: 11, color: '#7c3aed', textDecorationLine: 'underline' }}>{t('settings.privacyPolicy')}</Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280' }}>.</Text>
+                </View>
+              </View>
+
               {/* Liste des fonctionnalités Premium — séparée de la carte */}
               <View style={{ marginTop: 12, gap: 6 }}>
                 <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#e5e7eb' : '#374151', marginBottom: 4 }}>✨ {t('settings.premiumFeatures')}</Text>

@@ -811,7 +811,10 @@
     "trialBannerCta": "S'abonner",
     "freeModeTitle": "Vous êtes en mode Gratuit",
     "freeModeDesc": "Passez à Premium pour débloquer toutes les fonctionnalités.",
-    "freeModeSnooze": "Me rappeler dans 7 jours"
+    "freeModeSnooze": "Me rappeler dans 7 jours",
+    "subscriptionLegalPrefix": "En vous abonnant, vous acceptez nos",
+    "subscriptionLegalAnd": "et notre",
+    "subscriptionAutoRenew": "L'abonnement se renouvelle automatiquement. Annulez à tout moment depuis les Paramètres."
   },
   "help": {
     "title": "Centre d'aide",
