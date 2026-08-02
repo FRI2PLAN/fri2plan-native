@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
+import MemberAvatar from '../components/MemberAvatar';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
@@ -139,6 +140,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  const getMemberById = (userId: number | null | undefined) =>
+    userId ? (familyMembers as any[]).find((m: any) => m.id === userId) || null : null;
   // Rappel par défaut depuis les préférences utilisateur
   const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null };
   const defaultReminderMinutes = (userSettings as any)?.eventReminderMinutes ?? 15;
@@ -1273,6 +1276,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                               </View>
                             )}
                             {event.isPrivate ? <Text style={styles.privateIcon}>🔒</Text> : null}
+                            {!(event as any).calendarSubscriptionId && (event as any).userId && (
+                              <MemberAvatar member={getMemberById((event as any).userId)} size={16} />
+                            )}
                           </View>
                           <Text style={styles.eventTitle}>{event.title}</Text>
                           {desc && !isEventPast ? <Text style={styles.eventDescription} numberOfLines={1}>{desc}</Text> : null}
@@ -1328,6 +1334,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                             <Text style={styles.agendaEventIcon}>{category.icon}</Text>
                             <Text style={styles.agendaEventTime}>{format(eventDate, 'HH:mm')}</Text>
                             {event.isPrivate ? <Text style={styles.agendaPrivateIcon}>🔒</Text> : null}
+                            {!(event as any).calendarSubscriptionId && (event as any).userId && (
+                              <MemberAvatar member={getMemberById((event as any).userId)} size={18} />
+                            )}
                           </View>
                           <Text style={styles.agendaEventTitle}>{event.title}</Text>
                           {desc ? <Text style={styles.agendaEventDescription}>{desc}</Text> : null}
@@ -1400,6 +1409,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                               <Text style={styles.weekEventIcon}>{category.icon}</Text>
                               <Text style={styles.weekEventTitle} numberOfLines={1}>{event.title}</Text>
                               <Text style={styles.weekEventTime}>{format(parseLocalDate(event.startTime, !!event.isUtc), 'HH:mm')}</Text>
+                              {!(event as any).calendarSubscriptionId && (event as any).userId && (
+                                <MemberAvatar member={getMemberById((event as any).userId)} size={12} />
+                              )}
                             </TouchableOpacity>
                           );
                         })}
@@ -1458,6 +1470,9 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                               <Text style={styles.dayEventIcon}>{category.icon}</Text>
                               <Text style={styles.dayEventTitle} numberOfLines={1}>{event.title}</Text>
                               {event.isPrivate ? <Text style={styles.dayEventPrivate}>🔒</Text> : null}
+                              {!(event as any).calendarSubscriptionId && (event as any).userId && (
+                                <MemberAvatar member={getMemberById((event as any).userId)} size={18} />
+                              )}
                             </View>
                             {desc && durationMinutes > 30 ? (
                               <Text style={styles.dayEventDescription} numberOfLines={2}>{desc}</Text>
