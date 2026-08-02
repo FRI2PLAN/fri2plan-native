@@ -6,7 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -441,6 +441,35 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     startTime: e.startDate || '',
     endTime: e.endDate || ''}));
   const refetch = eventsQuery.refetch;
+
+  // Pré-calcul mémoïsé des événements de la semaine indexés par "YYYY-MM-DD-HH"
+  // Évite 168 appels à parseLocalDate à chaque render de la vue 7 jours
+  const weekEventsByDayHour = useMemo(() => {
+    const map: Record<string, typeof events> = {};
+    if (!events || events.length === 0) return map;
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+    for (const event of events) {
+      const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
+      if (eventDate < weekStart || eventDate > weekEnd) continue;
+      if (!isEventOnDay(event, eventDate)) {
+        // événement multi-jours : indexer sur chaque jour de la semaine
+        const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+        for (const day of days) {
+          if (isEventOnDay(event, day)) {
+            const key = `${format(day, 'yyyy-MM-dd')}-${eventDate.getHours().toString().padStart(2, '0')}`;
+            if (!map[key]) map[key] = [];
+            map[key].push(event);
+          }
+        }
+      } else {
+        const key = `${format(eventDate, 'yyyy-MM-dd')}-${eventDate.getHours().toString().padStart(2, '0')}`;
+        if (!map[key]) map[key] = [];
+        map[key].push(event);
+      }
+    }
+    return map;
+  }, [events, currentDate]);
 
   const createEvent = trpc.events.create.useMutation();
   const updateEvent = trpc.events.update.useMutation();
@@ -1355,10 +1384,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                   {eachDayOfInterval({
                     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
                     end: endOfWeek(currentDate, { weekStartsOn: 1 })}).map(day => {
-                    const hourEvents = (events || []).filter(event => {
-                      const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
-                      return isEventOnDay(event, day) && eventDate.getHours() === hour;
-                    });
+                    // Lookup O(1) dans la map pré-calculée au lieu de filtrer tous les événements
+                    const key = `${format(day, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
+                    const hourEvents = weekEventsByDayHour[key] || [];
                     return (
                       <View key={day.toString()} style={styles.weekDayColumn}>
                         {hourEvents.map(event => {
