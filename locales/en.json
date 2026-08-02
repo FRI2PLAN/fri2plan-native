@@ -225,7 +225,9 @@
     "nativeCalendarImportSuccess": "{{count}} event(s) imported from native calendar.",
     "nativeCalendarSelectCalendar": "Select a calendar",
     "nativeCalendarReadOnly": "Read only",
-    "nativeCalendarWritable": "Writable"
+    "nativeCalendarWritable": "Writable",
+    "importSuccessTitle": "ICS Import Complete",
+    "importSuccessMessage": "{{count}} event(s) successfully imported."
   },
   "tasks": {
     "title": "Tasks",

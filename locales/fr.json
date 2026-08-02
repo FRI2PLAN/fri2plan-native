@@ -225,7 +225,9 @@
     "nativeCalendarImportSuccess": "{{count}} événement(s) importé(s) depuis le calendrier natif.",
     "nativeCalendarSelectCalendar": "Sélectionnez un calendrier",
     "nativeCalendarReadOnly": "Lecture seule",
-    "nativeCalendarWritable": "Modifiable"
+    "nativeCalendarWritable": "Modifiable",
+    "importSuccessTitle": "Import ICS terminé",
+    "importSuccessMessage": "{{count}} événement(s) importé(s) avec succès."
   },
   "tasks": {
     "title": "Tâches",

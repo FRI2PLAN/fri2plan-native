@@ -282,14 +282,27 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       let successCount = 0;
       for (const event of eventsToImport) {
         try {
-          await createEvent.mutateAsync(event);
+          // skipNotification=true : pas de notif individuelle par événement
+          await createEvent.mutateAsync({ ...event, skipNotification: true });
           successCount++;
         } catch {}
       }
       setIsImporting(false);
       setImportModalOpen(false);
       refetch();
-      Alert.alert('Import réussi', `${successCount} événement(s) importé(s).`, [{ text: 'OK' }]);
+      // Notification groupée unique à la fin de l'import
+      if (successCount > 0) {
+        trpc.notifications.createForSelf.mutate({
+          type: 'event_created',
+          title: t('calendar.importSuccessTitle') || 'Import ICS terminé',
+          message: t('calendar.importSuccessMessage', { count: successCount }) || `${successCount} événement(s) importé(s) avec succès.`,
+        }).catch(() => {});
+      }
+      Alert.alert(
+        t('calendar.importSuccessTitle') || 'Import réussi',
+        `${successCount} événement(s) importé(s).`,
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       setIsImporting(false);
       Alert.alert('Erreur', "Impossible d'importer le fichier.", [{ text: 'OK' }]);
