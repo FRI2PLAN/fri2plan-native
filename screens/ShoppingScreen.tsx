@@ -480,7 +480,7 @@ export default function ShoppingScreen({
 
       {/* Modal formulaire liste — bottom sheet */}
       <Modal visible={showListForm} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
           <Pressable style={s.sheetBackdrop} onPress={() => setShowListForm(false)} />
           <View style={s.sheetContent}>
             <View style={s.modalHeader}>

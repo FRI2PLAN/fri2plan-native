@@ -349,7 +349,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
 
       {/* Modal création */}
       <Modal visible={createDialogOpen} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => { setCreateDialogOpen(false); resetForm(); }} />
           <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -491,7 +491,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
 
       {/* Modal détail */}
       <Modal visible={detailDialogOpen} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.detailModalContent]}>
             {selectedRequest && (
               <>

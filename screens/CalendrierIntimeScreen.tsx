@@ -429,7 +429,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
 
       {/* Modal nouveau cycle */}
       <Modal visible={newCycleOpen} transparent animationType="slide" onRequestClose={() => setNewCycleOpen(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => { setShowCycleDatePicker(false); setNewCycleOpen(false); }} />
           <ScrollView style={styles.modalContent} contentContainerStyle={{ paddingBottom: 24 }} bounces={false}>
             <Text style={styles.modalTitle}>{t('intimate.modalTitle')}</Text>

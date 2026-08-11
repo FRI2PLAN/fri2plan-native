@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { TasksSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -795,7 +795,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           MODAL — Créer une tâche
           ══════════════════════════════════════════════════════ */}
       <Modal visible={createModalVisible} animationType="slide" transparent onRequestClose={() => { setCreateModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('tasks.newTask') || 'Nouvelle tâche'}</Text>
@@ -814,14 +814,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </View>
           </View>
 
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ══════════════════════════════════════════════════════
           MODAL — Modifier une tâche
           ══════════════════════════════════════════════════════ */}
       <Modal visible={editModalVisible} animationType="slide" transparent onRequestClose={() => { setEditModalVisible(false); setShowDatePicker(false); setShowTimePicker(false); }}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('tasks.editTask') || 'Modifier'}</Text>
@@ -843,7 +843,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </View>
           </View>
 
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ══════════════════════════════════════════════════════

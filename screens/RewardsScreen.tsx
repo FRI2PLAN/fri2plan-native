@@ -403,7 +403,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
 
       {/* Modal création récompense */}
       <Modal visible={createOpen} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setCreateOpen(false)} />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>

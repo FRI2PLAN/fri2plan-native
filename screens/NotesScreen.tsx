@@ -416,7 +416,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
 
       {/* Modal création */}
       <Modal visible={createDialogOpen} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <Text style={styles.modalTitle}>{t('notes.createTitle')}</Text>
@@ -482,7 +482,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
 
       {/* Modal édition */}
       <Modal visible={editDialogOpen} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={styles.editHeader}>

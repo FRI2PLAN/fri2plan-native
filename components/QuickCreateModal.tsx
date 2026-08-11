@@ -797,7 +797,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
         keyboardVerticalOffset={0}
       >

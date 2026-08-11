@@ -811,7 +811,7 @@ export default function MealsScreen({
   // ─── Formulaire repas (modal) ──────────────────────────────────────────────
   const renderForm = () => (
     <Modal visible={showForm} transparent animationType="slide">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.sheetOverlay}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
         <Pressable style={s.sheetBackdrop} onPress={() => setShowForm(false)} />
         <View style={s.sheetContent}>
           {/* Header modal */}
