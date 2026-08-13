@@ -161,6 +161,74 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [googleCalendarModal, setGoogleCalendarModal] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
+
+  const completeGoogleOAuth = useCallback(async (sessionId: string) => {
+    const token = await AsyncStorage.getItem('authToken');
+    if (!token) {
+      Alert.alert('Connexion requise', 'Reconnectez-vous puis réessayez la connexion Google.');
+      return;
+    }
+
+    setGoogleCalendarLoading(true);
+    try {
+      const response = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${encodeURIComponent(sessionId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.status !== 'ready') {
+        throw new Error(data.error || 'La connexion Google est encore en cours.');
+      }
+      if (data.tokenData) {
+        await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(data.tokenData));
+      }
+      setGoogleCalendars(data.calendars || []);
+      setGoogleCalendarModal(true);
+    } catch (error: any) {
+      Alert.alert('Connexion Google', error?.message || 'Impossible de récupérer vos agendas Google.');
+    } finally {
+      setGoogleCalendarLoading(false);
+    }
+  }, []);
+
+  const startGoogleOAuth = useCallback(async () => {
+    const token = await AsyncStorage.getItem('authToken');
+    if (!token) {
+      Alert.alert('Connexion requise', 'Reconnectez-vous puis réessayez la connexion Google.');
+      return;
+    }
+
+    setGoogleCalendarLoading(true);
+    try {
+      const response = await fetch('https://app.fri2plan.ch/api/google-calendar/start', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.authUrl || !data.sessionId) {
+        throw new Error(data.error || 'Impossible de démarrer la connexion Google.');
+      }
+
+      // L’URL ouverte est directement celle de Google : Android ne peut donc pas
+      // réintercepter app.fri2plan.ch au lieu d’ouvrir le navigateur.
+      if (Platform.OS === 'android') {
+        const result = await WebBrowser.openBrowserAsync(data.authUrl, { showTitle: true, toolbarColor: '#7c3aed' });
+        if (result.type === 'opened') {
+          return;
+        }
+        throw new Error('Le navigateur Google n’a pas pu être ouvert.');
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(data.authUrl, 'fri2plan://google-calendar/complete');
+      if (result.type === 'success') {
+        const sessionId = new URL(result.url).searchParams.get('sessionId');
+        if (sessionId) await completeGoogleOAuth(sessionId);
+      }
+    } catch (error: any) {
+      Alert.alert('Connexion Google', error?.message || 'Impossible d’ouvrir Google.');
+    } finally {
+      setGoogleCalendarLoading(false);
+    }
+  }, [completeGoogleOAuth]);
   const [isImporting, setIsImporting] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -180,45 +248,29 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   useEffect(() => {
     loadViewMode();
     loadFilters();
-    // Gérer le deep link fri2plan://google-calendar/callback?google_calendars=... (Android)
-    // et fri2plan://google-calendar/oauth-done?sessionId=... (iOS - polling)
+    // Un seul retour OAuth mobile : le serveur rend à l'application un sessionId
+    // et l'app récupère ensuite les agendas avec sa session authentifiée.
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
-      if (url && url.startsWith('fri2plan://google-calendar/callback')) {
-        // Android : les calendriers sont encodés directement dans le deep link
+      if (url && url.startsWith('fri2plan://google-calendar/complete')) {
+        try {
+          const params = new URL(url).searchParams;
+          const oauthError = params.get('error');
+          if (oauthError) {
+            Alert.alert('Connexion Google', oauthError === 'oauth_denied' ? 'La connexion Google a été annulée.' : 'Google n’a pas pu terminer la connexion.');
+            return;
+          }
+          const sessionId = params.get('sessionId');
+          if (sessionId) completeGoogleOAuth(sessionId);
+        } catch {}
+      } else if (url && url.startsWith('fri2plan://google-calendar/callback')) {
+        // Compatibilité avec les retours de l'ancienne version encore ouverts.
         try {
           const params = new URL(url).searchParams;
           const encoded = params.get('google_calendars');
           if (encoded) {
-            const calendars = JSON.parse(decodeURIComponent(encoded));
-            setGoogleCalendars(calendars);
+            setGoogleCalendars(JSON.parse(decodeURIComponent(encoded)));
             setGoogleCalendarModal(true);
-          }
-        } catch {}
-      } else if (url && url.startsWith('fri2plan://google-calendar/oauth-done')) {
-        // iOS : le sessionId est dans le deep link, on fait un poll immédiat
-        try {
-          const params = new URL(url).searchParams;
-          const sessionId = params.get('sessionId');
-          if (sessionId) {
-            // Poll immédiat pour récupérer les calendriers
-            const doPoll = async () => {
-              try {
-                const token = await AsyncStorage.getItem('userToken');
-                const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, {
-                  headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                const pollData = await pollRes.json();
-                if (pollData.status === 'ready' && pollData.calendars) {
-                  setGoogleCalendars(pollData.calendars);
-                  if (pollData.tokenData) {
-                    await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
-                  }
-                  setGoogleCalendarModal(true);
-                }
-              } catch {}
-            };
-            doPoll();
           }
         } catch {}
       }
@@ -229,7 +281,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       if (url) handleDeepLink({ url });
     });
     return () => subscription.remove();
-  }, []);
+  }, [completeGoogleOAuth]);
 
   const loadViewMode = async () => {
     try {
@@ -1054,58 +1106,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                 <Text style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Bientôt disponible</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.calMenuItem} onPress={async () => {
+            <TouchableOpacity style={styles.calMenuItem} onPress={() => {
               setCalendarMenuVisible(false);
-              // Générer un sessionId unique pour le polling
-              const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-              // Récupérer le token FRI2PLAN AVANT d'ouvrir le navigateur
-              const token = await AsyncStorage.getItem('authToken');
-              if (!token) {
-                Alert.alert('Erreur', 'Vous devez être connecté pour utiliser Google Calendar.');
-                return;
-              }
-              // Sur iOS : Linking.openURL ouvre Safari sans bloquer le thread JS → le polling tourne en parallèle
-              // Sur Android : WebBrowser.openAuthSessionAsync ouvre Chrome Custom Tabs
-              const source = Platform.OS === 'ios' ? 'ios' : 'android';
-              const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=${source}&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-              if (Platform.OS === 'ios') {
-                Linking.openURL(connectUrl).catch(() =>
-                  Alert.alert('Erreur', "Impossible d'ouvrir Safari.")
-                );
-              } else {
-                WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() =>
-                  Alert.alert('Erreur', "Impossible d'ouvrir le navigateur.")
-                );
-              }
-              // Polling toutes les 2s pendant 3 minutes max
-              // Sur iOS : tourne en parallèle car Linking.openURL ne bloque pas le thread JS
-              // Sur Android : tourne en parallèle aussi
-              let attempts = 0;
-              const maxAttempts = 90;
-              const pollInterval = setInterval(async () => {
-                attempts++;
-                if (attempts > maxAttempts) {
-                  clearInterval(pollInterval);
-                  return;
-                }
-                try {
-                  const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, {
-                    headers: { 'Authorization': token ? `Bearer ${token}` : '' },
-                  });
-                  const pollData = await pollRes.json();
-                  if (pollData.status === 'ready') {
-                    clearInterval(pollInterval);
-                    // Fermer le navigateur quand le polling réussit
-                    try { WebBrowser.dismissBrowser(); } catch {}
-                    // Stocker le token Google pour l'utiliser lors de subscribe
-                    if (pollData.tokenData) {
-                      await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
-                    }
-                    setGoogleCalendars(pollData.calendars || []);
-                    setGoogleCalendarModal(true);
-                  }
-                } catch { /* ignorer les erreurs de polling */ }
-              }, 2000);
+              startGoogleOAuth();
             }}>
               <Text style={styles.calMenuIcon}>🗓️</Text>
               <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
@@ -2176,38 +2179,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               style={{ marginTop: 12, padding: 14, borderRadius: 10, backgroundColor: '#4285f4', alignItems: 'center' }}
               onPress={() => {
                 setGoogleManageModal(false);
-                // Relancer le flux OAuth Google
-                setTimeout(async () => {
-                  const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-                  const token = await AsyncStorage.getItem('authToken');
-                  if (!token) { Alert.alert('Erreur', 'Vous devez être connecté.'); return; }
-                  // Sur iOS : Linking.openURL ouvre Safari sans bloquer le thread JS → le polling tourne en parallèle
-                  // Sur Android : WebBrowser.openAuthSessionAsync ouvre Chrome Custom Tabs
-                  const source = Platform.OS === 'ios' ? 'ios' : 'android';
-                  const connectUrl = `https://app.fri2plan.ch/api/google-calendar/connect?source=${source}&sessionId=${sessionId}&token=${encodeURIComponent(token)}`;
-                  if (Platform.OS === 'ios') {
-                    Linking.openURL(connectUrl).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir Safari."));
-                  } else {
-                    WebBrowser.openAuthSessionAsync(connectUrl, 'fri2plan://').catch(() => Alert.alert('Erreur', "Impossible d'ouvrir le navigateur."));
-                  }
-                  let attempts = 0;
-                  const pollInterval = setInterval(async () => {
-                    attempts++;
-                    if (attempts > 90) { clearInterval(pollInterval); return; }
-                    try {
-                      const pollRes = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${sessionId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                      const pollData = await pollRes.json();
-                      if (pollData.status === 'ready') {
-                        clearInterval(pollInterval);
-                        // Fermer le navigateur quand le polling réussit
-                        try { WebBrowser.dismissBrowser(); } catch {}
-                        if (pollData.tokenData) await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(pollData.tokenData));
-                        setGoogleCalendars(pollData.calendars || []);
-                        setGoogleCalendarModal(true);
-                      }
-                    } catch {}
-                  }, 2000);
-                }, 300);
+                startGoogleOAuth();
               }}
             >
               <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15 }}>🗓️ Ajouter un calendrier Google</Text>
