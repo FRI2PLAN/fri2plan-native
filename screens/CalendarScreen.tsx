@@ -781,7 +781,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       });
       const data = await response.json();
       if (data.success) {
-        Alert.alert('Calendrier ajouté', `"${cal.summary}" a été synchronisé avec succès.`);
+        const importedCount = Number(data.importedCount || 0);
+        const importMessage = importedCount > 0
+          ? `"${cal.summary}" a été synchronisé : ${importedCount} événement(s) importé(s).`
+          : `"${cal.summary}" est connecté. Aucun événement à importer pour le moment.`;
+        Alert.alert('Calendrier ajouté', importMessage);
         setGoogleCalendarModal(false);
         refetch();
         refetchSyncedCalendars();
