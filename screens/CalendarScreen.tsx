@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking, Share, Clipboard } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking, Share, Clipboard, AppState } from 'react-native';
 import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, removeEventFromNative, getNativeEventId, saveConnectedCalendar, getConnectedCalendar, disconnectNativeCalendar, updateLastSync, type NativeCalendar, type ConnectedNativeCalendar } from '../hooks/useAppleCalendar';
 import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
@@ -6,7 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
 import MemberAvatar from '../components/MemberAvatar';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GOOGLE_OAUTH_PENDING_SESSION_KEY = 'googleOAuthPendingSessionId';
 
 /**
  * Parser une date stockée en base en objet Date JS.
@@ -161,10 +162,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [googleCalendarModal, setGoogleCalendarModal] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
+  const googleOAuthHandledSession = useRef<string | null>(null);
 
   const completeGoogleOAuth = useCallback(async (sessionId: string) => {
+    if (googleOAuthHandledSession.current === sessionId) return;
+    googleOAuthHandledSession.current = sessionId;
     const token = await AsyncStorage.getItem('authToken');
     if (!token) {
+      googleOAuthHandledSession.current = null;
       Alert.alert('Connexion requise', 'Reconnectez-vous puis réessayez la connexion Google.');
       return;
     }
@@ -181,9 +186,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       if (data.tokenData) {
         await AsyncStorage.setItem('googleOAuthToken', JSON.stringify(data.tokenData));
       }
+      await AsyncStorage.removeItem(GOOGLE_OAUTH_PENDING_SESSION_KEY);
       setGoogleCalendars(data.calendars || []);
       setGoogleCalendarModal(true);
     } catch (error: any) {
+      googleOAuthHandledSession.current = null;
       Alert.alert('Connexion Google', error?.message || 'Impossible de récupérer vos agendas Google.');
     } finally {
       setGoogleCalendarLoading(false);
@@ -207,6 +214,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       if (!response.ok || !data.authUrl || !data.sessionId) {
         throw new Error(data.error || 'Impossible de démarrer la connexion Google.');
       }
+      // Le deep link Android peut être perdu selon le navigateur. Conserver la
+      // session permet de la reprendre automatiquement au retour dans l’app.
+      googleOAuthHandledSession.current = null;
+      await AsyncStorage.setItem(GOOGLE_OAUTH_PENDING_SESSION_KEY, data.sessionId);
 
       // L’URL ouverte est directement celle de Google : Android ne peut donc pas
       // réintercepter app.fri2plan.ch au lieu d’ouvrir le navigateur.
@@ -276,11 +287,21 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       }
     };
     const subscription = Linking.addEventListener('url', handleDeepLink);
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        AsyncStorage.getItem(GOOGLE_OAUTH_PENDING_SESSION_KEY).then((sessionId) => {
+          if (sessionId) completeGoogleOAuth(sessionId);
+        }).catch(() => {});
+      }
+    });
     // Vérifier si l'app a été ouverte via un deep link
     Linking.getInitialURL().then((url) => {
       if (url) handleDeepLink({ url });
     });
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      appStateSubscription.remove();
+    };
   }, [completeGoogleOAuth]);
 
   const loadViewMode = async () => {
