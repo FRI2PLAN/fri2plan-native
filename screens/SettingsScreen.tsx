@@ -114,7 +114,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const updateSettingsMutation = (trpc.settings as any).update?.useMutation?.({ onSuccess: () => refetchSettings() });
   const updateNameMutation = (trpc.members as any).updateName?.useMutation?.();
   const updateColorMutation = (trpc.members as any).updateColor?.useMutation?.();
-  const deleteAccountMutation = (trpc.user as any).deleteMyAccount?.useMutation?.();
+  const deleteAccountMutation = (trpc.auth as any).deleteMyAccount?.useMutation?.();
   const createCheckoutMutation = trpc.subscription.createCheckout.useMutation();
   const createPortalMutation = trpc.subscription.createPortal.useMutation();
   const { data: subDetails, isLoading: subDetailsLoading } = (trpc.subscription as any).getSubscriptionDetails?.useQuery?.(

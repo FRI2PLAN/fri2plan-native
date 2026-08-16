@@ -5,6 +5,7 @@ const source = readFileSync(new URL('./SettingsScreen.tsx', import.meta.url), 'u
 
 describe('suppression de compte', () => {
   it('appelle la mutation et expose le message serveur en cas d’échec', () => {
+    expect(source).toContain('(trpc.auth as any).deleteMyAccount?.useMutation?.()');
     expect(source).toContain('deleteAccountMutation.mutate(undefined');
     expect(source).toContain("error?.message || 'La suppression du compte a échoué. Veuillez réessayer.'");
   });
