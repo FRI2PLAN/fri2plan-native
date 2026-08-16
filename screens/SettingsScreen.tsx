@@ -357,9 +357,16 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           text: t('settings.deleteAccount'),
           style: 'destructive',
           onPress: () => {
-            deleteAccountMutation?.mutate(undefined, {
+            if (!deleteAccountMutation) {
+              Alert.alert('❌', 'La suppression de compte est momentanément indisponible. Réessayez après avoir mis l’application à jour.');
+              return;
+            }
+            deleteAccountMutation.mutate(undefined, {
               onSuccess: () => onLogout?.(),
-              onError: () => Alert.alert('❌', t('common.error')),
+              onError: (error: any) => Alert.alert(
+                '❌',
+                error?.message || 'La suppression du compte a échoué. Veuillez réessayer.'
+              ),
             });
           },
         },

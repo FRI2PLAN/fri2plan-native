@@ -163,13 +163,17 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
   const googleOAuthHandledSession = useRef<string | null>(null);
+  const googleOAuthPollInFlight = useRef(false);
+  const googleOAuthRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const completeGoogleOAuth = useCallback(async (sessionId: string) => {
-    if (googleOAuthHandledSession.current === sessionId) return;
+    if (googleOAuthHandledSession.current === sessionId || googleOAuthPollInFlight.current) return;
     googleOAuthHandledSession.current = sessionId;
+    googleOAuthPollInFlight.current = true;
     const token = await AsyncStorage.getItem('authToken');
     if (!token) {
       googleOAuthHandledSession.current = null;
+      googleOAuthPollInFlight.current = false;
       Alert.alert('Connexion requise', 'Reconnectez-vous puis réessayez la connexion Google.');
       return;
     }
@@ -180,6 +184,19 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
+      // Android peut revenir au premier plan avant la fin du callback Google.
+      // Réessayer discrètement au lieu d’afficher une alerte prématurée.
+      if (data.status === 'pending') {
+        googleOAuthHandledSession.current = null;
+        if (!googleOAuthRetryTimer.current) {
+          googleOAuthRetryTimer.current = setTimeout(async () => {
+            googleOAuthRetryTimer.current = null;
+            const pendingSession = await AsyncStorage.getItem(GOOGLE_OAUTH_PENDING_SESSION_KEY);
+            if (pendingSession) void completeGoogleOAuth(pendingSession);
+          }, 1200);
+        }
+        return;
+      }
       if (data.status !== 'ready') {
         throw new Error(data.error || 'La connexion Google est encore en cours.');
       }
@@ -193,6 +210,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       googleOAuthHandledSession.current = null;
       Alert.alert('Connexion Google', error?.message || 'Impossible de récupérer vos agendas Google.');
     } finally {
+      googleOAuthPollInFlight.current = false;
       setGoogleCalendarLoading(false);
     }
   }, []);
@@ -301,6 +319,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     return () => {
       subscription.remove();
       appStateSubscription.remove();
+      if (googleOAuthRetryTimer.current) clearTimeout(googleOAuthRetryTimer.current);
     };
   }, [completeGoogleOAuth]);
 
@@ -594,25 +613,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [nativeSelectedCalendarId, setNativeSelectedCalendarId] = useState<string | null>(null);
   const [connectedNativeCalendar, setConnectedNativeCalendar] = useState<ConnectedNativeCalendar | null>(null);
   const [nativeSyncing, setNativeSyncing] = useState(false);
-  const [googleTokenStatus, setGoogleTokenStatus] = useState<'unknown' | 'valid' | 'expired'>('unknown');
 
-  // ─── Charger le calendrier natif connecté + vérifier token Google au focus ───
+  // ─── Charger le calendrier natif connecté au focus ─────────────────────────
   useFocusEffect(
     useCallback(() => {
-      // Charger le calendrier natif connecté
       getConnectedCalendar().then(cal => setConnectedNativeCalendar(cal));
-      // Vérifier le statut du token Google
-      AsyncStorage.getItem('googleOAuthToken').then(stored => {
-        if (!stored) { setGoogleTokenStatus('unknown'); return; }
-        try {
-          const tokenData = JSON.parse(stored);
-          if (tokenData.expiry_date && tokenData.expiry_date < Date.now()) {
-            setGoogleTokenStatus('expired');
-          } else {
-            setGoogleTokenStatus('valid');
-          }
-        } catch { setGoogleTokenStatus('unknown'); }
-      });
     }, [])
   );
 
@@ -791,33 +796,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     );
   };
 
-  // Déconnecter Google Calendar (supprimer le token local + serveur)
-  const handleDisconnectGoogle = async () => {
-    Alert.alert(
-      'Déconnecter Google',
-      'Supprimer la connexion Google Calendar ? Les calendriers synchronisés resteront mais ne se mettront plus à jour automatiquement.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Déconnecter', style: 'destructive', onPress: async () => {
-          // Supprimer le token local
-          await AsyncStorage.removeItem('googleOAuthToken');
-          // Appeler l'endpoint serveur pour supprimer le token en base
-          try {
-            const authToken = await AsyncStorage.getItem('authToken');
-            if (authToken) {
-              await fetch('https://app.fri2plan.ch/api/google-calendar/disconnect', {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${authToken}` },
-              });
-            }
-          } catch { /* ignorer les erreurs réseau */ }
-          setGoogleTokenStatus('unknown');
-          Alert.alert('✓', 'Connexion Google supprimée.');
-        }}
-      ]
-    );
-  };
-
   const [googleManageModal, setGoogleManageModal] = useState(false);
   const [googleColorPickerId, setGoogleColorPickerId] = useState<number | null>(null);
   const [googleSyncingId, setGoogleSyncingId] = useState<number | null>(null);
@@ -860,6 +838,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           : `"${cal.summary}" est connecté. Aucun événement à importer pour le moment.`;
         Alert.alert('Calendrier ajouté', importMessage);
         setGoogleCalendarModal(false);
+        setGoogleManageModal(true);
         refetch();
         refetchSyncedCalendars();
         refetchSubscriptions();
@@ -1129,40 +1108,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             )}
             <TouchableOpacity style={styles.calMenuItem} onPress={() => {
               setCalendarMenuVisible(false);
-              startGoogleOAuth();
+              if ((syncedCalendars as any[]).length > 0) {
+                setGoogleManageModal(true);
+              } else {
+                startGoogleOAuth();
+              }
             }}>
               <Text style={styles.calMenuIcon}>🗓️</Text>
               <Text style={[styles.calMenuLabel, { flex: 1 }]}>{t('calendar.googleCalendar') || 'Google Calendar'}</Text>
-              {googleTokenStatus === 'valid' ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10b981' }} />
-                  <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '600' }}>Connecté</Text>
-                </View>
-              ) : googleTokenStatus === 'expired' ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#f59e0b' }} />
-                  <Text style={{ fontSize: 11, color: '#f59e0b', fontWeight: '600' }}>Expiré</Text>
-                </View>
-              ) : (
-                <Text style={{ fontSize: 11, color: '#6b7280' }}>+ Ajouter</Text>
-              )}
-            </TouchableOpacity>
-            {(syncedCalendars as any[]).length > 0 && (
-              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); setGoogleManageModal(true); }}>
-                <Text style={styles.calMenuIcon}>⚙️</Text>
-                <Text style={[styles.calMenuLabel, { flex: 1 }]}>Gérer les calendriers Google</Text>
+              {(syncedCalendars as any[]).length > 0 ? (
                 <View style={{ backgroundColor: '#4285f4', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, marginLeft: 4 }}>
                   <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{(syncedCalendars as any[]).length}</Text>
                 </View>
-              </TouchableOpacity>
-            )}
-            {/* Bouton Déconnecter Google (si token présent) */}
-            {googleTokenStatus !== 'unknown' && (
-              <TouchableOpacity style={styles.calMenuItem} onPress={() => { setCalendarMenuVisible(false); handleDisconnectGoogle(); }}>
-                <Text style={styles.calMenuIcon}>🔓</Text>
-                <Text style={[styles.calMenuLabel, { flex: 1, color: '#ef4444' }]}>Déconnecter Google</Text>
-              </TouchableOpacity>
-            )}
+              ) : <Text style={{ fontSize: 11, color: '#6b7280' }}>+ Ajouter</Text>}
+            </TouchableOpacity>
             <View style={styles.calMenuDivider} />
             <TouchableOpacity style={[styles.calMenuItem, hasActiveFilters && styles.calMenuItemActive]} onPress={() => { setCalendarMenuVisible(false); setFilterModalOpen(true); }}>
               <Text style={styles.calMenuIcon}>⚙️</Text>
@@ -2123,23 +2082,11 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
         </View>
       </Modal>
 
-      {/* ── Modal Gérer les calendriers Google ── */}
+      {/* ── Sous-page Google Agenda : abonnements existants ── */}
       <Modal visible={googleManageModal} animationType="slide" transparent onRequestClose={() => { setGoogleManageModal(false); setGoogleColorPickerId(null); }}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: '85%' }]}>
             <Text style={styles.modalTitle}>🗓️ Calendriers Google</Text>
-            {/* Statut token Google */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, padding: 10, borderRadius: 8, backgroundColor: googleTokenStatus === 'valid' ? (isDark ? '#064e3b' : '#d1fae5') : googleTokenStatus === 'expired' ? (isDark ? '#78350f' : '#fef3c7') : (isDark ? '#1f2937' : '#f3f4f6') }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: googleTokenStatus === 'valid' ? '#10b981' : googleTokenStatus === 'expired' ? '#f59e0b' : '#9ca3af', marginRight: 8 }} />
-              <Text style={{ fontSize: 13, color: googleTokenStatus === 'valid' ? '#10b981' : googleTokenStatus === 'expired' ? '#f59e0b' : (isDark ? '#9ca3af' : '#6b7280'), fontWeight: '600', flex: 1 }}>
-                {googleTokenStatus === 'valid' ? 'Connexion Google active' : googleTokenStatus === 'expired' ? 'Connexion expirée — reconnectez-vous' : 'Non connecté à Google'}
-              </Text>
-              {googleTokenStatus !== 'unknown' && (
-                <TouchableOpacity onPress={() => { setGoogleManageModal(false); handleDisconnectGoogle(); }}>
-                  <Text style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Déconnecter</Text>
-                </TouchableOpacity>
-              )}
-            </View>
             <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
               {(syncedCalendars as any[]).length === 0 ? (
                 <Text style={[styles.importInfoText, { textAlign: 'center', marginTop: 20 }]}>Aucun calendrier Google connecté</Text>
