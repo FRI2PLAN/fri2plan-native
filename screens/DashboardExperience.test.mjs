@@ -14,14 +14,17 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
   });
 
   it('présente les repères de la famille et la prochaine action', () => {
-    expect(screen).toContain("t('dashboard.todayAtHome')");
     expect(screen).toContain("t('dashboard.nextUp')");
-    expect(screen).toContain('familyAvatarStack');
+    expect(screen).toContain("t('dashboard.todayWithCircle'");
+    expect(screen).toContain('heroGreetingRow');
+    expect(screen).toContain('familyAvatarOverflowLine');
+    expect(screen).toContain('greetingText');
   });
 
   it('dispose des nouveaux libellés dans les trois langues', () => {
     for (const locale of [fr, en, de]) {
       expect(locale.dashboard.todayAtHome).toBeTruthy();
+      expect(locale.dashboard.todayWithCircle).toContain('{{name}}');
       expect(locale.dashboard.nextUp).toBeTruthy();
       expect(locale.dashboard.greetingMorning).toContain('{{name}}');
     }

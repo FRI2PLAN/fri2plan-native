@@ -98,8 +98,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       if (!memberId || seenMemberIds.has(memberId)) return false;
       seenMemberIds.add(memberId);
       return true;
-    }).slice(0, 4);
+    }).slice(0, 8);
   }, [familyMembers]);
+  const primaryAvatarMembers = visibleFamilyMembers.slice(0, 4);
+  const overflowAvatarMembers = visibleFamilyMembers.slice(4, 8);
 
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery(
@@ -280,7 +282,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // arrivent ensuite sans bloquer l’Accueil ni provoquer un écran d’attente inutile.
   const isLoading = familiesLoading || (!!activeFamily && tasksLoading && eventsLoading);
   const greetingKey = getTodayGreetingKey(new Date().getHours());
-  const firstName = user?.name?.trim().split(' ')[0] || '';
+  const greetingText = t(`dashboard.${greetingKey}Simple`);
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
   const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
@@ -479,30 +481,45 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 />
                 {/* Carte d’accueil : repères familiaux immédiats */}
                 <View style={styles.todayHero}>
-                  <View style={styles.heroTopRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.heroEyebrow}>{t('dashboard.todayAtHome')}</Text>
-                      <Text style={styles.heroGreeting}>{t(`dashboard.${greetingKey}`, { name: firstName })}</Text>
-                      <Text style={styles.heroSubtitle} numberOfLines={1}>
-                        {activeFamily?.name || t('dashboard.familyPulse')}
-                      </Text>
-                    </View>
-                    <View style={styles.familyAvatarStack}>
-                      {visibleFamilyMembers.map((member: any, index: number) => (
-                        <TouchableOpacity
-                          key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
-                          onPress={() => setSelectedMember(member)}
-                          activeOpacity={0.78}
-                          accessibilityRole="button"
-                          accessibilityLabel={member.name || t('dashboard.memberSummaryTitle', { name: '' })}
-                          style={[
-                            styles.heroAvatar,
-                            { marginLeft: index === 0 ? 0 : -8 },
-                          ]}
-                        >
-                          <MemberAvatar member={member} size={32} />
-                        </TouchableOpacity>
-                      ))}
+                  <Text style={styles.heroCircleTitle} numberOfLines={1}>
+                    {t('dashboard.todayWithCircle', { name: activeFamily?.name || t('dashboard.familyPulse') })}
+                  </Text>
+
+                  <View style={styles.heroGreetingRow}>
+                    <Text style={styles.heroGreeting}>{greetingText}</Text>
+                    <View style={styles.familyAvatarCluster}>
+                      {overflowAvatarMembers.length > 0 && (
+                        <View style={[styles.familyAvatarLine, styles.familyAvatarOverflowLine]}>
+                          {overflowAvatarMembers.map((member: any) => (
+                            <TouchableOpacity
+                              key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
+                              onPress={() => setSelectedMember(member)}
+                              activeOpacity={0.78}
+                              hitSlop={6}
+                              accessibilityRole="button"
+                              accessibilityLabel={member.name || t('dashboard.memberSummaryTitle', { name: '' })}
+                              style={styles.heroAvatar}
+                            >
+                              <MemberAvatar member={member} size={44} />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                      <View style={styles.familyAvatarLine}>
+                        {primaryAvatarMembers.map((member: any) => (
+                          <TouchableOpacity
+                            key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
+                            onPress={() => setSelectedMember(member)}
+                            activeOpacity={0.78}
+                            hitSlop={6}
+                            accessibilityRole="button"
+                            accessibilityLabel={member.name || t('dashboard.memberSummaryTitle', { name: '' })}
+                            style={styles.heroAvatar}
+                          >
+                            <MemberAvatar member={member} size={44} />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   </View>
 
@@ -824,49 +841,50 @@ function getStyles(isDark: boolean) {
       borderWidth: 1,
       borderColor: isDark ? '#3B2B5A' : '#EDE9FE',
     },
-    heroTopRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    heroEyebrow: {
+    heroCircleTitle: {
       fontSize: 12,
       fontWeight: '800',
       letterSpacing: 0.6,
       textTransform: 'uppercase',
       color: '#7C3AED',
-      marginBottom: 4,
+      marginBottom: 7,
     },
-    heroGreeting: {
-      fontSize: 24,
-      fontWeight: '800',
-      color: isDark ? '#FFFFFF' : '#111111',
-      letterSpacing: -0.4,
-    },
-    heroSubtitle: {
-      fontSize: 13,
-      color: isDark ? '#C4B5FD' : '#6D5A8F',
-      marginTop: 3,
-      fontWeight: '600',
-    },
-    familyAvatarStack: {
+    heroGreetingRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingLeft: 8,
+      minHeight: 52,
+    },
+    heroGreeting: {
+      color: isDark ? '#FFFFFF' : '#17101F',
+      fontSize: 24,
+      fontWeight: '800',
+      letterSpacing: -0.4,
+      marginRight: 8,
+      flexShrink: 0,
+    },
+    familyAvatarCluster: {
+      flex: 1,
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    familyAvatarLine: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 5,
+    },
+    familyAvatarOverflowLine: {
+      marginBottom: 5,
     },
     heroAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 2,
+      borderWidth: 2.5,
       borderColor: isDark ? '#171321' : '#FFFEFB',
-    },
-    heroAvatarText: {
-      color: '#FFFFFF',
-      fontSize: 13,
-      fontWeight: '900',
+      backgroundColor: isDark ? '#2A2037' : '#F4F0FF',
     },
     heroNextAction: {
       flexDirection: 'row',

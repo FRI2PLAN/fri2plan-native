@@ -1633,3 +1633,5 @@ components/
 - [x] Fermer la fenêtre par appui hors de celle-ci ou par la croix centrée en bas.
 - [x] Dédupliquer les avatars pendant un changement de cercle pour supprimer l’avertissement de clé React dupliquée.
 - [x] Ajouter les traductions FR/EN/DE et la couverture Vitest correspondante.
+- [ ] Aérer les avatars de l’Accueil, supprimer la formule de salutation et placer « Aujourd’hui chez nous » près du nom du cercle.
+- [x] Réviser la carte Accueil : conserver « Bonsoir » sans prénom, afficher « Aujourd’hui chez les {{cercle}} » et disposer des avatars agrandis en une ou deux lignes équilibrées.
