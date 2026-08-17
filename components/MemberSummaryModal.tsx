@@ -1,11 +1,12 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useMemo } from 'react';
+import { Modal, PanResponder, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import MemberAvatar from './MemberAvatar';
 
 interface MemberSummaryModalProps {
   member: any | null;
+  familyMembers?: any[];
   tasks: any[];
   events: any[];
   onClose: () => void;
@@ -52,14 +53,45 @@ export function getMemberDailySummary(memberId: number | string | undefined, tas
   };
 }
 
-const MemberSummaryModal = ({ member, tasks, events, onClose }: MemberSummaryModalProps) => {
+const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose }: MemberSummaryModalProps) => {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
+  const [activeMemberIndex, setActiveMemberIndex] = useState(0);
+  const uniqueMembers = useMemo(() => {
+    const knownIds = new Set<string>();
+    return [...familyMembers, ...(member ? [member] : [])].filter((candidate) => {
+      const memberId = String(candidate?.id ?? '');
+      if (!memberId || knownIds.has(memberId)) return false;
+      knownIds.add(memberId);
+      return true;
+    });
+  }, [familyMembers, member]);
+
+  useEffect(() => {
+    const selectedIndex = uniqueMembers.findIndex((candidate) => String(candidate.id) === String(member?.id));
+    setActiveMemberIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [member?.id, uniqueMembers]);
+
+  const currentMember = uniqueMembers[activeMemberIndex] || member;
   const summary = useMemo(
-    () => getMemberDailySummary(member?.id, tasks, events),
-    [member?.id, tasks, events]
+    () => getMemberDailySummary(currentMember?.id, tasks, events),
+    [currentMember?.id, tasks, events]
   );
+  const shiftMember = (direction: 1 | -1) => {
+    if (uniqueMembers.length < 2) return;
+    setActiveMemberIndex((currentIndex) => (currentIndex + direction + uniqueMembers.length) % uniqueMembers.length);
+  };
+  const panResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dx <= -45) shiftMember(1);
+      if (gesture.dx >= 45) shiftMember(-1);
+    },
+  })).current;
+  const stackedMembers = uniqueMembers.length > 1
+    ? [1, 2].map((offset) => uniqueMembers[(activeMemberIndex + offset) % uniqueMembers.length])
+    : [];
 
   if (!member) return null;
 
@@ -67,17 +99,38 @@ const MemberSummaryModal = ({ member, tasks, events, onClose }: MemberSummaryMod
     <Modal transparent visible animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} />
-        <View style={styles.panel}>
+        <View style={styles.cardStage}>
+          {stackedMembers.map((stackedMember, index) => (
+            <View
+              key={`member-stack-${stackedMember.id}-${index}`}
+              pointerEvents="none"
+              style={[
+                styles.stackCard,
+                { backgroundColor: stackedMember.userColor || (isDark ? '#30213D' : '#EAE0FB'), top: 9 + index * 8 },
+              ]}
+            >
+              <MemberAvatar member={stackedMember} size={30} />
+            </View>
+          ))}
+        <View style={styles.panel} {...panResponder.panHandlers}>
           <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             <View style={styles.memberHeader}>
               <View style={styles.avatarRing}>
-                <MemberAvatar member={member} size={64} />
+                <MemberAvatar member={currentMember} size={64} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.title} numberOfLines={1}>{member.name || ''}</Text>
+                <Text style={styles.title} numberOfLines={1}>{currentMember.name || ''}</Text>
                 <Text style={styles.subtitle}>{t('dashboard.today')}</Text>
               </View>
             </View>
+
+            {uniqueMembers.length > 1 && (
+              <View style={styles.pagination} accessibilityLabel={`${activeMemberIndex + 1}/${uniqueMembers.length}`}>
+                {uniqueMembers.map((candidate, index) => (
+                  <View key={`member-dot-${candidate.id}`} style={[styles.paginationDot, index === activeMemberIndex && styles.paginationDotActive]} />
+                ))}
+              </View>
+            )}
 
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
@@ -115,8 +168,8 @@ const MemberSummaryModal = ({ member, tasks, events, onClose }: MemberSummaryMod
                 <Text style={styles.emptyText}>{t('dashboard.memberNoEvents')}</Text>
               ) : (
                 summary.memberEvents.map((event) => (
-                  <View key={`event-${event.id}`} style={styles.listRow}>
-                    <View style={[styles.eventDot, { backgroundColor: event.color || member.userColor || '#7C3AED' }]} />
+                    <View key={`event-${event.id}`} style={styles.listRow}>
+                    <View style={[styles.eventDot, { backgroundColor: event.color || currentMember.userColor || '#7C3AED' }]} />
                     <Text style={styles.rowTitle} numberOfLines={1}>{event.title}</Text>
                   </View>
                 ))
@@ -145,6 +198,7 @@ const MemberSummaryModal = ({ member, tasks, events, onClose }: MemberSummaryMod
             <Text style={styles.closeIcon}>✕</Text>
           </TouchableOpacity>
         </View>
+        </View>
       </View>
     </Modal>
   );
@@ -172,6 +226,24 @@ function getStyles(isDark: boolean) {
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 8 },
       elevation: 12,
+    },
+    cardStage: {
+      width: '100%',
+      position: 'relative',
+    },
+    stackCard: {
+      position: 'absolute',
+      left: 10,
+      right: 10,
+      bottom: -10,
+      borderRadius: 24,
+      opacity: 0.7,
+      alignItems: 'flex-end',
+      justifyContent: 'flex-start',
+      paddingTop: 18,
+      paddingRight: 18,
+      borderWidth: 1,
+      borderColor: isDark ? '#5A4672' : '#D9CCF0',
     },
     content: {
       padding: 20,
@@ -202,6 +274,23 @@ function getStyles(isDark: boolean) {
       marginTop: 3,
       fontSize: 13,
       fontWeight: '600',
+    },
+    pagination: {
+      flexDirection: 'row',
+      alignSelf: 'center',
+      gap: 5,
+      marginTop: -9,
+      marginBottom: 15,
+    },
+    paginationDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: isDark ? '#695578' : '#C8BAD7',
+    },
+    paginationDotActive: {
+      width: 18,
+      backgroundColor: '#7C3AED',
     },
     statsRow: {
       flexDirection: 'row',

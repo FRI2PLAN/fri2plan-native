@@ -46,8 +46,12 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(memberSummaryModal).toContain('getMemberDailySummary');
     expect(memberSummaryModal).toContain('task.assignedTo');
     expect(memberSummaryModal).toContain('event.userId');
-    expect(memberSummaryModal).toContain("{member.name || ''}");
+    expect(memberSummaryModal).toContain("{currentMember.name || ''}");
     expect(memberSummaryModal).toContain("t('dashboard.today')");
+    expect(memberSummaryModal).toContain('PanResponder.create');
+    expect(memberSummaryModal).toContain('onPanResponderRelease');
+    expect(memberSummaryModal).toContain('styles.stackCard');
+    expect(memberSummaryModal).toContain('shiftMember(1)');
     expect(memberSummaryModal).not.toContain('memberSummaryTitle');
     expect(memberSummaryModal).toContain('Pressable style={StyleSheet.absoluteFill} onPress={onClose}');
     expect(memberSummaryModal).toContain('style={styles.closeButton}');
@@ -62,5 +66,9 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
       expect(locale.dashboard.memberEvents).toBeTruthy();
       expect(locale.dashboard.memberAchievements).toBeTruthy();
     }
+  });
+
+  it('passe la liste des membres à la fenêtre afin de permettre le balayage entre cartes', () => {
+    expect(screen).toContain('familyMembers={visibleFamilyMembers}');
   });
 });

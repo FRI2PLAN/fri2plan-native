@@ -735,6 +735,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
       <MemberSummaryModal
         member={selectedMember}
+        familyMembers={visibleFamilyMembers}
         tasks={tasks as any[]}
         events={events as any[]}
         onClose={() => setSelectedMember(null)}
