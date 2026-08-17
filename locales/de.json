@@ -137,7 +137,14 @@
     "noFamilyText": "Um zu beginnen, erstellen Sie eine Familie oder treten Sie einer bestehenden bei.",
     "todayMeals": "Heutige Mahlzeiten",
     "noMeals": "Keine Mahlzeiten heute geplant",
-    "selectCircle": "Kreis auswählen"
+    "selectCircle": "Kreis auswählen",
+    "todayAtHome": "Heute bei uns",
+    "greetingMorning": "Guten Morgen {{name}}",
+    "greetingAfternoon": "Guten Tag {{name}}",
+    "greetingEvening": "Guten Abend {{name}}",
+    "familyPulse": "Ihre Familie auf einen Blick",
+    "nextUp": "Als Nächstes",
+    "allClear": "Im Moment steht nichts an"
   },
   "calendar": {
     "title": "Kalender",

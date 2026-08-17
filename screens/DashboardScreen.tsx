@@ -18,6 +18,12 @@ import { Modal } from 'react-native';
 import FamilySetupScreen from './FamilySetupScreen';
 import { TrialBanner } from '../components/TrialBanner';
 
+export function getTodayGreetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
+  if (hour < 12) return 'greetingMorning';
+  if (hour < 18) return 'greetingAfternoon';
+  return 'greetingEvening';
+}
+
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
   if (!dateStr) return new Date();
@@ -112,11 +118,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     const dt = new Date(d);
     return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
   };
-  const events = (rawEvents as any[]).map((e: any) => ({
+  const events = useMemo(() => (rawEvents as any[]).map((e: any) => ({
     ...e,
     startDate: normalizeDate(e.startDate),
     endDate: normalizeDate(e.endDate),
-  }));
+  })), [rawEvents]);
   const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = trpc.messages.list.useQuery(
     { familyId: activeFamily?.id || 0, limit: 50, offset: 0 },
     { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
@@ -256,9 +262,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       .slice(0, 3);
   }, [events]);
 
-  // Attendre TOUTES les requêtes principales pour éviter les apparitions en cascade
-  // familiesLoading inclus pour éviter l'écran "Créer une famille" lors du chargement initial
-  const isLoading = familiesLoading || tasksLoading || eventsLoading || messagesLoading || mealsLoading;
+  // Afficher les données actionnables dès qu’elles sont prêtes. Les messages et repas
+  // arrivent ensuite sans bloquer l’Accueil ni provoquer un écran d’attente inutile.
+  const isLoading = familiesLoading || (!!activeFamily && tasksLoading && eventsLoading);
+  const greetingKey = getTodayGreetingKey(new Date().getHours());
+  const firstName = user?.name?.trim().split(' ')[0] || '';
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
   const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
@@ -455,6 +463,42 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   trialDaysRemaining={subscriptionData?.trialDaysRemaining ?? 14}
                   onSubscribed={() => utils.subscription.checkAccess.invalidate()}
                 />
+                {/* Carte d’accueil : repères familiaux immédiats */}
+                <View style={styles.todayHero}>
+                  <View style={styles.heroTopRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.heroEyebrow}>{t('dashboard.todayAtHome')}</Text>
+                      <Text style={styles.heroGreeting}>{t(`dashboard.${greetingKey}`, { name: firstName })}</Text>
+                      <Text style={styles.heroSubtitle} numberOfLines={1}>
+                        {activeFamily?.name || t('dashboard.familyPulse')}
+                      </Text>
+                    </View>
+                    <View style={styles.familyAvatarStack}>
+                      {(familyMembers as any[]).slice(0, 4).map((member: any, index: number) => (
+                        <View
+                          key={member.id}
+                          style={[
+                            styles.heroAvatar,
+                            { backgroundColor: member.userColor || '#7c3aed', marginLeft: index === 0 ? 0 : -8 },
+                          ]}
+                        >
+                          <Text style={styles.heroAvatarText}>{(member.name || '?').charAt(0).toUpperCase()}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  <TouchableOpacity style={styles.heroNextAction} onPress={() => onNavigate && onNavigate(1)} activeOpacity={0.82}>
+                    <Text style={styles.heroNextIcon}>📅</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.heroNextLabel}>{t('dashboard.nextUp')}</Text>
+                      <Text style={styles.heroNextTitle} numberOfLines={1}>
+                        {filteredEvents[0]?.title || t('dashboard.allClear')}
+                      </Text>
+                    </View>
+                    <Text style={styles.heroNextArrow}>›</Text>
+                  </TouchableOpacity>
+                </View>
                 {/* Daily Summary Widget */}
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
@@ -489,7 +533,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => onNavigate && onNavigate(2)}
                     >
                       <Text style={{ fontSize: 22 }}>✅</Text>
-                      <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{pendingTasks}</Text>
+                      <View>
+                        <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{pendingTasks}</Text>
+                        <Text style={styles.compactWidgetLabel}>{t('dashboard.tasksTodo')}</Text>
+                      </View>
                     </TouchableOpacity>
 
                     {/* Widget Messages */}
@@ -498,7 +545,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => onNavigate && onNavigate(5)}
                     >
                       <Text style={{ fontSize: 22 }}>💬</Text>
-                      <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{unreadMessages}</Text>
+                      <View>
+                        <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{unreadMessages}</Text>
+                        <Text style={styles.compactWidgetLabel}>{t('dashboard.unreadMessages')}</Text>
+                      </View>
                     </TouchableOpacity>
                   </View>
 
@@ -739,6 +789,91 @@ function getStyles(isDark: boolean) {
       shadowRadius: 4,
       elevation: 3,
     },
+    todayHero: {
+      backgroundColor: isDark ? '#171321' : '#FFFEFB',
+      borderRadius: 18,
+      padding: 18,
+      marginHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 2,
+      borderWidth: 1,
+      borderColor: isDark ? '#3B2B5A' : '#EDE9FE',
+    },
+    heroTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    heroEyebrow: {
+      fontSize: 12,
+      fontWeight: '800',
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: '#7C3AED',
+      marginBottom: 4,
+    },
+    heroGreeting: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: isDark ? '#FFFFFF' : '#111111',
+      letterSpacing: -0.4,
+    },
+    heroSubtitle: {
+      fontSize: 13,
+      color: isDark ? '#C4B5FD' : '#6D5A8F',
+      marginTop: 3,
+      fontWeight: '600',
+    },
+    familyAvatarStack: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingLeft: 8,
+    },
+    heroAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: isDark ? '#171321' : '#FFFEFB',
+    },
+    heroAvatarText: {
+      color: '#FFFFFF',
+      fontSize: 13,
+      fontWeight: '900',
+    },
+    heroNextAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 16,
+      padding: 12,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#251B37' : '#F4F0FF',
+    },
+    heroNextIcon: {
+      fontSize: 19,
+    },
+    heroNextLabel: {
+      fontSize: 11,
+      fontWeight: '800',
+      textTransform: 'uppercase',
+      color: '#7C3AED',
+      letterSpacing: 0.5,
+      marginBottom: 2,
+    },
+    heroNextTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: isDark ? '#FFFFFF' : '#281A42',
+    },
+    heroNextArrow: {
+      fontSize: 28,
+      lineHeight: 28,
+      color: '#7C3AED',
+      fontWeight: '400',
+    },
     summaryHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -808,6 +943,11 @@ function getStyles(isDark: boolean) {
       fontWeight: 'bold',
       color: isDark ? '#f9fafb' : '#1f2937',
       marginTop: 2,
+    },
+    compactWidgetLabel: {
+      fontSize: 11,
+      color: isDark ? '#9CA3AF' : '#6B7280',
+      fontWeight: '600',
     },
     eventsSection: {
       marginBottom: 8,
