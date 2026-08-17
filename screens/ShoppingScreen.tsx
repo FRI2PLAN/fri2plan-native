@@ -6,7 +6,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, KeyboardAvoidingView, Pressable } from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
