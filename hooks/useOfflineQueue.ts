@@ -19,14 +19,14 @@ const QUEUE_KEY = '@fri2plan:offline_queue';
 export type OfflineAction =
   | { type: 'task.create'; payload: Record<string, unknown> }
   | { type: 'task.update'; payload: Record<string, unknown> }
-  | { type: 'task.delete'; payload: { id: number } }
-  | { type: 'task.complete'; payload: { id: number } }
+  | { type: 'task.delete'; payload: { taskId: number } }
+  | { type: 'task.complete'; payload: { taskId: number } }
   | { type: 'shopping.addItem'; payload: Record<string, unknown> }
-  | { type: 'shopping.toggleItem'; payload: { id: number; checked: boolean } }
-  | { type: 'shopping.deleteItem'; payload: { id: number } }
+  | { type: 'shopping.toggleItem'; payload: { itemId: number; checked: boolean } }
+  | { type: 'shopping.deleteItem'; payload: { itemId: number } }
   | { type: 'note.create'; payload: Record<string, unknown> }
   | { type: 'note.update'; payload: Record<string, unknown> }
-  | { type: 'note.delete'; payload: { id: number } }
+  | { type: 'note.delete'; payload: { noteId: number } }
   | { type: 'message.send'; payload: Record<string, unknown> };
 
 export interface QueuedAction {
