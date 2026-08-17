@@ -74,8 +74,8 @@ const MemberSummaryModal = ({ member, tasks, events, onClose }: MemberSummaryMod
                 <MemberAvatar member={member} size={64} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.title} numberOfLines={1}>{t('dashboard.memberSummaryTitle', { name: member.name || '' })}</Text>
-                <Text style={styles.subtitle}>{t('dashboard.todayAtHome')}</Text>
+                <Text style={styles.title} numberOfLines={1}>{member.name || ''}</Text>
+                <Text style={styles.subtitle}>{t('dashboard.today')}</Text>
               </View>
             </View>
 

@@ -1638,3 +1638,4 @@ components/
 - [x] Remplacer le doublon « À venir » par un prochain rendez-vous contextuel et réserver la liste aux événements du jour.
 - [x] Rétablir le filtre Aujourd’hui/Semaine avec trois événements maximum, en excluant le prochain rendez-vous déjà mis en avant.
 - [x] Éliminer les clés React dupliquées de toutes les listes rendues au changement de cercle, pas seulement de la rangée d’avatars de l’Accueil.
+- [x] Simplifier l’en-tête du résumé membre : nom complet en titre, puis « Aujourd’hui » en sous-titre.

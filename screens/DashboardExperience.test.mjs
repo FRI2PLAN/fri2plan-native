@@ -46,6 +46,9 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(memberSummaryModal).toContain('getMemberDailySummary');
     expect(memberSummaryModal).toContain('task.assignedTo');
     expect(memberSummaryModal).toContain('event.userId');
+    expect(memberSummaryModal).toContain("{member.name || ''}");
+    expect(memberSummaryModal).toContain("t('dashboard.today')");
+    expect(memberSummaryModal).not.toContain('memberSummaryTitle');
     expect(memberSummaryModal).toContain('Pressable style={StyleSheet.absoluteFill} onPress={onClose}');
     expect(memberSummaryModal).toContain('style={styles.closeButton}');
     expect(memberSummaryModal).toContain('<Text style={styles.closeIcon}>✕</Text>');
