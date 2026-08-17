@@ -1633,6 +1633,8 @@ components/
 - [x] Fermer la fenêtre par appui hors de celle-ci ou par la croix centrée en bas.
 - [x] Dédupliquer les avatars pendant un changement de cercle pour supprimer l’avertissement de clé React dupliquée.
 - [x] Ajouter les traductions FR/EN/DE et la couverture Vitest correspondante.
-- [ ] Aérer les avatars de l’Accueil, supprimer la formule de salutation et placer « Aujourd’hui chez nous » près du nom du cercle.
+- [x] Aérer les avatars de l’Accueil, supprimer la formule de salutation et placer « Aujourd’hui chez nous » près du nom du cercle. Supersédé ensuite par la salutation « Bonsoir » sans prénom, à la demande utilisateur.
 - [x] Réviser la carte Accueil : conserver « Bonsoir » sans prénom, afficher « Aujourd’hui chez les {{cercle}} » et disposer des avatars agrandis en une ou deux lignes équilibrées.
 - [x] Remplacer le doublon « À venir » par un prochain rendez-vous contextuel et réserver la liste aux événements du jour.
+- [x] Rétablir le filtre Aujourd’hui/Semaine avec trois événements maximum, en excluant le prochain rendez-vous déjà mis en avant.
+- [x] Éliminer les clés React dupliquées de toutes les listes rendues au changement de cercle, pas seulement de la rangée d’avatars de l’Accueil.

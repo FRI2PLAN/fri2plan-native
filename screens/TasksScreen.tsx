@@ -113,6 +113,16 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  const activeMembers = useMemo(() => {
+    const knownUserIds = new Set<string>();
+    return (members || []).filter((member) => {
+      if (member.status !== 'active') return false;
+      const memberId = String(member.id);
+      if (knownUserIds.has(memberId)) return false;
+      knownUserIds.add(memberId);
+      return true;
+    });
+  }, [members]);
 
   // ── Sélection multiple (taches terminées) ──
   const [taskSelectionMode, setTaskSelectionMode] = useState(false);
@@ -860,11 +870,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             <TouchableOpacity style={styles.pickerOption} onPress={() => { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, assignedTo: undefined })); else setFormData(p => ({ ...p, assignedTo: undefined })); setShowAssignPicker(false); }}>
               <Text style={styles.pickerOptionText}>{t('tasks.noOne')}</Text>
             </TouchableOpacity>
-            {members?.filter(m => m.status === 'active').map(m => (
-              <TouchableOpacity key={m.id} style={styles.pickerOption} onPress={() => { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, assignedTo: m.id })); else setFormData(p => ({ ...p, assignedTo: m.id })); setShowAssignPicker(false); }}>
+            {activeMembers.map((member, index) => (
+              <TouchableOpacity key={`task-member-${activeFamily?.id ?? 'none'}-${member.id}-${index}`} style={styles.pickerOption} onPress={() => { if (pickerTarget === 'edit') setEditFormData(p => ({ ...p, assignedTo: member.id })); else setFormData(p => ({ ...p, assignedTo: member.id })); setShowAssignPicker(false); }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <AvatarCircle name={m.name || '?'} size={28} color={m.id === user?.id ? '#7c3aed' : '#6b7280'} />
-                  <Text style={styles.pickerOptionText}>{m.name || `Membre ${m.id}`}{m.id === user?.id ? ' (moi)' : ''}</Text>
+                  <AvatarCircle name={member.name || '?'} size={28} color={member.id === user?.id ? '#7c3aed' : '#6b7280'} />
+                  <Text style={styles.pickerOptionText}>{member.name || `Membre ${member.id}`}{member.id === user?.id ? ' (moi)' : ''}</Text>
                 </View>
               </TouchableOpacity>
             ))}

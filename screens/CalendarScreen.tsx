@@ -141,8 +141,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  // Le carrousel conserve brièvement les pages voisines montées lors d’un changement
+  // de cercle. Cette liste protège le filtre Calendrier d’une réponse transitoire
+  // contenant le même compte dans l’ancien et le nouveau cercle.
+  const uniqueFamilyMembers = useMemo(() => {
+    const knownUserIds = new Set<string>();
+    return (familyMembers as any[]).filter((member: any) => {
+      const memberId = String(member?.id ?? '');
+      if (!memberId || knownUserIds.has(memberId)) return false;
+      knownUserIds.add(memberId);
+      return true;
+    });
+  }, [familyMembers]);
   const getMemberById = (userId: number | null | undefined) =>
-    userId ? (familyMembers as any[]).find((m: any) => m.id === userId) || null : null;
+    userId ? uniqueFamilyMembers.find((member: any) => member.id === userId) || null : null;
   // Rappel par défaut depuis les préférences utilisateur
   const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null };
   const defaultReminderMinutes = (userSettings as any)?.eventReminderMinutes ?? 15;
@@ -1669,12 +1681,12 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                   </TouchableOpacity>
                 ))}
               </View>
-              {familyMembers && familyMembers.length > 0 && (
+              {uniqueFamilyMembers.length > 0 && (
                 <>
                   <Text style={styles.filterSectionTitle}>{t('calendar.byMember') || 'Par membre'}</Text>
                   <View style={styles.filterCheckboxContainer}>
-                    {familyMembers.map((member: any) => (
-                      <TouchableOpacity key={member.id} style={styles.filterCheckboxRow} onPress={() => {
+                    {uniqueFamilyMembers.map((member: any, index: number) => (
+                      <TouchableOpacity key={`calendar-member-${activeFamily?.id ?? 'none'}-${member.id}-${index}`} style={styles.filterCheckboxRow} onPress={() => {
                         if (selectedMembers.includes(member.id)) setSelectedMembers(selectedMembers.filter(m => m !== member.id));
                         else setSelectedMembers([...selectedMembers, member.id]);
                       }}>
