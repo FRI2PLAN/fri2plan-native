@@ -1,4 +1,4 @@
-import { Modal, PanResponder, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -82,13 +82,19 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
     if (uniqueMembers.length < 2) return;
     setActiveMemberIndex((currentIndex) => (currentIndex + direction + uniqueMembers.length) % uniqueMembers.length);
   };
-  const panResponder = useRef(PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx <= -45) shiftMember(1);
-      if (gesture.dx >= 45) shiftMember(-1);
-    },
-  })).current;
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const handleSwipeStart = (event: any) => {
+    swipeStart.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
+  };
+  const handleSwipeEnd = (event: any) => {
+    if (!swipeStart.current) return;
+    const horizontalDistance = event.nativeEvent.pageX - swipeStart.current.x;
+    const verticalDistance = event.nativeEvent.pageY - swipeStart.current.y;
+    swipeStart.current = null;
+
+    if (Math.abs(horizontalDistance) < 45 || Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+    shiftMember(horizontalDistance < 0 ? 1 : -1);
+  };
   const stackedMembers = uniqueMembers.length > 1
     ? [1, 2].map((offset) => uniqueMembers[(activeMemberIndex + offset) % uniqueMembers.length])
     : [];
@@ -112,8 +118,14 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               <MemberAvatar member={stackedMember} size={30} />
             </View>
           ))}
-        <View style={styles.panel} {...panResponder.panHandlers}>
-          <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.panel}>
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.content}
+            onTouchStart={handleSwipeStart}
+            onTouchEnd={handleSwipeEnd}
+          >
             <View style={styles.memberHeader}>
               <View style={styles.avatarRing}>
                 <MemberAvatar member={currentMember} size={64} />
@@ -215,7 +227,7 @@ function getStyles(isDark: boolean) {
     },
     panel: {
       width: '100%',
-      maxHeight: '88%',
+      height: '100%',
       borderRadius: 24,
       backgroundColor: isDark ? '#191421' : '#FFFEFB',
       borderWidth: 1,
@@ -229,6 +241,7 @@ function getStyles(isDark: boolean) {
     },
     cardStage: {
       width: '100%',
+      height: '88%',
       position: 'relative',
     },
     stackCard: {
