@@ -144,7 +144,15 @@
     "greetingEvening": "Bonsoir {{name}}",
     "familyPulse": "Votre tribu en un coup d’œil",
     "nextUp": "À venir",
-    "allClear": "Rien de prévu pour le moment"
+    "allClear": "Rien de prévu pour le moment",
+    "memberSummaryTitle": "{{name}} aujourd’hui",
+    "memberTasks": "Tâches du jour",
+    "memberPoints": "Points gagnés",
+    "memberEvents": "Événements du jour",
+    "memberAchievements": "Réussites du jour",
+    "memberNoTasks": "Aucune tâche prévue aujourd’hui.",
+    "memberNoEvents": "Aucun événement prévu aujourd’hui.",
+    "memberNoAchievements": "La journée ne fait que commencer."
   },
   "calendar": {
     "title": "Calendrier",

@@ -17,6 +17,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Modal } from 'react-native';
 import FamilySetupScreen from './FamilySetupScreen';
 import { TrialBanner } from '../components/TrialBanner';
+import MemberAvatar from '../components/MemberAvatar';
+import MemberSummaryModal from '../components/MemberSummaryModal';
 
 export function getTodayGreetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
   if (hour < 12) return 'greetingMorning';
@@ -60,6 +62,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [joinCode, setJoinCode] = useState('');
   const { activeFamilyId, setActiveFamilyId } = useFamily();
   const queryClient = useQueryClient();
+  const [selectedMember, setSelectedMember] = useState<any>(null);
 
   // Fetch active family
   const { data: families, isLoading: familiesLoading } = trpc.family.list.useQuery();
@@ -86,6 +89,17 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  // Un utilisateur peut appartenir à plusieurs cercles. Dédupliquer la rangée
+  // d'avatars évite de rendre deux fois la même clé pendant le changement de cercle.
+  const visibleFamilyMembers = useMemo(() => {
+    const seenMemberIds = new Set<string>();
+    return (familyMembers as any[]).filter((member: any) => {
+      const memberId = String(member?.id ?? '');
+      if (!memberId || seenMemberIds.has(memberId)) return false;
+      seenMemberIds.add(memberId);
+      return true;
+    }).slice(0, 4);
+  }, [familyMembers]);
 
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery(
@@ -474,16 +488,20 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       </Text>
                     </View>
                     <View style={styles.familyAvatarStack}>
-                      {(familyMembers as any[]).slice(0, 4).map((member: any, index: number) => (
-                        <View
-                          key={member.id}
+                      {visibleFamilyMembers.map((member: any, index: number) => (
+                        <TouchableOpacity
+                          key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
+                          onPress={() => setSelectedMember(member)}
+                          activeOpacity={0.78}
+                          accessibilityRole="button"
+                          accessibilityLabel={member.name || t('dashboard.memberSummaryTitle', { name: '' })}
                           style={[
                             styles.heroAvatar,
-                            { backgroundColor: member.userColor || '#7c3aed', marginLeft: index === 0 ? 0 : -8 },
+                            { marginLeft: index === 0 ? 0 : -8 },
                           ]}
                         >
-                          <Text style={styles.heroAvatarText}>{(member.name || '?').charAt(0).toUpperCase()}</Text>
-                        </View>
+                          <MemberAvatar member={member} size={32} />
+                        </TouchableOpacity>
                       ))}
                     </View>
                   </View>
@@ -704,6 +722,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
           onSkip={() => setShowFamilySetup(false)}
         />
       </Modal>
+
+      <MemberSummaryModal
+        member={selectedMember}
+        tasks={tasks as any[]}
+        events={events as any[]}
+        onClose={() => setSelectedMember(null)}
+      />
     </View>
   );
 }

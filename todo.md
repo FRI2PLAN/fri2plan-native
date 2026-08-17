@@ -1626,3 +1626,10 @@ components/
 - [x] RewardsScreen : PremiumOverlay (module premium-only)
 - [x] RequestsScreen : PremiumOverlay (module premium-only)
 - [x] CalendrierIntimeScreen : PremiumOverlay (module premium-only)
+
+## Accueil — résumé individuel et changement de cercle (17 août 2026)
+- [x] Remplacer les initiales de la carte « Aujourd’hui chez nous » par les avatars personnalisés cliquables.
+- [x] Ajouter un résumé individuel avec tâches du jour, points gagnés, événements et réussites.
+- [x] Fermer la fenêtre par appui hors de celle-ci ou par la croix centrée en bas.
+- [x] Dédupliquer les avatars pendant un changement de cercle pour supprimer l’avertissement de clé React dupliquée.
+- [x] Ajouter les traductions FR/EN/DE et la couverture Vitest correspondante.

@@ -144,7 +144,15 @@
     "greetingEvening": "Good evening {{name}}",
     "familyPulse": "Your family at a glance",
     "nextUp": "Up next",
-    "allClear": "Nothing planned for now"
+    "allClear": "Nothing planned for now",
+    "memberSummaryTitle": "{{name}} today",
+    "memberTasks": "Today's tasks",
+    "memberPoints": "Points earned",
+    "memberEvents": "Today's events",
+    "memberAchievements": "Today's wins",
+    "memberNoTasks": "No task planned today.",
+    "memberNoEvents": "No event planned today.",
+    "memberNoAchievements": "The day is just getting started."
   },
   "calendar": {
     "title": "Calendar",
