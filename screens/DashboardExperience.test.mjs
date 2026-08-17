@@ -14,7 +14,9 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
   });
 
   it('présente les repères de la famille et la prochaine action', () => {
-    expect(screen).toContain("t('dashboard.nextUp')");
+    expect(screen).toContain("t('dashboard.nextAppointment')");
+    expect(screen).toContain('nextUpcomingEvent');
+    expect(screen).toContain('todayEvents.map');
     expect(screen).toContain("t('dashboard.todayWithCircle'");
     expect(screen).toContain('heroGreetingRow');
     expect(screen).toContain('familyAvatarOverflowLine');

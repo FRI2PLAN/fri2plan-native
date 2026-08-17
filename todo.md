@@ -1635,3 +1635,4 @@ components/
 - [x] Ajouter les traductions FR/EN/DE et la couverture Vitest correspondante.
 - [ ] Aérer les avatars de l’Accueil, supprimer la formule de salutation et placer « Aujourd’hui chez nous » près du nom du cercle.
 - [x] Réviser la carte Accueil : conserver « Bonsoir » sans prénom, afficher « Aujourd’hui chez les {{cercle}} » et disposer des avatars agrandis en une ou deux lignes équilibrées.
+- [x] Remplacer le doublon « À venir » par un prochain rendez-vous contextuel et réserver la liste aux événements du jour.

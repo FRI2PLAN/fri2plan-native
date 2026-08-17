@@ -148,6 +148,7 @@
     "greetingEveningSimple": "Good evening",
     "familyPulse": "Your family at a glance",
     "nextUp": "Up next",
+    "nextAppointment": "Next appointment",
     "allClear": "Nothing planned for now",
     "memberSummaryTitle": "{{name}} today",
     "memberTasks": "Today's tasks",

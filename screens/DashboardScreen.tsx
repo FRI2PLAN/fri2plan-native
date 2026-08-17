@@ -55,7 +55,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const { isDark } = useTheme();
   const styles = getStyles(isDark);
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [circlePickerOpen, setCirclePickerOpen] = useState(false);
   const [showFamilySetup, setShowFamilySetup] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -214,40 +213,27 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     return events.filter(e => {
       const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
       return eventDate >= todayStart && eventDate <= todayEnd;
-    });
+    }).sort((first, second) => parseLocalDate(first.startDate, !!first.isUtc).getTime() - parseLocalDate(second.startDate, !!second.isUtc).getTime());
   }, [events]);
 
-  // Events filtered by view mode (day or week)
-  const filteredEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Une seule carte met en avant le prochain rendez-vous, quel que soit son jour.
+  // Le bloc de synthèse, lui, reste exclusivement consacré à la journée en cours.
+  const nextUpcomingEvent = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((event) => parseLocalDate(event.startDate, !!event.isUtc) >= now)
+      .sort((first, second) => parseLocalDate(first.startDate, !!first.isUtc).getTime() - parseLocalDate(second.startDate, !!second.isUtc).getTime())[0];
+  }, [events]);
 
-    if (viewMode === 'day') {
-      // Vue Jour : événements d'aujourd'hui uniquement (pas les passés)
-      const now = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return events
-        .filter(e => {
-          const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
-          return eventDate >= now && eventDate <= tomorrow;        })
-        .sort((a, b) => parseLocalDate(a.startDate, !!(a as any).isUtc).getTime() - parseLocalDate(b.startDate, !!(b as any).isUtc).getTime())
-        .slice(0, 3);
-    } else {
-      // Vue Semaine : aujourd'hui + 7 jours (semaine coulante), sans passés, max 3
-      const now = new Date();
-      const in7days = new Date(today);
-      in7days.setDate(today.getDate() + 7);
-      in7days.setHours(23, 59, 59, 999);
-      return events
-        .filter(e => {
-          const eventDate = parseLocalDate(e.startDate, !!e.isUtc);
-          return eventDate >= now && eventDate <= in7days;
-        })
-        .sort((a, b) => parseLocalDate(a.startDate, !!(a as any).isUtc).getTime() - parseLocalDate(b.startDate, !!(b as any).isUtc).getTime())
-        .slice(0, 3);
-    }
-  }, [events, viewMode]);
+  const nextUpcomingEventTime = useMemo(() => {
+    if (!nextUpcomingEvent) return '';
+    const eventDate = parseLocalDate(nextUpcomingEvent.startDate, !!nextUpcomingEvent.isUtc);
+    const now = new Date();
+    const isSameDay = eventDate.getFullYear() === now.getFullYear()
+      && eventDate.getMonth() === now.getMonth()
+      && eventDate.getDate() === now.getDate();
+    return format(eventDate, isSameDay ? 'HH:mm' : 'EEE d MMM · HH:mm', { locale: fr });
+  }, [nextUpcomingEvent]);
 
   const unreadMessages = useMemo(() => {
     return messages.filter(m => 'isRead' in m && m.isRead === 0).length;
@@ -526,10 +512,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                   <TouchableOpacity style={styles.heroNextAction} onPress={() => onNavigate && onNavigate(1)} activeOpacity={0.82}>
                     <Text style={styles.heroNextIcon}>📅</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.heroNextLabel}>{t('dashboard.nextUp')}</Text>
+                      <Text style={styles.heroNextLabel}>{t('dashboard.nextAppointment')}</Text>
                       <Text style={styles.heroNextTitle} numberOfLines={1}>
-                        {filteredEvents[0]?.title || t('dashboard.allClear')}
+                        {nextUpcomingEvent?.title || t('dashboard.allClear')}
                       </Text>
+                      {!!nextUpcomingEventTime && <Text style={styles.heroNextMeta}>{nextUpcomingEventTime}</Text>}
                     </View>
                     <Text style={styles.heroNextArrow}>›</Text>
                   </TouchableOpacity>
@@ -538,26 +525,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                 <View style={styles.summaryWidget}>
                   <View style={styles.summaryHeader}>
                     <Text style={styles.widgetTitle}>{t('dashboard.summary')}</Text>
-                  </View>
-
-                  {/* Day/Week Tabs */}
-                  <View style={styles.tabsContainer}>
-                    <TouchableOpacity
-                      style={[styles.tab, viewMode === 'day' && styles.tabActive]}
-                      onPress={() => setViewMode('day')}
-                    >
-                      <Text style={[styles.tabText, viewMode === 'day' && styles.tabTextActive]}>
-                        {t('dashboard.day')}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.tab, viewMode === 'week' && styles.tabActive]}
-                      onPress={() => setViewMode('week')}
-                    >
-                      <Text style={[styles.tabText, viewMode === 'week' && styles.tabTextActive]}>
-                        {t('dashboard.week')}
-                      </Text>
-                    </TouchableOpacity>
                   </View>
 
                   {/* Widgets Tâches et Messages ultra-compacts */}
@@ -592,18 +559,18 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                     <View style={styles.eventsSectionHeader}>
                       <Text style={{ fontSize: 16 }}>📅</Text>
                       <Text style={styles.eventsSectionTitle}>
-                        {viewMode === 'day' ? t('dashboard.eventsToday') : t('dashboard.eventsThisWeek')}
+                        {t('dashboard.eventsToday')}
                       </Text>
                     </View>
-                    {filteredEvents.length === 0 ? (
+                    {todayEvents.length === 0 ? (
                       <Text style={styles.noEventsText}>{t('dashboard.noEvents')}</Text>
                     ) : (
-                      filteredEvents.map(event => (
+                      todayEvents.map(event => (
                         <TouchableOpacity key={event.id} style={styles.eventItem} onPress={() => handleEventPress(event)}>
                           <View style={styles.eventContent}>
                             <Text style={styles.eventTitle}>{event.title}</Text>
                             <Text style={styles.eventTime}>
-                              {format(parseLocalDate(event.startDate, !!(event as any).isUtc), viewMode === 'week' ? 'EEE d MMM · HH:mm' : 'HH:mm', { locale: fr })}
+                              {format(parseLocalDate(event.startDate, !!(event as any).isUtc), 'HH:mm', { locale: fr })}
                             </Text>
                           </View>
                           <View style={[styles.eventDot, { backgroundColor: event.color || '#7c3aed' }]} />
@@ -910,6 +877,12 @@ function getStyles(isDark: boolean) {
       fontSize: 14,
       fontWeight: '700',
       color: isDark ? '#FFFFFF' : '#281A42',
+    },
+    heroNextMeta: {
+      color: isDark ? '#C4B5FD' : '#6D5A8F',
+      fontSize: 12,
+      fontWeight: '700',
+      marginTop: 2,
     },
     heroNextArrow: {
       fontSize: 28,
