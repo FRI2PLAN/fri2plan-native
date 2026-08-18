@@ -17,7 +17,7 @@ import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
-import { StyleSheet, Platform, AppState } from 'react-native';
+import { StyleSheet, Platform, AppState, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -29,6 +29,7 @@ import { OfflineProvider } from './contexts/OfflineContext';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useOfflineExecutor } from './hooks/useOfflineExecutor';
 import { useOffline } from './contexts/OfflineContext';
+import { useFamily } from './contexts/FamilyContext';
 import { IAPProvider } from './contexts/IAPContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import * as Notifications from 'expo-notifications';
@@ -115,7 +116,9 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 24 * 60 * 60 * 1000, // 24h (pour le cache hors ligne)
+      // Conserver les dernières données utiles assez longtemps pour rouvrir
+      // l'application immédiatement, puis les réconcilier discrètement réseau.
+      gcTime: 7 * 24 * 60 * 60 * 1000, // 7 jours
       networkMode: 'offlineFirst',
     },
     mutations: {
@@ -280,17 +283,24 @@ function AppContent() {
 
   // Invalider les requêtes quand le token change (connexion / déconnexion)
   const prevTokenRef = useRef<string | null>(null);
+  const tokenHydrationHandledRef = useRef(false);
   useEffect(() => {
+    // La restauration d'auth arrive après le montage. À ce moment, préserver
+    // les requêtes hydratées depuis AsyncStorage : elles doivent être visibles
+    // avant le premier rafraîchissement réseau.
+    if (isLoading) return;
+    if (!tokenHydrationHandledRef.current) {
+      tokenHydrationHandledRef.current = true;
+      prevTokenRef.current = token;
+      return;
+    }
+
+    // Une vraie connexion ou déconnexion doit en revanche isoler la session.
     if (prevTokenRef.current !== token) {
-      const wasNull = prevTokenRef.current === null;
       prevTokenRef.current = token;
       queryClient.clear();
-      if (token && wasNull) {
-        // Pas de délai artificiel — l'app s'affiche immédiatement après login
-        // setIsInitializing(true/false) supprimé pour éviter le décalage de 800ms
-      }
     }
-  }, [token]);
+  }, [token, isLoading]);
 
   // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
   const effectiveLogout = useCallback(async () => {
@@ -320,6 +330,7 @@ function AppContent() {
         }}
       />
       <OfflineExecutorRegistrar />
+      <DataWarmup />
 
       <SubscriptionProvider>
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
@@ -446,6 +457,37 @@ function OfflineExecutorRegistrar() {
   return null;
 }
 
+// ─── Préchargement discret des écrans principaux ────────────────────────────
+// Les données restaurées restent visibles immédiatement. Une fois le premier
+// rendu stabilisé, on réchauffe les écrans utilisés au quotidien afin que leur
+// première ouverture ne déclenche pas une attente perceptible.
+function DataWarmup() {
+  const { isAuthenticated } = useAuth();
+  const { activeFamilyId } = useFamily();
+  const utils: any = trpc.useUtils();
+  const warmedFamilyRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !activeFamilyId || warmedFamilyRef.current === activeFamilyId) return;
+    warmedFamilyRef.current = activeFamilyId;
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      void Promise.allSettled([
+        utils.family.list.prefetch(),
+        utils.family.members.prefetch({ familyId: activeFamilyId }),
+        utils.tasks.list.prefetch(),
+        utils.events.list.prefetch(),
+        utils.messages.list.prefetch({ familyId: activeFamilyId, limit: 50, offset: 0 }),
+        utils.shopping.listsByFamily.prefetch({ familyId: activeFamilyId }),
+      ]);
+    });
+
+    return () => task.cancel();
+  }, [activeFamilyId, isAuthenticated, utils]);
+
+  return null;
+}
+
 // ─── Bannière hors ligne (dans le contexte Offline) ──────────────────────────
 function OfflineBannerWrapper() {
   const { queueSize, processQueue } = useOffline();
@@ -465,7 +507,12 @@ export default function App() {
       <ThemeProvider>
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister: asyncStoragePersister }}
+          persistOptions={{
+            persister: asyncStoragePersister,
+            // Une donnée restaurée est visible immédiatement. React Query la
+            // rafraîchit ensuite selon staleTime, sans bloquer les écrans.
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          }}
         >
           <OfflineProvider>
             <AuthProvider>

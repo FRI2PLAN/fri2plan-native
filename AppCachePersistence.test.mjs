@@ -10,9 +10,23 @@ describe('Cache persistant — démarrage rapide', () => {
     expect(app).toContain('persister: asyncStoragePersister');
   });
 
-  it('conserve le cache pendant vingt-quatre heures et privilégie le réseau hors ligne', () => {
-    expect(app).toContain('gcTime: 24 * 60 * 60 * 1000');
+  it('conserve le cache pendant sept jours et privilégie le réseau hors ligne', () => {
+    expect(app).toContain('gcTime: 7 * 24 * 60 * 60 * 1000');
+    expect(app).toContain('maxAge: 7 * 24 * 60 * 60 * 1000');
     expect(app).toContain("networkMode: 'offlineFirst'");
     expect(app).toContain('staleTime: 5 * 60 * 1000');
+  });
+
+  it('ne vide pas le cache pendant l’hydratation initiale du jeton', () => {
+    expect(app).toContain('if (isLoading) return;');
+    expect(app).toContain('if (!tokenHydrationHandledRef.current)');
+    expect(app).toContain('tokenHydrationHandledRef.current = true;');
+  });
+
+  it('préchauffe les données principales du cercle actif après le premier rendu', () => {
+    expect(app).toContain('function DataWarmup()');
+    expect(app).toContain('InteractionManager.runAfterInteractions');
+    expect(app).toContain('utils.events.list.prefetch()');
+    expect(app).toContain('utils.messages.list.prefetch({ familyId: activeFamilyId, limit: 50, offset: 0 })');
   });
 });

@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, TextInput, Alert } from 'react-native';
-import { DashboardSkeleton } from '../components/SkeletonLoader';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,6 +18,7 @@ import FamilySetupScreen from './FamilySetupScreen';
 import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
+import FamilyLoadingScreen from '../components/FamilyLoadingScreen';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
@@ -420,14 +420,16 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         </View>
       )}
 
-      {/* Favorites Bar */}
-      <FavoritesBar
-        favorites={favorites}
-        onFavoritePress={handleFavoritePress}
-        onFavoriteSelect={handleFavoriteSelect}
-        allPages={allPages}
-        badgeIds={allBadgeIds}
-      />
+      {/* Les raccourcis arrivent avec le tableau de bord, après la transition initiale. */}
+      {!isLoading && (
+        <FavoritesBar
+          favorites={favorites}
+          onFavoritePress={handleFavoritePress}
+          onFavoriteSelect={handleFavoriteSelect}
+          allPages={allPages}
+          badgeIds={allBadgeIds}
+        />
+      )}
       
       {/* Content */}
       <ScrollView 
@@ -437,9 +439,9 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         }
       >
 
-        {/* Skeleton pendant le chargement initial (familles + données) */}
+        {/* Transition compacte pendant le chargement initial des données essentielles */}
         {isLoading ? (
-          <DashboardSkeleton />
+          <FamilyLoadingScreen ready={!isLoading} />
         ) : !activeFamily ? (
           <View style={styles.noFamilyCard}>
             <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>

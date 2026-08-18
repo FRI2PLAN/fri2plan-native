@@ -1675,6 +1675,19 @@ components/
 - [x] Empêcher qu’un événement Google synchronisé soit importé deux fois.
 - [x] Sérialiser la synchronisation d’un même calendrier Google et dédupliquer les UID existants avant insertion.
 - [x] Agrandir et fiabiliser les zones tactiles des actions de courses pour une réaction au premier appui.
+- [ ] Mesurer le nombre d’événements et de cartes réellement rendus lors des vues Jour et Liste pour cibler la cause du délai.
+- [ ] Virtualiser la vue Liste et éviter le rendu simultané des vues Calendrier non actives.
+- [ ] Ajouter une instrumentation de développement pour les actions dont la réponse dépasse le seuil perceptible.
+- [ ] Restaurer les données du cercle actif avant le réseau et maintenir les boutons utilisables pendant la synchronisation silencieuse.
+- [x] Conserver le cache local au moins sept jours et le restaurer avant la première requête réseau de l’application.
+- [x] Ne pas vider le cache React Query lors de la restauration initiale du jeton, tout en le vidant à une vraie connexion ou déconnexion.
+- [x] Précharger en arrière-plan tâches, événements, messages, courses et membres dès la connexion ou le changement de cercle.
+- [x] Remplacer le skeleton d’Accueil par un fond neutre et un indicateur de chargement compact jusqu’aux données essentielles.
+- [x] Afficher une barre de progression courte avec une animation familiale discrète de verre qui se remplit pendant le chargement initial.
+- [x] Afficher les messages de chargement successifs, le verre violet à vague et bulles jusqu’à 90 %, puis la finalisation rapide « Tout est prêt ✓ ».
+- [x] Ajouter en FR/EN/DE tous les messages successifs de la progression de chargement de l’Accueil.
+- [x] Afficher les étapes 0–20, 20–40, 40–60, 60–80, 80–95 et 100 % selon les libellés familiaux validés par l’utilisateur.
+- [x] Utiliser la série retenue « Recherche des chaussettes perdues… » jusqu’à « Mission accomplie ! 💜 » comme contenu de progression principal.
 - [ ] Garantir une réponse visuelle immédiate sur les actions de tâches, messages et calendrier, avec synchronisation serveur en arrière-plan et annulation seulement en cas d’échec.
 - [x] Afficher immédiatement un message en cours d’envoi, le réconcilier au succès serveur et le retirer avec une erreur claire en cas d’échec.
 - [x] Afficher immédiatement les créations, modifications et suppressions d’événements dans le calendrier, puis réconcilier la liste après réponse serveur.
