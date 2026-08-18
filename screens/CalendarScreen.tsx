@@ -994,9 +994,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.map(event =>
         event.id === selectedEvent.id ? { ...event, ...payload, endDate: endDateUtc } : event,
       ));
-      setEditModalOpen(false);
-      setSelectedEvent(null);
-      resetForm();
+      closeEditModal();
       updateEvent.mutate(payload, {
         onSuccess: () => calendarUtils.events.list.invalidate(),
         onError: (error: any) => {
@@ -1007,9 +1005,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     } catch (error) {
       console.error('Error updating event:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder les modifications.');
-      setEditModalOpen(false);
-      setSelectedEvent(null);
-      resetForm();
+      closeEditModal();
     }
   };
 
@@ -1026,8 +1022,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           onPress: () => {
             const previousEvents = calendarUtils.events.list.getData(undefined);
             calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.filter(event => event.id !== selectedEvent.id));
-            setEditModalOpen(false);
-            setSelectedEvent(null);
+            closeEditModal();
             deleteEvent.mutate({ eventId: selectedEvent.id }, {
               onSuccess: () => calendarUtils.events.list.invalidate(),
               onError: (error: any) => {
@@ -1051,8 +1046,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     setShowCategoryDropdown(false); setShowReminderDropdown(false);
   };
 
+  // La fermeture doit rendre le calendrier tout de suite. Le reset du formulaire
+  // est volontairement différé pour ne pas bloquer l’animation native de la modale.
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setTimeout(() => {
+      setSelectedEvent(null);
+      resetForm();
+    }, 260);
+  };
+
   const openEditModal = (event: any) => {
     setSelectedEvent(event);
+    setEditModalOpen(true);
+    // Ouvre immédiatement la modale ; les champs se remplissent au frame suivant.
+    // Cela évite que les calculs de date retardent son apparition perceptible.
+    requestAnimationFrame(() => {
     const startTime = parseLocalDate(event.startTime, !!event.isUtc);
     const endTime = parseLocalDate(event.endTime, !!event.isUtc);
     setEventDate(startTime);
@@ -1066,7 +1075,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       category: event.category || 'other',
       reminder: (event.reminderMinutes ?? event.reminder)?.toString() || defaultReminderStr,
       isPrivate: event.isPrivate || false});
-    setEditModalOpen(true);
+    });
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -1549,7 +1558,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
       />
 
       {/* ── Modifier événement ── */}
-      <Modal visible={editModalOpen} animationType="slide" transparent>
+      <Modal visible={editModalOpen} animationType="slide" transparent onRequestClose={closeEditModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('common.edit') || 'Modifier'}</Text>
@@ -1638,7 +1647,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               <TouchableOpacity onPress={handleDeleteEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ fontSize: 24 }}>🗑️</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setEditModalOpen(false); setSelectedEvent(null); resetForm(); }} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#6b7280', justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity onPress={closeEditModal} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#6b7280', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold' }}>✕</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleUpdateEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center' }}>

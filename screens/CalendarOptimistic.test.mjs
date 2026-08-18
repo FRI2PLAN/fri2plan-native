@@ -16,4 +16,13 @@ describe('Calendrier — réponse visuelle immédiate', () => {
     expect(screen).toContain('calendarUtils.events.list.setData(undefined, previousEvents)');
     expect(screen).toContain('previous?.filter(event => event.id !== selectedEvent.id)');
   });
+
+  it('ouvre et ferme la modale sans attendre le nettoyage du formulaire', () => {
+    expect(screen).toContain('const closeEditModal = () => {');
+    expect(screen).toContain('setEditModalOpen(false);');
+    expect(screen).toContain('setTimeout(() => {');
+    expect(screen).toContain('}, 260);');
+    expect(screen).toContain('setEditModalOpen(true);');
+    expect(screen).toContain('requestAnimationFrame(() => {');
+  });
 });
