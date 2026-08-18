@@ -329,6 +329,8 @@
     "noMessages": "Aucun message pour le moment",
     "sendFirst": "Envoyez le premier message à votre famille !",
     "sendMessage": "Envoyer",
+    "sending": "Envoi…",
+    "queued": "À envoyer",
     "typeMessage": "Écrivez un message...",
     "unread": "Non lu",
     "read": "Lu",

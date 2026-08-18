@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import DiscussionGroupsTab from '../components/DiscussionGroupsTab';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,6 +38,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   const getLocale = () => {
@@ -67,6 +68,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   );
 
   const messages: any[] = (messagesData as any)?.messages || [];
+  const displayedMessages = useMemo(() => [...messages, ...optimisticMessages], [messages, optimisticMessages]);
 
   // Marquer comme lus
   const markAsRead = trpc.messages.markAsRead.useMutation({
@@ -160,18 +162,8 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     );
   };
 
-  // Mutation pour envoyer un message (endpoint create)
-  const sendMutation = trpc.messages.create.useMutation({
-    onSuccess: () => {
-      setNewMessage('');
-      refetch();
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 200);
-    },
-    onError: () => {
-      Alert.alert(t('common.error'), t('messages.sendError'));
-    }});
+  // La bulle apparaît immédiatement ; le serveur confirme ensuite en arrière-plan.
+  const sendMutation = trpc.messages.create.useMutation();
 
   const uploadFileMutation = trpc.messages.uploadFile.useMutation();
 
@@ -195,8 +187,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       const fileType = asset.mimeType || 'image/jpeg';
       const fileData = `data:${fileType};base64,${asset.base64}`;
       const { url } = await uploadFileMutation.mutateAsync({ fileName, fileType, fileSize: asset.fileSize || 0, fileData });
-      sendMutation.mutate({ content: newMessage.trim() || '📷', attachmentUrl: url, attachmentType: fileType });
-      setNewMessage('');
+      sendMessageOptimistically({ content: newMessage.trim() || '📷', attachmentUrl: url, attachmentType: fileType });
     } catch (e: any) {
       Alert.alert('Erreur', e.message || "Impossible d'envoyer la photo");
     } finally {
@@ -212,16 +203,45 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
   const { isConnected, enqueue } = useOffline();
 
+  const sendMessageOptimistically = (payload: { content: string; attachmentUrl?: string; attachmentType?: string }) => {
+    const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimisticMessage = {
+      id: optimisticId,
+      userId: user?.id,
+      senderId: user?.id,
+      userName: user?.name || t('messages.you'),
+      content: payload.content,
+      attachmentUrl: payload.attachmentUrl,
+      attachmentType: payload.attachmentType,
+      reactions: {},
+      createdAt: new Date().toISOString(),
+      deliveryState: isConnected ? 'sending' : 'queued',
+    };
+    setOptimisticMessages(previous => [...previous, optimisticMessage]);
+    setNewMessage('');
+    requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
+
+    if (!isConnected) {
+      enqueue({ type: 'message.send', payload });
+      return;
+    }
+
+    sendMutation.mutate(payload, {
+      onSuccess: () => {
+        setOptimisticMessages(previous => previous.filter(message => message.id !== optimisticId));
+        void refetch();
+      },
+      onError: () => {
+        setOptimisticMessages(previous => previous.filter(message => message.id !== optimisticId));
+        Alert.alert(t('common.error'), t('messages.sendError'));
+      },
+    });
+  };
+
   const handleSendMessage = () => {
     const content = newMessage.trim();
-    if (!content || sendMutation.isPending) return;
-    if (!isConnected) {
-      enqueue({ type: 'message.send', payload: { content } });
-      setNewMessage('');
-      Alert.alert('📵', 'Message mis en file d\'attente. Il sera envoyé à la reconnexion.');
-    } else {
-      sendMutation.mutate({ content });
-    }
+    if (!content) return;
+    sendMessageOptimistically({ content });
   };
 
   const handleEmojiSelected = (emoji: any) => {
@@ -256,7 +276,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     return (
       <TouchableOpacity
         activeOpacity={0.85}
-        onLongPress={() => handleLongPressMessage(message.id)}
+        onLongPress={() => typeof message.id === 'number' && handleLongPressMessage(message.id)}
         delayLongPress={400}
       >
       <View style={[styles.messageBubbleWrapper, own ? styles.ownWrapper : styles.otherWrapper]}>
@@ -307,7 +327,11 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           {/* Pied de bulle : timestamp + bouton Réagir */}
           <View style={styles.bubbleFooter}>
             <Text style={[styles.bubbleTime, own && styles.ownBubbleTime]}>
-              {formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
+              {message.deliveryState === 'sending'
+                ? t('messages.sending')
+                : message.deliveryState === 'queued'
+                  ? t('messages.queued')
+                  : formatDistanceToNow(parseUTCDate(message.createdAt), { addSuffix: true, locale: getLocale() })}
             </Text>
             <TouchableOpacity
               style={[styles.reactButton, own && styles.reactButtonOwn]}
@@ -339,7 +363,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>💬 {t('messages.title')}</Text>
-        {activeTab === 'general' && messages.length > 0 && (
+        {activeTab === 'general' && displayedMessages.length > 0 && (
           <TouchableOpacity
             style={styles.deleteAllButton}
             onPress={handleDeleteAll}
@@ -383,7 +407,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           ) : (
             <FlatList
               ref={flatListRef}
-              data={messages}
+              data={displayedMessages}
               keyExtractor={(item) => String(item.id)}
               renderItem={renderMessage}
               contentContainerStyle={styles.listContent}
@@ -430,15 +454,11 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             />
 
             <TouchableOpacity
-              style={[styles.sendButton, (!newMessage.trim() || sendMutation.isPending) && styles.sendButtonDisabled]}
+              style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
               onPress={() => requirePremium(() => handleSendMessage())}
-              disabled={!newMessage.trim() || sendMutation.isPending}
+              disabled={!newMessage.trim()}
             >
-              {sendMutation.isPending ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.sendButtonText}>➤</Text>
-              )}
+              <Text style={styles.sendButtonText}>➤</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

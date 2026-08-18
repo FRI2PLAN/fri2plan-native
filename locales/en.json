@@ -329,6 +329,8 @@
     "noMessages": "No messages yet",
     "sendFirst": "Send the first message to your family!",
     "sendMessage": "Send",
+    "sending": "Sending…",
+    "queued": "Queued",
     "typeMessage": "Write a message...",
     "unread": "Unread",
     "read": "Read",

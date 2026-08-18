@@ -329,6 +329,8 @@
     "noMessages": "Noch keine Nachrichten",
     "sendFirst": "Senden Sie die erste Nachricht an Ihre Familie!",
     "sendMessage": "Senden",
+    "sending": "Wird gesendet…",
+    "queued": "Wartet auf Versand",
     "typeMessage": "Nachricht schreiben...",
     "unread": "Ungelesen",
     "read": "Gelesen",

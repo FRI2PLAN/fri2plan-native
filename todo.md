@@ -1662,3 +1662,10 @@ components/
 - [x] Afficher un compteur discret par statut dans les filtres de Demandes pour rendre les actions en attente immédiatement visibles.
 - [x] Corriger le centrage réel du groupe complet d’avatars dans la carte Accueil.
 - [x] Vérifier et corriger les traductions FR/EN/DE de toutes les nouvelles jauges de tâches, récompenses, courses et repas.
+- [x] Auditer les appels, mutations et listes des parcours les plus lents afin de prioriser les gains de réactivité : Courses, Messages, Notes, Demandes et Calendrier refont actuellement une requête complète après plusieurs actions simples.
+- [x] Vérifier que validation et réactivation de tâches répondent déjà visuellement sans attendre le serveur, avec annulation en cas d’échec.
+- [ ] Étendre les mises à jour optimistes aux actions fréquentes au-delà des tâches.
+- [ ] Préparer un cache local persistant et un affichage progressif des données utiles.
+- [ ] Virtualiser les listes longues et mesurer les améliorations perçues avant les tests Android et iOS.
+- [ ] Garantir une réponse visuelle immédiate sur les actions de tâches, messages et calendrier, avec synchronisation serveur en arrière-plan et annulation seulement en cas d’échec.
+- [x] Afficher immédiatement un message en cours d’envoi, le réconcilier au succès serveur et le retirer avec une erreur claire en cas d’échec.
