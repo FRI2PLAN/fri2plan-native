@@ -144,6 +144,7 @@
     "greetingMorning": "Bonjour {{name}}",
     "greetingAfternoon": "Bon après-midi {{name}}",
     "greetingEvening": "Bonsoir {{name}}",
+    "greetingHello": "Salut, {{name}}",
     "greetingMorningSimple": "Bonjour",
     "greetingAfternoonSimple": "Bon après-midi",
     "greetingEveningSimple": "Bonsoir",

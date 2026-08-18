@@ -98,12 +98,12 @@
     "referral": "Empfehlen",
     "settings": "Einstellungen",
     "help": "Hilfe",
-    "home": "Startseite",
+    "home": "Home",
     "intimateCalendar": "Int. Kalender",
     "circles": "Kreise"
   },
   "dashboard": {
-    "title": "Startseite",
+    "title": "Home",
     "welcome": "Willkommen bei FRI2PLAN! 🎉",
     "noFamilyMessage": "Um die App zu nutzen, müssen Sie eine Familie erstellen oder einer bestehenden Familie beitreten.",
     "createFamily": "Familie erstellen",
@@ -144,6 +144,7 @@
     "greetingMorning": "Guten Morgen {{name}}",
     "greetingAfternoon": "Guten Tag {{name}}",
     "greetingEvening": "Guten Abend {{name}}",
+    "greetingHello": "Hallo, {{name}}",
     "greetingMorningSimple": "Guten Morgen",
     "greetingAfternoonSimple": "Guten Tag",
     "greetingEveningSimple": "Guten Abend",
@@ -978,7 +979,7 @@
     ]
   },
   "tabs": {
-    "home": "Startseite",
+    "home": "Home",
     "calendar": "Kalender",
     "tasks": "Aufgaben",
     "shopping": "Einkauf",

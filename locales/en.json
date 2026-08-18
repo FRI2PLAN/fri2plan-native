@@ -144,6 +144,7 @@
     "greetingMorning": "Good morning {{name}}",
     "greetingAfternoon": "Good afternoon {{name}}",
     "greetingEvening": "Good evening {{name}}",
+    "greetingHello": "Hello, {{name}}",
     "greetingMorningSimple": "Good morning",
     "greetingAfternoonSimple": "Good afternoon",
     "greetingEveningSimple": "Good evening",

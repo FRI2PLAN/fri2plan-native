@@ -20,11 +20,6 @@ import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
 
-export function getTodayGreetingKey(hour: number): 'greetingMorning' | 'greetingEvening' {
-  if (hour < 18) return 'greetingMorning';
-  return 'greetingEvening';
-}
-
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
   if (!dateStr) return new Date();
@@ -271,8 +266,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Afficher les données actionnables dès qu’elles sont prêtes. Les messages et repas
   // arrivent ensuite sans bloquer l’Accueil ni provoquer un écran d’attente inutile.
   const isLoading = familiesLoading || (!!activeFamily && tasksLoading && eventsLoading);
-  const greetingKey = getTodayGreetingKey(new Date().getHours());
-  const greetingText = t(`dashboard.${greetingKey}Simple`);
+  const greetingText = t('dashboard.greetingHello', { name: user?.name || '' });
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
   const DEFAULT_FAVORITE_IDS = ['calendar', 'notes', 'rewards'];
