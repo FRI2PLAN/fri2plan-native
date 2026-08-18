@@ -180,7 +180,6 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
   }, [visible]);
 
   const step = ONBOARDING_STEPS[currentStep];
-  const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
   const progress = ((currentStep + 1) / ONBOARDING_STEPS.length) * 100;
 
@@ -192,12 +191,6 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
     }
   };
 
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
   const handleSkip = () => {
     onComplete();
   };
@@ -206,7 +199,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
     <Modal
       visible={visible}
       animationType="fade"
-      transparent
+      transparent={false}
       onRequestClose={onComplete}
     >
       <View style={styles.overlay}>
@@ -259,50 +252,22 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
             {/* Boutons Explorer supprimés — l'utilisateur doit parcourir tout l'onboarding */}
           </ScrollView>
 
-          {/* Navigation */}
+          {/* Deux zones tactiles larges : l'onboarding ne doit jamais retenir l'utilisateur. */}
           <View style={styles.navigation}>
             <TouchableOpacity
-              style={[styles.navButton, isFirstStep && styles.navButtonDisabled]}
-              onPress={handlePrevious}
-              disabled={isFirstStep}
+              style={styles.skipFooterButton}
+              onPress={handleSkip}
               activeOpacity={0.7}
             >
-              <Ionicons 
-                name="chevron-back" 
-                size={24} 
-                color={isFirstStep ? '#9ca3af' : '#7c3aed'} 
-              />
-              <Text style={[styles.navButtonText, isFirstStep && styles.navButtonTextDisabled]}>
-                Précédent
-              </Text>
+              <Text style={styles.skipFooterText}>Passer l’introduction</Text>
             </TouchableOpacity>
-
-            {/* Step Indicators */}
-            <View style={styles.indicators}>
-              {ONBOARDING_STEPS.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    index === currentStep && styles.indicatorActive,
-                  ]}
-                />
-              ))}
-            </View>
-
             <TouchableOpacity
-              style={styles.navButton}
+              style={styles.nextButton}
               onPress={handleNext}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <Text style={styles.navButtonText}>
-                {isLastStep ? 'Terminer' : 'Suivant'}
-              </Text>
-              <Ionicons 
-                name={isLastStep ? "checkmark" : "chevron-forward"} 
-                size={24} 
-                color="#7c3aed" 
-              />
+              <Text style={styles.nextButtonText}>{isLastStep ? 'Terminer' : 'Suivant'}</Text>
+              <Ionicons name={isLastStep ? 'checkmark' : 'chevron-forward'} size={22} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -314,7 +279,7 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: '#fffdf7',
   },
   container: {
     flex: 1,
@@ -330,7 +295,7 @@ const styles = StyleSheet.create({
   progressBackground: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#e9e5ef',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -340,11 +305,12 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   skipButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
   },
   skipText: {
-    color: '#ffffff',
+    color: '#5b21b6',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -381,13 +347,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#1f1633',
     textAlign: 'center',
     marginBottom: 16,
   },
   description: {
     fontSize: 16,
-    color: '#d1d5db',
+    color: '#655c72',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -401,14 +367,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#f5f1fa',
     padding: 12,
     borderRadius: 8,
   },
   tipText: {
     flex: 1,
     fontSize: 14,
-    color: '#e5e7eb',
+    color: '#3d3648',
     lineHeight: 20,
   },
   actionButton: {
@@ -429,11 +395,11 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: '#e9e5ef',
   },
   navButton: {
     flexDirection: 'row',
@@ -466,5 +432,37 @@ const styles = StyleSheet.create({
   indicatorActive: {
     backgroundColor: '#7c3aed',
     width: 24,
+  },
+  skipFooterButton: {
+    alignItems: 'center',
+    borderColor: '#7c3aed',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: 10,
+  },
+  skipFooterText: {
+    color: '#5b21b6',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  nextButton: {
+    alignItems: 'center',
+    backgroundColor: '#7c3aed',
+    borderRadius: 14,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: 12,
+  },
+  nextButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

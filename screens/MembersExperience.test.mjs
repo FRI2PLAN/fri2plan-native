@@ -14,4 +14,12 @@ describe('Membres — notre tribu', () => {
     expect(membersScreen).toContain('<MemberAvatar member={member} size={48} />');
     expect(membersScreen).toContain('key={`${activeFamily?.id}-${member.id}`}');
   });
+
+  it('déduplique les membres avant de les compter et de les afficher', () => {
+    expect(membersScreen).toContain('const uniqueMembers = useMemo(() =>');
+    expect(membersScreen).toContain('seenMemberIds.has(memberId)');
+    expect(membersScreen).toContain('Membres ({uniqueMembers.length})');
+    expect(membersScreen).toContain("t('members.tribeCount', { count: uniqueMembers.length })");
+    expect(membersScreen).toContain('uniqueMembers.map((member: any) =>');
+  });
 });

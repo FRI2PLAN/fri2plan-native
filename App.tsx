@@ -328,6 +328,14 @@ function AppContent() {
     }
   }, [isAuthenticated]);
 
+  const completeFirstConnectionOnboarding = useCallback(async () => {
+    // L'onboarding est toujours le premier écran. Le logo et le verre ne
+    // démarrent qu'une fois le guide fermé ou passé.
+    setFamilyLoadingPhase('intro');
+    setShowFamilyLoading(true);
+    await completeOnboarding();
+  }, [completeOnboarding]);
+
   // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
   const effectiveLogout = useCallback(async () => {
     if (fcmLogoutRef.current) {
@@ -364,26 +372,29 @@ function AppContent() {
           {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady))) ? (
             <SplashScreen />
           ) : isAuthenticated ? (
-            <>
-              <AppNavigator onLogout={effectiveLogout} />
+            !hasSeenOnboarding ? (
               <OnboardingScreen
-                visible={!hasSeenOnboarding}
-                onComplete={completeOnboarding}
+                visible
+                onComplete={completeFirstConnectionOnboarding}
                 onNavigate={(pageIndex) => {
                   setCurrentPage(pageIndex);
                 }}
               />
-              {showFamilyLoading && (
-                <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
-                  <StatusBar style="dark" backgroundColor="#fffdf7" />
-                  {familyLoadingPhase === 'intro' ? (
-                    <FamilyLogoIntro onComplete={() => setFamilyLoadingPhase('glass')} />
-                  ) : (
-                    <FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />
-                  )}
-                </View>
-              )}
-            </>
+            ) : (
+              <>
+                <AppNavigator onLogout={effectiveLogout} />
+                {showFamilyLoading && (
+                  <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
+                    <StatusBar style="dark" backgroundColor="#fffdf7" />
+                    {familyLoadingPhase === 'intro' ? (
+                      <FamilyLogoIntro onComplete={() => setFamilyLoadingPhase('glass')} />
+                    ) : (
+                      <FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />
+                    )}
+                  </View>
+                )}
+              </>
+            )
           ) : (
             <LoginScreen
               initialInviteCode={inviteCodeFromLink}

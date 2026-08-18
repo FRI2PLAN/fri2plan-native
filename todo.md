@@ -1712,3 +1712,6 @@ components/
 - [x] Diagnostiquer et corriger le crash Android natif `ReactActivityDelegate.onUserLeaveHint` lors du démarrage ou de la mise en pause du client de développement.
 - [ ] Reconstruire puis tester le client de développement Android sur le Samsung afin de valider le démarrage et le retour depuis l’arrière-plan.
 - [x] Réparer la syntaxe du patch React Native afin que `npm install` applique correctement le correctif Android via patch-package sur Windows.
+- [x] Rendre l’onboarding de première connexion opaque sur fond blanc cassé, avec des actions Suivant et Passer faciles à utiliser.
+- [x] À la fin ou au passage de l’onboarding, afficher successivement le logo FRI2PLAN animé, le verre familial, puis l’application sans chevauchement visuel.
+- [x] Corriger le compteur du cercle Ixari afin qu’il déduplique les membres et affiche les 5 membres réels après la réassociation de Benjamin.

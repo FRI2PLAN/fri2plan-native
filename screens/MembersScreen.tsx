@@ -90,6 +90,18 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  // Une réassociation de compte peut laisser deux lignes du même utilisateur
+  // dans une réponse mise en cache. L'interface ne doit jamais les compter ou
+  // les afficher deux fois pendant la réconciliation serveur.
+  const uniqueMembers = useMemo(() => {
+    const seenMemberIds = new Set<string>();
+    return (members as any[]).filter((member: any) => {
+      const memberId = String(member.id);
+      if (seenMemberIds.has(memberId)) return false;
+      seenMemberIds.add(memberId);
+      return true;
+    });
+  }, [members]);
   const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
@@ -108,10 +120,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   );
 
   const currentUserIsAdmin = useMemo(() => {
-    if (!meData || !(members as any[]).length) return false;
-    const me = (members as any[]).find((m: any) => m.id === meData.id);
+    if (!meData || !uniqueMembers.length) return false;
+    const me = uniqueMembers.find((m: any) => m.id === meData.id);
     return me?.familyRole === 'admin' || me?.role === 'admin' || meData.role === 'admin';
-  }, [meData, members]);
+  }, [meData, uniqueMembers]);
 
   // Mutations
   const inviteMutation = trpc.members.invite.useMutation({
@@ -479,7 +491,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           onPress={() => setDetailTab('members')}
         >
           <Text style={[styles.tabText, detailTab === 'members' && styles.tabTextActive]}>
-            👥 Membres ({(members as any[]).length})
+            👥 Membres ({uniqueMembers.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -518,14 +530,14 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
             <View style={styles.tribeHero}>
               <Text style={styles.tribeEyebrow}>{t('members.ourTribe')}</Text>
               <Text style={styles.tribeTitle}>{activeFamily?.name || t('members.title')}</Text>
-              <Text style={styles.tribeSubtitle}>{t('members.tribeCount', { count: (members as any[]).length })}</Text>
+              <Text style={styles.tribeSubtitle}>{t('members.tribeCount', { count: uniqueMembers.length })}</Text>
             </View>
             {isLoading ? (
               <Text style={styles.emptyText}>{t('common.loading')}</Text>
-            ) : (members as any[]).length === 0 ? (
+            ) : uniqueMembers.length === 0 ? (
               <Text style={styles.emptyText}>{t('members.noMembers')}</Text>
             ) : (
-              (members as any[]).map((member: any) => {
+              uniqueMembers.map((member: any) => {
                 const isMe = member.id === meData?.id;
                 const isAdmin = isMemberAdmin(member);
                 return (
