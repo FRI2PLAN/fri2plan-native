@@ -27,8 +27,8 @@ export function CompletionFeedback({
   celebrate = false,
 }: CompletionFeedbackProps) {
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(8);
-  const scale = useSharedValue(0.82);
+  const translateY = useSharedValue(18);
+  const scale = useSharedValue(0.76);
 
   useEffect(() => {
     if (!visible) {
@@ -38,12 +38,13 @@ export function CompletionFeedback({
 
     opacity.value = withSequence(
       withTiming(1, { duration: motion.micro }),
-      withTiming(0, { duration: motion.standard }),
+      withTiming(0, { duration: motion.feedbackVisible }),
     );
-    translateY.value = withTiming(-24, { duration: motion.feedbackVisible });
+    // La trajectoire longue donne l’impression que les points rejoignent le compteur familial du haut.
+    translateY.value = withTiming(-220, { duration: motion.feedbackVisible });
     scale.value = withSequence(
-      withSpring(1.14, motion.completionSpring),
-      withSpring(1, motion.completionSpring),
+      withSpring(1.28, motion.completionSpring),
+      withTiming(1.08, { duration: motion.standard }),
     );
   }, [visible, opacity, scale, translateY]);
 
@@ -76,12 +77,12 @@ export function CompletionFeedback({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 18,
-    top: 8,
+    right: 12,
+    top: 2,
     zIndex: 20,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
     shadowColor: '#000',
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 4 },
@@ -91,21 +92,21 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 22,
     fontWeight: '900',
   },
   sparkle: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: '900',
   },
   label: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 20,
     fontWeight: '800',
   },
 });

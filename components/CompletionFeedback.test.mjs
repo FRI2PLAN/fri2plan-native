@@ -17,4 +17,10 @@ describe('fondations de feedback de validation', () => {
     expect(hapticSource).toContain('NotificationFeedbackType.Success');
     expect(hapticSource).toContain('catch');
   });
+
+  it('rend le gain de points assez grand et assez long pour rejoindre visuellement le compteur', () => {
+    expect(source).toContain('translateY.value = withTiming(-220');
+    expect(source).toContain('fontSize: 20');
+    expect(source).toContain('fontSize: 22');
+  });
 });

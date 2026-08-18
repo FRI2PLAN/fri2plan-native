@@ -20,9 +20,8 @@ import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
 
-export function getTodayGreetingKey(hour: number): 'greetingMorning' | 'greetingAfternoon' | 'greetingEvening' {
-  if (hour < 12) return 'greetingMorning';
-  if (hour < 18) return 'greetingAfternoon';
+export function getTodayGreetingKey(hour: number): 'greetingMorning' | 'greetingEvening' {
+  if (hour < 18) return 'greetingMorning';
   return 'greetingEvening';
 }
 
@@ -98,10 +97,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       if (!memberId || seenMemberIds.has(memberId)) return false;
       seenMemberIds.add(memberId);
       return true;
-    }).slice(0, 8);
+    });
   }, [familyMembers]);
-  const primaryAvatarMembers = visibleFamilyMembers.slice(0, 4);
-  const overflowAvatarMembers = visibleFamilyMembers.slice(4, 8);
 
   // Fetch dashboard data
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery(
@@ -480,26 +477,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
                   <View style={styles.heroGreetingRow}>
                     <Text style={styles.heroGreeting}>{greetingText}</Text>
-                    <View style={styles.familyAvatarCluster}>
-                      {overflowAvatarMembers.length > 0 && (
-                        <View style={[styles.familyAvatarLine, styles.familyAvatarOverflowLine]}>
-                          {overflowAvatarMembers.map((member: any) => (
-                            <TouchableOpacity
-                              key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
-                              onPress={() => setSelectedMember(member)}
-                              activeOpacity={0.78}
-                              hitSlop={6}
-                              accessibilityRole="button"
-                              accessibilityLabel={member.name || t('dashboard.memberSummaryTitle', { name: '' })}
-                              style={styles.heroAvatar}
-                            >
-                              <MemberAvatar member={member} size={44} />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                      <View style={styles.familyAvatarLine}>
-                        {primaryAvatarMembers.map((member: any) => (
+                  </View>
+                  <View style={styles.familyAvatarCluster}>
+                    <View style={styles.familyAvatarLine}>
+                      {visibleFamilyMembers.map((member: any) => (
                           <TouchableOpacity
                             key={`dashboard-member-${activeFamily?.id ?? 'none'}-${member.id}`}
                             onPress={() => setSelectedMember(member)}
@@ -512,7 +493,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                             <MemberAvatar member={member} size={44} />
                           </TouchableOpacity>
                         ))}
-                      </View>
                     </View>
                   </View>
 
@@ -844,31 +824,27 @@ function getStyles(isDark: boolean) {
       marginBottom: 7,
     },
     heroGreetingRow: {
-      flexDirection: 'row',
       alignItems: 'center',
-      minHeight: 52,
+      minHeight: 34,
     },
     heroGreeting: {
       color: isDark ? '#FFFFFF' : '#17101F',
       fontSize: 24,
       fontWeight: '800',
       letterSpacing: -0.4,
-      marginRight: 8,
-      flexShrink: 0,
+      marginBottom: 10,
     },
     familyAvatarCluster: {
-      flex: 1,
-      alignItems: 'flex-end',
-      justifyContent: 'center',
+      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+      marginBottom: 12,
     },
     familyAvatarLine: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: 5,
-    },
-    familyAvatarOverflowLine: {
-      marginBottom: 5,
+      justifyContent: 'flex-start',
+      flexWrap: 'wrap',
+      gap: 8,
     },
     heroAvatar: {
       width: 48,

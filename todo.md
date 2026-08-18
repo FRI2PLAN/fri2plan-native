@@ -1648,3 +1648,6 @@ components/
 - [x] Adoucir les transitions et les repères personnels du Calendrier sans modifier les flux Google ni ICS.
 - [x] Enrichir Courses et Repas avec une progression visuelle simple et des repères culinaires chaleureux.
 - [x] Faire évoluer Famille en une page « notre tribu » valorisant les membres et leurs réussites.
+- [ ] Corriger la connexion Metro Android pour éviter le timeout du build de développement.
+- [x] Aligner les avatars de l’Accueil à gauche sur une ligne adaptable et simplifier la salutation selon l’heure du système.
+- [x] Rendre le gain de points de validation plus grand et lisible jusque vers le compteur de points du haut.

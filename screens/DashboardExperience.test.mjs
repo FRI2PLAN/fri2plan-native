@@ -21,7 +21,9 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(screen).toContain('.slice(0, 3)');
     expect(screen).toContain("t('dashboard.todayWithCircle'");
     expect(screen).toContain('heroGreetingRow');
-    expect(screen).toContain('familyAvatarOverflowLine');
+    expect(screen).toContain("if (hour < 18) return 'greetingMorning'");
+    expect(screen).toContain("flexWrap: 'wrap'");
+    expect(screen).toContain("justifyContent: 'flex-start'");
     expect(screen).toContain('greetingText');
   });
 
