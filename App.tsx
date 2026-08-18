@@ -134,6 +134,12 @@ const asyncStoragePersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
+// Le contenu du cache React Query est conservé après une déconnexion pour que
+// le même compte retrouve immédiatement ses données. Cette clé associe le
+// cache persistant à son propriétaire et impose une purge avant tout rendu si
+// un autre compte se connecte sur le même appareil.
+const QUERY_CACHE_OWNER_KEY = '@fri2plan:query_cache_owner';
+
 // ─── Sous-composant PushRegistrar ─────────────────────────────────────────────
 // Doit être rendu INSIDE <trpc.Provider> pour pouvoir utiliser les hooks tRPC
 function PushRegistrar() {
@@ -235,6 +241,7 @@ function extractVerifyEmailToken(url: string | null): string | null {
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user, login } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
+  const [sessionCacheReady, setSessionCacheReady] = useState(false);
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
   // Code d'invitation depuis deep link (capturé avant le montage React)
@@ -281,26 +288,30 @@ function AppContent() {
   // activeFamilyId est lu dynamiquement depuis AsyncStorage dans chaque requête (lib/trpc.ts)
   const trpcClient = useMemo(() => createTRPCClient(), [token]);
 
-  // Invalider les requêtes quand le token change (connexion / déconnexion)
-  const prevTokenRef = useRef<string | null>(null);
-  const tokenHydrationHandledRef = useRef(false);
+  // Ne jamais vider le cache lors d’une simple déconnexion : il est utile au
+  // prochain accès du même compte. En revanche, un cache appartenant à un
+  // autre utilisateur est purgé AVANT le montage de l’interface authentifiée.
   useEffect(() => {
-    // La restauration d'auth arrive après le montage. À ce moment, préserver
-    // les requêtes hydratées depuis AsyncStorage : elles doivent être visibles
-    // avant le premier rafraîchissement réseau.
-    if (isLoading) return;
-    if (!tokenHydrationHandledRef.current) {
-      tokenHydrationHandledRef.current = true;
-      prevTokenRef.current = token;
-      return;
+    let cancelled = false;
+    if (isLoading) return () => { cancelled = true; };
+    if (!isAuthenticated || !user?.id) {
+      setSessionCacheReady(false);
+      return () => { cancelled = true; };
     }
 
-    // Une vraie connexion ou déconnexion doit en revanche isoler la session.
-    if (prevTokenRef.current !== token) {
-      prevTokenRef.current = token;
-      queryClient.clear();
-    }
-  }, [token, isLoading]);
+    const ownerId = String(user.id);
+    void (async () => {
+      const cachedOwnerId = await AsyncStorage.getItem(QUERY_CACHE_OWNER_KEY);
+      if (cancelled) return;
+      if (cachedOwnerId !== ownerId) {
+        queryClient.clear();
+        await AsyncStorage.setItem(QUERY_CACHE_OWNER_KEY, ownerId);
+      }
+      if (!cancelled) setSessionCacheReady(true);
+    })();
+
+    return () => { cancelled = true; };
+  }, [isAuthenticated, isLoading, user?.id]);
 
   // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
   const effectiveLogout = useCallback(async () => {
@@ -334,7 +345,7 @@ function AppContent() {
 
       <SubscriptionProvider>
       {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
-      {(isLoading || !splashMinDone || (isAuthenticated && !user)) ? (
+      {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady))) ? (
         <SplashScreen />
       ) : isAuthenticated ? (
         <>

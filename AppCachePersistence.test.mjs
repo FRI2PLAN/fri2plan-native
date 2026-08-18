@@ -17,10 +17,11 @@ describe('Cache persistant — démarrage rapide', () => {
     expect(app).toContain('staleTime: 5 * 60 * 1000');
   });
 
-  it('ne vide pas le cache pendant l’hydratation initiale du jeton', () => {
-    expect(app).toContain('if (isLoading) return;');
-    expect(app).toContain('if (!tokenHydrationHandledRef.current)');
-    expect(app).toContain('tokenHydrationHandledRef.current = true;');
+  it('conserve le cache du même compte tout en le purgeant avant le rendu d’un autre compte', () => {
+    expect(app).toContain("const QUERY_CACHE_OWNER_KEY = '@fri2plan:query_cache_owner'");
+    expect(app).toContain('const cachedOwnerId = await AsyncStorage.getItem(QUERY_CACHE_OWNER_KEY)');
+    expect(app).toContain('if (cachedOwnerId !== ownerId)');
+    expect(app).toContain('setSessionCacheReady(true)');
   });
 
   it('préchauffe les données principales du cercle actif après le premier rendu', () => {
