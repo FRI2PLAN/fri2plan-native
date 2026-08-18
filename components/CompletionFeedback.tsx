@@ -13,6 +13,7 @@ type CompletionFeedbackProps = {
   visible: boolean;
   points?: number;
   color?: string;
+  celebrate?: boolean;
 };
 
 /**
@@ -23,6 +24,7 @@ export function CompletionFeedback({
   visible,
   points = 0,
   color = familyPalette.reward,
+  celebrate = false,
 }: CompletionFeedbackProps) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(8);
@@ -63,6 +65,7 @@ export function CompletionFeedback({
       style={[styles.container, { backgroundColor: color }, animatedStyle]}
     >
       <View style={styles.content}>
+        {celebrate && <Text style={styles.sparkle}>✦</Text>}
         <Text style={styles.checkmark}>✓</Text>
         <Text style={styles.label}>{points > 0 ? `+${points} points` : 'Fait !'}</Text>
       </View>
@@ -93,6 +96,11 @@ const styles = StyleSheet.create({
   checkmark: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '900',
+  },
+  sparkle: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '900',
   },
   label: {

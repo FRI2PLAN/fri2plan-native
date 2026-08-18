@@ -11,6 +11,10 @@ import { useFamily } from '../contexts/FamilyContext';
 import { useOffline } from '../contexts/OfflineContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import FreemiumLimitModal from '../components/FreemiumLimitModal';
+import MemberAvatar from '../components/MemberAvatar';
+import { CompletionFeedback } from '../components/CompletionFeedback';
+import { triggerCompletionHaptic } from '../hooks/useCompletionFeedback';
+import { familyPalette } from '../constants/experience';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -81,6 +85,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [quickActionsVisible, setQuickActionsVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [optimisticCompletedTaskIds, setOptimisticCompletedTaskIds] = useState<Set<number>>(new Set());
+  const [completionFeedback, setCompletionFeedback] = useState<{
+    taskId: number;
+    points: number;
+    color: string;
+    celebrate: boolean;
+    key: number;
+  } | null>(null);
 
   // ── Pickers ──
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -182,15 +194,29 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     onError: (e) => Alert.alert('Erreur', e.message)});
 
   const completeMutation = trpc.tasks.complete.useMutation({
-    onSuccess: (data) => {
-      if (data?.points) Alert.alert('🎉', `+${data.points} points !`);
+    onSuccess: (_data, variables) => {
+      setOptimisticCompletedTaskIds(previous => {
+        const next = new Set(previous);
+        next.delete(variables.taskId);
+        return next;
+      });
+      utils.tasks.list.setData(undefined, (previous) => previous?.map((task: any) => task.id === variables.taskId
+        ? { ...task, status: 'completed', completedAt: new Date().toISOString() }
+        : task));
       setQuickActionsVisible(false);
       utils.tasks.list.invalidate();
       // Mettre à jour les points immédiatement sans déconnexion
       utils.rewards.myPoints.invalidate();
       utils.rewards.familyPoints.invalidate();
     },
-    onError: (e) => Alert.alert('Erreur', e.message)});
+    onError: (e, variables) => {
+      setOptimisticCompletedTaskIds(previous => {
+        const next = new Set(previous);
+        next.delete(variables.taskId);
+        return next;
+      });
+      Alert.alert('Erreur', e.message);
+    }});
 
   const uncompleteMutation = trpc.tasks.uncomplete.useMutation({
     onSuccess: () => {
@@ -242,6 +268,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const overdueTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) < todayStr)
     .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
   const todayTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) === todayStr);
+  const allTodayTasks = (tasks || []).filter(t => t.dueDate && getDueDateStr(t.dueDate) === todayStr);
+  const todayCompletedCount = allTodayTasks.filter(task => task.status === 'completed' || optimisticCompletedTaskIds.has(task.id)).length;
+  const todayProgressPercent = allTodayTasks.length > 0 ? Math.round((todayCompletedCount / allTodayTasks.length) * 100) : 0;
   const upcomingTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) >= tomorrowStr)
     .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
 
@@ -351,6 +380,24 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     }
   };
 
+  const handleCompleteTask = (task: any) => {
+    if (task.status === 'completed' || optimisticCompletedTaskIds.has(task.id)) return;
+
+    const points = Number(task.points) || 0;
+    const assignedMember = getMemberById(task.assignedTo);
+    const isImportant = task.priority === 'urgent' || task.priority === 'high' || points >= 30;
+    setOptimisticCompletedTaskIds(previous => new Set(previous).add(task.id));
+    setCompletionFeedback({
+      taskId: task.id,
+      points,
+      color: assignedMember?.userColor || familyPalette.success,
+      celebrate: isImportant,
+      key: Date.now(),
+    });
+    void triggerCompletionHaptic(points);
+    completeMutation.mutate({ taskId: task.id });
+  };
+
   const handleUpdateTask = () => {
     if (!selectedTask) return;
     if (!editFormData.title.trim()) { Alert.alert('Erreur', 'Le titre est requis'); return; }
@@ -370,21 +417,31 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const TaskCard = ({ task }: { task: any }) => {
     const assignedMember = getMemberById(task.assignedTo);
     const isAssignedToMe = task.assignedTo === user?.id;
+    const isOptimisticallyCompleted = optimisticCompletedTaskIds.has(task.id);
+    const isCompleted = task.status === 'completed' || isOptimisticallyCompleted;
     return (
-      <TouchableOpacity style={styles.taskCard} onPress={() => handleTaskPress(task)} activeOpacity={0.75}>
+      <TouchableOpacity style={[styles.taskCard, isCompleted && styles.taskCardCompleted]} onPress={() => handleTaskPress(task)} activeOpacity={0.75}>
         {/* Barre priorité */}
         <View style={[styles.priorityBar, { backgroundColor: getPriorityColor(task.priority) }]} />
 
         {/* Checkbox */}
-        <TouchableOpacity style={styles.taskCheckbox} onPress={() => completeMutation.mutate({ taskId: task.id })}>
-          <View style={[styles.checkbox, task.status === 'completed' && styles.checkboxChecked]}>
-            {task.status === 'completed' && <Text style={styles.checkmark}>✓</Text>}
+        <TouchableOpacity
+          style={styles.taskCheckbox}
+          hitSlop={8}
+          onPress={(event) => {
+            event.stopPropagation();
+            if (task.status === 'completed') uncompleteMutation.mutate({ taskId: task.id });
+            else handleCompleteTask(task);
+          }}
+        >
+          <View style={[styles.checkbox, isCompleted && styles.checkboxChecked, isOptimisticallyCompleted && styles.checkboxCelebrating]}>
+            {isCompleted && <Text style={styles.checkmark}>✓</Text>}
           </View>
         </TouchableOpacity>
 
         {/* Contenu */}
         <View style={styles.taskContent}>
-          <Text style={[styles.taskTitle, task.status === 'completed' && styles.taskTitleCompleted]} numberOfLines={2}>
+          <Text style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]} numberOfLines={2}>
             {task.isPrivate === 1 ? '🔒 ' : ''}{task.title}
           </Text>
           {task.description ? <Text style={styles.taskDescription} numberOfLines={1}>{task.description}</Text> : null}
@@ -398,22 +455,33 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             {task.recurrence && task.recurrence !== 'none' && <Text style={{ fontSize: 13 }}>🔁</Text>}
             {task.points > 0 && <Text style={styles.pointsText}>⭐ {task.points}pts</Text>}
           </View>
+          {assignedMember && (
+            <View style={styles.assigneeMeta}>
+              <Text style={styles.assigneeMetaText}>{assignedMember.name || t('tasks.assignedTo')}</Text>
+              {task.recurrence && task.recurrence !== 'none' && <Text style={styles.routineMetaText}>· 🔁 {t('tasks.recurrence') || 'Routine'}</Text>}
+            </View>
+          )}
         </View>
 
         {/* Avatar assigné */}
         <View style={styles.avatarZone}>
           {assignedMember ? (
-            <AvatarCircle
-              name={assignedMember.name || '?'}
-              size={30}
-              color={isAssignedToMe ? '#7c3aed' : '#6b7280'}
-            />
+            <View style={[styles.memberAvatarHalo, isAssignedToMe && styles.memberAvatarHaloMine]}>
+              <MemberAvatar member={assignedMember} size={34} />
+            </View>
           ) : (
             <View style={styles.avatarEmpty}>
               <Text style={styles.avatarEmptyText}>+</Text>
             </View>
           )}
         </View>
+        <CompletionFeedback
+          key={`completion-${completionFeedback?.key ?? 'idle'}`}
+          visible={completionFeedback?.taskId === task.id}
+          points={completionFeedback?.points}
+          color={completionFeedback?.color}
+          celebrate={completionFeedback?.celebrate}
+        />
       </TouchableOpacity>
     );
   };
@@ -608,7 +676,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => {
-              const completedIds = new Set((tasks || []).filter(t => t.status === 'completed').map(t => t.id));
+              const completedIds = new Set<number>((tasks || []).filter((task: any) => task.status === 'completed').map((task: any) => Number(task.id)));
               setSelectedTaskIds(selectedTaskIds.size === completedIds.size ? new Set() : completedIds);
             }} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
               <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>
@@ -663,6 +731,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 <Text style={styles.sectionChevron}>{todayExpanded ? '▲' : '▼'}</Text>
               </View>
             </TouchableOpacity>
+            {allTodayTasks.length > 0 && (
+              <View style={styles.todayProgressRow}>
+                <View style={styles.todayProgressTrack}>
+                  <View style={[styles.todayProgressFill, { width: `${todayProgressPercent}%` }]} />
+                </View>
+                <Text style={styles.todayProgressText}>{todayCompletedCount}/{allTodayTasks.length}</Text>
+              </View>
+            )}
             {todayExpanded && todayTasks.map(t => <TaskCard key={t.id} task={t} />)}
 
             {/* Liste filtrée */}
@@ -752,7 +828,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                   {/* ✅ Valider / ↩️ Annuler validation selon statut */}
                   {selectedTask.status !== 'completed' ? (
                     <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#10b981' }]}
-                      onPress={() => completeMutation.mutate({ taskId: selectedTask.id })}>
+                      onPress={() => handleCompleteTask(selectedTask)}>
                       <Text style={styles.quickBtnIcon}>✅</Text>
                       <Text style={styles.quickBtnLabel}>{t('common.validate')}</Text>
                     </TouchableOpacity>
@@ -970,20 +1046,26 @@ function getStyles(isDark: boolean) {
     sectionBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
     sectionEmpty: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
     sectionChevron: { color: '#fff', fontSize: 12 },
+    todayProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 2, marginBottom: 8 },
+    todayProgressTrack: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: isDark ? '#3E3151' : '#E9E0F7' },
+    todayProgressFill: { height: '100%', borderRadius: 3, backgroundColor: familyPalette.success },
+    todayProgressText: { color: subtext, fontSize: 11, fontWeight: '800', minWidth: 30, textAlign: 'right' },
 
     dateGroupHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 14, marginTop: 6 },
     dateGroupLabel: { fontSize: 12, fontWeight: '700', color: '#7c3aed', flex: 1, textTransform: 'capitalize' },
     dateGroupCount: { fontSize: 12, color: subtext },
 
     // Carte tâche
-    taskCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 12, marginHorizontal: 10, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: border },
+    taskCard: { position: 'relative', flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 16, marginHorizontal: 10, marginBottom: 9, overflow: 'hidden', borderWidth: 1, borderColor: border, shadowColor: '#34214D', shadowOpacity: isDark ? 0 : 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
+    taskCardCompleted: { opacity: 0.72, backgroundColor: isDark ? '#1A2630' : '#F2FBF6' },
     priorityBar: { width: 4, alignSelf: 'stretch' },
-    taskCheckbox: { padding: 12 },
-    checkbox: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
-    checkboxChecked: { backgroundColor: '#7c3aed', borderColor: '#7c3aed' },
+    taskCheckbox: { padding: 13 },
+    checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    checkboxChecked: { backgroundColor: familyPalette.success, borderColor: familyPalette.success },
+    checkboxCelebrating: { transform: [{ scale: 1.08 }] },
     checkmark: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
-    taskContent: { flex: 1, paddingVertical: 10, paddingRight: 4 },
-    taskTitle: { fontSize: 15, fontWeight: '600', color: text, marginBottom: 2 },
+    taskContent: { flex: 1, paddingVertical: 12, paddingRight: 4 },
+    taskTitle: { fontSize: 15, fontWeight: '700', color: text, marginBottom: 3 },
     taskTitleCompleted: { textDecorationLine: 'line-through', color: subtext },
     taskDescription: { fontSize: 13, color: subtext, marginBottom: 4 },
     taskMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
@@ -991,9 +1073,14 @@ function getStyles(isDark: boolean) {
     priorityText: { fontSize: 11, fontWeight: '600' },
     dueDateText: { fontSize: 11, color: subtext },
     pointsText: { fontSize: 11, color: '#7c3aed', fontWeight: '600' },
+    assigneeMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+    assigneeMetaText: { color: isDark ? '#CFC4DC' : '#655873', fontSize: 11, fontWeight: '700' },
+    routineMetaText: { color: subtext, fontSize: 11, fontWeight: '600' },
 
     // Avatar zone
-    avatarZone: { padding: 10 },
+    avatarZone: { padding: 11 },
+    memberAvatarHalo: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#30253B' : '#F2ECFC' },
+    memberAvatarHaloMine: { backgroundColor: '#7c3aed22', borderWidth: 1, borderColor: '#7c3aed66' },
     avatarEmpty: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
     avatarEmptyText: { fontSize: 16, color: subtext },
 

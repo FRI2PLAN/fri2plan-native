@@ -1641,3 +1641,5 @@ components/
 - [x] Simplifier l’en-tête du résumé membre : nom complet en titre, puis « Aujourd’hui » en sous-titre.
 - [x] Afficher les résumés membres comme des cartes empilées et permettre le passage au membre voisin par balayage horizontal, sans changer la fermeture.
 - [x] Restaurer la taille de la carte principale et rendre le balayage horizontal fiable malgré le contenu défilant du résumé.
+- [x] Moderniser les cartes de tâches avec avatar responsable, progression et hiérarchie visuelle plus chaleureuse.
+- [x] Ajouter une validation de tâche instantanée avec coche élastique, gain de points animé, vibration courte et célébration discrète pour les tâches importantes.
