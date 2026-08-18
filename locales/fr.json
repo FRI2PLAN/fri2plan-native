@@ -594,6 +594,8 @@
     "pendingClaims": "Réclamations en attente ({{count}})"
   },
   "members": {
+    "ourTribe": "Notre tribu",
+    "tribeCount": "{{count}} membre dans ce cercle",
     "title": "Membres",
     "addMember": "Ajouter un membre",
     "noMembers": "Aucun membre",

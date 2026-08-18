@@ -594,6 +594,8 @@
     "pendingClaims": "Ausstehende Anfragen ({{count}})"
   },
   "members": {
+    "ourTribe": "Unser Stamm",
+    "tribeCount": "{{count}} Mitglied in diesem Kreis",
     "title": "Mitglieder",
     "addMember": "Mitglied hinzufügen",
     "noMembers": "Keine Mitglieder",

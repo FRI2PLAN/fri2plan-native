@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import FreemiumLimitModal from '../components/FreemiumLimitModal';
+import MemberAvatar from '../components/MemberAvatar';
 
 interface MembersScreenProps {
   onNavigate?: (screen: string) => void;
@@ -89,6 +90,11 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  const { data: familyPoints = [] } = trpc.rewards.familyPoints.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
+  const memberPointsById = useMemo(() => new Map((familyPoints as any[]).map((entry: any) => [entry.userId, Number(entry.totalPoints || 0)])), [familyPoints]);
 
   const { data: allInvitations = [] } = trpc.invitations.list.useQuery(
     undefined,
@@ -509,6 +515,11 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         {/* ── ONGLET MEMBRES ── */}
         {detailTab === 'members' && (
           <View>
+            <View style={styles.tribeHero}>
+              <Text style={styles.tribeEyebrow}>{t('members.ourTribe')}</Text>
+              <Text style={styles.tribeTitle}>{activeFamily?.name || t('members.title')}</Text>
+              <Text style={styles.tribeSubtitle}>{t('members.tribeCount', { count: (members as any[]).length })}</Text>
+            </View>
             {isLoading ? (
               <Text style={styles.emptyText}>{t('common.loading')}</Text>
             ) : (members as any[]).length === 0 ? (
@@ -518,11 +529,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 const isMe = member.id === meData?.id;
                 const isAdmin = isMemberAdmin(member);
                 return (
-                  <View key={member.id} style={styles.memberCard}>
-                    <View style={[styles.memberAvatar, { backgroundColor: getMemberColor(member) }]}>
-                      <Text style={isEmojiAvatar(member) ? styles.memberEmoji : styles.memberInitial}>
-                        {getAvatarDisplay(member)}
-                      </Text>
+                  <View key={`${activeFamily?.id}-${member.id}`} style={styles.memberCard}>
+                    <View style={[styles.memberAvatarHalo, { backgroundColor: `${getMemberColor(member)}22` }]}>
+                      <MemberAvatar member={member} size={48} />
                     </View>
                     <View style={styles.memberInfo}>
                       <View style={styles.memberNameRow}>
@@ -531,7 +540,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                         {isMe && <Text style={styles.meBadge}>moi</Text>}
                       </View>
                       <Text style={styles.memberEmail} numberOfLines={1}>{member.email}</Text>
-                      <Text style={styles.memberRole}>{isAdmin ? '👑 Admin' : '👤 Membre'}</Text>
+                      <View style={styles.memberMetaRow}>
+                        <Text style={styles.memberRole}>{isAdmin ? '👑 Admin' : '👤 Membre'}</Text>
+                        <Text style={styles.memberPoints}>⭐ {memberPointsById.get(member.id) || 0} pts</Text>
+                      </View>
                     </View>
                     <View style={styles.memberActionsCol}>
                       {/* Modifier son propre profil */}
@@ -1044,14 +1056,23 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   circleActionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   circleActionBtnTextSecondary: { color: '#7c3aed', fontWeight: '700', fontSize: 15 },
 
+  // Présentation de tribu
+  tribeHero: { marginHorizontal: 14, marginTop: 14, marginBottom: 12, borderRadius: 18, padding: 16, backgroundColor: isDark ? '#2B2140' : '#F5F0FB', borderWidth: 1, borderColor: isDark ? '#463565' : '#E9DDF8' },
+  tribeEyebrow: { fontSize: 11, fontWeight: '800', color: '#7C3AED', letterSpacing: 0.6, textTransform: 'uppercase' },
+  tribeTitle: { fontSize: 22, fontWeight: '800', color: isDark ? '#FFFFFF' : '#2A1B3D', marginTop: 4 },
+  tribeSubtitle: { fontSize: 13, color: isDark ? '#D8C7EE' : '#6D5A82', marginTop: 3 },
+
   // Member card
   memberCard: {
     backgroundColor: isDark ? '#1f2937' : '#fff',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 13,
+    marginHorizontal: 14,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: isDark ? '#374151' : '#EEE7F7',
     shadowColor: '#000',
     shadowOpacity: isDark ? 0.3 : 0.05,
     shadowRadius: 4,
@@ -1062,6 +1083,7 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginRight: 10, flexShrink: 0,
   },
+  memberAvatarHalo: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', marginRight: 11, flexShrink: 0 },
   memberInitial: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   memberEmoji: { fontSize: 22 },
   memberInfo: { flex: 1 },
@@ -1074,7 +1096,9 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
     borderRadius: 4,
   },
   memberEmail: { fontSize: 11, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 1 },
-  memberRole: { fontSize: 11, color: '#7c3aed', marginTop: 2 },
+  memberMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 },
+  memberRole: { fontSize: 11, color: '#7c3aed' },
+  memberPoints: { fontSize: 11, color: isDark ? '#FCD34D' : '#92400E', fontWeight: '800' },
   memberActionsCol: { alignItems: 'flex-end', gap: 4 },
   memberActions: { flexDirection: 'row', gap: 4 },
   actionBtn: {

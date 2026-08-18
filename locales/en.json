@@ -594,6 +594,8 @@
     "pendingClaims": "Pending claims ({{count}})"
   },
   "members": {
+    "ourTribe": "Our tribe",
+    "tribeCount": "{{count}} member in this circle",
     "title": "Members",
     "addMember": "Add member",
     "noMembers": "No members",
