@@ -835,16 +835,19 @@ function getStyles(isDark: boolean) {
       marginBottom: 10,
     },
     familyAvatarCluster: {
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: 12,
     },
     familyAvatarLine: {
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
       flexWrap: 'wrap',
       gap: 8,
+      paddingHorizontal: 8,
     },
     heroAvatar: {
       width: 48,
