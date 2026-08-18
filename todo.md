@@ -1643,3 +1643,5 @@ components/
 - [x] Restaurer la taille de la carte principale et rendre le balayage horizontal fiable malgré le contenu défilant du résumé.
 - [x] Moderniser les cartes de tâches avec avatar responsable, progression et hiérarchie visuelle plus chaleureuse.
 - [x] Ajouter une validation de tâche instantanée avec coche élastique, gain de points animé, vibration courte et célébration discrète pour les tâches importantes.
+- [x] Mettre en avant une vitrine de récompenses avec solde, objectif atteignable et jauges de progression familiales.
+- [x] Mettre en évidence les récompenses disponibles avec un déverrouillage discret et des cartes plus chaleureuses.

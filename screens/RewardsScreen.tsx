@@ -180,6 +180,23 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     ...allBadgeTypes.filter(t => !earnedBadgeTypes.has(t)),
   ];
   const claimedRewardIds = new Set((myClaims as any[]).filter((c: any) => c.status === "pending").map((c: any) => c.rewardId));
+  const pointsBalance = Number((myPoints as any)?.totalPoints || 0);
+  const rewardCatalog = useMemo(() => (rewards as any[])
+    .map((reward: any) => {
+      const cost = Number(reward.pointsCost || 0);
+      const alreadyClaimed = claimedRewardIds.has(reward.id);
+      const canAfford = pointsBalance >= cost;
+      return {
+        reward,
+        canAfford,
+        alreadyClaimed,
+        remaining: Math.max(cost - pointsBalance, 0),
+        progress: cost > 0 ? Math.min(pointsBalance / cost, 1) : 1,
+      };
+    })
+    .sort((first, second) => Number(second.canAfford) - Number(first.canAfford) || first.remaining - second.remaining), [rewards, pointsBalance, myClaims]);
+  const nextReward = rewardCatalog.find(({ canAfford, alreadyClaimed }) => !canAfford && !alreadyClaimed);
+  const availableRewardCount = rewardCatalog.filter(({ canAfford, alreadyClaimed }) => canAfford && !alreadyClaimed).length;
 
   const tabs = useMemo(() => [
     { key: "catalog", label: "🎁 Catalogue" },
@@ -227,6 +244,25 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
             </View>
           </ScrollView>
         )}
+        {nextReward && (
+          <View style={styles.nextRewardGoal}>
+            <View style={styles.nextRewardGoalTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nextRewardGoalLabel}>{t('rewards.nextReward')}</Text>
+                <Text style={styles.nextRewardGoalName} numberOfLines={1}>{ICON_EMOJIS[nextReward.reward.icon || "gift"] || "🎁"} {nextReward.reward.name || nextReward.reward.title}</Text>
+              </View>
+              <Text style={styles.nextRewardGoalRemaining}>{t('rewards.missingPoints', { count: nextReward.remaining })}</Text>
+            </View>
+            <View style={styles.nextRewardTrack}>
+              <View style={[styles.nextRewardFill, { width: `${Math.round(nextReward.progress * 100)}%` }]} />
+            </View>
+          </View>
+        )}
+        {availableRewardCount > 0 && (
+          <View style={styles.availableNowPill}>
+            <Text style={styles.availableNowText}>✨ {t('rewards.availableNow', { count: availableRewardCount })}</Text>
+          </View>
+        )}
       </View>
 
       {/* Onglets - grille 2x2 */}
@@ -269,17 +305,27 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                 <Text style={styles.emptySubtext}>{t('rewards.createdByParents')}</Text>
               </View>
             ) : (
-              (rewards as any[]).map((reward: any) => {
-                const canAfford = ((myPoints as any)?.totalPoints ?? 0) >= reward.pointsCost;
-                const alreadyClaimed = claimedRewardIds.has(reward.id);
+              rewardCatalog.map(({ reward, canAfford, alreadyClaimed, remaining, progress }) => {
                 return (
-                  <View key={reward.id} style={styles.rewardCard}>
+                  <View key={reward.id} style={[styles.rewardCard, canAfford && !alreadyClaimed && styles.rewardCardAvailable]}>
                     <View style={styles.rewardIconBox}>
                       <Text style={styles.rewardIconText}>{ICON_EMOJIS[reward.icon || "gift"] || "🎁"}</Text>
                     </View>
                     <View style={styles.rewardBody}>
                       <Text style={styles.rewardName}>{reward.name || reward.title}</Text>
                       {reward.description ? <Text style={styles.rewardDesc}>{reward.description}</Text> : null}
+                      {canAfford && !alreadyClaimed ? (
+                        <View style={styles.availablePill}>
+                          <Text style={styles.availablePillText}>✦ {t('rewards.available')}</Text>
+                        </View>
+                      ) : !alreadyClaimed ? (
+                        <View style={styles.rewardProgressRow}>
+                          <View style={styles.rewardProgressTrack}>
+                            <View style={[styles.rewardProgressFill, { width: `${Math.round(progress * 100)}%` }]} />
+                          </View>
+                          <Text style={styles.rewardProgressText}>{t('rewards.missingPoints', { count: remaining })}</Text>
+                        </View>
+                      ) : null}
                       <View style={styles.rewardFooter}>
                         <View style={styles.rewardPtsBadge}>
                           <Text style={styles.rewardPtsText}>⭐ {reward.pointsCost} pts</Text>
@@ -447,7 +493,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: isDark ? "#111827" : "#f9fafb" },
   header: { alignItems: "center", paddingTop: 16, paddingBottom: 8 },
   pageTitle: { fontSize: 26, fontWeight: "800", color: isDark ? "#fff" : "#111827", textAlign: "center" },
-  pointsCard: { backgroundColor: "#7c3aed", marginHorizontal: 16, marginBottom: 8, borderRadius: 16, padding: 16 },
+  pointsCard: { backgroundColor: "#7c3aed", marginHorizontal: 16, marginBottom: 8, borderRadius: 18, padding: 16, shadowColor: '#4C1D95', shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   pointsRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   pointsLabel: { fontSize: 13, color: "#e9d5ff", marginBottom: 2 },
   pointsValue: { fontSize: 22, fontWeight: "800", color: "#fff" },
@@ -459,6 +505,15 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   familyRankPos: { fontSize: 16, fontWeight: "700", color: "#fff" },
   familyRankName: { fontSize: 11, color: "#e9d5ff", maxWidth: 60 },
   familyRankPts: { fontSize: 11, fontWeight: "600", color: "#fff" },
+  nextRewardGoal: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.18)' },
+  nextRewardGoalTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  nextRewardGoalLabel: { color: '#E9D5FF', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.45 },
+  nextRewardGoalName: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', marginTop: 3 },
+  nextRewardGoalRemaining: { color: '#F3E8FF', fontSize: 11, fontWeight: '700', textAlign: 'right' },
+  nextRewardTrack: { height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.22)', overflow: 'hidden', marginTop: 8 },
+  nextRewardFill: { height: '100%', borderRadius: 4, backgroundColor: '#FCD34D' },
+  availableNowPill: { alignSelf: 'flex-start', marginTop: 12, borderRadius: 99, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#D1FAE5' },
+  availableNowText: { color: '#065F46', fontSize: 11, fontWeight: '800' },
   tabsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
   tabBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: isDark ? "#1f2937" : "#fff", borderWidth: 1, borderColor: isDark ? "#374151" : "#e5e7eb", flexBasis: '47%', flexGrow: 1, alignItems: 'center' },
   tabBtnActive: { backgroundColor: "#7c3aed", borderColor: "#7c3aed" },
@@ -468,12 +523,19 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   createBtn: { backgroundColor: "#7c3aed", borderRadius: 12, padding: 14, alignItems: "center", marginBottom: 16 },
   createBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   sectionTitle: { fontSize: 15, fontWeight: "700", color: isDark ? "#d1d5db" : "#374151", marginBottom: 12 },
-  rewardCard: { flexDirection: "row", backgroundColor: isDark ? "#1f2937" : "#fff", borderRadius: 16, padding: 14, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  rewardCard: { flexDirection: "row", backgroundColor: isDark ? "#1f2937" : "#fff", borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: isDark ? '#374151' : '#EEE7F7', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  rewardCardAvailable: { borderColor: '#34D399', backgroundColor: isDark ? '#17352E' : '#F0FDF4' },
   rewardIconBox: { width: 52, height: 52, borderRadius: 26, backgroundColor: isDark ? "#374151" : "#f3f4f6", alignItems: "center", justifyContent: "center", marginRight: 12 },
   rewardIconText: { fontSize: 28 },
   rewardBody: { flex: 1 },
   rewardName: { fontSize: 16, fontWeight: "700", color: isDark ? "#fff" : "#111827", marginBottom: 2 },
   rewardDesc: { fontSize: 13, color: isDark ? "#9ca3af" : "#6b7280", marginBottom: 8 },
+  availablePill: { alignSelf: 'flex-start', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#D1FAE5', marginBottom: 8 },
+  availablePillText: { color: '#047857', fontSize: 11, fontWeight: '800' },
+  rewardProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  rewardProgressTrack: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: isDark ? '#374151' : '#E9E0F7' },
+  rewardProgressFill: { height: '100%', borderRadius: 3, backgroundColor: '#A78BFA' },
+  rewardProgressText: { color: isDark ? '#CFC4DC' : '#756080', fontSize: 10, fontWeight: '700' },
   rewardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   rewardPtsBadge: { backgroundColor: isDark ? "#374151" : "#fef3c7", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   rewardPtsText: { fontSize: 13, fontWeight: "600", color: isDark ? "#fbbf24" : "#92400e" },
