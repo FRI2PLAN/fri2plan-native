@@ -215,6 +215,17 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
     return true;
   }), [requests, filterStatus, filterType, user?.id]);
 
+  const requestStatusCounts = useMemo(() => {
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    (requests as any[]).forEach((request: any) => {
+      if (filterType !== 'all' && request.type !== filterType) return;
+      if (request.status === 'pending' && request.targetAdminId != null
+        && request.targetAdminId !== user?.id && request.userId !== user?.id) return;
+      if (request.status in counts) counts[request.status as keyof typeof counts] += 1;
+    });
+    return counts;
+  }, [requests, filterType, user?.id]);
+
   const getTypeConfig = (type: string) => REQUEST_TYPES.find(t => t.value === type) || REQUEST_TYPES[3];
   const getStatusConfig = (status: string) => STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
 
@@ -282,9 +293,16 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
               style={[styles.filterTab, filterStatus === status && styles.filterTabActive]}
               onPress={() => setFilterStatus(status === filterStatus ? 'all' : status)}
             >
-              <Text style={styles.filterTabEmoji}>
-                {status === 'pending' ? '⏳' : status === 'approved' ? '✅' : '❌'}
-              </Text>
+              <View style={styles.filterTabContent}>
+                <Text style={styles.filterTabEmoji}>
+                  {status === 'pending' ? '⏳' : status === 'approved' ? '✅' : '❌'}
+                </Text>
+                {requestStatusCounts[status] > 0 && (
+                  <View style={[styles.filterCountBadge, filterStatus === status && styles.filterCountBadgeActive]}>
+                    <Text style={[styles.filterCountText, filterStatus === status && styles.filterCountTextActive]}>{requestStatusCounts[status]}</Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -683,6 +701,23 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: '#7c3aed'},
   filterTabEmoji: {
     fontSize: 20},
+  filterTabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  filterCountBadge: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: isDark ? '#374151' : '#ECE4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCountBadgeActive: { backgroundColor: 'rgba(255,255,255,0.24)' },
+  filterCountText: { color: '#6D28D9', fontSize: 10, fontWeight: '800' },
+  filterCountTextActive: { color: '#FFFFFF' },
   filterTabText: {
     fontSize: 11,
     fontWeight: '600',

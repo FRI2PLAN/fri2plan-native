@@ -14,4 +14,10 @@ describe('Écrans secondaires — listes fluides', () => {
     expect(requests).toContain("import { useMemo, useState } from 'react'");
     expect(requests).toContain('const filteredRequests = useMemo');
   });
+
+  it('rend les actions de demandes en attente visibles dans les filtres', () => {
+    expect(requests).toContain('const requestStatusCounts = useMemo');
+    expect(requests).toContain('requestStatusCounts[status]');
+    expect(requests).toContain('styles.filterCountBadge');
+  });
 });

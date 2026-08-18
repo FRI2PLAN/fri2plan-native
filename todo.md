@@ -1659,5 +1659,5 @@ components/
 - [x] Empêcher une tâche du jour ou en retard d’être rendue une seconde fois dans la liste générale après réactivation.
 - [ ] Harmoniser Messages, Notes, Demandes, Budget et Réglages avec des états lisibles et des actions visibles sans changer leurs règles métier.
 - [x] Mémoriser les filtres et regroupements de Notes et Demandes afin de préserver la fluidité des listes lors des interactions.
-- [ ] Afficher un compteur discret par statut dans les filtres de Demandes pour rendre les actions en attente immédiatement visibles.
+- [x] Afficher un compteur discret par statut dans les filtres de Demandes pour rendre les actions en attente immédiatement visibles.
 - [x] Corriger le centrage réel du groupe complet d’avatars dans la carte Accueil.
