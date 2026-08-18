@@ -1707,3 +1707,7 @@ components/
 - [x] Identifier pourquoi la première donnée du Calendrier n’apparaît qu’après plusieurs dizaines de secondes malgré le cache persistant.
 - [x] Conserver le cache local utile à la déconnexion pour le même compte, avec une validation de propriétaire avant le rendu et un dernier cercle actif propre à chaque utilisateur.
 - [ ] Scinder les clés React Query dépendantes d’un cercle afin qu’un changement de cercle n’affiche jamais une donnée brièvement issue du cache de l’autre cercle.
+- [ ] Étudier l’enregistrement d’une recette importée avec URL source, ingrédients et marche à suivre consultable lors des réutilisations.
+- [ ] Étudier des modèles de tâches familiaux standards, proposés à la première connexion et réutilisables ultérieurement sans imposer de tâches à la famille.
+- [x] Diagnostiquer et corriger le crash Android natif `ReactActivityDelegate.onUserLeaveHint` lors du démarrage ou de la mise en pause du client de développement.
+- [ ] Reconstruire puis tester le client de développement Android sur le Samsung afin de valider le démarrage et le retour depuis l’arrière-plan.
