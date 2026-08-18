@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, RefreshControl, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -206,14 +206,14 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   };
 
   // Filtrage
-  const filteredRequests = (requests as any[]).filter((r: any) => {
+  const filteredRequests = useMemo(() => (requests as any[]).filter((r: any) => {
     if (filterStatus !== 'all' && r.status !== filterStatus) return false;
     if (filterType !== 'all' && r.type !== filterType) return false;
     if (r.status === 'pending' && r.targetAdminId != null) {
       if (r.targetAdminId !== user?.id && r.userId !== user?.id) return false;
     }
     return true;
-  });
+  }), [requests, filterStatus, filterType, user?.id]);
 
   const getTypeConfig = (type: string) => REQUEST_TYPES.find(t => t.value === type) || REQUEST_TYPES[3];
   const getStatusConfig = (status: string) => STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;

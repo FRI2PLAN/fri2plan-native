@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Switch, Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -260,18 +260,22 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   };
 
   // Filtrage
-  const filteredNotes = (notes as any[]).filter((note: any) => {
-    const matchSearch = !searchQuery ||
-      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchPrivacy = filterPrivacy === 'all' ||
-      (filterPrivacy === 'private' && (note.isPrivate === 1 || note.isPrivate === true)) ||
-      (filterPrivacy === 'public' && (note.isPrivate === 0 || note.isPrivate === false));
-    return matchSearch && matchPrivacy;
-  });
-
-  const pinnedNotes = filteredNotes.filter((n: any) => n.isPinned === 1 || n.isPinned === true);
-  const unpinnedNotes = filteredNotes.filter((n: any) => !n.isPinned || n.isPinned === 0);
+  const { filteredNotes, pinnedNotes, unpinnedNotes } = useMemo(() => {
+    const filtered = (notes as any[]).filter((note: any) => {
+      const matchSearch = !searchQuery ||
+        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        note.content?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchPrivacy = filterPrivacy === 'all' ||
+        (filterPrivacy === 'private' && (note.isPrivate === 1 || note.isPrivate === true)) ||
+        (filterPrivacy === 'public' && (note.isPrivate === 0 || note.isPrivate === false));
+      return matchSearch && matchPrivacy;
+    });
+    return {
+      filteredNotes: filtered,
+      pinnedNotes: filtered.filter((note: any) => note.isPinned === 1 || note.isPinned === true),
+      unpinnedNotes: filtered.filter((note: any) => !note.isPinned || note.isPinned === 0),
+    };
+  }, [notes, searchQuery, filterPrivacy]);
 
   const renderNoteCard = (note: any) => {
     const isPinned = note.isPinned === 1 || note.isPinned === true;

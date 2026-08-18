@@ -1657,3 +1657,5 @@ components/
 - [x] Afficher une célébration de premier plan lorsqu’une récompense devient nouvellement disponible après une tâche.
 - [x] Effacer le feedback de validation après son animation afin qu’il ne se rejoue jamais lors d’un simple clic ultérieur.
 - [x] Empêcher une tâche du jour ou en retard d’être rendue une seconde fois dans la liste générale après réactivation.
+- [ ] Harmoniser Messages, Notes, Demandes, Budget et Réglages avec des états lisibles et des actions visibles sans changer leurs règles métier.
+- [x] Mémoriser les filtres et regroupements de Notes et Demandes afin de préserver la fluidité des listes lors des interactions.
