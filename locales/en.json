@@ -987,6 +987,8 @@
     "cuisine": "Kitchen"
   },
   "meals": {
+    "weeklyMenu": "Weekly menu",
+    "daysPlanned": "{{count}} / 7 days",
     "title": "Meals",
     "newMeal": "New meal",
     "editMeal": "Edit meal",

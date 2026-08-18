@@ -149,6 +149,10 @@ export default function MealsScreen({
     { familyId: familyId!, startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') + ' 23:59:59' },
     { enabled: !!familyId }
   );
+  const plannedDaysCount = useMemo(() => new Set((weekMeals as Meal[]).map(meal => {
+    try { return format(parseISO(meal.date), 'yyyy-MM-dd'); } catch { return ''; }
+  }).filter(Boolean)).size, [weekMeals]);
+  const weeklyMenuProgress = Math.min(Math.round((plannedDaysCount / 7) * 100), 100);
 
   // ─── Historique ────────────────────────────────────────────────────────────
   const { data: historyMeals = [], isLoading: historyLoading } = trpc.meals.history.useQuery(
@@ -628,6 +632,16 @@ export default function MealsScreen({
         </TouchableOpacity>
       </View>
 
+      <View style={s.weekPlanSummary}>
+        <View style={s.weekPlanSummaryTop}>
+          <Text style={s.weekPlanSummaryLabel}>🍽️ {t('meals.weeklyMenu') || 'Menu de la semaine'}</Text>
+          <Text style={s.weekPlanSummaryCount}>{t('meals.daysPlanned', { count: plannedDaysCount })}</Text>
+        </View>
+        <View style={s.weekPlanTrack}>
+          <View style={[s.weekPlanFill, { width: `${weeklyMenuProgress}%` }]} />
+        </View>
+      </View>
+
       <ScrollView
         onScroll={e => { scrollOffsetRef.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={16}
@@ -1079,6 +1093,12 @@ function getStyles(isDark: boolean) {
     weekNavBtn: { padding: 8 },
     weekNavBtnText: { fontSize: 18, color: '#7c3aed' },
     weekLabel: { fontSize: 14, fontWeight: '600', color: text },
+    weekPlanSummary: { marginHorizontal: 12, marginTop: 10, marginBottom: 4, padding: 10, borderRadius: 12, backgroundColor: isDark ? '#1E293B' : '#FFF7ED' },
+    weekPlanSummaryTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 },
+    weekPlanSummaryLabel: { color: isDark ? '#FDE68A' : '#9A3412', fontSize: 12, fontWeight: '800' },
+    weekPlanSummaryCount: { color: subtext, fontSize: 11, fontWeight: '800' },
+    weekPlanTrack: { height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: isDark ? '#334155' : '#FED7AA' },
+    weekPlanFill: { height: '100%', borderRadius: 3, backgroundColor: '#F97316' },
     dayBlock: { borderBottomWidth: 1, borderBottomColor: border, padding: 10 },
     dayBlockToday: { borderLeftWidth: 3, borderLeftColor: '#7c3aed' },
     dayBlockDragOver: { backgroundColor: isDark ? '#2d1b69' : '#ede9fe', borderStyle: 'dashed', borderWidth: 2, borderColor: '#7c3aed' },
