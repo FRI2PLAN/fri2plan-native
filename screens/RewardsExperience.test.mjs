@@ -24,6 +24,12 @@ describe('Récompenses — vitrine de progression', () => {
       expect(locale.rewards.nextReward).toBeTruthy();
       expect(locale.rewards.available).toBeTruthy();
       expect(locale.rewards.availableNow).toContain('{{count}}');
+      expect(locale.rewards.availableNow_plural).toContain('{{count}}');
     }
+  });
+
+  it('centre le badge de disponibilité et lui donne une largeur adaptative à la carte violette', () => {
+    expect(rewardsScreen).toContain("availableNowPill: { alignItems: 'center', alignSelf: 'stretch'");
+    expect(rewardsScreen).toContain("textAlign: 'center'");
   });
 });

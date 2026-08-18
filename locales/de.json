@@ -600,6 +600,7 @@
     "missingPoints": "Noch {{count}} Pkt.",
     "available": "Verfügbar",
     "availableNow": "{{count}} Belohnung jetzt verfügbar",
+    "availableNow_plural": "{{count}} Belohnungen jetzt verfügbar",
     "rewardNamePlaceholder": "Z.B. Kinoabend",
     "rewardDescPlaceholder": "Details...",
     "ranking": "Rang",

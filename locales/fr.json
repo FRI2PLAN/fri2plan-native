@@ -600,6 +600,7 @@
     "missingPoints": "Encore {{count}} pts",
     "available": "Disponible",
     "availableNow": "{{count}} récompense disponible maintenant",
+    "availableNow_plural": "{{count}} récompenses disponibles maintenant",
     "rewardNamePlaceholder": "Ex: Sortie cinéma",
     "rewardDescPlaceholder": "Détails...",
     "ranking": "classement",

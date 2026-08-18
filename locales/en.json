@@ -600,6 +600,7 @@
     "missingPoints": "{{count}} pts to go",
     "available": "Available",
     "availableNow": "{{count}} reward available now",
+    "availableNow_plural": "{{count}} rewards available now",
     "rewardNamePlaceholder": "E.g. Movie night",
     "rewardDescPlaceholder": "Details...",
     "ranking": "ranking",

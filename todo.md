@@ -1698,3 +1698,4 @@ components/
 - [x] Régler la transition de chargement à environ deux secondes par étape, soit environ dix secondes avant l’ouverture de l’Accueil, sans dépendre d’une synchronisation réseau.
 - [ ] Ne révéler le tableau de bord qu’après disponibilité de l’avatar et du logo du profil, du solde de points, des événements du calendrier et des données essentielles de l’Accueil.
 - [ ] Éviter toute carte skeleton résiduelle du Calendrier et tout emplacement visuel vide à la première ouverture de l’Accueil.
+- [x] Corriger le libellé pluriel du badge de Récompenses et le centrer dans une largeur adaptative à la carte violette.
