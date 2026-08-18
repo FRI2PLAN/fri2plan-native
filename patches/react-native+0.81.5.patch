@@ -1,6 +1,24 @@
+diff --git a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java
+index 82d815c..7a976f7 100644
+--- a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java
++++ b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java
+@@ -188,7 +188,10 @@ public class ReactActivityDelegate {
+   }
+ 
+   public void onUserLeaveHint() {
+-    Objects.requireNonNull(mReactDelegate).onUserLeaveHint();
++    // Android peut mettre l'activité en pause avant que le délégué React soit
++    // initialisé (notamment au retour du launcher de développement).
++    final ReactDelegate reactDelegate = mReactDelegate;
++    if (reactDelegate != null) reactDelegate.onUserLeaveHint();
+   }
+ 
+   public void onPause() {
+diff --git a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+index 2a67797..72af7ac 100644
 --- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
 +++ b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
-@@ -435,7 +435,13 @@
+@@ -435,7 +435,13 @@ void ObjCTurboModule::performVoidMethodInvocation(
      @try {
        [inv invokeWithTarget:strongModule];
      } @catch (NSException *exception) {
@@ -15,16 +33,3 @@
      } @finally {
        [retainedObjectsForInvocation removeAllObjects];
      }
-
---- a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java
-+++ b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/ReactActivityDelegate.java
-@@ -188,7 +188,10 @@ public class ReactActivityDelegate {
-   }
- 
-   public void onUserLeaveHint() {
--    Objects.requireNonNull(mReactDelegate).onUserLeaveHint();
-+    // Android peut mettre l'activité en pause avant que le délégué React soit
-+    // initialisé (notamment au retour du launcher de développement).
-+    final ReactDelegate reactDelegate = mReactDelegate;
-+    if (reactDelegate != null) reactDelegate.onUserLeaveHint();
-   }

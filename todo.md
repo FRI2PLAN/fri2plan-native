@@ -1711,3 +1711,4 @@ components/
 - [ ] Étudier des modèles de tâches familiaux standards, proposés à la première connexion et réutilisables ultérieurement sans imposer de tâches à la famille.
 - [x] Diagnostiquer et corriger le crash Android natif `ReactActivityDelegate.onUserLeaveHint` lors du démarrage ou de la mise en pause du client de développement.
 - [ ] Reconstruire puis tester le client de développement Android sur le Samsung afin de valider le démarrage et le retour depuis l’arrière-plan.
+- [x] Réparer la syntaxe du patch React Native afin que `npm install` applique correctement le correctif Android via patch-package sur Windows.
