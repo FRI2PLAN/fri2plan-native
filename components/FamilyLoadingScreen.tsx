@@ -115,7 +115,7 @@ export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenP
 }
 
 const styles = StyleSheet.create({
-  screen: { alignItems: 'center', backgroundColor: '#fffdf7', minHeight: 430, paddingHorizontal: 32, paddingTop: 46 },
+  screen: { alignItems: 'center', backgroundColor: '#fffdf7', flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
   logo: { height: 46, marginBottom: 22, width: 150 },
   glass: { borderColor: '#6d3be8', borderRadius: 22, borderWidth: 2, height: 160, overflow: 'hidden', width: 96 },
   liquid: { backgroundColor: '#8b5cf6', bottom: 0, left: 0, overflow: 'hidden', position: 'absolute', right: 0 },

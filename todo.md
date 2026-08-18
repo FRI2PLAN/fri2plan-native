@@ -1699,8 +1699,9 @@ components/
 - [ ] Ne révéler le tableau de bord qu’après disponibilité de l’avatar et du logo du profil, du solde de points, des événements du calendrier et des données essentielles de l’Accueil.
 - [ ] Éviter toute carte skeleton résiduelle du Calendrier et tout emplacement visuel vide à la première ouverture de l’Accueil.
 - [x] Corriger le libellé pluriel du badge de Récompenses et le centrer dans une largeur adaptative à la carte violette.
-- [ ] Afficher le verre comme un écran blanc cassé plein écran couvrant l’en-tête, « Accueil » et le nom du cercle jusqu’à la fin de la séquence.
-- [ ] Ne révéler avatar, points, calendrier et contenu de l’Accueil qu’après la séquence complète du verre.
+- [x] Afficher le verre comme un écran blanc cassé plein écran couvrant l’en-tête, « Accueil » et le nom du cercle jusqu’à la fin de la séquence.
+- [x] Déplacer le verre hors de DashboardScreen et au-dessus de la coque authentifiée afin que la barre système, l’en-tête violet, avatar, points et sélecteur de cercle soient invisibles pendant le chargement.
+- [x] Ne révéler avatar, points, calendrier et contenu de l’Accueil qu’après la séquence complète du verre.
 - [x] Identifier pourquoi la première donnée du Calendrier n’apparaît qu’après plusieurs dizaines de secondes malgré le cache persistant.
 - [x] Conserver le cache local utile à la déconnexion pour le même compte, avec une validation de propriétaire avant le rendu et un dernier cercle actif propre à chaque utilisateur.
 - [ ] Scinder les clés React Query dépendantes d’un cercle afin qu’un changement de cercle n’affiche jamais une donnée brièvement issue du cache de l’autre cercle.

@@ -18,7 +18,6 @@ import FamilySetupScreen from './FamilySetupScreen';
 import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
-import FamilyLoadingScreen from '../components/FamilyLoadingScreen';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
@@ -263,10 +262,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       .slice(0, 3);
   }, [events]);
 
-  // Le sas familial dure volontairement cinq étapes de deux secondes. Cela donne
-  // le temps au cache, au profil, aux points et au calendrier de se stabiliser
-  // sans rendre l’ouverture dépendante d’une synchronisation réseau particulière.
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const greetingText = t('dashboard.greetingHello', { name: user?.name || '' });
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
@@ -421,16 +416,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         </View>
       )}
 
-      {/* Les raccourcis arrivent avec le tableau de bord, après la transition initiale. */}
-      {!isInitialLoading && (
-        <FavoritesBar
-          favorites={favorites}
-          onFavoritePress={handleFavoritePress}
-          onFavoriteSelect={handleFavoriteSelect}
-          allPages={allPages}
-          badgeIds={allBadgeIds}
-        />
-      )}
+      <FavoritesBar
+        favorites={favorites}
+        onFavoritePress={handleFavoritePress}
+        onFavoriteSelect={handleFavoriteSelect}
+        allPages={allPages}
+        badgeIds={allBadgeIds}
+      />
       
       {/* Content */}
       <ScrollView 
@@ -440,10 +432,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         }
       >
 
-        {/* Transition compacte pendant le chargement initial des données essentielles */}
-        {isInitialLoading ? (
-          <FamilyLoadingScreen onComplete={() => setIsInitialLoading(false)} />
-        ) : !activeFamily ? (
+        {!activeFamily ? (
           <View style={styles.noFamilyCard}>
             <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>
             <Text style={styles.noFamilyText}>

@@ -17,9 +17,11 @@ import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
-import { StyleSheet, Platform, AppState, InteractionManager } from 'react-native';
+import FamilyLoadingScreen from './components/FamilyLoadingScreen';
+import { StyleSheet, Platform, AppState, InteractionManager, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as Updates from 'expo-updates';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
@@ -242,6 +244,7 @@ function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user, login } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [sessionCacheReady, setSessionCacheReady] = useState(false);
+  const [showFamilyLoading, setShowFamilyLoading] = useState(true);
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
   // Code d'invitation depuis deep link (capturé avant le montage React)
@@ -313,6 +316,13 @@ function AppContent() {
     return () => { cancelled = true; };
   }, [isAuthenticated, isLoading, user?.id]);
 
+  // Une nouvelle connexion doit toujours passer par le sas familial. Lors
+  // d’une simple fermeture/réouverture, l’interface est déjà préchargée sous
+  // cette couche pendant que le cache local est restauré.
+  useEffect(() => {
+    if (!isAuthenticated) setShowFamilyLoading(true);
+  }, [isAuthenticated]);
+
   // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
   const effectiveLogout = useCallback(async () => {
     if (fcmLogoutRef.current) {
@@ -344,28 +354,36 @@ function AppContent() {
       <DataWarmup />
 
       <SubscriptionProvider>
-      {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
-      {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady))) ? (
-        <SplashScreen />
-      ) : isAuthenticated ? (
-        <>
-          <AppNavigator onLogout={effectiveLogout} />
-          <OnboardingScreen
-            visible={!hasSeenOnboarding}
-            onComplete={completeOnboarding}
-            onNavigate={(pageIndex) => {
-              setCurrentPage(pageIndex);
-            }}
-          />
-        </>
-      ) : (
-        <LoginScreen
-          initialInviteCode={inviteCodeFromLink}
-          initialScreenMode={inviteCodeFromLink ? 'register' : undefined}
-          isEmailInvitation={!!inviteCodeFromLink}
-          initialEmail={inviteEmailFromLink}
-        />
-      )}
+        <View style={styles.appRoot}>
+          {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
+          {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady))) ? (
+            <SplashScreen />
+          ) : isAuthenticated ? (
+            <>
+              <AppNavigator onLogout={effectiveLogout} />
+              <OnboardingScreen
+                visible={!hasSeenOnboarding}
+                onComplete={completeOnboarding}
+                onNavigate={(pageIndex) => {
+                  setCurrentPage(pageIndex);
+                }}
+              />
+              {showFamilyLoading && (
+                <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
+                  <StatusBar style="dark" backgroundColor="#fffdf7" />
+                  <FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />
+                </View>
+              )}
+            </>
+          ) : (
+            <LoginScreen
+              initialInviteCode={inviteCodeFromLink}
+              initialScreenMode={inviteCodeFromLink ? 'register' : undefined}
+              isEmailInvitation={!!inviteCodeFromLink}
+              initialEmail={inviteEmailFromLink}
+            />
+          )}
+        </View>
       </SubscriptionProvider>
 
       {/* Modale de mise à jour — affichée après le splash, indépendamment de l'auth */}
@@ -548,4 +566,12 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  appRoot: { flex: 1 },
+  familyLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#fffdf7',
+    elevation: 1000,
+    zIndex: 1000,
+  },
+});

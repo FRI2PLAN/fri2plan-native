@@ -24,6 +24,14 @@ describe('Cache persistant — démarrage rapide', () => {
     expect(app).toContain('setSessionCacheReady(true)');
   });
 
+  it('place le verre familial au-dessus de toute la coque authentifiée', () => {
+    expect(app).toContain('const [showFamilyLoading, setShowFamilyLoading] = useState(true)');
+    expect(app).toContain('<View style={styles.familyLoadingOverlay} accessibilityViewIsModal>');
+    expect(app).toContain('<FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />');
+    expect(app).toContain('...StyleSheet.absoluteFillObject');
+    expect(app).toContain('zIndex: 1000');
+  });
+
   it('préchauffe les données principales du cercle actif après le premier rendu', () => {
     expect(app).toContain('function DataWarmup()');
     expect(app).toContain('InteractionManager.runAfterInteractions');

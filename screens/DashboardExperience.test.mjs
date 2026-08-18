@@ -8,10 +8,10 @@ const en = JSON.parse(readFileSync(new URL('../locales/en.json', import.meta.url
 const de = JSON.parse(readFileSync(new URL('../locales/de.json', import.meta.url), 'utf8'));
 
 describe('Accueil — expérience familiale et chargement progressif', () => {
-  it('ouvre l’Accueil après le sas familial plutôt qu’au premier retour réseau', () => {
-    expect(screen).toContain('const [isInitialLoading, setIsInitialLoading] = useState(true)');
-    expect(screen).toContain('<FamilyLoadingScreen onComplete={() => setIsInitialLoading(false)} />');
-    expect(screen).toContain('!isInitialLoading && (');
+  it('laisse le tableau de bord se précharger derrière le sas familial affiché au niveau supérieur', () => {
+    expect(screen).not.toContain('FamilyLoadingScreen');
+    expect(screen).not.toContain('isInitialLoading');
+    expect(screen).toContain('<FavoritesBar');
   });
 
   it('présente les repères de la famille et la prochaine action', () => {
