@@ -276,6 +276,9 @@ export default function ShoppingScreen({
   const renderItem = ({ item }: { item: ShoppingItem }) => (
     <TouchableOpacity
       style={[s.itemRow, item.checked && s.itemRowChecked]}
+      activeOpacity={0.72}
+      delayPressIn={0}
+      pressRetentionOffset={{ top: 18, bottom: 18, left: 18, right: 18 }}
       onPress={() => {
         if (!isConnected) {
           enqueue({ type: 'shopping.toggleItem', payload: { itemId: item.id, checked: !item.checked } });
@@ -304,7 +307,7 @@ export default function ShoppingScreen({
         <Text style={[s.itemName, item.checked && s.itemNameChecked]}>{item.name}</Text>
         {item.quantity ? <Text style={s.itemQty}>{item.quantity}</Text> : null}
       </View>
-      <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', `${item.name} ?`, [
+      <TouchableOpacity hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} onPress={() => Alert.alert(t('common.delete') || 'Supprimer', `${item.name} ?`, [
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
         { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: () => {
           if (!isConnected) {
@@ -687,11 +690,11 @@ function getStyles(isDark: boolean) {
     autocomplete: { backgroundColor: card, borderWidth: 1, borderColor: border, borderRadius: 8, marginHorizontal: 10 },
     autocompleteItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: border },
     autocompleteText: { color: text, fontSize: 14 },
-    itemRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 10, padding: 12, marginBottom: 8, gap: 10 },
+    itemRow: { flexDirection: 'row', alignItems: 'center', minHeight: 64, backgroundColor: card, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8, gap: 12 },
     itemRowChecked: { opacity: 0.6 },
-    checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    checkbox: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
     checkboxChecked: { backgroundColor: '#7c3aed' },
-    checkMark: { color: '#fff', fontSize: 14, fontWeight: '700' },
+    checkMark: { color: '#fff', fontSize: 17, fontWeight: '700' },
     itemInfo: { flex: 1 },
     itemName: { fontSize: 15, fontWeight: '600', color: text },
     itemNameChecked: { textDecorationLine: 'line-through', color: subtext },

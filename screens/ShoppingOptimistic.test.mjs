@@ -15,4 +15,11 @@ describe('Courses — réponse visuelle immédiate', () => {
     expect(screen).toContain('previous?.filter(current => current.id !== item.id)');
     expect(screen).toContain('utils.shopping.itemsByList.setData({ listId }, previousItems)');
   });
+
+  it('prévoit des cibles tactiles confortables pour la coche et la suppression', () => {
+    expect(screen).toContain('delayPressIn={0}');
+    expect(screen).toContain('pressRetentionOffset={{ top: 18, bottom: 18, left: 18, right: 18 }}');
+    expect(screen).toContain("checkbox: { width: 32, height: 32");
+    expect(screen).toContain("hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}");
+  });
 });

@@ -1672,8 +1672,9 @@ components/
 - [x] Virtualiser l’onglet Terminé des tâches afin que les centaines de tâches achevées ne soient plus rendues d’un seul coup.
 - [x] Identifier et supprimer le délai perceptible encore visible pendant les interactions manuelles du Calendrier.
 - [x] Identifier et réduire le délai de plusieurs secondes au passage entre les vues Jour et Liste du Calendrier.
-- [ ] Empêcher qu’un événement Google synchronisé soit importé deux fois.
-- [ ] Agrandir et fiabiliser les zones tactiles des actions de courses pour une réaction au premier appui.
+- [x] Empêcher qu’un événement Google synchronisé soit importé deux fois.
+- [x] Sérialiser la synchronisation d’un même calendrier Google et dédupliquer les UID existants avant insertion.
+- [x] Agrandir et fiabiliser les zones tactiles des actions de courses pour une réaction au premier appui.
 - [ ] Garantir une réponse visuelle immédiate sur les actions de tâches, messages et calendrier, avec synchronisation serveur en arrière-plan et annulation seulement en cas d’échec.
 - [x] Afficher immédiatement un message en cours d’envoi, le réconcilier au succès serveur et le retirer avec une erreur claire en cas d’échec.
 - [x] Afficher immédiatement les créations, modifications et suppressions d’événements dans le calendrier, puis réconcilier la liste après réponse serveur.
