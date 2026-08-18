@@ -122,22 +122,11 @@ export default function ShoppingScreen({
   const archiveList = trpc.shopping.archiveList.useMutation({ onSuccess: () => { utils.shopping.listsByFamily.invalidate(); setSelectedList(null); } });
   const unarchiveList = trpc.shopping.unarchiveList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
   const duplicateList = trpc.shopping.duplicateList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
-  const addItem = trpc.shopping.addItem.useMutation({
-    onSuccess: () => {
-      // Forcer un refetch immédiat (networkMode offlineFirst bloque l'invalidation seule)
-      refetchItems();
-      utils.shopping.itemsByList.invalidate({ listId: selectedList?.id });
-      utils.shopping.itemsByList.invalidate();
-      utils.shopping.itemsHistory.invalidate();
-    },
-    onError: (err: any) => {
-      Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article. Vérifiez votre connexion.');
-    },
-  });
+  const addItem = trpc.shopping.addItem.useMutation();
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
-  const toggleItem = trpc.shopping.toggleItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const toggleItem = trpc.shopping.toggleItem.useMutation();
   const updateItem = trpc.shopping.updateItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
-  const deleteItem = trpc.shopping.deleteItem.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
+  const deleteItem = trpc.shopping.deleteItem.useMutation();
   const deleteChecked = trpc.shopping.deleteCheckedItems.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
   const deduplicate = trpc.shopping.deduplicateItems.useMutation({ onSuccess: () => { refetchItems(); utils.shopping.itemsByList.invalidate(); } });
 
@@ -243,17 +232,37 @@ export default function ShoppingScreen({
       setAutocomplete([]);
       Alert.alert('\ud83d\udcf5', 'Article ajout\u00e9 en file d\'attente (hors ligne)');
     } else {
-      try {
-        console.log('[submitItem] ONLINE: mutateAsync listId=', selectedList.id);
-        const result = await addItem.mutateAsync({ listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined });
-        console.log('[submitItem] SUCCESS:', result);
-        setNewItemName('');
-        setNewItemQty('');
-        setAutocomplete([]);
-      } catch (err: any) {
-        console.log('[submitItem] ERROR:', err?.message, err);
-        Alert.alert('Erreur', err?.message || 'Impossible d\'ajouter l\'article.');
-      }
+      const payload = { listId: selectedList.id, name: newItemName.trim(), quantity: newItemQty.trim() || undefined };
+      const optimisticId = -Date.now();
+      const optimisticItem = {
+        id: optimisticId,
+        listId: selectedList.id,
+        name: payload.name,
+        quantity: payload.quantity || '',
+        checked: false,
+        optimistic: true,
+        createdAt: new Date().toISOString(),
+      };
+      utils.shopping.itemsByList.setData({ listId: selectedList.id }, (previous: any[] | undefined) => [
+        ...(previous || []),
+        optimisticItem,
+      ]);
+      setNewItemName('');
+      setNewItemQty('');
+      setAutocomplete([]);
+      addItem.mutate(payload, {
+        onSuccess: (result) => {
+          utils.shopping.itemsByList.setData({ listId: selectedList.id }, (previous: any[] | undefined) => previous?.map(item =>
+            item.id === optimisticId ? { ...item, id: result.itemId, optimistic: false } : item,
+          ));
+          utils.shopping.itemsByList.invalidate({ listId: selectedList.id });
+          utils.shopping.itemsHistory.invalidate();
+        },
+        onError: (err: any) => {
+          utils.shopping.itemsByList.setData({ listId: selectedList.id }, (previous: any[] | undefined) => previous?.filter(item => item.id !== optimisticId));
+          Alert.alert('Erreur', err?.message || 'Impossible d’ajouter l’article. Vérifiez votre connexion.');
+        },
+      });
     }
   };
 
@@ -271,7 +280,19 @@ export default function ShoppingScreen({
         if (!isConnected) {
           enqueue({ type: 'shopping.toggleItem', payload: { itemId: item.id, checked: !item.checked } });
         } else {
-          toggleItem.mutate({ itemId: item.id });
+          const listId = selectedList?.id;
+          if (!listId) return;
+          const previousItems = utils.shopping.itemsByList.getData({ listId });
+          utils.shopping.itemsByList.setData({ listId }, (previous: any[] | undefined) => previous?.map(current =>
+            current.id === item.id ? { ...current, checked: !current.checked } : current,
+          ));
+          toggleItem.mutate({ itemId: item.id }, {
+            onSuccess: () => utils.shopping.itemsByList.invalidate({ listId }),
+            onError: (err: any) => {
+              utils.shopping.itemsByList.setData({ listId }, previousItems);
+              Alert.alert('Erreur', err?.message || 'Impossible de mettre à jour l’article.');
+            },
+          });
         }
       }}
       onLongPress={() => { setEditingItem(item); setEditItemName(item.name); setEditItemQty(item.quantity || ''); }}
@@ -289,7 +310,20 @@ export default function ShoppingScreen({
           if (!isConnected) {
             enqueue({ type: 'shopping.deleteItem', payload: { itemId: item.id } });
           } else {
-            deleteItem.mutate({ itemId: item.id });
+            const listId = selectedList?.id;
+            if (!listId) return;
+            const previousItems = utils.shopping.itemsByList.getData({ listId });
+            utils.shopping.itemsByList.setData({ listId }, (previous: any[] | undefined) => previous?.filter(current => current.id !== item.id));
+            deleteItem.mutate({ itemId: item.id }, {
+              onSuccess: () => {
+                utils.shopping.itemsByList.invalidate({ listId });
+                utils.shopping.itemsHistory.invalidate();
+              },
+              onError: (err: any) => {
+                utils.shopping.itemsByList.setData({ listId }, previousItems);
+                Alert.alert('Erreur', err?.message || 'Impossible de supprimer l’article.');
+              },
+            });
           }
         }},
       ])}>

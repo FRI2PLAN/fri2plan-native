@@ -1670,5 +1670,6 @@ components/
 - [ ] Garantir une réponse visuelle immédiate sur les actions de tâches, messages et calendrier, avec synchronisation serveur en arrière-plan et annulation seulement en cas d’échec.
 - [x] Afficher immédiatement un message en cours d’envoi, le réconcilier au succès serveur et le retirer avec une erreur claire en cas d’échec.
 - [x] Afficher immédiatement les créations, modifications et suppressions d’événements dans le calendrier, puis réconcilier la liste après réponse serveur.
+- [x] Afficher immédiatement l’ajout, la coche et la suppression d’un article de courses, avec retour arrière en cas d’échec.
 - [x] Remplacer la salutation horaire de l’Accueil par Salut/Hello/Hallo avec le prénom, dans les trois langues.
 - [x] Remplacer le libellé allemand de l’Accueil « Startseite » par « Home ».
