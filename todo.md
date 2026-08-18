@@ -1651,3 +1651,8 @@ components/
 - [ ] Corriger la connexion Metro Android pour éviter le timeout du build de développement.
 - [x] Aligner les avatars de l’Accueil à gauche sur une ligne adaptable et simplifier la salutation selon l’heure du système.
 - [x] Rendre le gain de points de validation plus grand et lisible jusque vers le compteur de points du haut.
+- [x] Centrer les avatars de l’Accueil indépendamment de leur nombre, avec retour à la ligne équilibré.
+- [x] Animer le compteur global de points après la validation au lieu de faire voyager artificiellement les points dans la carte.
+- [x] Déduire le gain du compteur global lors de la réactivation d’une tâche.
+- [x] Afficher une célébration de premier plan lorsqu’une récompense devient nouvellement disponible après une tâche.
+- [x] Effacer le feedback de validation après son animation afin qu’il ne se rejoue jamais lors d’un simple clic ultérieur.

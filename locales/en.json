@@ -251,6 +251,8 @@
     "importSuccessMessage": "{{count}} event(s) successfully imported."
   },
   "tasks": {
+    "rewardUnlocked": "New reward unlocked!",
+    "rewardUnlockedDetail": "It is now available in rewards.",
     "title": "Tasks",
     "addTask": "New task",
     "noTasks": "No tasks",

@@ -12,7 +12,7 @@ describe('Tâches — expérience de validation familiale', () => {
   });
 
   it('relie la validation à un feedback haptique et visuel sans alerte bloquante', () => {
-    expect(tasksScreen).toContain('triggerCompletionHaptic(points)');
+    expect(tasksScreen).toContain('triggerCompletionHaptic(feedback.points)');
     expect(tasksScreen).toContain('<CompletionFeedback');
     expect(tasksScreen).toContain('celebrate: isImportant');
     expect(tasksScreen).not.toContain("Alert.alert('🎉'");
@@ -29,5 +29,23 @@ describe('Tâches — expérience de validation familiale', () => {
   it('conserve une célébration discrète pour les tâches importantes', () => {
     expect(completionFeedback).toContain('celebrate?: boolean');
     expect(completionFeedback).toContain('{celebrate && <Text style={styles.sparkle}>✦</Text>}');
+  });
+
+  it('répercute les gains et les retraits de points au compteur fixe', () => {
+    expect(tasksScreen).toContain('emitPointsFeedback(pointsDelta)');
+    expect(tasksScreen).toContain('handleUncompleteTask');
+    expect(tasksScreen).toContain('-(Number(task.points) || 0)');
+  });
+
+  it('ne joue le feedback qu’après succès et le nettoie ensuite', () => {
+    expect(tasksScreen).toContain('pendingCompletionFeedback.current.set');
+    expect(tasksScreen).toContain('if (feedback)');
+    expect(tasksScreen).toContain('onFinished={() => setCompletionFeedback(null)}');
+  });
+
+  it('célèbre une récompense qui devient nouvellement disponible', () => {
+    expect(tasksScreen).toContain('knownAvailableRewardIds');
+    expect(tasksScreen).toContain('<RewardUnlockCelebration');
+    expect(tasksScreen).toContain("t('tasks.rewardUnlocked')");
   });
 });

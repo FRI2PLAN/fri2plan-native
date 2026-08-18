@@ -251,6 +251,8 @@
     "importSuccessMessage": "{{count}} Ereignis(se) erfolgreich importiert."
   },
   "tasks": {
+    "rewardUnlocked": "Neue Belohnung freigeschaltet!",
+    "rewardUnlockedDetail": "Sie ist jetzt bei den Belohnungen verfügbar.",
     "title": "Aufgaben",
     "addTask": "Neue Aufgabe",
     "noTasks": "Keine Aufgaben",

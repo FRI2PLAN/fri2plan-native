@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Animated,
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +13,7 @@ import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useAuth } from '../contexts/AuthContext';
+import { subscribeToPointsFeedback } from '../lib/pointsFeedbackBus';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -66,6 +68,42 @@ export default function RichHeader({
     const myPoints = sorted.find((m: any) => m.userId === user.id)?.totalPoints || 0;
     return { currentUserPoints: myPoints, currentUserRank: rank, totalMembers: sorted.length };
   }, [user, familyPoints]);
+  const [displayedPoints, setDisplayedPoints] = useState(currentUserPoints);
+  const displayedPointsRef = useRef(currentUserPoints);
+  const isCounterAnimating = useRef(false);
+  const pointsScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isCounterAnimating.current) return;
+    displayedPointsRef.current = currentUserPoints;
+    setDisplayedPoints(currentUserPoints);
+  }, [currentUserPoints]);
+
+  useEffect(() => subscribeToPointsFeedback(({ delta }) => {
+    const start = displayedPointsRef.current;
+    const target = Math.max(0, start + delta);
+    const steps = Math.min(Math.max(Math.abs(delta), 1), 18);
+    const increment = (target - start) / steps;
+    let step = 0;
+    isCounterAnimating.current = true;
+
+    Animated.sequence([
+      Animated.spring(pointsScale, { toValue: 1.34, useNativeDriver: true, friction: 4 }),
+      Animated.spring(pointsScale, { toValue: 1, useNativeDriver: true, friction: 5 }),
+    ]).start();
+
+    const timer = setInterval(() => {
+      step += 1;
+      const next = step >= steps ? target : Math.round(start + increment * step);
+      displayedPointsRef.current = next;
+      setDisplayedPoints(next);
+      if (step >= steps) {
+        clearInterval(timer);
+        isCounterAnimating.current = false;
+      }
+    }, 34);
+    return () => clearInterval(timer);
+  }), [pointsScale]);
 
   // Calcul progression vers prochain palier
   const progressPercent = useMemo(() => {
@@ -123,7 +161,7 @@ export default function RichHeader({
             </Text>
             {totalMembers > 0 && (
               <View style={styles.pointsRow}>
-                <Text style={styles.pointsText}>🏆 {currentUserPoints} pts</Text>
+                <Animated.Text style={[styles.pointsText, { transform: [{ scale: pointsScale }] }]}>🏆 {displayedPoints} pts</Animated.Text>
                 <Text style={styles.rankText}>{currentUserRank}/{totalMembers}</Text>
               </View>
             )}

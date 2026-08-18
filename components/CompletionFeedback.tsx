@@ -14,6 +14,7 @@ type CompletionFeedbackProps = {
   points?: number;
   color?: string;
   celebrate?: boolean;
+  onFinished?: () => void;
 };
 
 /**
@@ -25,6 +26,7 @@ export function CompletionFeedback({
   points = 0,
   color = familyPalette.reward,
   celebrate = false,
+  onFinished,
 }: CompletionFeedbackProps) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(18);
@@ -47,6 +49,12 @@ export function CompletionFeedback({
       withTiming(1.08, { duration: motion.standard }),
     );
   }, [visible, opacity, scale, translateY]);
+
+  useEffect(() => {
+    if (!visible || !onFinished) return;
+    const timer = setTimeout(onFinished, motion.micro + motion.feedbackVisible);
+    return () => clearTimeout(timer);
+  }, [visible, onFinished]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

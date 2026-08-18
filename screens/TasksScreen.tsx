@@ -3,7 +3,7 @@ import { TasksSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,8 +13,10 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import FreemiumLimitModal from '../components/FreemiumLimitModal';
 import MemberAvatar from '../components/MemberAvatar';
 import { CompletionFeedback } from '../components/CompletionFeedback';
+import { RewardUnlockCelebration } from '../components/RewardUnlockCelebration';
 import { triggerCompletionHaptic } from '../hooks/useCompletionFeedback';
 import { familyPalette } from '../constants/experience';
+import { emitPointsFeedback } from '../lib/pointsFeedbackBus';
 import { format, addDays } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 
@@ -93,6 +95,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     celebrate: boolean;
     key: number;
   } | null>(null);
+  const [rewardUnlock, setRewardUnlock] = useState<{ id: number; name: string } | null>(null);
+  const pendingPointDeltas = useRef(new Map<number, number>());
+  const pendingCompletionFeedback = useRef(new Map<number, { points: number; color: string; celebrate: boolean }>());
+  const knownAvailableRewardIds = useRef<Set<number> | null>(null);
 
   // ── Pickers ──
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -120,6 +126,31 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   // ── tRPC ──
   const utils = trpc.useUtils();
   const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery();
+  const { data: rewards = [] } = trpc.rewards.list.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
+  const { data: myPoints } = trpc.rewards.myPoints.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
+  const pointsBalance = Number((myPoints as any)?.totalPoints || 0);
+  const availableRewards = useMemo(() => (rewards as any[]).filter((reward: any) => Number(reward.pointsCost || 0) <= pointsBalance), [rewards, pointsBalance]);
+
+  useEffect(() => {
+    if (!activeFamily || myPoints === undefined) return;
+    const currentlyAvailable = new Set(availableRewards.map((reward: any) => Number(reward.id)));
+    if (!knownAvailableRewardIds.current) {
+      knownAvailableRewardIds.current = currentlyAvailable;
+      return;
+    }
+    const unlockedReward = availableRewards.find((reward: any) => !knownAvailableRewardIds.current?.has(Number(reward.id)));
+    knownAvailableRewardIds.current = currentlyAvailable;
+    if (unlockedReward) {
+      setRewardUnlock({ id: Number(unlockedReward.id), name: unlockedReward.name || '' });
+      void triggerCompletionHaptic(30);
+    }
+  }, [activeFamily, availableRewards, myPoints]);
   // Chargement permanent pour afficher les noms dans les cartes et les modaux
   const { data: members } = trpc.family.members.useQuery(
     { familyId: activeFamily?.id || 0 },
@@ -195,6 +226,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const completeMutation = trpc.tasks.complete.useMutation({
     onSuccess: (_data, variables) => {
+      const pointsDelta = pendingPointDeltas.current.get(variables.taskId) || 0;
+      const feedback = pendingCompletionFeedback.current.get(variables.taskId);
+      pendingPointDeltas.current.delete(variables.taskId);
+      pendingCompletionFeedback.current.delete(variables.taskId);
       setOptimisticCompletedTaskIds(previous => {
         const next = new Set(previous);
         next.delete(variables.taskId);
@@ -208,6 +243,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       // Mettre à jour les points immédiatement sans déconnexion
       utils.rewards.myPoints.invalidate();
       utils.rewards.familyPoints.invalidate();
+      emitPointsFeedback(pointsDelta);
+      if (feedback) {
+        setCompletionFeedback({ taskId: variables.taskId, ...feedback, key: Date.now() });
+        void triggerCompletionHaptic(feedback.points);
+      }
     },
     onError: (e, variables) => {
       setOptimisticCompletedTaskIds(previous => {
@@ -215,17 +255,25 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         next.delete(variables.taskId);
         return next;
       });
+      pendingPointDeltas.current.delete(variables.taskId);
+      pendingCompletionFeedback.current.delete(variables.taskId);
       Alert.alert('Erreur', e.message);
     }});
 
   const uncompleteMutation = trpc.tasks.uncomplete.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      const pointsDelta = pendingPointDeltas.current.get(variables.taskId) || 0;
+      pendingPointDeltas.current.delete(variables.taskId);
       setQuickActionsVisible(false);
       utils.tasks.list.invalidate();
       utils.rewards.myPoints.invalidate();
       utils.rewards.familyPoints.invalidate();
+      emitPointsFeedback(pointsDelta);
     },
-    onError: (e) => Alert.alert('Erreur', e.message)});
+    onError: (e, variables) => {
+      pendingPointDeltas.current.delete(variables.taskId);
+      Alert.alert('Erreur', e.message);
+    }});
 
   const postponeMutation = trpc.tasks.postpone.useMutation({
     onSuccess: (data) => {
@@ -387,15 +435,19 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     const assignedMember = getMemberById(task.assignedTo);
     const isImportant = task.priority === 'urgent' || task.priority === 'high' || points >= 30;
     setOptimisticCompletedTaskIds(previous => new Set(previous).add(task.id));
-    setCompletionFeedback({
-      taskId: task.id,
+    pendingPointDeltas.current.set(task.id, points);
+    pendingCompletionFeedback.current.set(task.id, {
       points,
       color: assignedMember?.userColor || familyPalette.success,
       celebrate: isImportant,
-      key: Date.now(),
     });
-    void triggerCompletionHaptic(points);
     completeMutation.mutate({ taskId: task.id });
+  };
+
+  const handleUncompleteTask = (task: any) => {
+    if (!task || task.status !== 'completed') return;
+    pendingPointDeltas.current.set(task.id, -(Number(task.points) || 0));
+    uncompleteMutation.mutate({ taskId: task.id });
   };
 
   const handleUpdateTask = () => {
@@ -430,7 +482,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           hitSlop={8}
           onPress={(event) => {
             event.stopPropagation();
-            if (task.status === 'completed') uncompleteMutation.mutate({ taskId: task.id });
+            if (task.status === 'completed') handleUncompleteTask(task);
             else handleCompleteTask(task);
           }}
         >
@@ -481,6 +533,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           points={completionFeedback?.points}
           color={completionFeedback?.color}
           celebrate={completionFeedback?.celebrate}
+          onFinished={() => setCompletionFeedback(null)}
         />
       </TouchableOpacity>
     );
@@ -834,7 +887,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#6b7280' }]}
-                      onPress={() => uncompleteMutation.mutate({ taskId: selectedTask.id })}>
+                      onPress={() => handleUncompleteTask(selectedTask)}>
                       <Text style={styles.quickBtnIcon}>↩️</Text>
                       <Text style={styles.quickBtnLabel}>Annuler</Text>
                     </TouchableOpacity>
@@ -992,6 +1045,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         visible={freemiumLimitVisible}
         messageKey="freemium.limitTasksBody"
         onClose={() => setFreemiumLimitVisible(false)}
+      />
+
+      <RewardUnlockCelebration
+        visible={!!rewardUnlock}
+        rewardName={rewardUnlock?.name}
+        title={t('tasks.rewardUnlocked')}
+        subtitle={t('tasks.rewardUnlockedDetail')}
+        onDismiss={() => setRewardUnlock(null)}
       />
 
       {/* Reporter */}

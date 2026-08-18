@@ -251,6 +251,8 @@
     "importSuccessMessage": "{{count}} événement(s) importé(s) avec succès."
   },
   "tasks": {
+    "rewardUnlocked": "Nouvelle récompense débloquée !",
+    "rewardUnlockedDetail": "Elle est maintenant disponible dans les récompenses.",
     "title": "Tâches",
     "addTask": "Nouvelle tâche",
     "noTasks": "Aucune tâche",
