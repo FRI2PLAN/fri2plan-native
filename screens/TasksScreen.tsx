@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, FlatList, RefreshControl, Modal, TextInput, Alert, Switch, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { TasksSkeleton } from '../components/SkeletonLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../contexts/ThemeContext';
@@ -754,7 +754,40 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         )
       )}
 
-      {/* Liste */}
+      {/* L’historique peut contenir plusieurs centaines de tâches : il est virtualisé. */}
+      {filter === 'completed' && !isLoading ? (
+        <FlatList
+          style={styles.content}
+          data={filteredTasks}
+          keyExtractor={(task) => String(task.id)}
+          renderItem={({ item: task }) => (
+            <View>
+              {taskSelectionMode && (
+                <TouchableOpacity onPress={() => toggleTaskSelection(task.id)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingTop: 6 }}>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selectedTaskIds.has(task.id) ? '#7c3aed' : (isDark ? '#4b5563' : '#d1d5db'), backgroundColor: selectedTaskIds.has(task.id) ? '#7c3aed' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                    {selectedTaskIds.has(task.id) && <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>✓</Text>}
+                  </View>
+                  <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}>{selectedTaskIds.has(task.id) ? 'Sélectionnée' : 'Sélectionner'}</Text>
+                </TouchableOpacity>
+              )}
+              <TaskCard task={task} />
+            </View>
+          )}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}
+          contentContainerStyle={filteredTasks.length === 0 ? styles.virtualListEmpty : styles.virtualListContent}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>📋</Text>
+              <Text style={styles.emptyStateText}>{t('tasks.empty') || 'Aucune tâche pour le moment'}</Text>
+            </View>
+          }
+          ListFooterComponent={<View style={{ height: 80 }} />}
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS === 'android'}
+        />
+      ) : (
       <ScrollView style={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />}>
         {isLoading ? (
           <TasksSkeleton />
@@ -850,6 +883,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           </>
         )}
       </ScrollView>
+      )}
 
       {/* ══════════════════════════════════════════════════════
           DIALOG ACTIONS RAPIDES (clic sur une tâche)
@@ -1097,7 +1131,9 @@ function getStyles(isDark: boolean) {
     filterAddBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
     filterAddBtnText: { color: '#fff', fontSize: 22, fontWeight: '300', lineHeight: 26 },
 
-    content: { flex: 1 },
+  content: { flex: 1 },
+  virtualListContent: { paddingBottom: 80 },
+  virtualListEmpty: { flexGrow: 1, paddingBottom: 80 },
 
     // Sections
     sectionToday: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 10, marginTop: 10, marginBottom: 4, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#7c3aed' },

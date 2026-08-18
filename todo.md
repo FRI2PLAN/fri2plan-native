@@ -1668,6 +1668,8 @@ components/
 - [x] Vérifier le cache local persistant et l’affichage progressif des données utiles : React Query est restauré depuis AsyncStorage avec réseau offline-first.
 - [x] Vérifier l’hydratation dès l’ouverture des dernières tâches, événements, messages et courses depuis AsyncStorage, puis leur actualisation discrète en arrière-plan.
 - [ ] Virtualiser les listes longues et mesurer les améliorations perçues avant les tests Android et iOS.
+- [ ] Vérifier que les listes à fort volume de tâches, messages, agenda et courses rendent uniquement les lignes visibles.
+- [x] Virtualiser l’onglet Terminé des tâches afin que les centaines de tâches achevées ne soient plus rendues d’un seul coup.
 - [ ] Garantir une réponse visuelle immédiate sur les actions de tâches, messages et calendrier, avec synchronisation serveur en arrière-plan et annulation seulement en cas d’échec.
 - [x] Afficher immédiatement un message en cours d’envoi, le réconcilier au succès serveur et le retirer avec une erreur claire en cas d’échec.
 - [x] Afficher immédiatement les créations, modifications et suppressions d’événements dans le calendrier, puis réconcilier la liste après réponse serveur.
