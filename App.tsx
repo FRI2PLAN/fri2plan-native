@@ -472,12 +472,17 @@ function DataWarmup() {
     warmedFamilyRef.current = activeFamilyId;
 
     const task = InteractionManager.runAfterInteractions(() => {
+      const currentDay = new Date().toISOString().slice(0, 10);
       void Promise.allSettled([
+        utils.auth.me.prefetch(),
         utils.family.list.prefetch(),
         utils.family.members.prefetch({ familyId: activeFamilyId }),
         utils.tasks.list.prefetch(),
         utils.events.list.prefetch(),
         utils.messages.list.prefetch({ familyId: activeFamilyId, limit: 50, offset: 0 }),
+        utils.meals.list.prefetch({ familyId: activeFamilyId, startDate: `${currentDay}T00:00:00`, endDate: `${currentDay}T23:59:59` }),
+        utils.rewards.familyPoints.prefetch({ familyId: activeFamilyId }),
+        utils.notifications.getUnreadCount.prefetch({ familyId: activeFamilyId }),
         utils.shopping.listsByFamily.prefetch({ familyId: activeFamilyId }),
       ]);
     });

@@ -8,11 +8,14 @@ const en = readFileSync(resolve(process.cwd(), 'locales/en.json'), 'utf8');
 const de = readFileSync(resolve(process.cwd(), 'locales/de.json'), 'utf8');
 
 describe('Chargement familial de l’Accueil', () => {
-  it('utilise le verre violet, les bulles et le plafond de 90 % avant les données', () => {
+  it('utilise le verre violet, les bulles et cinq étapes de deux secondes avant l’ouverture', () => {
     expect(component).toContain("require('../assets/logo.png')");
     expect(component).toContain('backgroundColor: \'#8b5cf6\'');
     expect(component).toContain('bubblesLoop');
-    expect(component).toContain('ready ? 1 : 0.9');
+    expect(component).toContain('const STAGE_DURATION_MS = 2_000');
+    expect(component).toContain('STAGES.length * STAGE_DURATION_MS');
+    expect(component).toContain('setReady(true)');
+    expect(component).toContain('onCompleteRef.current()');
   });
 
   it('référence toutes les étapes de progression traduites', () => {

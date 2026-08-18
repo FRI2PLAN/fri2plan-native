@@ -26,7 +26,9 @@ describe('Cache persistant — démarrage rapide', () => {
   it('préchauffe les données principales du cercle actif après le premier rendu', () => {
     expect(app).toContain('function DataWarmup()');
     expect(app).toContain('InteractionManager.runAfterInteractions');
+    expect(app).toContain('utils.auth.me.prefetch()');
     expect(app).toContain('utils.events.list.prefetch()');
     expect(app).toContain('utils.messages.list.prefetch({ familyId: activeFamilyId, limit: 50, offset: 0 })');
+    expect(app).toContain('utils.rewards.familyPoints.prefetch({ familyId: activeFamilyId })');
   });
 });

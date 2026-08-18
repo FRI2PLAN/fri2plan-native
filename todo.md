@@ -1694,3 +1694,7 @@ components/
 - [x] Afficher immédiatement l’ajout, la coche et la suppression d’un article de courses, avec retour arrière en cas d’échec.
 - [x] Remplacer la salutation horaire de l’Accueil par Salut/Hello/Hallo avec le prénom, dans les trois langues.
 - [x] Remplacer le libellé allemand de l’Accueil « Startseite » par « Home ».
+- [x] Garder le verre de chargement visible assez longtemps pour que les messages familiaux puissent être lus, sans masquer indéfiniment l’Accueil.
+- [x] Régler la transition de chargement à environ deux secondes par étape, soit environ dix secondes avant l’ouverture de l’Accueil, sans dépendre d’une synchronisation réseau.
+- [ ] Ne révéler le tableau de bord qu’après disponibilité de l’avatar et du logo du profil, du solde de points, des événements du calendrier et des données essentielles de l’Accueil.
+- [ ] Éviter toute carte skeleton résiduelle du Calendrier et tout emplacement visuel vide à la première ouverture de l’Accueil.

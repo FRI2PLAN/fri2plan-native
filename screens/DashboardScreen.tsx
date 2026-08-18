@@ -59,7 +59,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
   // Fetch active family
-  const { data: families, isLoading: familiesLoading } = trpc.family.list.useQuery();
+  const { data: families } = trpc.family.list.useQuery();
   // Trouver la famille active par ID (ou la première par défaut)
   const activeFamily = useMemo(() => {
     if (!families || families.length === 0) return undefined;
@@ -96,11 +96,11 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   }, [familyMembers]);
 
   // Fetch dashboard data
-  const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = trpc.tasks.list.useQuery(
+  const { data: tasks = [], refetch: refetchTasks } = trpc.tasks.list.useQuery(
     undefined,
     { staleTime: 5 * 60 * 1000 } // 5 min — utilise le cache au lieu de refetch à chaque ouverture
   );
-  const { data: rawEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = trpc.events.list.useQuery(
+  const { data: rawEvents = [], refetch: refetchEvents } = trpc.events.list.useQuery(
     undefined,
     { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
@@ -131,7 +131,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     startDate: normalizeDate(e.startDate),
     endDate: normalizeDate(e.endDate),
   })), [rawEvents]);
-  const { data: messagesData, isLoading: messagesLoading, refetch: refetchMessages } = trpc.messages.list.useQuery(
+  const { data: messagesData, refetch: refetchMessages } = trpc.messages.list.useQuery(
     { familyId: activeFamily?.id || 0, limit: 50, offset: 0 },
     { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
@@ -139,7 +139,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   // Repas du jour
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { data: todayMeals = [], isLoading: mealsLoading, refetch: refetchMeals } = trpc.meals.list.useQuery(
+  const { data: todayMeals = [], refetch: refetchMeals } = trpc.meals.list.useQuery(
     { familyId: activeFamily?.id || 0, startDate: todayStr + 'T00:00:00', endDate: todayStr + 'T23:59:59' },
     { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 }
   );
@@ -263,9 +263,10 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       .slice(0, 3);
   }, [events]);
 
-  // Afficher les données actionnables dès qu’elles sont prêtes. Les messages et repas
-  // arrivent ensuite sans bloquer l’Accueil ni provoquer un écran d’attente inutile.
-  const isLoading = familiesLoading || (!!activeFamily && tasksLoading && eventsLoading);
+  // Le sas familial dure volontairement cinq étapes de deux secondes. Cela donne
+  // le temps au cache, au profil, aux points et au calendrier de se stabiliser
+  // sans rendre l’ouverture dépendante d’une synchronisation réseau particulière.
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const greetingText = t('dashboard.greetingHello', { name: user?.name || '' });
 
   // Favorites (5 buttons with icon only) - persisted in AsyncStorage (only IDs stored, names resolved dynamically)
@@ -421,7 +422,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       )}
 
       {/* Les raccourcis arrivent avec le tableau de bord, après la transition initiale. */}
-      {!isLoading && (
+      {!isInitialLoading && (
         <FavoritesBar
           favorites={favorites}
           onFavoritePress={handleFavoritePress}
@@ -440,8 +441,8 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       >
 
         {/* Transition compacte pendant le chargement initial des données essentielles */}
-        {isLoading ? (
-          <FamilyLoadingScreen ready={!isLoading} />
+        {isInitialLoading ? (
+          <FamilyLoadingScreen onComplete={() => setIsInitialLoading(false)} />
         ) : !activeFamily ? (
           <View style={styles.noFamilyCard}>
             <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>

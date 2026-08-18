@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 type FamilyLoadingScreenProps = {
-  ready: boolean;
+  onComplete: () => void;
 };
 
 const STAGES = [
@@ -14,12 +14,22 @@ const STAGES = [
   'dashboard.loadingOrder',
 ] as const;
 
-export default function FamilyLoadingScreen({ ready }: FamilyLoadingScreenProps) {
+const STAGE_DURATION_MS = 2_000;
+const FINAL_MESSAGE_DURATION_MS = 450;
+
+export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenProps) {
   const { t } = useTranslation();
   const progress = useRef(new Animated.Value(0.06)).current;
   const wave = useRef(new Animated.Value(0)).current;
   const bubbles = useRef(new Animated.Value(0)).current;
   const [displayProgress, setDisplayProgress] = useState(6);
+  const [stageIndex, setStageIndex] = useState(0);
+  const [ready, setReady] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const progressListener = progress.addListener(({ value }) => setDisplayProgress(Math.round(value * 100)));
@@ -52,16 +62,34 @@ export default function FamilyLoadingScreen({ ready }: FamilyLoadingScreenProps)
   }, [bubbles, wave]);
 
   useEffect(() => {
-    const target = ready ? 1 : 0.9;
+    const target = ready ? 1 : Math.min(0.9, (stageIndex + 1) * (0.9 / STAGES.length));
     Animated.timing(progress, {
       toValue: target,
-      duration: ready ? 320 : 2400,
+      duration: ready ? 320 : 1_400,
       easing: ready ? Easing.out(Easing.cubic) : Easing.out(Easing.quad),
       useNativeDriver: false,
     }).start();
-  }, [progress, ready]);
+  }, [progress, ready, stageIndex]);
 
-  const stageIndex = useMemo(() => Math.min(STAGES.length - 1, Math.floor((displayProgress / 100) * STAGES.length)), [displayProgress]);
+  useEffect(() => {
+    // Cinq étapes de deux secondes : l’animation est un sas d’accueil volontaire
+    // et ne dépend pas de la fin d’une requête réseau particulière.
+    let revealTimer: ReturnType<typeof setTimeout> | undefined;
+    const stageTimer = setInterval(() => {
+      setStageIndex((current) => Math.min(current + 1, STAGES.length - 1));
+    }, STAGE_DURATION_MS);
+    const completionTimer = setTimeout(() => {
+      setReady(true);
+      revealTimer = setTimeout(() => onCompleteRef.current(), FINAL_MESSAGE_DURATION_MS);
+    }, STAGES.length * STAGE_DURATION_MS);
+
+    return () => {
+      clearInterval(stageTimer);
+      clearTimeout(completionTimer);
+      if (revealTimer) clearTimeout(revealTimer);
+    };
+  }, []);
+
   const liquidHeight = progress.interpolate({ inputRange: [0, 1], outputRange: ['5%', '96%'] });
   const waveTranslate = wave.interpolate({ inputRange: [0, 1], outputRange: [-20, 20] });
   const bubbleTranslate = bubbles.interpolate({ inputRange: [0, 1], outputRange: [18, -68] });
