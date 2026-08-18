@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 type FamilyLoadingScreenProps = {
@@ -96,7 +96,6 @@ export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenP
 
   return (
     <View style={styles.screen} accessibilityLabel={t('dashboard.loadingAria')}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
       <View style={styles.glass}>
         <Animated.View style={[styles.liquid, { height: liquidHeight }]}>
           <Animated.View style={[styles.wave, { transform: [{ translateX: waveTranslate }] }]} />
@@ -116,7 +115,6 @@ export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenP
 
 const styles = StyleSheet.create({
   screen: { alignItems: 'center', backgroundColor: '#fffdf7', flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
-  logo: { height: 46, marginBottom: 22, width: 150 },
   glass: { borderColor: '#6d3be8', borderRadius: 22, borderWidth: 2, height: 160, overflow: 'hidden', width: 96 },
   liquid: { backgroundColor: '#8b5cf6', bottom: 0, left: 0, overflow: 'hidden', position: 'absolute', right: 0 },
   wave: { backgroundColor: 'rgba(255,255,255,0.34)', borderRadius: 22, height: 12, position: 'absolute', top: -6, width: 140 },

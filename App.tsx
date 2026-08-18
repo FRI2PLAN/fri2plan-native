@@ -17,6 +17,7 @@ import LoginScreen from './screens/LoginScreen';
 import AppNavigator from './navigation/AppNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
+import FamilyLogoIntro from './components/FamilyLogoIntro';
 import FamilyLoadingScreen from './components/FamilyLoadingScreen';
 import { StyleSheet, Platform, AppState, InteractionManager, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -245,6 +246,7 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(0);
   const [sessionCacheReady, setSessionCacheReady] = useState(false);
   const [showFamilyLoading, setShowFamilyLoading] = useState(true);
+  const [familyLoadingPhase, setFamilyLoadingPhase] = useState<'intro' | 'glass'>('intro');
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
   // Code d'invitation depuis deep link (capturé avant le montage React)
@@ -320,7 +322,10 @@ function AppContent() {
   // d’une simple fermeture/réouverture, l’interface est déjà préchargée sous
   // cette couche pendant que le cache local est restauré.
   useEffect(() => {
-    if (!isAuthenticated) setShowFamilyLoading(true);
+    if (!isAuthenticated) {
+      setShowFamilyLoading(true);
+      setFamilyLoadingPhase('intro');
+    }
   }, [isAuthenticated]);
 
   // Wrapper stable qui délègue à fcmLogoutRef.current au moment de l'appel
@@ -371,7 +376,11 @@ function AppContent() {
               {showFamilyLoading && (
                 <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
                   <StatusBar style="dark" backgroundColor="#fffdf7" />
-                  <FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />
+                  {familyLoadingPhase === 'intro' ? (
+                    <FamilyLogoIntro onComplete={() => setFamilyLoadingPhase('glass')} />
+                  ) : (
+                    <FamilyLoadingScreen onComplete={() => setShowFamilyLoading(false)} />
+                  )}
                 </View>
               )}
             </>

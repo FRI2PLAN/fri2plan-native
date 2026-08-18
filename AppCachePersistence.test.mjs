@@ -32,6 +32,13 @@ describe('Cache persistant — démarrage rapide', () => {
     expect(app).toContain('zIndex: 1000');
   });
 
+  it('enchaîne une intro logo de trois secondes avant le verre familial', () => {
+    expect(app).toContain("import FamilyLogoIntro from './components/FamilyLogoIntro'");
+    expect(app).toContain("const [familyLoadingPhase, setFamilyLoadingPhase] = useState<'intro' | 'glass'>('intro')");
+    expect(app).toContain("familyLoadingPhase === 'intro'");
+    expect(app).toContain('<FamilyLogoIntro onComplete={() => setFamilyLoadingPhase(\'glass\')} />');
+  });
+
   it('préchauffe les données principales du cercle actif après le premier rendu', () => {
     expect(app).toContain('function DataWarmup()');
     expect(app).toContain('InteractionManager.runAfterInteractions');

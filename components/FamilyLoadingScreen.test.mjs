@@ -9,7 +9,7 @@ const de = readFileSync(resolve(process.cwd(), 'locales/de.json'), 'utf8');
 
 describe('Chargement familial de l’Accueil', () => {
   it('utilise le verre violet, les bulles et cinq étapes de deux secondes avant l’ouverture', () => {
-    expect(component).toContain("require('../assets/logo.png')");
+    expect(component).not.toContain("require('../assets/logo.png')");
     expect(component).toContain('backgroundColor: \'#8b5cf6\'');
     expect(component).toContain('bubblesLoop');
     expect(component).toContain('const STAGE_DURATION_MS = 2_000');
