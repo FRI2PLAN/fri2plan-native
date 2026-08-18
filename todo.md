@@ -1656,3 +1656,4 @@ components/
 - [x] Déduire le gain du compteur global lors de la réactivation d’une tâche.
 - [x] Afficher une célébration de premier plan lorsqu’une récompense devient nouvellement disponible après une tâche.
 - [x] Effacer le feedback de validation après son animation afin qu’il ne se rejoue jamais lors d’un simple clic ultérieur.
+- [x] Empêcher une tâche du jour ou en retard d’être rendue une seconde fois dans la liste générale après réactivation.

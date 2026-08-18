@@ -335,7 +335,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const filteredTasks = useMemo(() => {
     const filtered = (tasks || []).filter(t => {
       // "Mes t\u00e2ches" = assign\u00e9es \u00e0 moi ET non termin\u00e9es (les termin\u00e9es vont dans l'onglet Termin\u00e9)
-      if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed';
+      // Les tâches datées sont déjà rendues dans En retard, Aujourd'hui ou À venir.
+      // Cette liste générale conserve uniquement les tâches personnelles sans date afin d'éviter tout doublon.
+      if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed' && !t.dueDate;
       return t.status === filter;
     });
     // Trier les t\u00e2ches termin\u00e9es du plus r\u00e9cent au plus ancien

@@ -43,6 +43,11 @@ describe('Tâches — expérience de validation familiale', () => {
     expect(tasksScreen).toContain('onFinished={() => setCompletionFeedback(null)}');
   });
 
+  it('ne répète pas les tâches datées déjà placées dans les sections chronologiques', () => {
+    expect(tasksScreen).toContain("t.status !== 'completed' && !t.dueDate");
+    expect(tasksScreen).toContain('éviter tout doublon');
+  });
+
   it('célèbre une récompense qui devient nouvellement disponible', () => {
     expect(tasksScreen).toContain('knownAvailableRewardIds');
     expect(tasksScreen).toContain('<RewardUnlockCelebration');
