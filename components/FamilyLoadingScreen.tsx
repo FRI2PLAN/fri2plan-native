@@ -96,13 +96,18 @@ export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenP
 
   return (
     <View style={styles.screen} accessibilityLabel={t('dashboard.loadingAria')}>
-      <View style={styles.glass}>
-        <Animated.View style={[styles.liquid, { height: liquidHeight }]}>
-          <Animated.View style={[styles.wave, { transform: [{ translateX: waveTranslate }] }]} />
-          <Animated.View style={[styles.bubble, styles.bubbleOne, { transform: [{ translateY: bubbleTranslate }] }]} />
-          <Animated.View style={[styles.bubble, styles.bubbleTwo, { transform: [{ translateY: bubbleTranslate }] }]} />
-          <Animated.View style={[styles.bubble, styles.bubbleThree, { transform: [{ translateY: bubbleTranslate }] }]} />
-        </Animated.View>
+      <View style={styles.glassAssembly}>
+        <View style={styles.glass}>
+          <View pointerEvents="none" style={styles.glassRim} />
+          <Animated.View style={[styles.liquid, { height: liquidHeight }]}>
+            <Animated.View style={[styles.wave, { transform: [{ translateX: waveTranslate }] }]} />
+            <Animated.View style={[styles.bubble, styles.bubbleOne, { transform: [{ translateY: bubbleTranslate }] }]} />
+            <Animated.View style={[styles.bubble, styles.bubbleTwo, { transform: [{ translateY: bubbleTranslate }] }]} />
+            <Animated.View style={[styles.bubble, styles.bubbleThree, { transform: [{ translateY: bubbleTranslate }] }]} />
+          </Animated.View>
+          <View pointerEvents="none" style={styles.glassReflection} />
+        </View>
+        <View style={styles.glassBase} />
       </View>
       <Text style={styles.message}>{ready ? t('dashboard.loadingReady') : t(STAGES[stageIndex])}</Text>
       <View style={styles.progressTrack}>
@@ -115,9 +120,13 @@ export default function FamilyLoadingScreen({ onComplete }: FamilyLoadingScreenP
 
 const styles = StyleSheet.create({
   screen: { alignItems: 'center', backgroundColor: '#fffdf7', flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
-  glass: { borderColor: '#6d3be8', borderRadius: 22, borderWidth: 2, height: 160, overflow: 'hidden', width: 96 },
+  glassAssembly: { alignItems: 'center', marginBottom: 2 },
+  glass: { backgroundColor: 'rgba(255,255,255,0.48)', borderBottomLeftRadius: 25, borderBottomRightRadius: 25, borderColor: '#6d3be8', borderTopLeftRadius: 18, borderTopRightRadius: 18, borderWidth: 2, height: 166, overflow: 'hidden', width: 108 },
+  glassRim: { borderColor: '#6d3be8', borderRadius: 999, borderWidth: 2, height: 12, left: 7, position: 'absolute', right: 7, top: -6, zIndex: 4 },
+  glassReflection: { backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 99, bottom: 22, left: 12, position: 'absolute', top: 18, width: 5, zIndex: 3 },
+  glassBase: { backgroundColor: 'rgba(109,59,232,0.18)', borderRadius: 99, height: 7, marginTop: 8, width: 92 },
   liquid: { backgroundColor: '#8b5cf6', bottom: 0, left: 0, overflow: 'hidden', position: 'absolute', right: 0 },
-  wave: { backgroundColor: 'rgba(255,255,255,0.34)', borderRadius: 22, height: 12, position: 'absolute', top: -6, width: 140 },
+  wave: { backgroundColor: 'rgba(255,255,255,0.34)', borderRadius: 22, height: 12, position: 'absolute', top: -6, width: 152 },
   bubble: { backgroundColor: 'rgba(255,255,255,0.56)', borderRadius: 10, position: 'absolute' },
   bubbleOne: { height: 7, left: 20, width: 7 },
   bubbleTwo: { height: 5, left: 52, width: 5 },

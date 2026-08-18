@@ -16,6 +16,9 @@ describe('Chargement familial de l’Accueil', () => {
     expect(component).toContain('STAGES.length * STAGE_DURATION_MS');
     expect(component).toContain('setReady(true)');
     expect(component).toContain('onCompleteRef.current()');
+    expect(component).toContain('styles.glassRim');
+    expect(component).toContain('styles.glassReflection');
+    expect(component).toContain('styles.glassBase');
   });
 
   it('référence toutes les étapes de progression traduites', () => {

@@ -205,13 +205,10 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
       <View style={styles.overlay}>
         <SafeAreaView style={styles.container}>
           {/* Progress Bar */}
-          <View style={[styles.progressContainer, { paddingTop: insets.top + 10 }]}>
+          <View style={[styles.progressContainer, { paddingTop: insets.top + 10 }]}> 
             <View style={styles.progressBackground}>
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>{t('common.skip') || 'Passer'}</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Content */}

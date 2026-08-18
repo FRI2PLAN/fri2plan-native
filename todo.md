@@ -1715,3 +1715,6 @@ components/
 - [x] Rendre l’onboarding de première connexion opaque sur fond blanc cassé, avec des actions Suivant et Passer faciles à utiliser.
 - [x] À la fin ou au passage de l’onboarding, afficher successivement le logo FRI2PLAN animé, le verre familial, puis l’application sans chevauchement visuel.
 - [x] Corriger le compteur du cercle Ixari afin qu’il déduplique les membres et affiche les 5 membres réels après la réassociation de Benjamin.
+- [x] Supprimer le doublon du bouton « Passer » dans l’onboarding et conserver une action de passage large en bas.
+- [x] Empêcher le logo et le verre de démarrer derrière l’onboarding afin que « Terminer » révèle immédiatement l’intro complète.
+- [x] Donner au verre violet un bord supérieur, un reflet et une base pour une silhouette plus proche d’un vrai verre minimaliste.
