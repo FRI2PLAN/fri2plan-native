@@ -590,7 +590,9 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const deleteEvent = trpc.events.delete.useMutation();
 
   // ─── Abonnements calendrier ────────────────────────────────────────────────
-  const calendarUtils = trpc.useUtils();
+  // Le routeur calendrier évolue indépendamment du client mobile : conserver cet accès
+  // dynamique évite de bloquer les mises à jour optimistes pendant sa régénération.
+  const calendarUtils: any = trpc.useUtils();
   const { data: calendarSubscriptions = [], refetch: refetchSubscriptions } = trpc.events.listSubscriptions.useQuery();
   const createSubscription = trpc.events.createSubscription.useMutation({
     onSuccess: () => { refetchSubscriptions(); setSubscribeUrl(''); setSubscribeName(''); },
@@ -914,7 +916,6 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const handleCreateEvent = async () => {
-
     try {
       const dateStr = format(eventDate, 'yyyy-MM-dd');
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
@@ -923,7 +924,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Envoyer en UTC (ISO string sans millisecondes) pour un stockage cohérent en base
       const startDateUtc = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
       const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
-      await createEvent.mutateAsync({
+      const payload = {
         title: formData.title,
         description: formData.description,
         startDate: startDateUtc,
@@ -932,10 +933,36 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
-        isUtc: 1});
+        isUtc: 1,
+      };
+      const optimisticId = -Date.now();
+      const optimisticEvent = {
+        id: optimisticId,
+        familyId: activeFamily?.id,
+        userId: user?.id,
+        ...payload,
+        endDate: endDateUtc,
+        createdAt: new Date().toISOString(),
+        optimistic: true,
+      };
+      calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => [
+        ...(previous || []),
+        optimisticEvent,
+      ]);
       setCreateModalOpen(false);
       resetForm();
-      refetch();
+      createEvent.mutate(payload, {
+        onSuccess: (result) => {
+          calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.map(event =>
+            event.id === optimisticId ? { ...event, id: result.eventId, optimistic: false } : event,
+          ));
+          calendarUtils.events.list.invalidate();
+        },
+        onError: (error: any) => {
+          calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.filter(event => event.id !== optimisticId));
+          Alert.alert('Erreur', error?.message || 'Impossible de créer l’événement.');
+        },
+      });
     } catch (error) {
       console.error('Error creating event:', error);
     }
@@ -951,7 +978,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Envoyer en UTC (ISO string sans millisecondes) pour un stockage cohérent en base
       const startDateUtc = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
       const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
-      await updateEvent.mutateAsync({
+      const payload = {
         eventId: selectedEvent.id,
         title: formData.title,
         description: formData.description,
@@ -961,11 +988,22 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         category: formData.category,
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
-        isUtc: 1});
+        isUtc: 1,
+      };
+      const previousEvents = calendarUtils.events.list.getData(undefined);
+      calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.map(event =>
+        event.id === selectedEvent.id ? { ...event, ...payload, endDate: endDateUtc } : event,
+      ));
       setEditModalOpen(false);
       setSelectedEvent(null);
       resetForm();
-      refetch();
+      updateEvent.mutate(payload, {
+        onSuccess: () => calendarUtils.events.list.invalidate(),
+        onError: (error: any) => {
+          calendarUtils.events.list.setData(undefined, previousEvents);
+          Alert.alert('Erreur', error?.message || 'Impossible de sauvegarder les modifications.');
+        },
+      });
     } catch (error) {
       console.error('Error updating event:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder les modifications.');
@@ -985,16 +1023,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {
           text: 'Supprimer',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteEvent.mutateAsync({ eventId: selectedEvent.id });
-              setEditModalOpen(false);
-              setSelectedEvent(null);
-              refetch();
-            } catch (error: any) {
-              console.error('Error deleting event:', error);
-              Alert.alert('Erreur', error?.message || 'Impossible de supprimer l\'événement. Vérifiez votre connexion.');
-            }
+          onPress: () => {
+            const previousEvents = calendarUtils.events.list.getData(undefined);
+            calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.filter(event => event.id !== selectedEvent.id));
+            setEditModalOpen(false);
+            setSelectedEvent(null);
+            deleteEvent.mutate({ eventId: selectedEvent.id }, {
+              onSuccess: () => calendarUtils.events.list.invalidate(),
+              onError: (error: any) => {
+                calendarUtils.events.list.setData(undefined, previousEvents);
+                Alert.alert('Erreur', error?.message || 'Impossible de supprimer l’événement. Vérifiez votre connexion.');
+              },
+            });
           },
         },
       ]
