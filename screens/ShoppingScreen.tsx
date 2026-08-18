@@ -112,6 +112,8 @@ export default function ShoppingScreen({
     () => hideChecked ? items.filter((i: ShoppingItem) => !i.checked) : items,
     [items, hideChecked]
   );
+  const checkedItemsCount = (items as ShoppingItem[]).filter(item => !!item.checked).length;
+  const shoppingProgressPercent = items.length > 0 ? Math.round((checkedItemsCount / items.length) * 100) : 0;
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
   const createList = trpc.shopping.createList.useMutation({ onSuccess: () => utils.shopping.listsByFamily.invalidate() });
@@ -327,6 +329,18 @@ export default function ShoppingScreen({
             <Text style={s.moreBtn}>⋯</Text>
           </TouchableOpacity>
         </View>
+
+        {items.length > 0 && (
+          <View style={s.basketProgress}>
+            <View style={s.basketProgressTop}>
+              <Text style={s.basketProgressLabel}>🧺 {t('shopping.basketProgress') || 'Panier en cours'}</Text>
+              <Text style={s.basketProgressCount}>{checkedItemsCount}/{items.length}</Text>
+            </View>
+            <View style={s.basketProgressTrack}>
+              <View style={[s.basketProgressFill, { width: `${shoppingProgressPercent}%` }]} />
+            </View>
+          </View>
+        )}
 
         {/* Actions rapides */}
         <View style={s.quickActions}>
@@ -621,6 +635,12 @@ function getStyles(isDark: boolean) {
     backBtn: { paddingRight: 8 },
     backBtnText: { color: '#7c3aed', fontWeight: '600', fontSize: 15 },
     detailTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: text, textAlign: 'center' },
+    basketProgress: { marginHorizontal: 12, marginTop: 10, marginBottom: 2, padding: 10, borderRadius: 12, backgroundColor: isDark ? '#1E293B' : '#F5F0FB' },
+    basketProgressTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 },
+    basketProgressLabel: { fontSize: 12, fontWeight: '800', color: isDark ? '#DDD6FE' : '#6D28D9' },
+    basketProgressCount: { fontSize: 12, fontWeight: '800', color: subtext },
+    basketProgressTrack: { height: 6, borderRadius: 4, overflow: 'hidden', backgroundColor: isDark ? '#334155' : '#E9DDF8' },
+    basketProgressFill: { height: '100%', borderRadius: 4, backgroundColor: '#10B981' },
     quickActions: { flexDirection: 'row', padding: 8, gap: 8, borderBottomWidth: 1, borderBottomColor: border },
     quickBtn: { flex: 1, backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, paddingVertical: 8, alignItems: 'center', gap: 2 },
     quickBtnIcon: { fontSize: 16 },
