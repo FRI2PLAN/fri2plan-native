@@ -1661,3 +1661,4 @@ components/
 - [x] Mémoriser les filtres et regroupements de Notes et Demandes afin de préserver la fluidité des listes lors des interactions.
 - [x] Afficher un compteur discret par statut dans les filtres de Demandes pour rendre les actions en attente immédiatement visibles.
 - [x] Corriger le centrage réel du groupe complet d’avatars dans la carte Accueil.
+- [x] Vérifier et corriger les traductions FR/EN/DE de toutes les nouvelles jauges de tâches, récompenses, courses et repas.
