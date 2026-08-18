@@ -1645,3 +1645,6 @@ components/
 - [x] Ajouter une validation de tâche instantanée avec coche élastique, gain de points animé, vibration courte et célébration discrète pour les tâches importantes.
 - [x] Mettre en avant une vitrine de récompenses avec solde, objectif atteignable et jauges de progression familiales.
 - [x] Mettre en évidence les récompenses disponibles avec un déverrouillage discret et des cartes plus chaleureuses.
+- [x] Adoucir les transitions et les repères personnels du Calendrier sans modifier les flux Google ni ICS.
+- [x] Enrichir Courses et Repas avec une progression visuelle simple et des repères culinaires chaleureux.
+- [x] Faire évoluer Famille en une page « notre tribu » valorisant les membres et leurs réussites.

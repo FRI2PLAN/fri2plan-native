@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking, Share, Clipboard, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Modal, TextInput, Alert, Dimensions, Platform, Linking, Share, Clipboard, AppState, LayoutAnimation } from 'react-native';
 import { getLocalCalendars, requestCalendarPermissions, importEventsFromNative, exportEventToNative, removeEventFromNative, getNativeEventId, saveConnectedCalendar, getConnectedCalendar, disconnectNativeCalendar, updateLastSync, type NativeCalendar, type ConnectedNativeCalendar } from '../hooks/useAppleCalendar';
 import * as WebBrowser from 'expo-web-browser';
 import { CalendarSkeleton } from '../components/SkeletonLoader';
@@ -347,6 +347,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       await AsyncStorage.setItem('calendar_view_mode', mode);
       setViewMode(mode);
     } catch {}
+  };
+
+  const handleViewModeChange = (mode: 'month' | 'week' | 'day' | 'agenda') => {
+    if (mode !== viewMode) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    void saveViewMode(mode);
   };
 
   const loadFilters = async () => {
@@ -1045,7 +1052,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           return (
             <TouchableOpacity
               key={mode}
-              onPress={() => saveViewMode(mode)}
+              onPress={() => handleViewModeChange(mode)}
               style={[styles.calIconWrapper, isActive && styles.calIconWrapperActive]}
             >
               {mode === 'agenda' ? (
