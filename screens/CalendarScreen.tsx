@@ -343,10 +343,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const saveViewMode = async (mode: 'month' | 'week' | 'day' | 'agenda') => {
-    try {
-      await AsyncStorage.setItem('calendar_view_mode', mode);
-      setViewMode(mode);
-    } catch {}
+    // La vue doit changer avant toute écriture disque : AsyncStorage est une
+    // préférence de confort, jamais une condition d’affichage.
+    setViewMode(mode);
+    void AsyncStorage.setItem('calendar_view_mode', mode).catch(() => {});
   };
 
   const handleViewModeChange = (mode: 'month' | 'week' | 'day' | 'agenda') => {
@@ -1078,7 +1078,18 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     });
   };
 
-  const selectedDateEvents = getEventsForDate(selectedDate);
+  const selectedDateEvents = useMemo(
+    () => getEventsForDate(selectedDate),
+    [events, selectedDate, viewMode, currentDate, selectedCategories, selectedMembers],
+  );
+  const agendaEvents = useMemo(() => {
+    const now = new Date();
+    return (events || [])
+      .filter(event => parseLocalDate(event.startTime, !!event.isUtc) >= now)
+      .filter(event => selectedCategories.length === 0 || selectedCategories.includes(event.category))
+      .filter(event => selectedMembers.length === 0 || selectedMembers.includes(event.userId))
+      .sort((a, b) => parseLocalDate(a.startTime, !!a.isUtc).getTime() - parseLocalDate(b.startTime, !!b.isUtc).getTime());
+  }, [events, selectedCategories, selectedMembers]);
   const hasActiveFilters = selectedCategories.length > 0 || selectedMembers.length > 0;
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -1363,11 +1374,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         {/* ── Vue Agenda ── */}
         {viewMode === 'agenda' && (
           <View style={styles.agendaContainer}>
-            {events && events.length > 0 ? (
-              events
-                .filter(event => parseLocalDate(event.startTime, !!event.isUtc) >= new Date())
-                .sort((a, b) => parseLocalDate(a.startTime, !!a.isUtc).getTime() - parseLocalDate(b.startTime, !!b.isUtc).getTime())
-                .map((event, index, arr) => {
+            {agendaEvents.length > 0 ? (
+              agendaEvents.map((event, index, arr) => {
                   const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
                   const prevEventDate = index > 0 ? parseLocalDate(arr[index - 1].startTime, !!arr[index - 1].isUtc) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);

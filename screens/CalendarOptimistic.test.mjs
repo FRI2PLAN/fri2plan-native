@@ -25,4 +25,11 @@ describe('Calendrier — réponse visuelle immédiate', () => {
     expect(screen).toContain('setEditModalOpen(true);');
     expect(screen).toContain('requestAnimationFrame(() => {');
   });
+
+  it('change la vue avant la persistance AsyncStorage et mémorise l’agenda filtré', () => {
+    expect(screen).toContain('setViewMode(mode);');
+    expect(screen).toContain("void AsyncStorage.setItem('calendar_view_mode', mode).catch(() => {});");
+    expect(screen).toContain('const agendaEvents = useMemo(() => {');
+    expect(screen).toContain('agendaEvents.map((event, index, arr) => {');
+  });
 });
