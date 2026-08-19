@@ -1738,3 +1738,4 @@ components/
 - [ ] Après validation explicite, supprimer puis réimporter séparément les deux autres abonnements ICS en contrôlant à chaque fois le nombre d’événements et l’absence de doublons.
 - [x] Corriger le compteur de membres du header afin qu’il déduplique et filtre les membres du cercle actif, comme l’onglet Membres.
 - [x] Remplacer la source du dénominateur du header par la liste dédupliquée des membres réels du cercle actif, indépendamment des entrées de points historiques.
+- [x] Éliminer l’avertissement React de clé `7177701` dupliquée lors du changement de cercle, en rendant chaque clé unique dans son contexte de rendu.

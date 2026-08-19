@@ -32,4 +32,11 @@ describe('Récompenses — vitrine de progression', () => {
     expect(rewardsScreen).toContain("availableNowPill: { alignItems: 'center', alignSelf: 'stretch'");
     expect(rewardsScreen).toContain("textAlign: 'center'");
   });
+
+  it('déduplique le classement familial et lie chaque clé de rang au cercle actif', () => {
+    expect(rewardsScreen).toContain('const familyPoints = useMemo(() =>');
+    expect(rewardsScreen).toContain('const pointsByUserId = new Map<number, any>();');
+    expect(rewardsScreen).toContain('!pointsByUserId.has(userId)');
+    expect(rewardsScreen).toContain('key={`reward-rank-${activeFamilyId}-${m.userId}`}');
+  });
 });

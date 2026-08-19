@@ -74,8 +74,18 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const { data: familyPointsRaw = [] } = trpc.rewards.familyPoints.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId, staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true }
   );
-  // Toujours trier par points décroissants côté client (sécurité en cas de backend non trié)
-  const familyPoints = [...(familyPointsRaw as any[])].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
+  // Le classement ne doit afficher qu'une fois chaque membre. Des lignes de
+  // points historiques peuvent subsister après une réassociation de compte.
+  const familyPoints = useMemo(() => {
+    const pointsByUserId = new Map<number, any>();
+    for (const entry of familyPointsRaw as any[]) {
+      const userId = Number(entry.userId);
+      if (!Number.isNaN(userId) && !pointsByUserId.has(userId)) {
+        pointsByUserId.set(userId, entry);
+      }
+    }
+    return Array.from(pointsByUserId.values()).sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
+  }, [familyPointsRaw]);
   const { data: rewards = [], isLoading: rewardsLoading } = trpc.rewards.list.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
   );
@@ -233,9 +243,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         </View>
         {(familyPoints as any[]).length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              {(familyPoints as any[]).slice(0, 5).map((m: any, i: number) => (
-                <View key={m.userId} style={[styles.familyRankItem, m.userId === user?.id && styles.familyRankItemMe]}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {(familyPoints as any[]).slice(0, 5).map((m: any, i: number) => (
+                <View key={`reward-rank-${activeFamilyId}-${m.userId}`} style={[styles.familyRankItem, m.userId === user?.id && styles.familyRankItemMe]}>
                   <Text style={styles.familyRankPos}>{i + 1}</Text>
                   <Text style={styles.familyRankName} numberOfLines={1}>{m.userName || "?"}</Text>
                   <Text style={styles.familyRankPts}>{m.totalPoints} pts</Text>
