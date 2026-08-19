@@ -1739,3 +1739,4 @@ components/
 - [x] Corriger le compteur de membres du header afin qu’il déduplique et filtre les membres du cercle actif, comme l’onglet Membres.
 - [x] Remplacer la source du dénominateur du header par la liste dédupliquée des membres réels du cercle actif, indépendamment des entrées de points historiques.
 - [x] Éliminer l’avertissement React de clé `7177701` dupliquée lors du changement de cercle, en rendant chaque clé unique dans son contexte de rendu.
+- [x] Afficher un écran blanc cassé avec logo FRI2PLAN et indicateur de chargement compact pendant le changement de cercle, au lieu de l’écran transitoire « Créer une famille / Rejoindre un cercle ».
