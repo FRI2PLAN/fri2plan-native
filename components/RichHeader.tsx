@@ -59,28 +59,48 @@ export default function RichHeader({
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
+  const { data: activeFamilyMembers = [] } = trpc.family.members.useQuery(
+    { familyId: activeFamily?.id || 0 },
+    { enabled: !!activeFamily }
+  );
 
-  // Une réassociation de compte peut créer plusieurs lignes de points pour le
-  // même membre. Le header doit compter les mêmes personnes uniques que l’écran
-  // Membres, jamais les lignes techniques du backend.
-  const uniqueFamilyPoints = useMemo(() => {
+  // Le dénominateur et le rang doivent suivre la liste effective des membres du
+  // cercle. Les entrées de points peuvent contenir des reliquats techniques
+  // après une réassociation de compte et ne constituent pas la source de vérité.
+  const uniqueActiveFamilyMembers = useMemo(() => {
+    const membersById = new Map<number, any>();
+    for (const member of activeFamilyMembers as any[]) {
+      const memberId = Number(member.id);
+      if (!Number.isNaN(memberId) && !membersById.has(memberId)) {
+        membersById.set(memberId, member);
+      }
+    }
+    return Array.from(membersById.values());
+  }, [activeFamilyMembers]);
+
+  const pointsByUserId = useMemo(() => {
     const pointsByUser = new Map<number, any>();
     for (const entry of familyPoints as any[]) {
       if (!pointsByUser.has(entry.userId)) {
         pointsByUser.set(entry.userId, entry);
       }
     }
-    return Array.from(pointsByUser.values());
+    return pointsByUser;
   }, [familyPoints]);
 
   // Calculer points et classement de l'utilisateur
   const { currentUserPoints, currentUserRank, totalMembers } = useMemo(() => {
-    if (!user || !uniqueFamilyPoints.length) return { currentUserPoints: 0, currentUserRank: 0, totalMembers: 0 };
-    const sorted = [...uniqueFamilyPoints].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
+    if (!user || !uniqueActiveFamilyMembers.length) return { currentUserPoints: 0, currentUserRank: 0, totalMembers: 0 };
+    const sorted = uniqueActiveFamilyMembers
+      .map((member: any) => ({
+        userId: Number(member.id),
+        totalPoints: Number(pointsByUserId.get(Number(member.id))?.totalPoints || 0),
+      }))
+      .sort((a, b) => b.totalPoints - a.totalPoints);
     const rank = sorted.findIndex((m: any) => m.userId === user.id) + 1;
     const myPoints = sorted.find((m: any) => m.userId === user.id)?.totalPoints || 0;
-    return { currentUserPoints: myPoints, currentUserRank: rank, totalMembers: sorted.length };
-  }, [user, uniqueFamilyPoints]);
+    return { currentUserPoints: myPoints, currentUserRank: rank, totalMembers: uniqueActiveFamilyMembers.length };
+  }, [user, uniqueActiveFamilyMembers, pointsByUserId]);
   const [displayedPoints, setDisplayedPoints] = useState(currentUserPoints);
   const displayedPointsRef = useRef(currentUserPoints);
   const isCounterAnimating = useRef(false);
