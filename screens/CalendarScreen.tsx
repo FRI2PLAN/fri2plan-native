@@ -601,7 +601,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     onSuccess: () => { refetchSubscriptions(); refetch(); },
   });
   const syncSubscription = trpc.events.syncSubscription.useMutation({
-    onSuccess: () => { refetch(); Alert.alert('✓', 'Synchronisation terminée'); },
+    onSuccess: async () => {
+      // La synchronisation met à jour eventCount et lastSyncAt côté serveur.
+      // Recharger aussi les abonnements pour que la carte passe immédiatement
+      // de « Jamais synchronisé / 0 événement » à son état réel.
+      await Promise.all([refetch(), refetchSubscriptions()]);
+      Alert.alert('✓', 'Synchronisation terminée');
+    },
   });
   const deleteSubscriptionEvents = trpc.events.deleteSubscriptionEvents.useMutation({
     onSuccess: (result, variables) => {

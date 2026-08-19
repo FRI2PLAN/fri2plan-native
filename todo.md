@@ -1726,3 +1726,11 @@ components/
 - [x] Ajouter un accès visible et sûr « Voir la recette » à l’URL source conservée sur les repas importés ou réutilisés.
 - [ ] Regrouper les corrections JavaScript validées dans une OTA de production après test complet sur le client de développement, puis mettre le chantier en pause.
 - [ ] Inclure dans cette OTA de production l’ensemble du lot validé : expérience cosy, animations, cache, réactivité, onboarding, logo, verre familial, récompenses, repas et isolement des cercles.
+- [x] Garantir que la suppression d’un abonnement ICS efface tous les événements portant son `calendarSubscriptionId` avant toute réimportation.
+- [x] Garantir que la suppression d’un abonnement ICS efface tous les événements portant son `calendarSubscriptionId` avant toute réimportation.
+- [ ] Vérifier après le déploiement Railway que la suppression du calendrier Benjamin retire effectivement `On-Ice Home` avant toute réimportation.
+- [x] Identifier puis supprimer de manière ciblée l’événement ICS orphelin `On-Ice Home` resté après la suppression historique de l’abonnement Benjamin.
+- [x] Distinguer une donnée événement résiduelle en cache mobile d’une ligne réellement présente en base avant tout nettoyage ICS.
+- [x] Rafraîchir immédiatement le compteur d’événements et le statut vert d’un abonnement ICS après sa synchronisation réussie.
+- [ ] Corriger le calcul des rappels ICS pour déclencher à l’heure affichée moins le délai personnel, sans décalage de fuseau horaire.
+- [x] Corriger le test serveur de rappel immédiat afin qu’il crée une date locale cohérente avec la timezone de l’utilisateur.
