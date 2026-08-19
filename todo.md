@@ -1718,3 +1718,11 @@ components/
 - [x] Supprimer le doublon du bouton « Passer » dans l’onboarding et conserver une action de passage large en bas.
 - [x] Empêcher le logo et le verre de démarrer derrière l’onboarding afin que « Terminer » révèle immédiatement l’intro complète.
 - [x] Donner au verre violet un bord supérieur, un reflet et une base pour une silhouette plus proche d’un vrai verre minimaliste.
+- [x] Conserver l’URL source d’une recette importée et la rendre accessible lors de la consultation ou réutilisation du repas, sans imposer une extraction fragile de la méthode.
+- [x] Auditer l’isolation des événements entre les cercles Ixari et Contemporains 75 pour confirmer qu’un utilisateur multi-cercle ne voit que le cercle actif.
+- [x] Auditer le cloisonnement par cercle de tous les modules familiaux : messages, notes, repas, tâches, courses, demandes, récompenses et calendrier.
+- [x] Décider et implémenter une règle explicite pour un utilisateur multi-cercle : cloisonnement strict du cercle actif ou vue consolidée clairement identifiée, jamais un mélange implicite.
+- [x] Imposer le cloisonnement strict : synchroniser le cercle actif par utilisateur avec l’en-tête tRPC et purger les caches familiaux au changement de cercle.
+- [x] Ajouter un accès visible et sûr « Voir la recette » à l’URL source conservée sur les repas importés ou réutilisés.
+- [ ] Regrouper les corrections JavaScript validées dans une OTA de production après test complet sur le client de développement, puis mettre le chantier en pause.
+- [ ] Inclure dans cette OTA de production l’ensemble du lot validé : expérience cosy, animations, cache, réactivité, onboarding, logo, verre familial, récompenses, repas et isolement des cercles.

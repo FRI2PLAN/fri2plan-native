@@ -45,6 +45,15 @@ describe('Cache persistant — démarrage rapide', () => {
     expect(app).toContain('utils.auth.me.prefetch()');
     expect(app).toContain('utils.events.list.prefetch()');
     expect(app).toContain('utils.messages.list.prefetch({ familyId: activeFamilyId, limit: 50, offset: 0 })');
-    expect(app).toContain('utils.rewards.familyPoints.prefetch({ familyId: activeFamilyId })');
+    expect(app).toContain('utils.shopping.listsByFamily.prefetch({ familyId: activeFamilyId })');
+  });
+
+  it('purge les requêtes familiales avant le rendu lorsqu’un autre cercle devient actif', () => {
+    expect(app).toContain("const FAMILY_CACHE_SCOPE_KEY = '@fri2plan:query_cache_family_scope'");
+    expect(app).toContain('function FamilyCacheScopeGate');
+    expect(app).toContain('const scope = `${user.id}:${activeFamilyId ?? \'none\'}`;');
+    expect(app).toContain('if (cachedScope !== scope)');
+    expect(app).toContain('queryClient.clear();');
+    expect(app).toContain('<FamilyCacheScopeGate onReady={setFamilyCacheReady} />');
   });
 });

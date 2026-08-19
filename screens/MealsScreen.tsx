@@ -11,7 +11,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, Modal,
-  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image, Share, KeyboardAvoidingView, Platform, Pressable} from 'react-native';
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch, Image, Share, KeyboardAvoidingView, Platform, Pressable, Linking} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
@@ -569,14 +569,41 @@ export default function MealsScreen({
     Alert.alert('✓', `${ingredientsToAdd.length} ingrédient(s) ajouté(s) à la liste`);
   };
 
+  const openRecipeSource = useCallback(async (meal: Meal) => {
+    const url = meal.sourceUrl?.trim();
+    if (!url) return;
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (!canOpen) throw new Error('unsupported-url');
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        t('meals.recipeUnavailable'),
+        t('meals.recipeUnavailableMessage'),
+      );
+    }
+  }, [t]);
+
   const renderMealCard = (meal: Meal) => (
     <View key={meal.id} style={s.mealCard}>
       {meal.imageUrl ? (
-        <Image
-          source={{ uri: meal.imageUrl }}
-          style={{ width: '100%', height: 120, borderRadius: 8, marginBottom: 8 }}
-          resizeMode="cover"
-        />
+        <View style={s.mealImageWrap}>
+          <Image
+            source={{ uri: meal.imageUrl }}
+            style={s.mealImage}
+            resizeMode="cover"
+          />
+          {meal.sourceUrl ? (
+            <TouchableOpacity
+              style={s.recipeImageLink}
+              onPress={() => void openRecipeSource(meal)}
+              accessibilityRole="link"
+              accessibilityLabel={t('meals.viewRecipe')}
+            >
+              <Text style={s.recipeImageLinkText}>🔗 {t('meals.viewRecipe')}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       ) : null}
       <View style={s.mealCardHeader}>
         <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
@@ -607,6 +634,16 @@ export default function MealsScreen({
           </TouchableOpacity>
         </View>
       </View>
+      {!meal.imageUrl && meal.sourceUrl ? (
+        <TouchableOpacity
+          style={s.recipeSourceButton}
+          onPress={() => void openRecipeSource(meal)}
+          accessibilityRole="link"
+          accessibilityLabel={t('meals.viewRecipe')}
+        >
+          <Text style={s.recipeSourceButtonText}>🔗 {t('meals.viewRecipe')}</Text>
+        </TouchableOpacity>
+      ) : null}
       <TouchableOpacity
         style={s.moveMealBtn}
         onPress={() => setMovingMeal(meal)}
@@ -1110,6 +1147,12 @@ function getStyles(isDark: boolean) {
     noMealText: { fontSize: 12, color: subtext, fontStyle: 'italic', paddingLeft: 4 },
     // Carte repas
     mealCard: { backgroundColor: card, borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: border },
+    mealImageWrap: { width: '100%', height: 120, borderRadius: 8, overflow: 'hidden', marginBottom: 8, position: 'relative' },
+    mealImage: { width: '100%', height: '100%' },
+    recipeImageLink: { position: 'absolute', right: 8, bottom: 8, backgroundColor: 'rgba(31, 41, 55, 0.82)', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
+    recipeImageLinkText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+    recipeSourceButton: { alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: isDark ? '#312e81' : '#ede9fe' },
+    recipeSourceButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 12, fontWeight: '700' },
     mealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     mealEmoji: { fontSize: 22 },
     mealCardInfo: { flex: 1 },

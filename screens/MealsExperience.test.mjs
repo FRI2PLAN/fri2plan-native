@@ -9,4 +9,12 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('weeklyMenuProgress');
     expect(mealsScreen).toContain('s.weekPlanFill');
   });
+
+  it('conserve et ouvre visiblement le lien source de la recette', () => {
+    expect(mealsScreen).toContain('const openRecipeSource = useCallback');
+    expect(mealsScreen).toContain('Linking.openURL(url)');
+    expect(mealsScreen).toContain("t('meals.viewRecipe')");
+    expect(mealsScreen).toContain('recipeImageLink');
+    expect(mealsScreen).toContain('recipeSourceButton');
+  });
 });

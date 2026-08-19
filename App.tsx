@@ -142,6 +142,7 @@ const asyncStoragePersister = createAsyncStoragePersister({
 // cache persistant à son propriétaire et impose une purge avant tout rendu si
 // un autre compte se connecte sur le même appareil.
 const QUERY_CACHE_OWNER_KEY = '@fri2plan:query_cache_owner';
+const FAMILY_CACHE_SCOPE_KEY = '@fri2plan:query_cache_family_scope';
 
 // ─── Sous-composant PushRegistrar ─────────────────────────────────────────────
 // Doit être rendu INSIDE <trpc.Provider> pour pouvoir utiliser les hooks tRPC
@@ -245,6 +246,7 @@ function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user, login } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [sessionCacheReady, setSessionCacheReady] = useState(false);
+  const [familyCacheReady, setFamilyCacheReady] = useState(false);
   const [showFamilyLoading, setShowFamilyLoading] = useState(true);
   const [familyLoadingPhase, setFamilyLoadingPhase] = useState<'intro' | 'glass'>('intro');
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
@@ -364,12 +366,13 @@ function AppContent() {
         }}
       />
       <OfflineExecutorRegistrar />
+      <FamilyCacheScopeGate onReady={setFamilyCacheReady} />
       <DataWarmup />
 
       <SubscriptionProvider>
         <View style={styles.appRoot}>
           {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
-          {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady))) ? (
+          {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady || !familyCacheReady))) ? (
             <SplashScreen />
           ) : isAuthenticated ? (
             !hasSeenOnboarding ? (
@@ -512,12 +515,12 @@ function OfflineExecutorRegistrar() {
 // première ouverture ne déclenche pas une attente perceptible.
 function DataWarmup() {
   const { isAuthenticated } = useAuth();
-  const { activeFamilyId } = useFamily();
+  const { activeFamilyId, isReady: isFamilyReady } = useFamily();
   const utils: any = trpc.useUtils();
   const warmedFamilyRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated || !activeFamilyId || warmedFamilyRef.current === activeFamilyId) return;
+    if (!isAuthenticated || !isFamilyReady || !activeFamilyId || warmedFamilyRef.current === activeFamilyId) return;
     warmedFamilyRef.current = activeFamilyId;
 
     const task = InteractionManager.runAfterInteractions(() => {
@@ -537,7 +540,40 @@ function DataWarmup() {
     });
 
     return () => task.cancel();
-  }, [activeFamilyId, isAuthenticated, utils]);
+  }, [activeFamilyId, isAuthenticated, isFamilyReady, utils]);
+
+  return null;
+}
+
+// Les requêtes dont la clé ne contient pas familyId (Calendrier, Notes, Tâches,
+// Demandes…) ne doivent jamais survivre à un changement de cercle. Cette porte
+// attend la restauration du cercle sélectionné, puis purge le cache d’un autre
+// contexte AVANT de rendre l’interface familiale.
+function FamilyCacheScopeGate({ onReady }: { onReady: (ready: boolean) => void }) {
+  const { isAuthenticated, user } = useAuth();
+  const { activeFamilyId, isReady: isFamilyReady } = useFamily();
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isAuthenticated || !user?.id || !isFamilyReady) {
+      onReady(false);
+      return () => { cancelled = true; };
+    }
+
+    const scope = `${user.id}:${activeFamilyId ?? 'none'}`;
+    onReady(false);
+    void (async () => {
+      const cachedScope = await AsyncStorage.getItem(FAMILY_CACHE_SCOPE_KEY);
+      if (cancelled) return;
+      if (cachedScope !== scope) {
+        queryClient.clear();
+        await AsyncStorage.setItem(FAMILY_CACHE_SCOPE_KEY, scope);
+      }
+      if (!cancelled) onReady(true);
+    })();
+
+    return () => { cancelled = true; };
+  }, [activeFamilyId, isAuthenticated, isFamilyReady, onReady, user?.id]);
 
   return null;
 }
