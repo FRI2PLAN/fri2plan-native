@@ -60,14 +60,27 @@ export default function RichHeader({
     { enabled: !!activeFamily }
   );
 
+  // Une réassociation de compte peut créer plusieurs lignes de points pour le
+  // même membre. Le header doit compter les mêmes personnes uniques que l’écran
+  // Membres, jamais les lignes techniques du backend.
+  const uniqueFamilyPoints = useMemo(() => {
+    const pointsByUser = new Map<number, any>();
+    for (const entry of familyPoints as any[]) {
+      if (!pointsByUser.has(entry.userId)) {
+        pointsByUser.set(entry.userId, entry);
+      }
+    }
+    return Array.from(pointsByUser.values());
+  }, [familyPoints]);
+
   // Calculer points et classement de l'utilisateur
   const { currentUserPoints, currentUserRank, totalMembers } = useMemo(() => {
-    if (!user || !familyPoints.length) return { currentUserPoints: 0, currentUserRank: 0, totalMembers: 0 };
-    const sorted = [...familyPoints].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
+    if (!user || !uniqueFamilyPoints.length) return { currentUserPoints: 0, currentUserRank: 0, totalMembers: 0 };
+    const sorted = [...uniqueFamilyPoints].sort((a: any, b: any) => (b.totalPoints || 0) - (a.totalPoints || 0));
     const rank = sorted.findIndex((m: any) => m.userId === user.id) + 1;
     const myPoints = sorted.find((m: any) => m.userId === user.id)?.totalPoints || 0;
     return { currentUserPoints: myPoints, currentUserRank: rank, totalMembers: sorted.length };
-  }, [user, familyPoints]);
+  }, [user, uniqueFamilyPoints]);
   const [displayedPoints, setDisplayedPoints] = useState(currentUserPoints);
   const displayedPointsRef = useRef(currentUserPoints);
   const isCounterAnimating = useRef(false);

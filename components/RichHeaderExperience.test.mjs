@@ -10,4 +10,11 @@ describe('Header — compteur de points', () => {
     expect(source).toContain('setInterval');
     expect(source).toContain('displayedPoints');
   });
+
+  it('compte un seul rang par membre, même si la réponse de points contient un doublon', () => {
+    expect(source).toContain('const uniqueFamilyPoints = useMemo');
+    expect(source).toContain('const pointsByUser = new Map<number, any>();');
+    expect(source).toContain('if (!pointsByUser.has(entry.userId))');
+    expect(source).toContain('totalMembers: sorted.length');
+  });
 });

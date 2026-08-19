@@ -1734,3 +1734,6 @@ components/
 - [x] Rafraîchir immédiatement le compteur d’événements et le statut vert d’un abonnement ICS après sa synchronisation réussie.
 - [ ] Corriger le calcul des rappels ICS pour déclencher à l’heure affichée moins le délai personnel, sans décalage de fuseau horaire.
 - [x] Corriger le test serveur de rappel immédiat afin qu’il crée une date locale cohérente avec la timezone de l’utilisateur.
+- [ ] Valider sur le calendrier Benjamin la suppression couplée abonnement ICS + événements associés avant de nettoyer les deux autres abonnements.
+- [ ] Après validation explicite, supprimer puis réimporter séparément les deux autres abonnements ICS en contrôlant à chaque fois le nombre d’événements et l’absence de doublons.
+- [x] Corriger le compteur de membres du header afin qu’il déduplique et filtre les membres du cercle actif, comme l’onglet Membres.
