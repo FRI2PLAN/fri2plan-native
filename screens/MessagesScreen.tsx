@@ -12,6 +12,7 @@ import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { usePager } from '../contexts/PagerContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
@@ -26,6 +27,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const { requirePremium } = useSubscription();
+  const { setSwipeEnabled } = usePager();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const styles = getStyles(isDark);
@@ -56,6 +58,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
 
+    setSwipeEnabled(false);
     const metrics = Keyboard.metrics?.();
     setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
   };
@@ -71,13 +74,15 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setAndroidKeyboardInset(0);
+      setSwipeEnabled(true);
     });
 
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      setSwipeEnabled(true);
     };
-  }, []);
+  }, [setSwipeEnabled]);
 
   const getLocale = () => {
     switch (i18n.language) {

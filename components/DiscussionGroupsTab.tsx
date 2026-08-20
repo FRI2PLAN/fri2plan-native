@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePager } from '../contexts/PagerContext';
 import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -18,6 +19,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { setSwipeEnabled } = usePager();
   const insets = useSafeAreaInsets();
   const styles = getStyles(isDark);
   
@@ -51,6 +53,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
 
+    setSwipeEnabled(false);
     const metrics = Keyboard.metrics?.();
     setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
   };
@@ -72,6 +75,19 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       hideSubscription.remove();
     };
   }, []);
+
+  useEffect(() => () => setSwipeEnabled(true), [setSwipeEnabled]);
+
+  const openGroupConversation = (groupId: number) => {
+    setSwipeEnabled(false);
+    setSelectedGroup(groupId);
+  };
+
+  const closeGroupConversation = () => {
+    Keyboard.dismiss();
+    setSwipeEnabled(true);
+    setSelectedGroup(null);
+  };
   
   // Récupérer la locale date-fns selon la langue
   const getLocale = () => {
@@ -423,7 +439,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
               <TouchableOpacity
                 key={group.id}
                 style={styles.groupCard}
-                onPress={() => setSelectedGroup(group.id)}
+                onPress={() => openGroupConversation(group.id)}
               >
                 <View style={styles.groupHeader}>
                   <Text style={styles.groupName}>👥 {group.name}</Text>
@@ -531,7 +547,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     >
       {/* Header du groupe */}
       <View style={styles.groupConversationHeader}>
-        <TouchableOpacity onPress={() => setSelectedGroup(null)} style={styles.backButton}>
+        <TouchableOpacity onPress={closeGroupConversation} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.groupInfo}>

@@ -17,6 +17,8 @@ describe('Messages — clavier Android', () => {
     expect(messagesScreen).toContain('const handleInputFocus');
     expect(messagesScreen).toContain("Dimensions.get('window').height * 0.38");
     expect(messagesScreen).toContain('onFocus={handleInputFocus}');
+    expect(messagesScreen).toContain('setSwipeEnabled(false)');
+    expect(messagesScreen).toContain('setSwipeEnabled(true)');
   });
 
   it('applique la même réservation jusqu’au bord du clavier à la conversation de groupe', () => {
@@ -27,6 +29,9 @@ describe('Messages — clavier Android', () => {
     expect(groupsTab).toContain("enabled={Platform.OS === 'ios'}");
     expect(groupsTab).toContain('const handleInputFocus');
     expect(groupsTab).toContain('onFocus={handleInputFocus}');
+    expect(groupsTab).toContain('openGroupConversation');
+    expect(groupsTab).toContain('closeGroupConversation');
+    expect(groupsTab).toContain('onPress={closeGroupConversation}');
   });
 
   it('conserve le même ordre de Hooks avant et après l’ouverture d’un groupe', () => {
