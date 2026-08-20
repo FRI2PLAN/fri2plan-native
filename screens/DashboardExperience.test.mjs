@@ -47,13 +47,10 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(screen).toContain('onPress={() => setSelectedMember(member)}');
   });
 
-  it('masque le faux état sans cercle derrière une transition neutre FRI2PLAN', () => {
-    expect(screen).toContain('const [isCircleTransitioning, setIsCircleTransitioning] = useState(false);');
-    expect(screen).toContain('if (isCircleTransitioning) {');
-    expect(screen).toContain('source={require(\'../assets/logo.png\')}');
-    expect(screen).toContain('<ActivityIndicator color="#7c3aed" size="small" />');
-    expect(screen).toContain('setIsCircleTransitioning(true);');
-    expect(screen).toContain('backgroundColor: \'#fffdf7\'');
+  it('déclenche la transition globale avant de remplacer le cercle actif', () => {
+    expect(screen).toContain('beginCircleTransition');
+    expect(screen).toContain('beginCircleTransition();');
+    expect(screen).not.toContain('circleTransitionScreen');
   });
 
   it('présente le résumé individuel et conserve la croix de fermeture en bas', () => {

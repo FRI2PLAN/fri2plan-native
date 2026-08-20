@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -52,14 +52,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [circlePickerOpen, setCirclePickerOpen] = useState(false);
   const [showFamilySetup, setShowFamilySetup] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [isCircleTransitioning, setIsCircleTransitioning] = useState(false);
   const [joinCode, setJoinCode] = useState('');
-  const { activeFamilyId, setActiveFamilyId } = useFamily();
+  const { activeFamilyId, setActiveFamilyId, beginCircleTransition } = useFamily();
   const queryClient = useQueryClient();
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
   // Fetch active family
-  const { data: families, isFetching: isFamiliesFetching } = trpc.family.list.useQuery();
+  const { data: families } = trpc.family.list.useQuery();
   // Trouver la famille active par ID (ou la première par défaut)
   const activeFamily = useMemo(() => {
     if (!families || families.length === 0) return undefined;
@@ -79,7 +78,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   }, [activeFamily?.id, activeFamilyId]);
 
   // Fetch family members
-  const { data: familyMembers = [], isFetching: isFamilyMembersFetching } = trpc.family.members.useQuery(
+  const { data: familyMembers = [] } = trpc.family.members.useQuery(
     { familyId: activeFamily?.id || 0 },
     { enabled: !!activeFamily }
   );
@@ -94,16 +93,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       return true;
     });
   }, [familyMembers]);
-
-  // Pendant le changement de cercle, ne jamais laisser l’état « sans cercle »
-  // apparaître alors que le cache du nouveau contexte est en cours de remplacement.
-  useEffect(() => {
-    if (!isCircleTransitioning) return;
-    if (!activeFamily || activeFamily.id !== activeFamilyId || isFamiliesFetching || isFamilyMembersFetching) return;
-
-    const settleTimer = setTimeout(() => setIsCircleTransitioning(false), 120);
-    return () => clearTimeout(settleTimer);
-  }, [activeFamily, activeFamilyId, isCircleTransitioning, isFamiliesFetching, isFamilyMembersFetching]);
 
   // Fetch dashboard data
   const { data: tasks = [], refetch: refetchTasks } = trpc.tasks.list.useQuery(
@@ -374,16 +363,6 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     if (onNavigate) onNavigate(1);
   };
 
-  if (isCircleTransitioning) {
-    return (
-      <View style={styles.circleTransitionScreen} accessibilityLabel="Chargement du cercle">
-        <StatusBar style="dark" backgroundColor="#fffdf7" />
-        <Image source={require('../assets/logo.png')} style={styles.circleTransitionLogo} resizeMode="contain" />
-        <ActivityIndicator color="#7c3aed" size="small" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -418,7 +397,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       setCirclePickerOpen(false);
                       return;
                     }
-                    setIsCircleTransitioning(true);
+                    beginCircleTransition();
                     setCirclePickerOpen(false);
                     await setActiveFamilyId(fam.id);
                     // Invalider tout le cache React Query pour forcer un rechargement avec le nouveau cercle
@@ -803,17 +782,6 @@ function getStyles(isDark: boolean) {
       marginTop: 12,
       fontSize: 16,
       color: isDark ? '#9ca3af' : '#6b7280',
-    },
-    circleTransitionScreen: {
-      alignItems: 'center',
-      backgroundColor: '#fffdf7',
-      flex: 1,
-      justifyContent: 'center',
-    },
-    circleTransitionLogo: {
-      height: 102,
-      marginBottom: 24,
-      width: 190,
     },
     summaryWidget: {
       backgroundColor: isDark ? '#1f2937' : '#fff',

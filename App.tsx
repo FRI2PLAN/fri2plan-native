@@ -386,6 +386,7 @@ function AppContent() {
             ) : (
               <>
                 <AppNavigator onLogout={effectiveLogout} />
+                <CircleTransitionOverlay />
                 {showFamilyLoading && (
                   <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
                     <StatusBar style="dark" backgroundColor="#fffdf7" />
@@ -420,6 +421,31 @@ function AppContent() {
         />
       )}
     </trpc.Provider>
+  );
+}
+
+// Séquence globale lors d’un changement de cercle. Elle recouvre aussi le
+// header afin qu’aucun état intermédiaire des pages conservées par le pager ne
+// puisse apparaître avant la disponibilité du nouveau contexte familial.
+function CircleTransitionOverlay() {
+  const { isCircleTransitioning, completeCircleTransition } = useFamily();
+  const [phase, setPhase] = useState<'intro' | 'glass'>('intro');
+
+  useEffect(() => {
+    if (isCircleTransitioning) setPhase('intro');
+  }, [isCircleTransitioning]);
+
+  if (!isCircleTransitioning) return null;
+
+  return (
+    <View style={styles.familyLoadingOverlay} accessibilityViewIsModal>
+      <StatusBar style="dark" backgroundColor="#fffdf7" />
+      {phase === 'intro' ? (
+        <FamilyLogoIntro onComplete={() => setPhase('glass')} />
+      ) : (
+        <FamilyLoadingScreen onComplete={completeCircleTransition} />
+      )}
+    </View>
   );
 }
 

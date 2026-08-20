@@ -11,18 +11,25 @@ const storageKeyForUser = (userId: number | string) => `active_family_id_${userI
 interface FamilyContextType {
   activeFamilyId: number | null;
   isReady: boolean;
+  isCircleTransitioning: boolean;
   setActiveFamilyId: (id: number | null) => Promise<void>;
+  beginCircleTransition: () => void;
+  completeCircleTransition: () => void;
 }
 
 const FamilyContext = createContext<FamilyContextType>({
   activeFamilyId: null,
   isReady: false,
+  isCircleTransitioning: false,
   setActiveFamilyId: async () => {},
+  beginCircleTransition: () => {},
+  completeCircleTransition: () => {},
 });
 
 export function FamilyProvider({ children }: { children: React.ReactNode }) {
   const [activeFamilyId, setActiveFamilyIdState] = useState<number | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isCircleTransitioning, setIsCircleTransitioning] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
   const storageKey = user?.id ? storageKeyForUser(user.id) : null;
 
@@ -82,8 +89,23 @@ export function FamilyProvider({ children }: { children: React.ReactNode }) {
     setIsReady(true);
   }, [storageKey]);
 
+  const beginCircleTransition = useCallback(() => {
+    setIsCircleTransitioning(true);
+  }, []);
+
+  const completeCircleTransition = useCallback(() => {
+    setIsCircleTransitioning(false);
+  }, []);
+
   return (
-    <FamilyContext.Provider value={{ activeFamilyId, isReady, setActiveFamilyId }}>
+    <FamilyContext.Provider value={{
+      activeFamilyId,
+      isReady,
+      isCircleTransitioning,
+      setActiveFamilyId,
+      beginCircleTransition,
+      completeCircleTransition,
+    }}>
       {children}
     </FamilyContext.Provider>
   );
