@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus, Keyboard, KeyboardEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus, Keyboard, KeyboardEvent, Dimensions } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,19 +39,21 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
-  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
+  const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  // PagerView ne redimensionne pas de façon fiable son contenu Android.
-  // On réserve donc explicitement la hauteur mesurée du clavier pour le compositeur.
+  // PagerView ne redimensionne pas de façon fiable son contenu Android. Un clavier
+  // Samsung flottant ne touche pas forcément le bas de la fenêtre : on réserve donc
+  // l'espace jusqu'à son bord supérieur, pas seulement sa hauteur.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      setAndroidKeyboardHeight(event.endCoordinates.height);
+      const keyboardTopInset = Dimensions.get('window').height - event.endCoordinates.screenY;
+      setAndroidKeyboardInset(Math.max(event.endCoordinates.height, keyboardTopInset));
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setAndroidKeyboardHeight(0);
+      setAndroidKeyboardInset(0);
     });
 
     return () => {
@@ -446,7 +448,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           )}
 
           {/* Zone de saisie */}
-          <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardHeight }]}>
+          <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardInset }]}>
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={handlePickImage}

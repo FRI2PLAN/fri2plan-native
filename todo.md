@@ -1751,4 +1751,5 @@ components/
 - [ ] Réconcilier le fichier app.json local avec la version 1.1.6 et le code Android 71 avant la build Google Play.
 - [x] Corriger l’écran Messages Android afin que la barre de saisie remonte et reste visible au-dessus du clavier.
 - [x] Renforcer la correction Android en déplaçant explicitement la saisie Messages selon la hauteur réelle du clavier dans le pager.
+- [x] Adapter la position de la saisie Messages Android à la position réelle des claviers flottants, pas seulement à leur hauteur.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

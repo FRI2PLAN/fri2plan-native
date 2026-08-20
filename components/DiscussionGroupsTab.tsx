@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform, Keyboard, KeyboardEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform, Keyboard, KeyboardEvent, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect, useRef } from 'react';
@@ -35,19 +35,20 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
+  const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Le pager Android superpose le clavier au contenu ; garder le compositeur
-  // dans la zone visible exige de réserver sa hauteur mesurée.
+  // Le pager Android superpose le clavier au contenu. Pour les claviers
+  // flottants, le compositeur doit remonter jusqu'au bord supérieur réel.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      setAndroidKeyboardHeight(event.endCoordinates.height);
+      const keyboardTopInset = Dimensions.get('window').height - event.endCoordinates.screenY;
+      setAndroidKeyboardInset(Math.max(event.endCoordinates.height, keyboardTopInset));
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setAndroidKeyboardHeight(0);
+      setAndroidKeyboardInset(0);
     });
 
     return () => {
@@ -556,7 +557,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       </ScrollView>
       
       {/* Zone de saisie */}
-      <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardHeight }]}>
+      <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardInset }]}>
         <TouchableOpacity
           style={styles.emojiButton}
           onPress={handlePickImage}
