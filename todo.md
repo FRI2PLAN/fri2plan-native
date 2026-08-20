@@ -1741,3 +1741,4 @@ components/
 - [x] Éliminer l’avertissement React de clé `7177701` dupliquée lors du changement de cercle, en rendant chaque clé unique dans son contexte de rendu.
 - [x] Afficher un écran blanc cassé avec logo FRI2PLAN et indicateur de chargement compact pendant le changement de cercle, au lieu de l’écran transitoire « Créer une famille / Rejoindre un cercle ».
 - [x] Tracer puis corriger l’export FRI2PLAN vers Google qui décale certains événements de deux heures, sans modifier les données de rappel locales existantes.
+- [x] Désactiver le lien ICS sortant FRI2PLAN du cercle Ixari afin d’éviter les doublons et les doubles rappels Google, sans toucher aux abonnements entrants.
