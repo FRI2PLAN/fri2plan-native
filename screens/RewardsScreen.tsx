@@ -207,6 +207,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     .sort((first, second) => Number(second.canAfford) - Number(first.canAfford) || first.remaining - second.remaining), [rewards, pointsBalance, myClaims]);
   const nextReward = rewardCatalog.find(({ canAfford, alreadyClaimed }) => !canAfford && !alreadyClaimed);
   const availableRewardCount = rewardCatalog.filter(({ canAfford, alreadyClaimed }) => canAfford && !alreadyClaimed).length;
+  const availableRewardLabelKey = availableRewardCount === 1
+    ? 'rewards.availableNow'
+    : 'rewards.availableNow_plural';
 
   const tabs = useMemo(() => [
     { key: "catalog", label: "🎁 Catalogue" },
@@ -270,7 +273,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
         )}
         {availableRewardCount > 0 && (
           <View style={styles.availableNowPill}>
-            <Text style={styles.availableNowText}>✨ {t('rewards.availableNow', { count: availableRewardCount })}</Text>
+            <Text style={styles.availableNowText}>✨ {t(availableRewardLabelKey, { count: availableRewardCount })}</Text>
           </View>
         )}
       </View>

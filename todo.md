@@ -1743,3 +1743,4 @@ components/
 - [x] Tracer puis corriger l’export FRI2PLAN vers Google qui décale certains événements de deux heures, sans modifier les données de rappel locales existantes.
 - [x] Désactiver le lien ICS sortant FRI2PLAN du cercle Ixari afin d’éviter les doublons et les doubles rappels Google, sans toucher aux abonnements entrants.
 - [x] Déclencher au changement de cercle une séquence globale logo FRI2PLAN puis verre à chaussettes, placée au-dessus de toute la coque afin de masquer tout contenu intermédiaire.
+- [x] Corriger le libellé français du badge Récompenses afin d’afficher « récompenses disponibles » au pluriel.

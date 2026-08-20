@@ -26,6 +26,11 @@ describe('Récompenses — vitrine de progression', () => {
       expect(locale.rewards.availableNow).toContain('{{count}}');
       expect(locale.rewards.availableNow_plural).toContain('{{count}}');
     }
+    expect(fr.rewards.availableNow_plural).toBe('{{count}} récompenses disponibles maintenant');
+    expect(rewardsScreen).toContain("const availableRewardLabelKey = availableRewardCount === 1");
+    expect(rewardsScreen).toContain("? 'rewards.availableNow'");
+    expect(rewardsScreen).toContain(": 'rewards.availableNow_plural';");
+    expect(rewardsScreen).toContain("t(availableRewardLabelKey, { count: availableRewardCount })");
   });
 
   it('centre le badge de disponibilité et lui donne une largeur adaptative à la carte violette', () => {
