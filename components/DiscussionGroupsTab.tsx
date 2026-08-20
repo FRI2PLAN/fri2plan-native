@@ -10,6 +10,7 @@ import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 interface DiscussionGroupsTabProps {
   activeFamilyId: number;
@@ -558,7 +559,10 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       </ScrollView>
       
       {/* Zone de saisie */}
-      <View style={styles.inputContainer}>
+      <KeyboardStickyView
+        enabled={Platform.OS === 'android'}
+        style={styles.inputContainer}
+      >
         <TouchableOpacity
           style={styles.emojiButton}
           onPress={handlePickImage}
@@ -598,7 +602,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             <Text style={styles.sendButtonText}>➤</Text>
           )}
         </TouchableOpacity>
-      </View>
+      </KeyboardStickyView>
       
       {/* Dialog paramètres du groupe */}
       <Modal visible={membersDialogOpen} transparent animationType="slide">

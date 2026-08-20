@@ -1763,4 +1763,7 @@ components/
 - [x] Ajouter un espacement Android commun au-dessus de la barre d’outils clavier afin d’afficher entièrement les saisies Général et Groupes.
 - [x] Reconfigurer le redimensionnement racine Android et retirer les contournements de clavier des conversations Messages.
 - [x] Refondre Général et Groupes autour d’un conteneur de conversation commun dont la saisie est redimensionnée nativement par Android.
+- [x] Restaurer la coque du pager sans redimensionnement global, puis isoler le redimensionnement Android à la seule page Messages.
+- [x] Organiser Général et Groupes en colonne conversationnelle standard : liste flexible et saisie fixe dans la zone Messages redimensionnée.
+- [x] Intégrer un contrôleur natif de clavier standard pour synchroniser fiablement les conversations Général et Groupes avec le clavier système.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

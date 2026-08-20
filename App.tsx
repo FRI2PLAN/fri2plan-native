@@ -23,6 +23,7 @@ import { StyleSheet, Platform, AppState, InteractionManager, View } from 'react-
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as Updates from 'expo-updates';
 import { registerForPushNotificationsAsync } from './hooks/usePushNotifications';
@@ -619,8 +620,9 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
+    <KeyboardProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
         <PersistQueryClientProvider
           client={queryClient}
           persistOptions={{
@@ -643,8 +645,9 @@ export default function App() {
             </AuthProvider>
           </OfflineProvider>
         </PersistQueryClientProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </KeyboardProvider>
   );
 }
 

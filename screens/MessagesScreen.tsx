@@ -16,6 +16,7 @@ import { usePager } from '../contexts/PagerContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 interface MessagesScreenProps {
   onNavigate?: (screen: string) => void;
@@ -449,7 +450,10 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           )}
 
           {/* Zone de saisie */}
-          <View style={styles.inputContainer}>
+          <KeyboardStickyView
+            enabled={Platform.OS === 'android'}
+            style={styles.inputContainer}
+          >
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={handlePickImage}
@@ -486,7 +490,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             >
               <Text style={styles.sendButtonText}>➤</Text>
             </TouchableOpacity>
-          </View>
+          </KeyboardStickyView>
         </KeyboardAvoidingView>
       ) : (
         <DiscussionGroupsTab activeFamilyId={activeFamilyId} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Alert, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import RichHeader from './RichHeader';
 import QuickActionsModal from './QuickActionsModal';
@@ -80,15 +80,11 @@ export default function FixedHeaderLayout({
         onNavigateHome={() => onNavigate?.(0)}
       />
 
-      {/* Le conteneur racine se redimensionne avec le clavier. Les pages du
-          pager gardent ainsi leur propre bas visible, y compris Messages. */}
-      <KeyboardAvoidingView
-        style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        enabled
-      >
+      {/* Le pager reste indépendant du clavier : seules les conversations
+          utilisent le contrôleur natif de clavier. */}
+      <View style={styles.content}>
         {children}
-      </KeyboardAvoidingView>
+      </View>
 
       {/* Quick Actions Modal — liste des actions */}
       <QuickActionsModal
