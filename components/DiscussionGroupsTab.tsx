@@ -39,14 +39,29 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const getAndroidKeyboardInset = (coordinates?: { height: number; screenY: number }) => {
+    if (!coordinates) {
+      return Math.round(Dimensions.get('window').height * 0.38);
+    }
+
+    const keyboardTopInset = Dimensions.get('window').height - coordinates.screenY;
+    return Math.max(coordinates.height, keyboardTopInset);
+  };
+
+  const handleInputFocus = () => {
+    if (Platform.OS !== 'android') return;
+
+    const metrics = Keyboard.metrics?.();
+    setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
+  };
+
   // Le pager Android superpose le clavier au contenu. Pour les claviers
   // flottants, le compositeur doit remonter jusqu'au bord supérieur réel.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      const keyboardTopInset = Dimensions.get('window').height - event.endCoordinates.screenY;
-      setAndroidKeyboardInset(Math.max(event.endCoordinates.height, keyboardTopInset));
+      setAndroidKeyboardInset(getAndroidKeyboardInset(event.endCoordinates));
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setAndroidKeyboardInset(0);
@@ -583,6 +598,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
           placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
           multiline
           maxLength={500}
+          onFocus={handleInputFocus}
         />
         
         <TouchableOpacity

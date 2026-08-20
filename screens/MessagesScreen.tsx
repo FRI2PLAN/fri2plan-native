@@ -42,6 +42,24 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
+  const getAndroidKeyboardInset = (coordinates?: { height: number; screenY: number }) => {
+    if (!coordinates) {
+      // Valeur provisoire : elle place immédiatement le compositeur au-dessus
+      // d'un clavier Android standard, puis l'événement natif affine la position.
+      return Math.round(Dimensions.get('window').height * 0.38);
+    }
+
+    const keyboardTopInset = Dimensions.get('window').height - coordinates.screenY;
+    return Math.max(coordinates.height, keyboardTopInset);
+  };
+
+  const handleInputFocus = () => {
+    if (Platform.OS !== 'android') return;
+
+    const metrics = Keyboard.metrics?.();
+    setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
+  };
+
   // PagerView ne redimensionne pas de façon fiable son contenu Android. Un clavier
   // Samsung flottant ne touche pas forcément le bas de la fenêtre : on réserve donc
   // l'espace jusqu'à son bord supérieur, pas seulement sa hauteur.
@@ -49,8 +67,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
     if (Platform.OS !== 'android') return;
 
     const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      const keyboardTopInset = Dimensions.get('window').height - event.endCoordinates.screenY;
-      setAndroidKeyboardInset(Math.max(event.endCoordinates.height, keyboardTopInset));
+      setAndroidKeyboardInset(getAndroidKeyboardInset(event.endCoordinates));
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setAndroidKeyboardInset(0);
@@ -474,6 +491,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
               placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
               multiline
               maxLength={500}
+              onFocus={handleInputFocus}
               onSubmitEditing={handleSendMessage}
             />
 

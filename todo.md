@@ -1754,4 +1754,5 @@ components/
 - [x] Adapter la position de la saisie Messages Android à la position réelle des claviers flottants, pas seulement à leur hauteur.
 - [ ] Aligner la saisie Messages Android sur les insets réels du clavier afin de reproduire le positionnement natif au-dessus du clavier flottant.
 - [x] Corriger l’ordre des Hooks de DiscussionGroupsTab lorsque l’utilisateur ouvre ou ferme une conversation de groupe.
+- [x] Supprimer le délai de remontée de la saisie Messages lors de la première ouverture du clavier Android après navigation.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.
