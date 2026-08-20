@@ -1747,8 +1747,9 @@ components/
 - [x] Préparation TestFlight iOS 1.1.5 abandonnée : le train App Store Connect est fermé aux nouvelles builds.
 - [x] Stratégie temporaire iOS 1.1.6 / Android 1.1.5 abandonnée pour préserver l’uniformité entre plateformes.
 - [x] Vérifier la compatibilité native des binaires iOS publics 1.1.5 avant toute OTA du lot actuel.
-- [ ] Préparer la build Android 1.1.6 (versionCode 71) sur le même code que la build iOS 1.1.6 déjà validée dans TestFlight, puis la tester sur Google Play interne avant publication coordonnée.
-- [ ] Réconcilier le fichier app.json local avec la version 1.1.6 et le code Android 71 avant la build Google Play.
+- [x] Préparation Android 1.1.6 code 71 remplacée : cette build ne contient pas le contrôleur clavier natif.
+- [x] Configuration locale 1.1.6 code 71 remplacée par une nouvelle build requise avec le module clavier natif.
+- [ ] Incrémenter Android à versionCode 72 et reconstruire Android/iOS 1.1.6 avec le contrôleur clavier natif avant les soumissions stores.
 - [x] Corriger l’écran Messages Android afin que la barre de saisie remonte et reste visible au-dessus du clavier.
 - [x] Renforcer la correction Android en déplaçant explicitement la saisie Messages selon la hauteur réelle du clavier dans le pager.
 - [x] Adapter la position de la saisie Messages Android à la position réelle des claviers flottants, pas seulement à leur hauteur.
