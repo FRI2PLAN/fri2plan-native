@@ -5,13 +5,17 @@ const messagesScreen = readFileSync(new URL('./MessagesScreen.tsx', import.meta.
 const groupsTab = readFileSync(new URL('../components/DiscussionGroupsTab.tsx', import.meta.url), 'utf8');
 
 describe('Messages — clavier Android', () => {
-  it('utilise un padding de clavier dans la conversation générale au sein du pager', () => {
+  it('mesure le clavier Android et réserve son espace dans la conversation générale', () => {
     expect(messagesScreen).toContain('behavior="padding"');
-    expect(messagesScreen).toContain('la barre de saisie sous le clavier');
+    expect(messagesScreen).toContain("Keyboard.addListener('keyboardDidShow'");
+    expect(messagesScreen).toContain('marginBottom: androidKeyboardHeight');
+    expect(messagesScreen).toContain("enabled={Platform.OS === 'ios'}");
   });
 
-  it('applique le même comportement à la conversation de groupe', () => {
+  it('applique la même réservation de hauteur à la conversation de groupe', () => {
     expect(groupsTab).toContain('behavior="padding"');
-    expect(groupsTab).toContain('zone de saisie');
+    expect(groupsTab).toContain("Keyboard.addListener('keyboardDidShow'");
+    expect(groupsTab).toContain('marginBottom: androidKeyboardHeight');
+    expect(groupsTab).toContain("enabled={Platform.OS === 'ios'}");
   });
 });

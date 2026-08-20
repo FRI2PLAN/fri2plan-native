@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus, Keyboard, KeyboardEvent } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,7 +39,26 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
+  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+
+  // PagerView ne redimensionne pas de façon fiable son contenu Android.
+  // On réserve donc explicitement la hauteur mesurée du clavier pour le compositeur.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
+      setAndroidKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setAndroidKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const getLocale = () => {
     switch (i18n.language) {
@@ -400,6 +419,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           // "padding" conserve le compositeur visible dans le PagerView Android,
           // là où "height" laisse la barre de saisie sous le clavier.
           behavior="padding"
+          enabled={Platform.OS === 'ios'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
         >
           {isLoading ? (
@@ -426,7 +446,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           )}
 
           {/* Zone de saisie */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardHeight }]}>
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={handlePickImage}

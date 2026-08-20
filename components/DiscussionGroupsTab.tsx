@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform, Keyboard, KeyboardEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect, useRef } from 'react';
@@ -35,7 +35,26 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Le pager Android superpose le clavier au contenu ; garder le compositeur
+  // dans la zone visible exige de réserver sa hauteur mesurée.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
+      setAndroidKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setAndroidKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
   
   // Récupérer la locale date-fns selon la langue
   const getLocale = () => {
@@ -491,6 +510,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       // Même comportement que la conversation générale : la zone de saisie
       // doit rester dans la partie visible du PagerView Android.
       behavior="padding"
+      enabled={Platform.OS === 'ios'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
     >
       {/* Header du groupe */}
@@ -536,7 +556,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       </ScrollView>
       
       {/* Zone de saisie */}
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardHeight }]}>
         <TouchableOpacity
           style={styles.emojiButton}
           onPress={handlePickImage}
