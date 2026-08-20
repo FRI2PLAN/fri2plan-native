@@ -509,11 +509,11 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      // Même bloc natif que la conversation générale : la saisie et le clavier
-      // montent ensemble dans une fenêtre redimensionnée.
+      // Android est redimensionné par la coque commune du pager ; iOS conserve
+      // son comportement local de KeyboardAvoidingView.
       behavior="padding"
-      enabled
-      keyboardVerticalOffset={Platform.OS === 'android' ? -64 : (insets.top + 56)}
+      enabled={Platform.OS === 'ios'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
     >
       {/* Header du groupe */}
       <View style={styles.groupConversationHeader}>

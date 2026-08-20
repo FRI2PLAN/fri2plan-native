@@ -1761,4 +1761,6 @@ components/
 - [x] Remplacer les compensations manuelles de clavier par une structure native où la saisie Messages monte et descend comme un bloc avec le clavier Android.
 - [x] Repositionner le conteneur complet des saisies Général et Groupes pour que les deux zones restent entièrement visibles au-dessus du clavier Android.
 - [x] Ajouter un espacement Android commun au-dessus de la barre d’outils clavier afin d’afficher entièrement les saisies Général et Groupes.
+- [x] Reconfigurer le redimensionnement racine Android et retirer les contournements de clavier des conversations Messages.
+- [x] Refondre Général et Groupes autour d’un conteneur de conversation commun dont la saisie est redimensionnée nativement par Android.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

@@ -419,13 +419,11 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       {activeTab === 'general' ? (
         <KeyboardAvoidingView
           style={styles.contentContainer}
-          // Le padding natif garde la liste et le compositeur dans une même
-          // fenêtre redimensionnée avec le clavier, sur Android comme iOS.
+          // Android est géré par la coque commune, afin que le PagerView soit
+          // redimensionné avec toute la conversation. iOS reste localement géré.
           behavior="padding"
-          enabled
-          // Le clavier Samsung inclut une barre d’outils : cette marge garde
-          // le compositeur entièrement visible au-dessus de cette zone.
-          keyboardVerticalOffset={Platform.OS === 'android' ? -64 : (insets.top + 56)}
+          enabled={Platform.OS === 'ios'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
         >
           {isLoading ? (
             <View style={styles.loadingContainer}>
