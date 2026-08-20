@@ -18,6 +18,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const styles = getStyles(isDark);
   
   // États
@@ -503,7 +504,6 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   // Vue conversation du groupe
   const currentGroup = groups.find((g: any) => g.id === selectedGroup);
   const isCreator = currentGroup?.creatorId === user?.id;
-  const insets = useSafeAreaInsets();
   
   return (
     <KeyboardAvoidingView

@@ -20,4 +20,14 @@ describe('Messages — clavier Android', () => {
     expect(groupsTab).toContain('marginBottom: androidKeyboardInset');
     expect(groupsTab).toContain("enabled={Platform.OS === 'ios'}");
   });
+
+  it('conserve le même ordre de Hooks avant et après l’ouverture d’un groupe', () => {
+    const safeAreaHookIndex = groupsTab.indexOf('const insets = useSafeAreaInsets();');
+    const groupListBranchIndex = groupsTab.indexOf('if (!selectedGroup)');
+    const conversationMarkerIndex = groupsTab.indexOf('// Vue conversation du groupe');
+
+    expect(safeAreaHookIndex).toBeGreaterThan(-1);
+    expect(safeAreaHookIndex).toBeLessThan(groupListBranchIndex);
+    expect(safeAreaHookIndex).toBeLessThan(conversationMarkerIndex);
+  });
 });
