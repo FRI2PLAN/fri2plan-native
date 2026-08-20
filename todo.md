@@ -1759,4 +1759,6 @@ components/
 - [x] Rendre fonctionnelle la flèche retour d’une conversation de groupe vers la liste des groupes.
 - [x] Désactiver le balayage horizontal du pager pendant une conversation de groupe ou lorsque le clavier est ouvert, afin d’éviter les changements de page accidentels.
 - [x] Remplacer les compensations manuelles de clavier par une structure native où la saisie Messages monte et descend comme un bloc avec le clavier Android.
+- [x] Repositionner le conteneur complet des saisies Général et Groupes pour que les deux zones restent entièrement visibles au-dessus du clavier Android.
+- [x] Ajouter un espacement Android commun au-dessus de la barre d’outils clavier afin d’afficher entièrement les saisies Général et Groupes.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

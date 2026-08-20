@@ -5,12 +5,11 @@ const messagesScreen = readFileSync(new URL('./MessagesScreen.tsx', import.meta.
 const groupsTab = readFileSync(new URL('../components/DiscussionGroupsTab.tsx', import.meta.url), 'utf8');
 
 describe('Messages — clavier Android', () => {
-  it('lie nativement la saisie générale à l’animation du clavier Android', () => {
+  it('garde la saisie générale dans un conteneur redimensionné nativement par le clavier', () => {
     expect(messagesScreen).toContain('behavior="padding"');
-    expect(messagesScreen).toContain('useAnimatedKeyboard');
-    expect(messagesScreen).toContain('translateY: -keyboard.height.value');
-    expect(messagesScreen).toContain('<Animated.View style={[styles.inputContainer');
-    expect(messagesScreen).toContain("enabled={Platform.OS === 'ios'}");
+    expect(messagesScreen).toContain('enabled');
+    expect(messagesScreen).toContain('<View style={styles.inputContainer}>');
+    expect(messagesScreen).toContain("keyboardVerticalOffset={Platform.OS === 'android' ? -64");
   });
 
   it('verrouille le pager dès le focus et le libère à la fermeture du clavier', () => {
@@ -20,12 +19,11 @@ describe('Messages — clavier Android', () => {
     expect(messagesScreen).toContain('setSwipeEnabled(true)');
   });
 
-  it('lie de la même façon la saisie de groupe au clavier Android', () => {
+  it('garde de la même façon la saisie de groupe dans le conteneur redimensionné', () => {
     expect(groupsTab).toContain('behavior="padding"');
-    expect(groupsTab).toContain('useAnimatedKeyboard');
-    expect(groupsTab).toContain('translateY: -keyboard.height.value');
-    expect(groupsTab).toContain('<Animated.View style={[styles.inputContainer');
-    expect(groupsTab).toContain("enabled={Platform.OS === 'ios'}");
+    expect(groupsTab).toContain('enabled');
+    expect(groupsTab).toContain('<View style={styles.inputContainer}>');
+    expect(groupsTab).toContain("keyboardVerticalOffset={Platform.OS === 'android' ? -64");
     expect(groupsTab).toContain('const handleInputFocus');
     expect(groupsTab).toContain('onFocus={handleInputFocus}');
     expect(groupsTab).toContain('openGroupConversation');

@@ -16,7 +16,6 @@ import { usePager } from '../contexts/PagerContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
-import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 interface MessagesScreenProps {
   onNavigate?: (screen: string) => void;
@@ -43,12 +42,6 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
   const flatListRef = useRef<FlatList>(null);
-  const keyboard = useAnimatedKeyboard();
-  const inputKeyboardStyle = useAnimatedStyle(() => ({
-    // Liaison native image par image : le compositeur reste un seul bloc
-    // avec le clavier, sans attendre les événements JavaScript.
-    transform: [{ translateY: -keyboard.height.value }],
-  }));
 
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
@@ -426,11 +419,13 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
       {activeTab === 'general' ? (
         <KeyboardAvoidingView
           style={styles.contentContainer}
-          // "padding" conserve le compositeur visible dans le PagerView Android,
-          // là où "height" laisse la barre de saisie sous le clavier.
+          // Le padding natif garde la liste et le compositeur dans une même
+          // fenêtre redimensionnée avec le clavier, sur Android comme iOS.
           behavior="padding"
-          enabled={Platform.OS === 'ios'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
+          enabled
+          // Le clavier Samsung inclut une barre d’outils : cette marge garde
+          // le compositeur entièrement visible au-dessus de cette zone.
+          keyboardVerticalOffset={Platform.OS === 'android' ? -64 : (insets.top + 56)}
         >
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -456,7 +451,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           )}
 
           {/* Zone de saisie */}
-          <Animated.View style={[styles.inputContainer, Platform.OS === 'android' && inputKeyboardStyle]}>
+          <View style={styles.inputContainer}>
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={handlePickImage}
@@ -493,7 +488,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             >
               <Text style={styles.sendButtonText}>➤</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </KeyboardAvoidingView>
       ) : (
         <DiscussionGroupsTab activeFamilyId={activeFamilyId} />

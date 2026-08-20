@@ -10,7 +10,6 @@ import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
-import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 interface DiscussionGroupsTabProps {
   activeFamilyId: number;
@@ -40,10 +39,6 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
-  const keyboard = useAnimatedKeyboard();
-  const inputKeyboardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboard.height.value }],
-  }));
 
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
@@ -514,11 +509,11 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      // Même comportement que la conversation générale : la zone de saisie
-      // doit rester dans la partie visible du PagerView Android.
+      // Même bloc natif que la conversation générale : la saisie et le clavier
+      // montent ensemble dans une fenêtre redimensionnée.
       behavior="padding"
-      enabled={Platform.OS === 'ios'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
+      enabled
+      keyboardVerticalOffset={Platform.OS === 'android' ? -64 : (insets.top + 56)}
     >
       {/* Header du groupe */}
       <View style={styles.groupConversationHeader}>
@@ -563,7 +558,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       </ScrollView>
       
       {/* Zone de saisie */}
-      <Animated.View style={[styles.inputContainer, Platform.OS === 'android' && inputKeyboardStyle]}>
+      <View style={styles.inputContainer}>
         <TouchableOpacity
           style={styles.emojiButton}
           onPress={handlePickImage}
@@ -603,7 +598,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             <Text style={styles.sendButtonText}>➤</Text>
           )}
         </TouchableOpacity>
-      </Animated.View>
+      </View>
       
       {/* Dialog paramètres du groupe */}
       <Modal visible={membersDialogOpen} transparent animationType="slide">
