@@ -5,27 +5,26 @@ const messagesScreen = readFileSync(new URL('./MessagesScreen.tsx', import.meta.
 const groupsTab = readFileSync(new URL('../components/DiscussionGroupsTab.tsx', import.meta.url), 'utf8');
 
 describe('Messages — clavier Android', () => {
-  it('utilise le bord supérieur réel du clavier Android dans la conversation générale', () => {
+  it('lie nativement la saisie générale à l’animation du clavier Android', () => {
     expect(messagesScreen).toContain('behavior="padding"');
-    expect(messagesScreen).toContain("Keyboard.addListener('keyboardDidShow'");
-    expect(messagesScreen).toContain("Dimensions.get('window').height - coordinates.screenY");
-    expect(messagesScreen).toContain('marginBottom: androidKeyboardInset');
+    expect(messagesScreen).toContain('useAnimatedKeyboard');
+    expect(messagesScreen).toContain('translateY: -keyboard.height.value');
+    expect(messagesScreen).toContain('<Animated.View style={[styles.inputContainer');
     expect(messagesScreen).toContain("enabled={Platform.OS === 'ios'}");
   });
 
-  it('pré-positionne la saisie au focus, avant la notification tardive du clavier Android', () => {
+  it('verrouille le pager dès le focus et le libère à la fermeture du clavier', () => {
     expect(messagesScreen).toContain('const handleInputFocus');
-    expect(messagesScreen).toContain("Dimensions.get('window').height * 0.38");
     expect(messagesScreen).toContain('onFocus={handleInputFocus}');
     expect(messagesScreen).toContain('setSwipeEnabled(false)');
     expect(messagesScreen).toContain('setSwipeEnabled(true)');
   });
 
-  it('applique la même réservation jusqu’au bord du clavier à la conversation de groupe', () => {
+  it('lie de la même façon la saisie de groupe au clavier Android', () => {
     expect(groupsTab).toContain('behavior="padding"');
-    expect(groupsTab).toContain("Keyboard.addListener('keyboardDidShow'");
-    expect(groupsTab).toContain("Dimensions.get('window').height - coordinates.screenY");
-    expect(groupsTab).toContain('marginBottom: androidKeyboardInset');
+    expect(groupsTab).toContain('useAnimatedKeyboard');
+    expect(groupsTab).toContain('translateY: -keyboard.height.value');
+    expect(groupsTab).toContain('<Animated.View style={[styles.inputContainer');
     expect(groupsTab).toContain("enabled={Platform.OS === 'ios'}");
     expect(groupsTab).toContain('const handleInputFocus');
     expect(groupsTab).toContain('onFocus={handleInputFocus}');

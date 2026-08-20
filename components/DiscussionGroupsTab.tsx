@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform, Keyboard, KeyboardEvent, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, FlatList, Image, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect, useRef } from 'react';
@@ -10,6 +10,7 @@ import { trpc } from '../lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 interface DiscussionGroupsTabProps {
   activeFamilyId: number;
@@ -38,43 +39,17 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-  const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
-
-  const getAndroidKeyboardInset = (coordinates?: { height: number; screenY: number }) => {
-    if (!coordinates) {
-      return Math.round(Dimensions.get('window').height * 0.38);
-    }
-
-    const keyboardTopInset = Dimensions.get('window').height - coordinates.screenY;
-    return Math.max(coordinates.height, keyboardTopInset);
-  };
+  const keyboard = useAnimatedKeyboard();
+  const inputKeyboardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboard.height.value }],
+  }));
 
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
 
     setSwipeEnabled(false);
-    const metrics = Keyboard.metrics?.();
-    setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
   };
-
-  // Le pager Android superpose le clavier au contenu. Pour les claviers
-  // flottants, le compositeur doit remonter jusqu'au bord supérieur réel.
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-
-    const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      setAndroidKeyboardInset(getAndroidKeyboardInset(event.endCoordinates));
-    });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setAndroidKeyboardInset(0);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
 
   useEffect(() => () => setSwipeEnabled(true), [setSwipeEnabled]);
 
@@ -588,7 +563,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
       </ScrollView>
       
       {/* Zone de saisie */}
-      <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardInset }]}>
+      <Animated.View style={[styles.inputContainer, Platform.OS === 'android' && inputKeyboardStyle]}>
         <TouchableOpacity
           style={styles.emojiButton}
           onPress={handlePickImage}
@@ -628,7 +603,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
             <Text style={styles.sendButtonText}>➤</Text>
           )}
         </TouchableOpacity>
-      </View>
+      </Animated.View>
       
       {/* Dialog paramètres du groupe */}
       <Modal visible={membersDialogOpen} transparent animationType="slide">

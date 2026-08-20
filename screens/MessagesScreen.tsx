@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus, Keyboard, KeyboardEvent, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image, Modal, AppState, AppStateStatus, Keyboard } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +16,7 @@ import { usePager } from '../contexts/PagerContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import EmojiPicker from 'rn-emoji-keyboard';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
 interface MessagesScreenProps {
   onNavigate?: (screen: string) => void;
@@ -41,44 +42,29 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
-  const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-
-  const getAndroidKeyboardInset = (coordinates?: { height: number; screenY: number }) => {
-    if (!coordinates) {
-      // Valeur provisoire : elle place immédiatement le compositeur au-dessus
-      // d'un clavier Android standard, puis l'événement natif affine la position.
-      return Math.round(Dimensions.get('window').height * 0.38);
-    }
-
-    const keyboardTopInset = Dimensions.get('window').height - coordinates.screenY;
-    return Math.max(coordinates.height, keyboardTopInset);
-  };
+  const keyboard = useAnimatedKeyboard();
+  const inputKeyboardStyle = useAnimatedStyle(() => ({
+    // Liaison native image par image : le compositeur reste un seul bloc
+    // avec le clavier, sans attendre les événements JavaScript.
+    transform: [{ translateY: -keyboard.height.value }],
+  }));
 
   const handleInputFocus = () => {
     if (Platform.OS !== 'android') return;
 
     setSwipeEnabled(false);
-    const metrics = Keyboard.metrics?.();
-    setAndroidKeyboardInset(getAndroidKeyboardInset(metrics));
   };
 
-  // PagerView ne redimensionne pas de façon fiable son contenu Android. Un clavier
-  // Samsung flottant ne touche pas forcément le bas de la fenêtre : on réserve donc
-  // l'espace jusqu'à son bord supérieur, pas seulement sa hauteur.
+  // La fermeture libère à nouveau le balayage entre les pages principales.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
-    const showSubscription = Keyboard.addListener('keyboardDidShow', (event: KeyboardEvent) => {
-      setAndroidKeyboardInset(getAndroidKeyboardInset(event.endCoordinates));
-    });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setAndroidKeyboardInset(0);
       setSwipeEnabled(true);
     });
 
     return () => {
-      showSubscription.remove();
       hideSubscription.remove();
       setSwipeEnabled(true);
     };
@@ -470,7 +456,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
           )}
 
           {/* Zone de saisie */}
-          <View style={[styles.inputContainer, Platform.OS === 'android' && { marginBottom: androidKeyboardInset }]}>
+          <Animated.View style={[styles.inputContainer, Platform.OS === 'android' && inputKeyboardStyle]}>
             <TouchableOpacity
               style={styles.emojiButton}
               onPress={handlePickImage}
@@ -507,7 +493,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
             >
               <Text style={styles.sendButtonText}>➤</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       ) : (
         <DiscussionGroupsTab activeFamilyId={activeFamilyId} />
