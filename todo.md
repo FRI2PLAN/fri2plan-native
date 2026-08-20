@@ -1767,4 +1767,9 @@ components/
 - [x] Restaurer la coque du pager sans redimensionnement global, puis isoler le redimensionnement Android à la seule page Messages.
 - [x] Organiser Général et Groupes en colonne conversationnelle standard : liste flexible et saisie fixe dans la zone Messages redimensionnée.
 - [x] Intégrer un contrôleur natif de clavier standard pour synchroniser fiablement les conversations Général et Groupes avec le clavier système.
+- [ ] Mettre de côté les fichiers locaux app.json et dépendances, puis récupérer la configuration 1.1.6 code 72 avec le contrôleur clavier natif.
+- [ ] Vérifier le compte de service Google Play local et l’exclure du dépôt tout en le conservant pour `eas submit`.
+- [ ] Installer puis valider sur Android la build 1.1.6 code 72 avec le contrôleur clavier natif dans Général et Groupes.
+- [x] Afficher les messages du plus ancien au plus récent, avec le dernier message près de la saisie, dans Général et Groupes sur iOS et Android.
+- [x] Ouvrir les pièces jointes de Messages dans un aperçu fermable identique sur iOS et Android.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

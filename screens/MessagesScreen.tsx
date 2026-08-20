@@ -42,6 +42,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const handleInputFocus = () => {
@@ -91,7 +92,13 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
   );
 
   const messages: any[] = (messagesData as any)?.messages || [];
-  const displayedMessages = useMemo(() => [...messages, ...optimisticMessages], [messages, optimisticMessages]);
+  // La liste reste chronologique même si une source renvoie un ordre différent :
+  // les derniers messages se trouvent toujours près de la saisie.
+  const displayedMessages = useMemo(() => (
+    [...messages, ...optimisticMessages].sort(
+      (first, second) => parseUTCDate(first.createdAt).getTime() - parseUTCDate(second.createdAt).getTime()
+    )
+  ), [messages, optimisticMessages]);
 
   // Marquer comme lus
   const markAsRead = trpc.messages.markAsRead.useMutation({
@@ -321,11 +328,16 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
           {/* Pièce jointe image */}
           {message.attachmentUrl && message.attachmentType?.startsWith('image') && (
-            <Image
-              source={{ uri: message.attachmentUrl }}
-              style={styles.attachmentImage}
-              resizeMode="cover"
-            />
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setLightboxImage(message.attachmentUrl)}
+            >
+              <Image
+                source={{ uri: message.attachmentUrl }}
+                style={styles.attachmentImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
           )}
 
           {/* Réactions existantes */}
@@ -525,6 +537,28 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
         </TouchableOpacity>
       </Modal>
 
+      {/* Aperçu plein écran des images jointes */}
+      <Modal
+        visible={!!lightboxImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLightboxImage(null)}
+      >
+        <View style={styles.lightboxContainer}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            style={styles.lightboxClose}
+            onPress={() => setLightboxImage(null)}
+          >
+            <Text style={styles.lightboxCloseText}>✕</Text>
+          </TouchableOpacity>
+          {lightboxImage && (
+            <Image source={{ uri: lightboxImage }} style={styles.lightboxImage} resizeMode="contain" />
+          )}
+        </View>
+      </Modal>
+
       {/* Emoji Picker */}
       <EmojiPicker
         onEmojiSelected={handleEmojiSelected}
@@ -661,6 +695,30 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     height: 140,
     borderRadius: 8,
     marginTop: 6},
+  lightboxContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20},
+  lightboxImage: {
+    width: '100%',
+    height: '85%'},
+  lightboxClose: {
+    position: 'absolute',
+    top: 48,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1},
+  lightboxCloseText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '600'},
   reactionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

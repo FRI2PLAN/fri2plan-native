@@ -101,6 +101,11 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
     { groupId: selectedGroup || 0 },
     { enabled: !!selectedGroup }
   );
+  // La conversation se lit toujours de l’ancien vers le récent, quelle que soit
+  // la stratégie de tri du serveur ou du cache.
+  const chronologicalMessages = [...messages].sort(
+    (first: any, second: any) => parseUTCDate(first.createdAt).getTime() - parseUTCDate(second.createdAt).getTime()
+  );
   
   // Récupérer les membres du groupe sélectionné
   const { data: groupMembers = [], refetch: refetchGroupMembers } = trpc.discussionGroups.getMembers.useQuery(
@@ -345,7 +350,7 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
           </Text>
 
           {/* Pièce jointe image */}
-          {message.attachmentUrl && message.attachmentType === 'image' && (
+          {message.attachmentUrl && message.attachmentType?.startsWith('image') && (
             <TouchableOpacity onPress={() => setLightboxImage(message.attachmentUrl)}>
               <Image source={{ uri: message.attachmentUrl }} style={styles.attachmentImage} />
             </TouchableOpacity>
@@ -549,8 +554,8 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
         contentContainerStyle={styles.messagesListContent}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
       >
-        {messages.length > 0 ? (
-          messages.map(renderMessage)
+        {chronologicalMessages.length > 0 ? (
+          chronologicalMessages.map(renderMessage)
         ) : (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>{t('messages.noMessagesInGroup')}</Text>

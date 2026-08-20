@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const screen = readFileSync(new URL('./MessagesScreen.tsx', import.meta.url), 'utf8');
+const groupsTab = readFileSync(new URL('../components/DiscussionGroupsTab.tsx', import.meta.url), 'utf8');
 const locales = ['fr', 'en', 'de'].map((language) => JSON.parse(
   readFileSync(new URL(`../locales/${language}.json`, import.meta.url), 'utf8'),
 ));
@@ -25,5 +26,21 @@ describe('Messages — envoi immédiatement visible', () => {
       expect(locale.messages.sending).toBeTruthy();
       expect(locale.messages.queued).toBeTruthy();
     }
+  });
+
+  it('garde les conversations dans l’ordre ancien-vers-récent', () => {
+    expect(screen).toContain('[...messages, ...optimisticMessages].sort(');
+    expect(screen).toContain('parseUTCDate(first.createdAt).getTime() - parseUTCDate(second.createdAt).getTime()');
+    expect(groupsTab).toContain('const chronologicalMessages = [...messages].sort(');
+    expect(groupsTab).toContain('chronologicalMessages.map(renderMessage)');
+  });
+
+  it('ouvre les images jointes dans un aperçu fermable sur les deux conversations', () => {
+    expect(screen).toContain('const [lightboxImage, setLightboxImage]');
+    expect(screen).toContain('onPress={() => setLightboxImage(message.attachmentUrl)}');
+    expect(screen).toContain('visible={!!lightboxImage}');
+    expect(screen).toContain("accessibilityLabel={t('common.close')}");
+    expect(groupsTab).toContain("message.attachmentType?.startsWith('image')");
+    expect(groupsTab).toContain('visible={!!lightboxImage}');
   });
 });
