@@ -59,7 +59,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app",
-      "buildNumber": "5",
+      "buildNumber": "9",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -92,7 +92,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 72,
+      "versionCode": 73,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 36,

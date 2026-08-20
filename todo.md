@@ -1773,3 +1773,5 @@ components/
 - [x] Afficher les messages du plus ancien au plus récent, avec le dernier message près de la saisie, dans Général et Groupes sur iOS et Android.
 - [x] Ouvrir les pièces jointes de Messages dans un aperçu fermable identique sur iOS et Android.
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.
+- [x] Préparer des builds de production 1.1.6 iOS et Android incluant les correctifs Messages, sans OTA complémentaire.
+- [x] Enregistrer dans Git la configuration finale 1.1.6 avec Android versionCode 73 avant les builds de production.
