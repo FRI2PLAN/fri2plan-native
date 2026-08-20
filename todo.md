@@ -1744,4 +1744,7 @@ components/
 - [x] Désactiver le lien ICS sortant FRI2PLAN du cercle Ixari afin d’éviter les doublons et les doubles rappels Google, sans toucher aux abonnements entrants.
 - [x] Déclencher au changement de cercle une séquence globale logo FRI2PLAN puis verre à chaussettes, placée au-dessus de toute la coque afin de masquer tout contenu intermédiaire.
 - [x] Corriger le libellé français du badge Récompenses afin d’afficher « récompenses disponibles » au pluriel.
-- [ ] Générer un build iOS de production 1.1.5 pour TestFlight en utilisant l’incrément automatique déjà configuré.
+- [x] Préparation TestFlight iOS 1.1.5 abandonnée : le train App Store Connect est fermé aux nouvelles builds.
+- [x] Stratégie temporaire iOS 1.1.6 / Android 1.1.5 abandonnée pour préserver l’uniformité entre plateformes.
+- [x] Vérifier la compatibilité native des binaires iOS publics 1.1.5 avant toute OTA du lot actuel.
+- [ ] Préparer la build Android 1.1.6 (versionCode 71) sur le même code que la build iOS 1.1.6 déjà validée dans TestFlight, puis la tester sur Google Play interne avant publication coordonnée.
