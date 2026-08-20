@@ -1748,3 +1748,6 @@ components/
 - [x] Stratégie temporaire iOS 1.1.6 / Android 1.1.5 abandonnée pour préserver l’uniformité entre plateformes.
 - [x] Vérifier la compatibilité native des binaires iOS publics 1.1.5 avant toute OTA du lot actuel.
 - [ ] Préparer la build Android 1.1.6 (versionCode 71) sur le même code que la build iOS 1.1.6 déjà validée dans TestFlight, puis la tester sur Google Play interne avant publication coordonnée.
+- [ ] Réconcilier le fichier app.json local avec la version 1.1.6 et le code Android 71 avant la build Google Play.
+- [x] Corriger l’écran Messages Android afin que la barre de saisie remonte et reste visible au-dessus du clavier.
+- [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.

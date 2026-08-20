@@ -488,7 +488,9 @@ export default function DiscussionGroupsTab({ activeFamilyId }: DiscussionGroups
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // Même comportement que la conversation générale : la zone de saisie
+      // doit rester dans la partie visible du PagerView Android.
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top + 56) : 0}
     >
       {/* Header du groupe */}
