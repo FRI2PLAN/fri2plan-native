@@ -1784,3 +1784,4 @@ components/
 - [ ] Vérifier et clarifier la continuité des comptes utilisateurs lors de l’arrêt de la version WebView annoncé pour le 31 août.
 - [ ] Diagnostiquer et empêcher la création de rappels en double pour un même événement et un même utilisateur.
 - [x] Corriger les clés de traduction visibles dans la confirmation d’ajout des ingrédients et le titre automatique de liste de courses depuis Repas.
+- [x] Supprimer l’import React dupliqué qui bloque le bundling de RichHeader.

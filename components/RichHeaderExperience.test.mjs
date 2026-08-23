@@ -26,4 +26,9 @@ describe('Header — compteur de points', () => {
     expect(source).toContain('await changeLanguage(language);');
     expect(source).toContain("['fr', 'en', 'de'].map");
   });
+
+  it('ne déclare les hooks React qu’une seule fois pour conserver un bundling valide', () => {
+    expect(source.match(/from 'react'/g)).toHaveLength(1);
+    expect(source).toContain("import React, { useEffect, useMemo, useRef, useState } from 'react'");
+  });
 });
