@@ -1793,3 +1793,4 @@ components/
 - [x] Localiser les jours, mois et formats de date dans les calendriers ainsi que les repas selon la langue active.
 - [x] Localiser tous les libellés statiques du calendrier intime dans les cinq langues.
 - [x] Définir un affichage multilingue sûr pour les récompenses et autres contenus créés avant le changement de langue.
+- [x] Synchroniser immédiatement la langue affichée dans Paramètres après un changement effectué depuis le header.

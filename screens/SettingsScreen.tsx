@@ -85,6 +85,12 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
 
+  // Le header peut modifier i18n sans passer par cet écran. Garder alors
+  // l’étiquette et le drapeau de Paramètres synchronisés avec la langue active.
+  useEffect(() => {
+    setCurrentLanguage(i18n.language);
+  }, [i18n.language]);
+
   // ─── Données serveur ───────────────────────────────────────────────────────
   const { data: userSettings, refetch: refetchSettings } = (trpc.settings as any).get?.useQuery?.(undefined) || { data: null, refetch: () => {} };
   const { data: families } = (trpc.family as any).list?.useQuery?.() || { data: [] };
