@@ -1787,3 +1787,4 @@ components/
 - [x] Supprimer l’import React dupliqué qui bloque le bundling de RichHeader.
 - [ ] Vérifier en conditions réelles que chaque limitation du plan gratuit est appliquée côté serveur et dans l’application.
 - [x] Afficher le drapeau de la langue active dans le header mobile pour ouvrir le sélecteur de langue.
+- [x] Ajouter une traduction espagnole complète basée sur le fichier français et l’intégrer à la détection ainsi qu’au sélecteur de langue.

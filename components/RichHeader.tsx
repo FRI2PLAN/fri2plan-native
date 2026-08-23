@@ -36,11 +36,15 @@ export default function RichHeader({
   onNavigateHome,
 }: RichHeaderProps) {
   const { isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const styles = getStyles(isDark);
   const navigation = useNavigation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+
+  useEffect(() => {
+    setCurrentLanguage(i18n.language);
+  }, [i18n.language]);
 
   const handleLanguageChange = async (language: string) => {
     await changeLanguage(language);
@@ -51,12 +55,14 @@ export default function RichHeader({
   const getLanguageLabel = (language: string) => {
     if (language === 'en') return t('settings.langEn');
     if (language === 'de') return t('settings.langDe');
+    if (language === 'es') return t('settings.langEs');
     return t('settings.langFr');
   };
 
   const getLanguageFlag = (language: string) => {
     if (language === 'en') return '🇬🇧';
     if (language === 'de') return '🇩🇪';
+    if (language === 'es') return '🇪🇸';
     return '🇫🇷';
   };
 
@@ -280,7 +286,7 @@ export default function RichHeader({
         <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setLanguagePickerOpen(false)} />
         <View style={styles.languageModal}>
           <Text style={styles.languageTitle}>{t('settings.selectLanguage')}</Text>
-          {['fr', 'en', 'de'].map((language) => (
+          {['fr', 'en', 'de', 'es'].map((language) => (
             <TouchableOpacity
               key={language}
               style={[styles.languageOption, currentLanguage === language && styles.languageOptionSelected]}

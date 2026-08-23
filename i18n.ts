@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import fr from './locales/fr.json';
 import en from './locales/en.json';
 import de from './locales/de.json';
+import es from './locales/es.json';
 
 const LANGUAGE_STORAGE_KEY = '@fri2plan_language';
 
@@ -19,7 +20,7 @@ const initI18n = async () => {
   
   // If no saved language, use device language (default to 'fr' if not supported)
   if (!savedLanguage) {
-    savedLanguage = ['fr', 'en', 'de'].includes(deviceLanguage) ? deviceLanguage : 'fr';
+    savedLanguage = ['fr', 'en', 'de', 'es'].includes(deviceLanguage) ? deviceLanguage : 'fr';
   }
 
   i18n
@@ -30,6 +31,7 @@ const initI18n = async () => {
         fr: { translation: fr },
         en: { translation: en },
         de: { translation: de },
+        es: { translation: es },
       },
       lng: savedLanguage,
       fallbackLng: 'fr',
