@@ -83,4 +83,10 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
   it('passe la liste des membres à la fenêtre afin de permettre le balayage entre cartes', () => {
     expect(screen).toContain('familyMembers={visibleFamilyMembers}');
   });
+
+  it('aligne les raccourcis Paramètres et Centre d’aide sur les pages actives', () => {
+    expect(screen).toContain("{ id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 12 }");
+    expect(screen).toContain("{ id: 'help', name: t('navigation.help'), icon: '❓', pageIndex: 13 }");
+    expect(screen).not.toContain("{ id: 'settings', name: t('navigation.settings'), icon: '⚙️', pageIndex: 13 }");
+  });
 });

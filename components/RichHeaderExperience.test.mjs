@@ -18,4 +18,12 @@ describe('Header — compteur de points', () => {
     expect(source).toContain('const pointsByUserId = useMemo');
     expect(source).toContain('totalMembers: uniqueActiveFamilyMembers.length');
   });
+
+  it('propose le même changement de langue persistant que les Paramètres', () => {
+    expect(source).toContain("import { changeLanguage, getCurrentLanguage } from '../i18n'");
+    expect(source).toContain('language-outline');
+    expect(source).toContain("setLanguagePickerOpen(true)");
+    expect(source).toContain('await changeLanguage(language);');
+    expect(source).toContain("['fr', 'en', 'de'].map");
+  });
 });

@@ -11,7 +11,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
 import { useOffline } from '../contexts/OfflineContext';
-import { useSubscription } from '../contexts/SubscriptionContext';
 import { usePager } from '../contexts/PagerContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
@@ -27,7 +26,6 @@ interface MessagesScreenProps {
 export default function MessagesScreen({ onNavigate, onPrevious, onNext }: MessagesScreenProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
-  const { requirePremium } = useSubscription();
   const { setSwipeEnabled } = usePager();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -497,7 +495,7 @@ export default function MessagesScreen({ onNavigate, onPrevious, onNext }: Messa
 
             <TouchableOpacity
               style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
-              onPress={() => requirePremium(() => handleSendMessage())}
+              onPress={handleSendMessage}
               disabled={!newMessage.trim()}
             >
               <Text style={styles.sendButtonText}>➤</Text>

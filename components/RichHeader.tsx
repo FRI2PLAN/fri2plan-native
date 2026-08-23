@@ -6,14 +6,18 @@ import {
   StyleSheet,
   Animated,
   Image,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { subscribeToPointsFeedback } from '../lib/pointsFeedbackBus';
+import { changeLanguage, getCurrentLanguage } from '../i18n';
 
 interface RichHeaderProps {
   onQuickActionsPress?: () => void;
@@ -33,8 +37,23 @@ export default function RichHeader({
   onNavigateHome,
 }: RichHeaderProps) {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const styles = getStyles(isDark);
   const navigation = useNavigation();
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+
+  const handleLanguageChange = async (language: string) => {
+    await changeLanguage(language);
+    setCurrentLanguage(language);
+    setLanguagePickerOpen(false);
+  };
+
+  const getLanguageLabel = (language: string) => {
+    if (language === 'en') return t('settings.langEn');
+    if (language === 'de') return t('settings.langDe');
+    return t('settings.langFr');
+  };
 
   // Récupérer les données utilisateur depuis le cache local (AuthContext) ET depuis le serveur
   const { user: cachedUser } = useAuth();
@@ -179,6 +198,7 @@ export default function RichHeader({
   };
 
   return (
+    <>
     <View style={styles.container}>
       <View style={styles.row}>
         {/* Left: Avatar + Name + Points - Clickable to go Home */}
@@ -234,6 +254,15 @@ export default function RichHeader({
             )}
           </TouchableOpacity>
 
+          {/* Langue : même préférence persistante que dans Paramètres */}
+          <TouchableOpacity
+            onPress={() => setLanguagePickerOpen(true)}
+            style={styles.iconButton}
+            accessibilityLabel={t('settings.selectLanguage')}
+          >
+            <Ionicons name="language-outline" size={21} color="#fff" />
+          </TouchableOpacity>
+
           {/* Hamburger Menu */}
           <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
             <Ionicons name="menu" size={26} color="#fff" />
@@ -241,6 +270,28 @@ export default function RichHeader({
         </View>
       </View>
     </View>
+    <Modal visible={languagePickerOpen} transparent animationType="fade" onRequestClose={() => setLanguagePickerOpen(false)}>
+      <View style={styles.languageOverlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setLanguagePickerOpen(false)} />
+        <View style={styles.languageModal}>
+          <Text style={styles.languageTitle}>{t('settings.selectLanguage')}</Text>
+          {['fr', 'en', 'de'].map((language) => (
+            <TouchableOpacity
+              key={language}
+              style={[styles.languageOption, currentLanguage === language && styles.languageOptionSelected]}
+              onPress={() => void handleLanguageChange(language)}
+            >
+              <Text style={styles.languageOptionText}>{getLanguageLabel(language)}</Text>
+              {currentLanguage === language && <Text style={styles.languageCheckmark}>✓</Text>}
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity style={styles.languageCloseButton} onPress={() => setLanguagePickerOpen(false)}>
+            <Text style={styles.languageCloseText}>{t('common.close')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -356,5 +407,58 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
     color: 'rgba(255,255,255,0.75)',
     fontSize: 9,
     marginTop: 2,
+  },
+  languageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  languageModal: {
+    backgroundColor: isDark ? '#1f2937' : '#fff',
+    borderRadius: 16,
+    padding: 20,
+  },
+  languageTitle: {
+    color: isDark ? '#f9fafb' : '#111827',
+    fontSize: 19,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  languageOption: {
+    alignItems: 'center',
+    borderColor: isDark ? '#4b5563' : '#e5e7eb',
+    borderRadius: 10,
+    borderWidth: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    padding: 14,
+  },
+  languageOptionSelected: {
+    backgroundColor: isDark ? '#3b2f6e' : '#f3e8ff',
+    borderColor: '#7c3aed',
+  },
+  languageOptionText: {
+    color: isDark ? '#f9fafb' : '#1f2937',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  languageCheckmark: {
+    color: '#7c3aed',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  languageCloseButton: {
+    alignItems: 'center',
+    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+    borderRadius: 10,
+    marginTop: 4,
+    padding: 14,
+  },
+  languageCloseText: {
+    color: isDark ? '#f9fafb' : '#1f2937',
+    fontSize: 15,
+    fontWeight: '600',
   },
 }); }

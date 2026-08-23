@@ -143,9 +143,9 @@ export function usePushNotifications(): PushNotificationState {
       const data = response.notification.request.content.data;
       const type = data?.type as string | undefined;
       console.log('[Push] Notification tapée, type:', type);
-      if (type) {
+      if (type || data?.actionUrl) {
         import('../navigation/navigationRef').then(({ navigateFromNotification }) => {
-          navigateFromNotification(type);
+          navigateFromNotification(data as { type?: string; actionUrl?: string });
         }).catch(err => console.error('[Push] Erreur navigation:', err));
       }
     });

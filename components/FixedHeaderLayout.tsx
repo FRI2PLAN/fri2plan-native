@@ -105,6 +105,10 @@ export default function FixedHeaderLayout({
       <NotificationsModal
         visible={notificationsVisible}
         onClose={() => setNotificationsVisible(false)}
+        onNavigate={(pageIndex) => {
+          setNotificationsVisible(false);
+          onNavigate?.(pageIndex);
+        }}
       />
     </View>
   );

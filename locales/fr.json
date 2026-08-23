@@ -765,11 +765,11 @@
     "featureMembersLimit": "Jusqu'à 2 membres",
     "featureBudget": "Budget et dépenses avancés",
     "featureNotifications": "Notifications personnalisées",
-    "featureTasks": "Tâches illimitées",
-    "featureMessages": "Messagerie familiale illimitée",
+    "featureTasks": "5 tâches actives",
+    "featureMessages": "Historique des messages : 7 jours",
     "featureMeals": "Planificateur de repas",
-    "featureShopping": "Courses illimitées",
-    "featureNotes": "Notes illimitées",
+    "featureShopping": "20 articles actifs",
+    "featureNotes": "5 notes",
     "featureRewards": "Récompenses & points",
     "featureIntimate": "Calendrier intime",
     "featureReferral": "Programme de parrainage",
@@ -1207,7 +1207,10 @@
     "rewardsBtn": "Voir les récompenses",
     "readyTip1": "Vous pouvez revisiter ce guide depuis Paramètres > Centre d'aide",
     "readyTip2": "Chaque section a son propre tutoriel détaillé",
-    "readyTip3": "N'hésitez pas à nous contacter si vous avez des questions"
+    "readyTip3": "N'hésitez pas à nous contacter si vous avez des questions",
+    "skipIntroduction": "Passer l’introduction",
+    "next": "Suivant",
+    "finish": "Terminer"
   },
   "register": {
     "accountCreatedTitle": "Compte créé !",

@@ -1775,3 +1775,11 @@ components/
 - [ ] Publier l’OTA 1.1.6 uniquement après que les builds Android et iOS 1.1.6 soient disponibles en production sur leurs stores respectifs.
 - [x] Préparer des builds de production 1.1.6 iOS et Android incluant les correctifs Messages, sans OTA complémentaire.
 - [x] Enregistrer dans Git la configuration finale 1.1.6 avec Android versionCode 73 avant les builds de production.
+- [x] Ajouter un accès clair au choix de langue dans le header mobile, en cohérence avec le réglage existant dans Paramètres.
+- [x] Faire naviguer chaque notification vers l’écran et, si possible, l’élément concerné lors de son ouverture.
+- [x] Corriger le raccourci Paramètres de la session afin qu’il ouvre Paramètres et non le Centre d’aide.
+- [x] Harmoniser les promesses et les limites réellement appliquées du plan gratuit entre le site et l’application mobile.
+- [x] Aligner l’application mobile sur la grille officielle du plan gratuit publiée sur le site, après validation des écarts constatés.
+- [x] Conserver les membres existants à la fin de l’essai, tout en bloquant les nouvelles invitations dès deux membres actifs dans le plan gratuit.
+- [ ] Vérifier et clarifier la continuité des comptes utilisateurs lors de l’arrêt de la version WebView annoncé pour le 31 août.
+- [ ] Diagnostiquer et empêcher la création de rappels en double pour un même événement et un même utilisateur.

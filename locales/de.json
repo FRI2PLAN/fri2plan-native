@@ -765,11 +765,11 @@
     "featureMembersLimit": "Bis zu 2 Mitglieder",
     "featureBudget": "Erweitertes Budget & Ausgaben",
     "featureNotifications": "Benutzerdefinierte Benachrichtigungen",
-    "featureTasks": "Unbegrenzte Aufgaben",
-    "featureMessages": "Unbegrenzte Familienmessages",
+    "featureTasks": "5 aktive Aufgaben",
+    "featureMessages": "Nachrichtenverlauf: 7 Tage",
     "featureMeals": "Mahlzeitenplaner",
-    "featureShopping": "Unbegrenzte Einkaufsartikel",
-    "featureNotes": "Unbegrenzte Notizen",
+    "featureShopping": "20 aktive Artikel",
+    "featureNotes": "5 Notizen",
     "featureRewards": "Belohnungen & Punkte",
     "featureIntimate": "Intimer Kalender",
     "featureReferral": "Empfehlungsprogramm",
@@ -1207,7 +1207,10 @@
     "rewardsBtn": "Belohnungen anzeigen",
     "readyTip1": "Sie können diesen Leitfaden unter Einstellungen > Hilfezentrum erneut aufrufen",
     "readyTip2": "Jeder Abschnitt hat sein eigenes detailliertes Tutorial",
-    "readyTip3": "Zögern Sie nicht, uns zu kontaktieren, wenn Sie Fragen haben"
+    "readyTip3": "Zögern Sie nicht, uns zu kontaktieren, wenn Sie Fragen haben",
+    "skipIntroduction": "Einführung überspringen",
+    "next": "Weiter",
+    "finish": "Fertig"
   },
   "register": {
     "accountCreatedTitle": "Konto erstellt!",

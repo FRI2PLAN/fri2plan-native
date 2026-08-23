@@ -2,7 +2,8 @@ import React, { useState, useCallback, memo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import { navigationRef } from './navigationRef';
+import { navigationRef, setNotificationPageNavigator } from './navigationRef';
+import { useEffect } from 'react';
 import CircularPager from '../components/CircularPager';
 import GlobalPrefetch from '../components/GlobalPrefetch';
 import FixedHeaderLayout from '../components/FixedHeaderLayout';
@@ -98,6 +99,11 @@ export default function AppNavigator({
   const handlePageSelect = useCallback((pageIndex: number) => {
     setCurrentPage(pageIndex);
   }, []);
+
+  useEffect(() => {
+    setNotificationPageNavigator(handlePageSelect);
+    return () => setNotificationPageNavigator(null);
+  }, [handlePageSelect]);
 
   return (
     <NavigationContainer ref={navigationRef}>

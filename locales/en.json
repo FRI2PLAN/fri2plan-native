@@ -765,11 +765,11 @@
     "featureMembersLimit": "Up to 2 members",
     "featureBudget": "Advanced budget & expenses",
     "featureNotifications": "Custom notifications",
-    "featureTasks": "Unlimited tasks",
-    "featureMessages": "Unlimited family messaging",
+    "featureTasks": "5 active tasks",
+    "featureMessages": "7-day message history",
     "featureMeals": "Meal planner",
-    "featureShopping": "Unlimited shopping items",
-    "featureNotes": "Unlimited notes",
+    "featureShopping": "20 active items",
+    "featureNotes": "5 notes",
     "featureRewards": "Rewards & points",
     "featureIntimate": "Intimate calendar",
     "featureReferral": "Referral program",
@@ -1207,7 +1207,10 @@
     "rewardsBtn": "View rewards",
     "readyTip1": "You can revisit this guide from Settings > Help Center",
     "readyTip2": "Each section has its own detailed tutorial",
-    "readyTip3": "Don't hesitate to contact us if you have any questions"
+    "readyTip3": "Don't hesitate to contact us if you have any questions",
+    "skipIntroduction": "Skip introduction",
+    "next": "Next",
+    "finish": "Finish"
   },
   "register": {
     "accountCreatedTitle": "Account created!",

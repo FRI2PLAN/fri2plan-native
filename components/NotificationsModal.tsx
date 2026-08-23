@@ -24,11 +24,13 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 interface NotificationsModalProps {
   visible: boolean;
   onClose: () => void;
+  onNavigate?: (pageIndex: number) => void;
 }
 
 export default function NotificationsModal({
   visible,
   onClose,
+  onNavigate,
 }: NotificationsModalProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
@@ -72,6 +74,53 @@ export default function NotificationsModal({
 
   const handleMarkAsRead = (notificationId: number) => {
     markAsReadMutation.mutate({ notificationId });
+  };
+
+  const getDestinationPage = (notification: any): number | null => {
+    const path = String(notification.actionUrl || '').split('?')[0].replace(/\/$/, '');
+    const pagesByPath: Record<string, number> = {
+      '/calendar': 1,
+      '/tasks': 2,
+      '/shopping': 3,
+      '/meals': 4,
+      '/messages': 5,
+      '/requests': 6,
+      '/notes': 7,
+      '/budget': 8,
+      '/rewards': 9,
+      '/intimate-calendar': 10,
+      '/members': 11,
+      '/settings': 12,
+      '/help': 13,
+    };
+    if (pagesByPath[path] !== undefined) return pagesByPath[path];
+
+    const pagesByType: Record<string, number> = {
+      event: 1,
+      event_reminder: 1,
+      event_created: 1,
+      event_modified: 1,
+      task: 2,
+      task_assigned: 2,
+      task_due: 2,
+      shopping_item: 3,
+      meal: 4,
+      message: 5,
+      message_new: 5,
+      group_message: 5,
+      request: 6,
+      note: 7,
+      budget: 8,
+      reward: 9,
+    };
+    return pagesByType[notification.type] ?? null;
+  };
+
+  const handleNotificationPress = (notification: any) => {
+    handleMarkAsRead(notification.id);
+    const destination = getDestinationPage(notification);
+    if (destination !== null) onNavigate?.(destination);
+    onClose();
   };
 
   const handleMarkAllAsRead = () => {
@@ -190,7 +239,7 @@ export default function NotificationsModal({
                     { borderBottomColor: borderColor },
                     !notification.isRead && { backgroundColor: unreadBg },
                   ]}
-                  onPress={() => handleMarkAsRead(notification.id)}
+                  onPress={() => handleNotificationPress(notification)}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.iconCircle, { backgroundColor: getNotificationColor(notification.type) }]}>

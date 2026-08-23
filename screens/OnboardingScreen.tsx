@@ -256,14 +256,14 @@ export default function OnboardingScreen({ visible, onComplete, onNavigate }: On
               onPress={handleSkip}
               activeOpacity={0.7}
             >
-              <Text style={styles.skipFooterText}>Passer l’introduction</Text>
+              <Text style={styles.skipFooterText}>{t('onboarding.skipIntroduction')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.nextButton}
               onPress={handleNext}
               activeOpacity={0.8}
             >
-              <Text style={styles.nextButtonText}>{isLastStep ? 'Terminer' : 'Suivant'}</Text>
+              <Text style={styles.nextButtonText}>{isLastStep ? t('onboarding.finish') : t('onboarding.next')}</Text>
               <Ionicons name={isLastStep ? 'checkmark' : 'chevron-forward'} size={22} color="#ffffff" />
             </TouchableOpacity>
           </View>
