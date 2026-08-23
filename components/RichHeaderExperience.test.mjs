@@ -26,9 +26,10 @@ describe('Header — compteur de points', () => {
     expect(source).toContain("return '🇬🇧'");
     expect(source).toContain("return '🇩🇪'");
     expect(source).toContain("return '🇪🇸'");
+    expect(source).toContain("return '🇮🇹'");
     expect(source).toContain("setLanguagePickerOpen(true)");
     expect(source).toContain('await changeLanguage(language);');
-    expect(source).toContain("['fr', 'en', 'de', 'es'].map");
+    expect(source).toContain("['fr', 'en', 'de', 'es', 'it'].map");
     expect(source).toContain('setCurrentLanguage(i18n.language);');
   });
 

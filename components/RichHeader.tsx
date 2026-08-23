@@ -56,6 +56,7 @@ export default function RichHeader({
     if (language === 'en') return t('settings.langEn');
     if (language === 'de') return t('settings.langDe');
     if (language === 'es') return t('settings.langEs');
+    if (language === 'it') return t('settings.langIt');
     return t('settings.langFr');
   };
 
@@ -63,6 +64,7 @@ export default function RichHeader({
     if (language === 'en') return '🇬🇧';
     if (language === 'de') return '🇩🇪';
     if (language === 'es') return '🇪🇸';
+    if (language === 'it') return '🇮🇹';
     return '🇫🇷';
   };
 
@@ -286,7 +288,7 @@ export default function RichHeader({
         <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setLanguagePickerOpen(false)} />
         <View style={styles.languageModal}>
           <Text style={styles.languageTitle}>{t('settings.selectLanguage')}</Text>
-          {['fr', 'en', 'de', 'es'].map((language) => (
+          {['fr', 'en', 'de', 'es', 'it'].map((language) => (
             <TouchableOpacity
               key={language}
               style={[styles.languageOption, currentLanguage === language && styles.languageOptionSelected]}

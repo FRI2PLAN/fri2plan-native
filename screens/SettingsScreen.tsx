@@ -190,6 +190,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
     if (lang === 'en') return t('settings.langEn');
     if (lang === 'de') return t('settings.langDe');
     if (lang === 'es') return t('settings.langEs');
+    if (lang === 'it') return t('settings.langIt');
     return t('settings.langFr');
   };
 
@@ -1205,7 +1206,7 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
           <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={() => setShowLanguageModal(false)} />
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('settings.selectLanguage')}</Text>
-            {['fr', 'en', 'de', 'es'].map(lang => (
+            {['fr', 'en', 'de', 'es', 'it'].map(lang => (
               <TouchableOpacity
                 key={lang}
                 style={[styles.languageOption, currentLanguage === lang && styles.languageOptionSelected]}
