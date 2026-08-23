@@ -54,6 +54,12 @@ export default function RichHeader({
     return t('settings.langFr');
   };
 
+  const getLanguageFlag = (language: string) => {
+    if (language === 'en') return '🇬🇧';
+    if (language === 'de') return '🇩🇪';
+    return '🇫🇷';
+  };
+
   // Récupérer les données utilisateur depuis le cache local (AuthContext) ET depuis le serveur
   const { user: cachedUser } = useAuth();
   const { data: meData } = trpc.auth.me.useQuery();
@@ -259,7 +265,7 @@ export default function RichHeader({
             style={styles.iconButton}
             accessibilityLabel={t('settings.selectLanguage')}
           >
-            <Ionicons name="language-outline" size={21} color="#fff" />
+            <Text style={styles.languageTriggerFlag}>{getLanguageFlag(currentLanguage)}</Text>
           </TouchableOpacity>
 
           {/* Hamburger Menu */}
@@ -380,6 +386,10 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   iconButton: {
     padding: 6,
     position: 'relative',
+  },
+  languageTriggerFlag: {
+    fontSize: 20,
+    lineHeight: 24,
   },
   menuButton: {
     padding: 6,

@@ -1785,3 +1785,5 @@ components/
 - [ ] Diagnostiquer et empêcher la création de rappels en double pour un même événement et un même utilisateur.
 - [x] Corriger les clés de traduction visibles dans la confirmation d’ajout des ingrédients et le titre automatique de liste de courses depuis Repas.
 - [x] Supprimer l’import React dupliqué qui bloque le bundling de RichHeader.
+- [ ] Vérifier en conditions réelles que chaque limitation du plan gratuit est appliquée côté serveur et dans l’application.
+- [x] Afficher le drapeau de la langue active dans le header mobile pour ouvrir le sélecteur de langue.
