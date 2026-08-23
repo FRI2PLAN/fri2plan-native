@@ -1783,3 +1783,4 @@ components/
 - [x] Conserver les membres existants à la fin de l’essai, tout en bloquant les nouvelles invitations dès deux membres actifs dans le plan gratuit.
 - [ ] Vérifier et clarifier la continuité des comptes utilisateurs lors de l’arrêt de la version WebView annoncé pour le 31 août.
 - [ ] Diagnostiquer et empêcher la création de rappels en double pour un même événement et un même utilisateur.
+- [x] Corriger les clés de traduction visibles dans la confirmation d’ajout des ingrédients et le titre automatique de liste de courses depuis Repas.

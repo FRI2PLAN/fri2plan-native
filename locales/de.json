@@ -1030,6 +1030,8 @@
     "notesPlaceholder": "Zutaten, Anweisungen...",
     "addToShopping": "Zur Einkaufsliste hinzufügen",
     "noIngredients": "Keine Zutaten in den Notizen gefunden",
+    "ingredientsAdded": "Zutat(en) zur Liste hinzugefügt",
+    "shoppingListFor": "Einkauf für",
     "moveTo": "Verschieben nach",
     "breakfast": "Frühstück",
     "lunch": "Mittagessen",

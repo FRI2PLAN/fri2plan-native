@@ -1030,6 +1030,8 @@
     "notesPlaceholder": "Ingrédients, instructions...",
     "addToShopping": "Ajouter aux courses",
     "noIngredients": "Aucun ingrédient trouvé dans les notes",
+    "ingredientsAdded": "ingrédient(s) ajouté(s) à la liste",
+    "shoppingListFor": "Courses pour",
     "ingredientsFound": "ingrédient(s) trouvé(s) dans la recette",
     "adaptFor": "Adapter les quantités pour",
     "convives": "convive(s)",

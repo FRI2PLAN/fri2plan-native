@@ -1030,6 +1030,8 @@
     "notesPlaceholder": "Ingredients, instructions...",
     "addToShopping": "Add to shopping list",
     "noIngredients": "No ingredients found in notes",
+    "ingredientsAdded": "ingredient(s) added to the list",
+    "shoppingListFor": "Shopping for",
     "moveTo": "Move to",
     "breakfast": "Breakfast",
     "lunch": "Lunch",
