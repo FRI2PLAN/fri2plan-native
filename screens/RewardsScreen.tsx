@@ -44,7 +44,8 @@ const getBadgeMetadata = (t: (key: string) => string): Record<string, { name: st
 const ICON_EMOJIS: Record<string, string> = { gift: "🎁", trophy: "🏆", star: "⭐", sparkles: "✨" };
 
 export default function RewardsScreen({ onNavigate, onPrevious, onNext }: RewardsScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : i18n.language === 'it' ? 'it-IT' : 'fr-FR';
   const BADGE_METADATA = getBadgeMetadata(t);
   const { isDark } = useTheme();
   const { user } = useAuth();
@@ -212,11 +213,11 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     : 'rewards.availableNow_plural';
 
   const tabs = useMemo(() => [
-    { key: "catalog", label: "🎁 Catalogue" },
-    { key: "badges",  label: "🎖️ Badges" },
-    { key: "history", label: "📜 Historique" },
-    ...(isAdmin ? [{ key: "admin", label: "⚙️ Admin" }] : []),
-  ], [isAdmin]);
+    { key: "catalog", label: `🎁 ${t('rewards.tabCatalog')}` },
+    { key: "badges",  label: `🎖️ ${t('rewards.tabBadges')}` },
+    { key: "history", label: `📜 ${t('rewards.tabHistory')}` },
+    ...(isAdmin ? [{ key: "admin", label: `⚙️ ${t('rewards.tabAdmin')}` }] : []),
+  ], [isAdmin, i18n.language]);
 
   return (
     <View style={styles.container}>
@@ -417,7 +418,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                   <View style={styles.historyBody}>
                     <Text style={styles.historyName}>{earned.rewardName}</Text>
                     <Text style={styles.historyDate}>
-                      {new Date(earned.earnedAt).toLocaleDateString("fr-FR")}
+                      {new Date(earned.earnedAt).toLocaleDateString(dateLocale)}
                       {earned.approvedByName ? ` · Approuvé par ${earned.approvedByName}` : ""}
                     </Text>
                   </View>
@@ -443,7 +444,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                   <View style={styles.claimBody}>
                     <Text style={styles.claimUser}>👤 {claim.userName || "Membre"}</Text>
                     <Text style={styles.claimReward}>🎁 {claim.rewardName}</Text>
-                    <Text style={styles.claimDate}>{claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString("fr-FR") : "—"}</Text>
+                    <Text style={styles.claimDate}>{claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString(dateLocale) : "—"}</Text>
                   </View>
                   <View style={styles.claimActions}>
                     <TouchableOpacity style={styles.approveBtn} onPress={() => approveMutation.mutate({ claimId: claim.id })} disabled={approveMutation.isLoading}>

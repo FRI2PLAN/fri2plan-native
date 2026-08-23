@@ -1790,3 +1790,6 @@ components/
 - [x] Ajouter une traduction espagnole complète basée sur le fichier français et l’intégrer à la détection ainsi qu’au sélecteur de langue.
 - [x] Ajouter une traduction italienne complète basée sur le fichier français et l’intégrer à la détection ainsi qu’aux sélecteurs de langue.
 - [x] Auditer les e-mails et notifications générés côté serveur afin de planifier leur prise en charge multilingue.
+- [x] Localiser les jours, mois et formats de date dans les calendriers ainsi que les repas selon la langue active.
+- [x] Localiser tous les libellés statiques du calendrier intime dans les cinq langues.
+- [x] Définir un affichage multilingue sûr pour les récompenses et autres contenus créés avant le changement de langue.

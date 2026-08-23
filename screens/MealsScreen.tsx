@@ -23,7 +23,7 @@ import PremiumOverlay from '../components/PremiumOverlay';
 import { AddToShoppingModal } from '../components/AddToShoppingModal';
 import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
-import { fr, de, enUS } from 'date-fns/locale';
+import { fr, de, enUS, es, it } from 'date-fns/locale';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -101,7 +101,7 @@ export default function MealsScreen({
   const isFree = !hasPremium && !isTrialActive;
 
   // ─── Locale date-fns ───────────────────────────────────────────────────────
-  const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : fr;
+  const dateFnsLocale = i18n.language === 'de' ? de : i18n.language === 'en' ? enUS : i18n.language === 'es' ? es : i18n.language === 'it' ? it : fr;
 
   // ─── Famille ───────────────────────────────────────────────────────────────
   const { activeFamilyId: ctxFamilyId } = useFamily();

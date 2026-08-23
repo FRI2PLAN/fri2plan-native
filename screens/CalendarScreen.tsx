@@ -11,7 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour, isWithinInterval } from 'date-fns';
-import { fr, de, enUS } from 'date-fns/locale';
+import { fr, de, enUS, es, it } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
@@ -537,6 +537,8 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     const lang = i18n.language;
     if (lang === 'de') return de;
     if (lang === 'en') return enUS;
+    if (lang === 'es') return es;
+    if (lang === 'it') return it;
     return fr;
   };
 
@@ -1885,7 +1887,7 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                       <View style={{ marginBottom: 8, paddingHorizontal: 4, paddingVertical: 5, backgroundColor: statusColor + '11', borderRadius: 6 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                           <Text style={{ fontSize: 11, color: statusColor, fontWeight: '600', textAlign: 'center' }}>
-                            {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
+                            {statusLabel}{hasSynced ? ` : ${new Date(sub.lastSyncAt).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : i18n.language === 'it' ? 'it-IT' : 'fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
                           </Text>
                           {(sub.eventCount !== undefined && sub.eventCount !== null) && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#374151' : '#e5e7eb', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 }}>

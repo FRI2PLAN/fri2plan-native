@@ -53,7 +53,8 @@ const PHASE_COLORS = {
 
 export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext }: CalendrierIntimeScreenProps) {
   const { isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-GB' : i18n.language === 'es' ? 'es-ES' : i18n.language === 'it' ? 'it-IT' : 'fr-FR';
   const MOOD_OPTIONS = getMoodOptions(t);
   const FLOW_OPTIONS = getFlowOptions(t);
   const SYMPTOM_OPTIONS = getSymptomOptions(t);
@@ -187,7 +188,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
     }
 
     return { dayOfCycle, cycleDuration, periodDuration, phase, phaseColor, phaseEmoji, nextPeriodDate, daysUntilNext, ovulationDay, fertilityStart, fertilityEnd };
-  }, [settings]);
+  }, [settings, i18n.language]);
 
   const isEnabled = !!(settings as any)?.isEnabled;
 
@@ -291,7 +292,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                               ? (t('intimate.today') || "Aujourd'hui")
                               : (t('intimate.daysAgo', { count: Math.abs(currentCycleInfo.daysUntilNext) }) || `Il y a ${Math.abs(currentCycleInfo.daysUntilNext)} j.`)}
                         </Text>
-                        <Text style={styles.dateCardDate}>{currentCycleInfo.nextPeriodDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</Text>
+                        <Text style={styles.dateCardDate}>{currentCycleInfo.nextPeriodDate.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}</Text>
                       </View>
                       <View style={styles.dateCard}>
                         <Text style={styles.dateCardEmoji}>🌸</Text>
@@ -353,7 +354,7 @@ export default function CalendrierIntimeScreen({ onNavigate, onPrevious, onNext 
                         <View>
                           <Text style={styles.cycleCardTitle}>{t('intimate.cycleNumber', { num: (cycles as any[]).length - index }) || `Cycle #${(cycles as any[]).length - index}`}</Text>
                           <Text style={styles.cycleCardDate}>
-                            {t('intimate.cycleStart') || 'Début'} : {new Date(cycle.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            {t('intimate.cycleStart') || 'Début'} : {new Date(cycle.startDate).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}
                           </Text>
                           {cycle.cycleLength && <Text style={styles.cycleCardLength}>{t('intimate.cycleDuration') || 'Durée'} : {cycle.cycleLength} {t('intimate.days') || 'jours'}</Text>}
                         </View>
