@@ -1794,3 +1794,6 @@ components/
 - [x] Localiser tous les libellés statiques du calendrier intime dans les cinq langues.
 - [x] Définir un affichage multilingue sûr pour les récompenses et autres contenus créés avant le changement de langue.
 - [x] Synchroniser immédiatement la langue affichée dans Paramètres après un changement effectué depuis le header.
+- [x] Auditer les cercles orphelins après suppression d’utilisateur et corriger le nettoyage des futurs comptes supprimés.
+- [x] Supprimer uniquement les cercles orphelins explicitement confirmés après inventaire de leurs membres et données.
+- [x] Préserver les cercles avec membres existants en retirant seulement les adhésions des comptes supprimés et en réattribuant un administrateur si nécessaire.
