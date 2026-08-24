@@ -81,7 +81,15 @@
     "emailNotVerifiedMessage": "Your email is not yet verified. Click below to receive a new confirmation email.",
     "resendVerificationEmail": "Resend confirmation email",
     "resendSuccess": "Email sent! Check your inbox.",
-    "resendError": "Error sending email. Please try again."
+    "resendError": "Error sending email. Please try again.",
+    "signingIn": "Signing in…",
+    "verifying": "Verifying…",
+    "biometricSignIn": "Fingerprint sign-in",
+    "enableBiometricSignIn": "Enable fingerprint sign-in",
+    "biometricPrompt": "Sign in to FRI2PLAN",
+    "biometricFallback": "Use password",
+    "sessionExpired": "Session expired",
+    "sessionExpiredMessage": "Please sign in again with your password."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -256,7 +264,13 @@
     "nativeCalendarReadOnly": "Read only",
     "nativeCalendarWritable": "Writable",
     "importSuccessTitle": "ICS Import Complete",
-    "importSuccessMessage": "{{count}} event(s) successfully imported."
+    "importSuccessMessage": "{{count}} event(s) successfully imported.",
+    "deleteEventTitle": "Delete event",
+    "deleteEventConfirm": "Do you want to delete “{{title}}”?",
+    "saveError": "Unable to save your changes.",
+    "deleteError": "Unable to delete the event. Please check your connection."
+    ,"syncComplete": "Sync complete",
+    "deleteImportedEventsError": "Unable to delete imported events."
   },
   "tasks": {
     "rewardUnlocked": "New reward unlocked!",

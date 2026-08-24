@@ -86,7 +86,8 @@ export const changeLanguage = async (language: string) => {
 // Get current language
 export const getCurrentLanguage = () => i18n.language;
 
-// Initialize on app start
-initI18n();
+// Promesse partagée : l’application peut attendre la préférence sauvegardée
+// avant de rendre l’écran de connexion et éviter un flash dans la langue du téléphone.
+export const i18nReady = initI18n();
 
 export default i18n;

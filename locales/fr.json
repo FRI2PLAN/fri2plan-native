@@ -81,7 +81,15 @@
     "emailNotVerifiedMessage": "Votre email n'est pas encore vérifié. Cliquez ci-dessous pour recevoir un nouvel email de confirmation.",
     "resendVerificationEmail": "Renvoyer l'email de confirmation",
     "resendSuccess": "Email envoyé ! Vérifiez votre boîte de réception.",
-    "resendError": "Erreur lors de l'envoi. Veuillez réessayer."
+    "resendError": "Erreur lors de l'envoi. Veuillez réessayer.",
+    "signingIn": "Connexion en cours…",
+    "verifying": "Vérification…",
+    "biometricSignIn": "Empreinte digitale",
+    "enableBiometricSignIn": "Activer l’empreinte digitale",
+    "biometricPrompt": "Connexion à FRI2PLAN",
+    "biometricFallback": "Utiliser le mot de passe",
+    "sessionExpired": "Session expirée",
+    "sessionExpiredMessage": "Veuillez vous reconnecter avec votre mot de passe."
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -256,7 +264,13 @@
     "nativeCalendarReadOnly": "Lecture seule",
     "nativeCalendarWritable": "Modifiable",
     "importSuccessTitle": "Import ICS terminé",
-    "importSuccessMessage": "{{count}} événement(s) importé(s) avec succès."
+    "importSuccessMessage": "{{count}} événement(s) importé(s) avec succès.",
+    "deleteEventTitle": "Supprimer l’événement",
+    "deleteEventConfirm": "Voulez-vous supprimer « {{title}} » ?",
+    "saveError": "Impossible d’enregistrer les modifications.",
+    "deleteError": "Impossible de supprimer l’événement. Vérifiez votre connexion."
+    ,"syncComplete": "Synchronisation terminée",
+    "deleteImportedEventsError": "Impossible de supprimer les événements importés."
   },
   "tasks": {
     "rewardUnlocked": "Nouvelle récompense débloquée !",

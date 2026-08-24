@@ -123,9 +123,9 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
     try {
       setBiometricLoading(true);
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Connexion à FRI2PLAN',
-        cancelLabel: 'Annuler',
-        fallbackLabel: 'Utiliser le mot de passe',
+        promptMessage: t('auth.biometricPrompt'),
+        cancelLabel: t('common.cancel'),
+        fallbackLabel: t('auth.biometricFallback'),
         disableDeviceFallback: false,
       });
       if (result.success) {
@@ -140,7 +140,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
           await SecureStore.deleteItemAsync(BIOMETRIC_TOKEN_KEY);
           await SecureStore.deleteItemAsync(BIOMETRIC_USER_KEY);
           setBiometricEnabled(false);
-          if (!silent) Alert.alert('Session expirée', 'Veuillez vous reconnecter avec votre mot de passe.');
+          if (!silent) Alert.alert(t('auth.sessionExpired'), t('auth.sessionExpiredMessage'));
         }
       }
     } catch (e) {
@@ -436,11 +436,11 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
               resizeMode="contain"
             />
 
-            <Text style={styles.title}>Connexion</Text>
+            <Text style={styles.title}>{t('auth.loginTitle')}</Text>
             {/* Sous-titre supprimé pour tenir sur une page sans scroll */}
 
             {/* Email */}
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('auth.email')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -507,7 +507,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Se connecter</Text>
+                <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
               )}
             </TouchableOpacity>
 
@@ -536,14 +536,14 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
             {/* Pas encore de compte */}
             <TouchableOpacity onPress={() => setScreenMode('register')} disabled={loading}>
               <Text style={styles.registerText}>
-                Pas encore de compte ? <Text style={styles.registerLink}>S'inscrire</Text>
+                {t('auth.dontHaveAccount')} <Text style={styles.registerLink}>{t('auth.signUp')}</Text>
               </Text>
             </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OU</Text>
+              <Text style={styles.dividerText}>{t('auth.or')}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -556,7 +556,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
               {googleLoading ? (
                 <View style={styles.oauthLoadingRow}>
                   <ActivityIndicator color="#374151" size="small" />
-                  <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#374151' }]}>Connexion en cours...</Text>
+                  <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#374151' }]}>{t('auth.signingIn')}</Text>
                 </View>
               ) : !googleReady ? (
                 <View style={styles.oauthLoadingRow}>
@@ -592,7 +592,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
                 {appleLoading ? (
                   <View style={styles.oauthLoadingRow}>
                     <ActivityIndicator color="#fff" size="small" />
-                    <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
+                    <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>{t('auth.signingIn')}</Text>
                   </View>
                 ) : (
                   <View style={styles.oauthLoadingRow}>
@@ -613,7 +613,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
                 {biometricLoading ? (
                   <View style={[styles.oauthLoadingRow, { justifyContent: 'center' }]}>
                     <ActivityIndicator color="#fff" size="small" />
-                    <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#fff' }]}>Vérification...</Text>
+                    <Text style={[styles.oauthButtonText, { marginLeft: 8, color: '#fff' }]}>{t('auth.verifying')}</Text>
                   </View>
                 ) : (
                   <View style={[styles.oauthLoadingRow, { justifyContent: 'center' }]}>
@@ -622,8 +622,8 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
                     </Text>
                     <Text style={[styles.oauthButtonText, { color: '#fff' }]} numberOfLines={1}>
                       {biometricEnabled
-                        ? (Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Empreinte digitale')
-                        : (Platform.OS === 'ios' ? 'Activer Face ID / Touch ID' : 'Activer l\'empreinte')}
+                        ? (Platform.OS === 'ios' ? 'Face ID / Touch ID' : t('auth.biometricSignIn'))
+                        : (Platform.OS === 'ios' ? 'Enable Face ID / Touch ID' : t('auth.enableBiometricSignIn'))}
                     </Text>
                   </View>
                 )}

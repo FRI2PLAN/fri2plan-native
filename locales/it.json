@@ -499,7 +499,15 @@
     "emailNotVerifiedMessage": "La vostra email non è ancora verificata. Cliccate qui sotto per ricevere una nuova email di conferma.",
     "resendVerificationEmail": "Rinvia email di conferma",
     "resendSuccess": "Email inviata! Controlla la tua casella di posta.",
-    "resendError": "Errore durante l'invio. Riprova."
+    "resendError": "Errore nell'invio. Riprova.",
+    "signingIn": "Accesso in corso…",
+    "verifying": "Verifica in corso…",
+    "biometricSignIn": "Impronta digitale",
+    "enableBiometricSignIn": "Attiva l’impronta digitale",
+    "biometricPrompt": "Accedi a FRI2PLAN",
+    "biometricFallback": "Usa la password",
+    "sessionExpired": "Sessione scaduta",
+    "sessionExpiredMessage": "Accedi di nuovo con la password."
   },
   "requests": {
     "title": "Richieste",
@@ -671,7 +679,13 @@
     "nativeCalendarReadOnly": "Sola lettura",
     "nativeCalendarWritable": "Modificabile",
     "importSuccessTitle": "Importazione ICS completata",
-    "importSuccessMessage": "{{count}} evento(i) importato(i) con successo."
+    "importSuccessMessage": "{{count}} evento(i) importato(i) con successo.",
+    "deleteEventTitle": "Elimina l’evento",
+    "deleteEventConfirm": "Vuoi eliminare «{{title}}»?",
+    "saveError": "Impossibile salvare le modifiche.",
+    "deleteError": "Impossibile eliminare l’evento. Verifica la connessione."
+    ,"syncComplete": "Sincronizzazione completata",
+    "deleteImportedEventsError": "Impossibile eliminare gli eventi importati."
   },
   "messages": {
     "title": "Messaggi",

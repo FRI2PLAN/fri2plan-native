@@ -608,7 +608,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Recharger aussi les abonnements pour que la carte passe immédiatement
       // de « Jamais synchronisé / 0 événement » à son état réel.
       await Promise.all([refetch(), refetchSubscriptions()]);
-      Alert.alert('✓', 'Synchronisation terminée');
+      Alert.alert('✓', t('calendar.syncComplete'));
     },
   });
   const deleteSubscriptionEvents = trpc.events.deleteSubscriptionEvents.useMutation({
@@ -617,7 +617,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       syncSubscription.mutate({ id: variables.id });
       refetch();
     },
-    onError: (e: any) => Alert.alert('Erreur', e.message || 'Impossible de supprimer les événements'),
+    onError: (e: any) => Alert.alert(t('common.error'), e.message || t('calendar.deleteImportedEventsError')),
   });
   const updateSubscription = trpc.events.updateSubscription.useMutation({
     onSuccess: () => {
@@ -1007,12 +1007,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         onSuccess: () => calendarUtils.events.list.invalidate(),
         onError: (error: any) => {
           calendarUtils.events.list.setData(undefined, previousEvents);
-          Alert.alert('Erreur', error?.message || 'Impossible de sauvegarder les modifications.');
+          Alert.alert(t('common.error'), error?.message || t('calendar.saveError'));
         },
       });
     } catch (error) {
       console.error('Error updating event:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder les modifications.');
+      Alert.alert(t('common.error'), t('calendar.saveError'));
       closeEditModal();
     }
   };
@@ -1020,12 +1020,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const handleDeleteEvent = () => {
     if (!selectedEvent) return;
     Alert.alert(
-      'Supprimer l\'événement',
-      `Voulez-vous supprimer "${selectedEvent.title}" ?`,
+      t('calendar.deleteEventTitle'),
+      t('calendar.deleteEventConfirm', { title: selectedEvent.title }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             const previousEvents = calendarUtils.events.list.getData(undefined);
@@ -1035,7 +1035,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
               onSuccess: () => calendarUtils.events.list.invalidate(),
               onError: (error: any) => {
                 calendarUtils.events.list.setData(undefined, previousEvents);
-                Alert.alert('Erreur', error?.message || 'Impossible de supprimer l’événement. Vérifiez votre connexion.');
+                Alert.alert(t('common.error'), error?.message || t('calendar.deleteError'));
               },
             });
           },

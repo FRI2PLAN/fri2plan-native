@@ -2,6 +2,7 @@ import { enableScreens } from 'react-native-screens';
 enableScreens(true);
 import 'react-native-gesture-handler';
 import './i18n'; // Initialize i18n
+import { i18nReady } from './i18n';
 import * as NativeSplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -246,6 +247,7 @@ function extractVerifyEmailToken(url: string | null): string | null {
 function AppContent() {
   const { isAuthenticated, isLoading, hasSeenOnboarding, completeOnboarding, logout, token, user, login } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
+  const [languageReady, setLanguageReady] = useState(false);
   const [sessionCacheReady, setSessionCacheReady] = useState(false);
   const [familyCacheReady, setFamilyCacheReady] = useState(false);
   const [showFamilyLoading, setShowFamilyLoading] = useState(true);
@@ -267,6 +269,14 @@ function AppContent() {
 
   // Timer durée minimale splash (800ms) — laisse le temps au logo d'apparaître sans bloquer
   // Masque le splash natif dès que React est prêt (après 300ms pour laisser le temps au rendu)
+  useEffect(() => {
+    let cancelled = false;
+    void i18nReady.finally(() => {
+      if (!cancelled) setLanguageReady(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     const hideNative = setTimeout(() => {
       NativeSplashScreen.hideAsync().catch(() => {});
@@ -373,7 +383,7 @@ function AppContent() {
       <SubscriptionProvider>
         <View style={styles.appRoot}>
           {/* Splash screen pendant le chargement auth OU durée minimale non écoulée OU user pas encore chargé */}
-          {(isLoading || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady || !familyCacheReady))) ? (
+          {(isLoading || !languageReady || !splashMinDone || (isAuthenticated && (!user || !sessionCacheReady || !familyCacheReady))) ? (
             <SplashScreen />
           ) : isAuthenticated ? (
             !hasSeenOnboarding ? (

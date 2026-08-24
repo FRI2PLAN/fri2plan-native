@@ -1799,3 +1799,8 @@ components/
 - [x] Auditer les cercles orphelins après suppression d’utilisateur et corriger le nettoyage des futurs comptes supprimés.
 - [x] Supprimer uniquement les cercles orphelins explicitement confirmés après inventaire de leurs membres et données.
 - [x] Préserver les cercles avec membres existants en retirant seulement les adhésions des comptes supprimés et en réattribuant un administrateur si nécessaire.
+- [x] Corriger les modales calendrier encore affichées en français après le choix de l’espagnol.
+- [x] Assurer que la langue choisie dans l’application est appliquée à l’écran de connexion, sans revenir à la seule langue du téléphone.
+- [ ] Corriger les rappels futurs afin qu’ils utilisent la langue de profil synchronisée, sans conserver une traduction française obsolète.
+- [x] Vérifier les formulations et signes de ponctuation espagnols dans les écrans de connexion et le Centre d’aide.
+- [ ] Reproduire les parcours signalés après installation de l’OTA avant de conclure à une régression non couverte par la mise à jour.

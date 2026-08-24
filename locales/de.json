@@ -81,7 +81,15 @@
     "emailNotVerifiedMessage": "Ihre E-Mail-Adresse wurde noch nicht bestätigt. Klicken Sie unten, um eine neue Bestätigungs-E-Mail zu erhalten.",
     "resendVerificationEmail": "Bestätigungs-E-Mail erneut senden",
     "resendSuccess": "E-Mail gesendet! Überprüfen Sie Ihren Posteingang.",
-    "resendError": "Fehler beim Senden. Bitte versuchen Sie es erneut."
+    "resendError": "Fehler beim Senden. Bitte versuchen Sie es erneut.",
+    "signingIn": "Anmeldung läuft…",
+    "verifying": "Wird überprüft…",
+    "biometricSignIn": "Anmeldung per Fingerabdruck",
+    "enableBiometricSignIn": "Fingerabdruck-Anmeldung aktivieren",
+    "biometricPrompt": "Bei FRI2PLAN anmelden",
+    "biometricFallback": "Passwort verwenden",
+    "sessionExpired": "Sitzung abgelaufen",
+    "sessionExpiredMessage": "Bitte melden Sie sich erneut mit Ihrem Passwort an."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -256,7 +264,13 @@
     "nativeCalendarReadOnly": "Nur lesen",
     "nativeCalendarWritable": "Bearbeitbar",
     "importSuccessTitle": "ICS-Import abgeschlossen",
-    "importSuccessMessage": "{{count}} Ereignis(se) erfolgreich importiert."
+    "importSuccessMessage": "{{count}} Ereignis(se) erfolgreich importiert.",
+    "deleteEventTitle": "Ereignis löschen",
+    "deleteEventConfirm": "Möchten Sie „{{title}}“ löschen?",
+    "saveError": "Änderungen konnten nicht gespeichert werden.",
+    "deleteError": "Das Ereignis konnte nicht gelöscht werden. Bitte prüfen Sie Ihre Verbindung."
+    ,"syncComplete": "Synchronisierung abgeschlossen",
+    "deleteImportedEventsError": "Importierte Ereignisse konnten nicht gelöscht werden."
   },
   "tasks": {
     "rewardUnlocked": "Neue Belohnung freigeschaltet!",
