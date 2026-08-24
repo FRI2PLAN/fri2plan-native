@@ -210,6 +210,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setToken(authToken);
       setUser(userData);
 
+      // La préférence active (locale ou choisie par l'utilisateur) devient aussi
+      // la langue de référence du serveur pour les emails et notifications.
+      try {
+        const { getCurrentLanguage, syncLanguagePreference } = await import('../i18n');
+        await syncLanguagePreference(getCurrentLanguage());
+      } catch (languageSyncError) {
+        console.warn('[AuthContext] Impossible de synchroniser la langue:', languageSyncError);
+      }
+
       // Envoyer automatiquement la timezone de l'appareil au serveur
       // Cela permet des rappels et emails à la bonne heure locale pour tous les fuseaux
       try {
