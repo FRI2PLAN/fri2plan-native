@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
-import { trpc } from '../lib/trpc';
 
 // La clé par utilisateur conserve le dernier cercle choisi sans jamais
 // reprendre la préférence d’un autre compte. La clé d’en-tête est mise à
@@ -33,10 +32,6 @@ export function FamilyProvider({ children }: { children: React.ReactNode }) {
   const [isCircleTransitioning, setIsCircleTransitioning] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
   const storageKey = user?.id ? storageKeyForUser(user.id) : null;
-  const { data: families = [], isFetched: hasFetchedFamilies } = trpc.family.list.useQuery(
-    undefined,
-    { enabled: !!storageKey && !authLoading },
-  );
 
   // Chaque compte conserve son dernier cercle actif, sans jamais reprendre
   // celui d’un autre compte ayant utilisé le même appareil.
@@ -51,41 +46,29 @@ export function FamilyProvider({ children }: { children: React.ReactNode }) {
       setIsReady(true);
       return;
     }
-    if (!hasFetchedFamilies) {
-      setIsReady(false);
-      return;
-    }
     let cancelled = false;
     (async () => {
       const stored = await AsyncStorage.getItem(storageKey);
-      const availableFamilies = families as Array<{ id: number }>;
-      const storedId = stored ? parseInt(stored, 10) : null;
-      const storedFamilyIsAvailable =
-        storedId !== null &&
-        !isNaN(storedId) &&
-        availableFamilies.some((family) => family.id === storedId);
-      const accountFamilyIsAvailable =
-        !!user?.familyId &&
-        availableFamilies.some((family) => family.id === user.familyId);
-      const nextFamilyId = storedFamilyIsAvailable
-        ? storedId
-        : accountFamilyIsAvailable
-          ? user!.familyId
-          : availableFamilies[0]?.id ?? null;
-
-      if (nextFamilyId !== null) {
-        await AsyncStorage.multiSet([
-          [storageKey, String(nextFamilyId)],
-          [ACTIVE_FAMILY_HEADER_KEY, String(nextFamilyId)],
-        ]);
-      } else {
-        await AsyncStorage.multiRemove([storageKey, ACTIVE_FAMILY_HEADER_KEY]);
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed)) {
+          await AsyncStorage.setItem(ACTIVE_FAMILY_HEADER_KEY, String(parsed));
+          if (!cancelled) setActiveFamilyIdState(parsed);
+          if (!cancelled) setIsReady(true);
+          return;
+        }
       }
-      if (!cancelled) setActiveFamilyIdState(nextFamilyId);
+      if (user?.familyId) {
+        await AsyncStorage.multiSet([
+          [storageKey, String(user.familyId)],
+          [ACTIVE_FAMILY_HEADER_KEY, String(user.familyId)],
+        ]);
+        if (!cancelled) setActiveFamilyIdState(user.familyId);
+      }
       if (!cancelled) setIsReady(true);
     })();
     return () => { cancelled = true; };
-  }, [authLoading, families, hasFetchedFamilies, storageKey, user?.familyId]);
+  }, [authLoading, storageKey, user?.familyId]);
 
   const setActiveFamilyId = useCallback(async (id: number | null) => {
     setIsReady(false);

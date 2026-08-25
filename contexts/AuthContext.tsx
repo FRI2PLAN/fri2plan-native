@@ -203,10 +203,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!authToken || !userData) {
         throw new Error('Invalid login data');
       }
-      await Promise.all([
-        AsyncStorage.setItem('authToken', authToken),
-        AsyncStorage.setItem('user', JSON.stringify(userData)),
-      ]);
+      const userStorageEntries: Array<[string, string]> = [
+        ['authToken', authToken],
+        ['user', JSON.stringify(userData)],
+      ];
+      if (userData.familyId) {
+        userStorageEntries.push(
+          [`active_family_id_${userData.id}`, String(userData.familyId)],
+          ['active_family_id', String(userData.familyId)],
+        );
+      }
+      await AsyncStorage.multiSet(userStorageEntries);
       setToken(authToken);
       setUser(userData);
 
