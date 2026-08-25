@@ -1816,7 +1816,7 @@ components/
 - [x] Configurer les Android App Links HTTPS et la vérification de domaine pour ouvrir directement FRI2PLAN depuis une invitation.
 - [x] Créer et installer une build preview Android pour tester l’ouverture native des liens HTTPS d’invitation.
 - [x] Ramener la vérification e-mail d’une invitation vers l’application native et le cercle d’origine au lieu de `/login` web.
-- [ ] Refondre l’invitation autour d’un lien e-mail, d’un partage WhatsApp et d’un code manuel pour les comptes existants.
+- [x] Refondre l’invitation autour d’un lien e-mail, d’un partage WhatsApp et d’un code manuel pour les comptes existants.
 - [x] Afficher l’inscription uniquement pour une adresse non existante et proposer la connexion ou le code pour un compte existant.
 - [x] Ajouter une page de confirmation e-mail avec ouverture explicite de FRI2PLAN ou renvoi vers le store lorsque l’application est absente.
 - [x] Gérer explicitement une invitation ouverte avec une session d’un autre compte déjà active.

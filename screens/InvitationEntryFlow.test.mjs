@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const login = readFileSync(new URL('./LoginScreen.tsx', import.meta.url), 'utf8');
 const register = readFileSync(new URL('./RegisterScreen.tsx', import.meta.url), 'utf8');
+const members = readFileSync(new URL('./MembersScreen.tsx', import.meta.url), 'utf8');
 
 describe('Entrée d’invitation dans l’application mobile', () => {
   it('préserve le code reçu au démarrage et choisit l’inscription ou la connexion selon l’adresse invitée', () => {
@@ -26,5 +27,11 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(app).toContain("currentUserEmail?.toLowerCase() !== inv.email?.toLowerCase()");
     expect(app).toContain("t('invitation.switchAccount')");
     expect(app).toContain('onSwitchAccount={effectiveLogout}');
+  });
+
+  it('partage le lien HTTPS et le code manuel pour les personnes ayant déjà un compte', () => {
+    expect(members).toContain('Tu as déjà un compte ?');
+    expect(members).toContain('saisis ce code : ${code}');
+    expect(members).toContain('https://app.fri2plan.ch/invitation/${code}');
   });
 });

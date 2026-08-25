@@ -250,7 +250,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
     const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
     try {
       await Share.share({
-        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nClique sur ce lien pour nous rejoindre directement :\n${inviteLink}`,
+        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nOuvre ce lien pour créer ton compte ou rejoindre le cercle :\n${inviteLink}\n\nTu as déjà un compte ? Dans FRI2PLAN, choisis « Rejoindre un cercle » puis saisis ce code : ${code}`,
         title: 'Invitation FRI2PLAN',
       });
     } catch (e) {}
