@@ -92,7 +92,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.ch",
-      "versionCode": 74,
+      "versionCode": 75,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "targetSdkVersion": 36,

@@ -1820,6 +1820,9 @@ components/
 - [x] Afficher l’inscription uniquement pour une adresse non existante et proposer la connexion ou le code pour un compte existant.
 - [x] Ajouter une page de confirmation e-mail avec ouverture explicite de FRI2PLAN ou renvoi vers le store lorsque l’application est absente.
 - [x] Gérer explicitement une invitation ouverte avec une session d’un autre compte déjà active.
+- [x] Isoler le profil preview sur un canal OTA `preview` distinct de la production.
+- [ ] Construire une APK preview Android dédiée à la validation des invitations.
+- [ ] Valider le parcours complet par e-mail, WhatsApp/SMS et code manuel avant toute OTA production.
 - [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
 - [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.
