@@ -6,16 +6,25 @@ const login = readFileSync(new URL('./LoginScreen.tsx', import.meta.url), 'utf8'
 const register = readFileSync(new URL('./RegisterScreen.tsx', import.meta.url), 'utf8');
 
 describe('Entrée d’invitation dans l’application mobile', () => {
-  it('préserve le code reçu au démarrage et ouvre l’inscription', () => {
+  it('préserve le code reçu au démarrage et choisit l’inscription ou la connexion selon l’adresse invitée', () => {
     expect(app).toContain("export const pendingInviteCode = { code: null as string | null };");
     expect(app).toContain('pendingInviteCode.code = inviteCode;');
-    expect(app).toContain("initialScreenMode={inviteCodeFromLink ? 'register' : undefined}");
+    expect(app).toContain("initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : undefined}");
+    expect(app).toContain('hasExistingAccount: Boolean((getByCodeQuery.data as any).hasExistingAccount)');
   });
 
   it('préremplit et transmet le code unique lors de l’inscription', () => {
     expect(login).toContain('initialInviteCode={pendingInviteCode}');
+    expect(login).toContain("setScreenMode(initialScreenMode || 'login');");
+    expect(login).toContain('if (initialEmail) setEmail(initialEmail);');
     expect(register).toContain("const [inviteCode, setInviteCode] = useState(initialInviteCode || '');");
     expect(register).toContain('inviteCode: inviteCode || undefined,');
     expect(register).not.toContain('acceptInvitationMutation');
+  });
+
+  it('demande un changement de compte au lieu d’accepter une invitation destinée à une autre adresse', () => {
+    expect(app).toContain("currentUserEmail?.toLowerCase() !== inv.email?.toLowerCase()");
+    expect(app).toContain("t('invitation.switchAccount')");
+    expect(app).toContain('onSwitchAccount={effectiveLogout}');
   });
 });

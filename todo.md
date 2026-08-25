@@ -1807,13 +1807,19 @@ components/
 - [x] Ouvrir automatiquement l’inscription préremplie depuis un lien d’invitation pour un utilisateur non connecté.
 - [x] Accepter le cercle d’origine après vérification e-mail et connexion, sans afficher la création de cercle.
 - [x] Corriger les liens universels d’invitation afin de privilégier l’application Android/iOS installée avant la version web.
-- [ ] Faire ouvrir les liens d’invitation HTTPS dans l’application Android installée au lieu du WebView.
+- [x] Faire ouvrir les liens d’invitation HTTPS dans l’application Android installée au lieu du WebView.
 - [x] Sortir le WebView utilisateur du parcours d’invitation et d’accès aux fonctionnalités gratuites.
 - [ ] Concevoir un accès d’administration séparé, réservé au superadmin, sans réintroduire le WebView dans le parcours utilisateur.
 - [ ] Permettre de partager et rouvrir un lien d’invitation WhatsApp tant qu’il est en attente et non expiré.
 - [x] Gérer explicitement les anciennes invitations lors de la réutilisation d’une adresse de test après suppression de son compte.
-- [ ] Vérifier et corriger la reconnaissance Android de l’application installée pour les liens d’invitation.
-- [ ] Configurer les Android App Links HTTPS et la vérification de domaine pour ouvrir directement FRI2PLAN depuis une invitation.
+- [x] Vérifier et corriger la reconnaissance Android de l’application installée pour les liens d’invitation.
+- [x] Configurer les Android App Links HTTPS et la vérification de domaine pour ouvrir directement FRI2PLAN depuis une invitation.
+- [x] Créer et installer une build preview Android pour tester l’ouverture native des liens HTTPS d’invitation.
+- [x] Ramener la vérification e-mail d’une invitation vers l’application native et le cercle d’origine au lieu de `/login` web.
+- [ ] Refondre l’invitation autour d’un lien e-mail, d’un partage WhatsApp et d’un code manuel pour les comptes existants.
+- [x] Afficher l’inscription uniquement pour une adresse non existante et proposer la connexion ou le code pour un compte existant.
+- [x] Ajouter une page de confirmation e-mail avec ouverture explicite de FRI2PLAN ou renvoi vers le store lorsque l’application est absente.
+- [x] Gérer explicitement une invitation ouverte avec une session d’un autre compte déjà active.
 - [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
 - [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.

@@ -91,6 +91,11 @@
     "sessionExpired": "Session expirée",
     "sessionExpiredMessage": "Veuillez vous reconnecter avec votre mot de passe."
   },
+  "invitation": {
+    "wrongAccountTitle": "Invitation en attente",
+    "wrongAccountMessage": "Cette invitation est destinée à {{email}}. Déconnectez-vous pour continuer avec ce compte.",
+    "switchAccount": "Changer de compte"
+  },
   "navigation": {
     "dashboard": "Tableau de bord",
     "calendar": "Calendrier",

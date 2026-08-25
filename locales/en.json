@@ -91,6 +91,11 @@
     "sessionExpired": "Session expired",
     "sessionExpiredMessage": "Please sign in again with your password."
   },
+  "invitation": {
+    "wrongAccountTitle": "Invitation pending",
+    "wrongAccountMessage": "This invitation is for {{email}}. Sign out to continue with that account.",
+    "switchAccount": "Switch account"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "calendar": "Calendar",

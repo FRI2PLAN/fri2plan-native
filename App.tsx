@@ -20,7 +20,7 @@ import OnboardingScreen from './screens/OnboardingScreen';
 import SplashScreen from './screens/SplashScreen';
 import FamilyLogoIntro from './components/FamilyLogoIntro';
 import FamilyLoadingScreen from './components/FamilyLoadingScreen';
-import { StyleSheet, Platform, AppState, InteractionManager, View } from 'react-native';
+import { Alert, StyleSheet, Platform, AppState, InteractionManager, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
@@ -39,6 +39,7 @@ import { IAPProvider } from './contexts/IAPContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import * as Notifications from 'expo-notifications';
 import { Linking } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 // ─── Store global pour les deep links Google Calendar ────────────────────────
 // Permet de capturer les deep links avant que CalendarScreen soit monté
@@ -51,6 +52,8 @@ export const pendingSubscriptionSuccess = { triggered: false };
 // ─── Store global pour le deep link invitation ────────────────────────────────
 // Capturé avant que React soit monté (getInitialURL est async)
 export const pendingInviteCode = { code: null as string | null };
+export const pendingInviteEmail = { email: null as string | null };
+export const pendingVerifiedInvitation = { value: false };
 
 // Extraire le code d'invitation d'une URL
 function extractInviteCode(url: string | null): string | null {
@@ -60,6 +63,17 @@ function extractInviteCode(url: string | null): string | null {
     // et fri2plan://invitation/{code}
     const match = url.match(/\/invitation\/([^/?#]+)/);
     if (match) return decodeURIComponent(match[1]);
+    const queryMatch = url.match(/[?&]invite=([^&#]+)/);
+    if (queryMatch) return decodeURIComponent(queryMatch[1]);
+  } catch {}
+  return null;
+}
+
+function extractInviteEmail(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const match = url.match(/[?&]email=([^&#]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
   } catch {}
   return null;
 }
@@ -75,6 +89,8 @@ Linking.getInitialURL().then((url) => {
   const inviteCode = extractInviteCode(url);
   if (inviteCode) {
     pendingInviteCode.code = inviteCode;
+    pendingInviteEmail.email = extractInviteEmail(url);
+    pendingVerifiedInvitation.value = /[?&]verified=1(?:[&#]|$)/.test(url || '');
     console.log('[DeepLink] invitation code capturé au démarrage:', inviteCode);
   }
 }).catch(() => {});
@@ -95,6 +111,8 @@ Linking.addEventListener('url', (event) => {
   const inviteCode = extractInviteCode(event.url);
   if (inviteCode) {
     pendingInviteCode.code = inviteCode;
+    pendingInviteEmail.email = extractInviteEmail(event.url);
+    pendingVerifiedInvitation.value = /[?&]verified=1(?:[&#]|$)/.test(event.url);
     console.log('[DeepLink] invitation code reçu (app active):', inviteCode);
   }
 });
@@ -259,7 +277,10 @@ function AppContent() {
     pendingInviteCode.code || undefined
   );
   // Email associé à l'invitation (récupéré via invitations.getByCode)
-  const [inviteEmailFromLink, setInviteEmailFromLink] = useState<string | undefined>(undefined);
+  const [inviteEmailFromLink, setInviteEmailFromLink] = useState<string | undefined>(
+    pendingInviteEmail.email || undefined,
+  );
+  const [inviteHasExistingAccount, setInviteHasExistingAccount] = useState(pendingVerifiedInvitation.value);
   // Vérification de version au démarrage
   const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
   const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
@@ -295,7 +316,10 @@ function AppContent() {
       const code = extractInviteCode(event.url);
       if (code) {
         setInviteCodeFromLink(code);
-        setInviteEmailFromLink(undefined); // sera rechargé via useEffect
+        setInviteEmailFromLink(extractInviteEmail(event.url));
+        setInviteHasExistingAccount(
+          /[?&]verified=1(?:[&#]|$)/.test(event.url),
+        );
         console.log('[DeepLink] invitation code mis à jour dans AppContent:', code);
       }
     });
@@ -370,7 +394,12 @@ function AppContent() {
       <InvitationHandler
         inviteCode={inviteCodeFromLink}
         isAuthenticated={isAuthenticated}
-        onEmailFound={(email) => setInviteEmailFromLink(email)}
+        currentUserEmail={user?.email ?? undefined}
+        onInvitationFound={({ email, hasExistingAccount }) => {
+          setInviteEmailFromLink(email);
+          setInviteHasExistingAccount(hasExistingAccount);
+        }}
+        onSwitchAccount={effectiveLogout}
         onFamilyJoined={() => {
           setInviteCodeFromLink(undefined);
           setInviteEmailFromLink(undefined);
@@ -413,7 +442,7 @@ function AppContent() {
           ) : (
             <LoginScreen
               initialInviteCode={inviteCodeFromLink}
-              initialScreenMode={inviteCodeFromLink ? 'register' : undefined}
+              initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : undefined}
               isEmailInvitation={!!inviteCodeFromLink}
               initialEmail={inviteEmailFromLink}
             />
@@ -488,14 +517,19 @@ function VerifyEmailHandler({ login }: { login: (user: any, token: string) => Pr
 function InvitationHandler({
   inviteCode,
   isAuthenticated,
-  onEmailFound,
+  currentUserEmail,
+  onInvitationFound,
+  onSwitchAccount,
   onFamilyJoined,
 }: {
   inviteCode: string | undefined;
   isAuthenticated: boolean;
-  onEmailFound: (email: string) => void;
+  currentUserEmail?: string;
+  onInvitationFound: (invitation: { email: string; hasExistingAccount: boolean }) => void;
+  onSwitchAccount: () => Promise<void>;
   onFamilyJoined: () => void;
 }) {
+  const { t } = useTranslation();
   const getByCodeQuery = trpc.invitations.getByCode.useQuery(
     { code: inviteCode! },
     {
@@ -510,18 +544,38 @@ function InvitationHandler({
   // Quand on récupère l'invitation, pré-remplir l'email
   useEffect(() => {
     if ((getByCodeQuery.data as any)?.email) {
-      onEmailFound((getByCodeQuery.data as any).email);
+      onInvitationFound({
+        email: (getByCodeQuery.data as any).email,
+        hasExistingAccount: Boolean((getByCodeQuery.data as any).hasExistingAccount),
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(getByCodeQuery.data as any)?.email]);
+  }, [(getByCodeQuery.data as any)?.email, (getByCodeQuery.data as any)?.hasExistingAccount]);
 
   // Si l'utilisateur est déjà connecté et qu'un code d'invitation arrive
   const acceptedRef = useRef(false);
+  const accountPromptedRef = useRef(false);
   useEffect(() => {
     if (!inviteCode || !isAuthenticated || acceptedRef.current) return;
     if (!getByCodeQuery.data) return;
     const inv = getByCodeQuery.data as any;
     if (inv.status !== 'pending') return;
+    if (currentUserEmail?.toLowerCase() !== inv.email?.toLowerCase()) {
+      if (accountPromptedRef.current) return;
+      accountPromptedRef.current = true;
+      Alert.alert(
+        t('invitation.wrongAccountTitle'),
+        t('invitation.wrongAccountMessage', { email: inv.email }),
+        [
+          { text: t('common.cancel'), style: 'cancel', onPress: onFamilyJoined },
+          {
+            text: t('invitation.switchAccount'),
+            onPress: () => { void onSwitchAccount(); },
+          },
+        ],
+      );
+      return;
+    }
     acceptedRef.current = true;
     acceptByCodeMutation.mutateAsync({ code: inviteCode })
       .then(() => {
@@ -534,7 +588,7 @@ function InvitationHandler({
         console.warn('[Invitation] Erreur acceptation automatique:', err.message);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inviteCode, isAuthenticated, getByCodeQuery.data]);
+  }, [inviteCode, isAuthenticated, currentUserEmail, getByCodeQuery.data, onFamilyJoined, onSwitchAccount, t]);
 
   return null;
 }

@@ -91,6 +91,11 @@
     "sessionExpired": "Sitzung abgelaufen",
     "sessionExpiredMessage": "Bitte melden Sie sich erneut mit Ihrem Passwort an."
   },
+  "invitation": {
+    "wrongAccountTitle": "Einladung steht aus",
+    "wrongAccountMessage": "Diese Einladung ist für {{email}} bestimmt. Melden Sie sich ab, um mit diesem Konto fortzufahren.",
+    "switchAccount": "Konto wechseln"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "calendar": "Kalender",

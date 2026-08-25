@@ -1051,6 +1051,11 @@
     "joinInviteHint": "Introduce el código de invitación que recibiste de un miembro de la familia.",
     "accessApp": "Acceder a la aplicación"
   },
+  "invitation": {
+    "wrongAccountTitle": "Invitación pendiente",
+    "wrongAccountMessage": "Esta invitación es para {{email}}. Cierra sesión para continuar con esa cuenta.",
+    "switchAccount": "Cambiar de cuenta"
+  },
   "navigation": {
     "dashboard": "Tablero",
     "calendar": "Calendario",

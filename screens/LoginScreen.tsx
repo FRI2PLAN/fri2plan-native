@@ -80,7 +80,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
   const { t } = useTranslation();
   const { login } = useAuth();
   const { setActiveFamilyId } = useFamily();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -96,6 +96,13 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
   const [emailNotVerified, setEmailNotVerified] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+
+  useEffect(() => {
+    if (!initialInviteCode) return;
+    setPendingInviteCode(initialInviteCode);
+    setScreenMode(initialScreenMode || 'login');
+    if (initialEmail) setEmail(initialEmail);
+  }, [initialEmail, initialInviteCode, initialScreenMode]);
 
   // Initialisation biométrie au démarrage
   useEffect(() => {
