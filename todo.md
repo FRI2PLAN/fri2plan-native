@@ -1812,3 +1812,5 @@ components/
 - [ ] Concevoir un accès d’administration séparé, réservé au superadmin, sans réintroduire le WebView dans le parcours utilisateur.
 - [ ] Permettre de partager et rouvrir un lien d’invitation WhatsApp tant qu’il est en attente et non expiré.
 - [x] Gérer explicitement les anciennes invitations lors de la réutilisation d’une adresse de test après suppression de son compte.
+- [ ] Vérifier et corriger la reconnaissance Android de l’application installée pour les liens d’invitation.
+- [ ] Configurer les Android App Links HTTPS et la vérification de domaine pour ouvrir directement FRI2PLAN depuis une invitation.
