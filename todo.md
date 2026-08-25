@@ -1804,3 +1804,6 @@ components/
 - [ ] Corriger les rappels futurs afin qu’ils utilisent la langue de profil synchronisée, sans conserver une traduction française obsolète.
 - [x] Vérifier les formulations et signes de ponctuation espagnols dans les écrans de connexion et le Centre d’aide.
 - [ ] Reproduire les parcours signalés après installation de l’OTA avant de conclure à une régression non couverte par la mise à jour.
+- [x] Ouvrir automatiquement l’inscription préremplie depuis un lien d’invitation pour un utilisateur non connecté.
+- [x] Accepter le cercle d’origine après vérification e-mail et connexion, sans afficher la création de cercle.
+- [x] Corriger les liens universels d’invitation afin de privilégier l’application Android/iOS installée avant la version web.

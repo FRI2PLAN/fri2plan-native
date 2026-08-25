@@ -89,29 +89,12 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
     }
   };
 
-  // Mutation pour accepter l'invitation par code (table invitations) après inscription
-  const acceptInvitationMutation = trpc.invitations.acceptByCodeWithUserId.useMutation({
-    onSuccess: (data) => {
-      console.log('[Invitation] Famille rejointe après inscription:', data.familyId);
-    },
-    onError: (error) => {
-      console.error('[Invitation] Erreur acceptation invitation:', error);
-      // Ne pas bloquer — l'utilisateur est quand même inscrit
-    },
-  });
-
   // tRPC mutation for auto-login after registration
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
       if (data?.user && data?.token) {
-        // Si invitation email, accepter l'invitation avec l'userId nouvellement créé
-        if (isEmailInvitation && inviteCode && data.user?.id) {
-          try {
-            await acceptInvitationMutation.mutateAsync({ code: inviteCode, userId: data.user.id });
-          } catch (e) {
-            console.error('[Invitation] Erreur acceptation:', e);
-          }
-        }
+        // Le serveur a déjà accepté l’invitation unique pendant l’inscription.
+        // La vérification e-mail peut donc ouvrir une nouvelle session sans perdre le cercle.
         await login(data.user, data.token);
       }
       setLoading(false);
@@ -129,9 +112,8 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
   // tRPC mutation for registration
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
-      // Pour les invitations email, ne pas passer inviteCode à register
-      // (register utilise families.inviteCode, pas invitations.invitationCode)
-      // L'acceptation se fait dans loginMutation.onSuccess via acceptByCodeWithUserId
+      // Le serveur distingue maintenant les codes d’invitation uniques et
+      // rattache le compte au cercle avant l’envoi du mail de vérification.
       loginMutation.mutate({ email, password, rememberMe: true });
     },
     onError: (error) => {
