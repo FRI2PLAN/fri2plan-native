@@ -1814,3 +1814,5 @@ components/
 - [x] Gérer explicitement les anciennes invitations lors de la réutilisation d’une adresse de test après suppression de son compte.
 - [ ] Vérifier et corriger la reconnaissance Android de l’application installée pour les liens d’invitation.
 - [ ] Configurer les Android App Links HTTPS et la vérification de domaine pour ouvrir directement FRI2PLAN depuis une invitation.
+- [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
+- [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.

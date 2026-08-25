@@ -18,4 +18,12 @@ describe('Cercle actif — isolation locale par utilisateur', () => {
     expect(familyContext).toContain('[ACTIVE_FAMILY_HEADER_KEY, String(id)]');
     expect(familyContext).toContain('isReady: boolean;');
   });
+
+  it('écarte un cercle local supprimé au profit d’un cercle encore actif du compte', () => {
+    expect(familyContext).toContain('trpc.family.list.useQuery(');
+    expect(familyContext).toContain('const storedFamilyIsAvailable =');
+    expect(familyContext).toContain('availableFamilies.some((family) => family.id === storedId)');
+    expect(familyContext).toContain('const nextFamilyId = storedFamilyIsAvailable');
+    expect(familyContext).toContain('await AsyncStorage.multiRemove([storageKey, ACTIVE_FAMILY_HEADER_KEY]);');
+  });
 });
