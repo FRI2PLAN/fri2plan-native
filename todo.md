@@ -1823,8 +1823,9 @@ components/
 - [x] Isoler le profil preview sur un canal OTA `preview` distinct de la production.
 - [ ] Construire une APK preview Android dédiée à la validation des invitations.
 - [ ] Valider le parcours complet par e-mail, WhatsApp/SMS et code manuel avant toute OTA production.
-- [ ] Corriger la reprise après vérification e-mail ou WhatsApp lorsqu’elle ouvre encore l’inscription au lieu de la connexion préremplie.
-- [ ] Afficher et rendre copiable le code alphanumérique du cercle depuis sa fiche détaillée.
+- [x] Corriger la reprise après vérification e-mail ou WhatsApp lorsqu’elle ouvre encore l’inscription au lieu de la connexion préremplie.
+- [x] Afficher et rendre copiable le code alphanumérique du cercle depuis sa fiche détaillée.
+- [x] Afficher la saisie d’adresse d’invitation entièrement au-dessus du clavier Android.
 - [x] Partager par WhatsApp uniquement le lien d’invitation nominative, sans code dans le message.
 - [x] Afficher, copier et partager séparément le code générique du cercle depuis sa fiche détaillée.
 - [x] Garantir que « Rejoindre un cercle » consomme uniquement le code générique de cercle, jamais le code nominatif d’invitation.

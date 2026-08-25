@@ -25,6 +25,12 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(register).not.toContain('acceptInvitationMutation');
   });
 
+  it('relit une URL initiale vérifiée pour ouvrir la connexion invitée au démarrage', () => {
+    expect(app).toContain('Linking.getInitialURL().then(applyInvitationUrl)');
+    expect(app).toContain('const verifiedInvitation = /[?&]verified=1');
+    expect(app).toContain('setInviteHasExistingAccount(verifiedInvitation)');
+  });
+
   it('demande un changement de compte au lieu d’accepter une invitation destinée à une autre adresse', () => {
     expect(app).toContain("currentUserEmail?.toLowerCase() !== inv.email?.toLowerCase()");
     expect(app).toContain("t('invitation.switchAccount')");
@@ -39,5 +45,11 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(members).toContain('Dans l’application, choisis « Rejoindre un cercle » puis colle ce code.');
     expect(members).toContain('Le code de cercle est distinct du code d\'invitation nominative.');
     expect(members).toContain('https://app.fri2plan.ch/invitation/${code}');
+  });
+
+  it('remonte la saisie d’invitation au-dessus du clavier Android', () => {
+    expect(members).toContain('KeyboardAvoidingView');
+    expect(members).toContain("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}");
+    expect(members).toContain('modalDismissArea');
   });
 });

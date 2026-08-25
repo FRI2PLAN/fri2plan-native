@@ -10,6 +10,8 @@ import {
   Alert,
   Share,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
@@ -701,9 +703,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
       {/* ── MODAL INVITATION ── */}
       <Modal visible={showInviteModal} transparent animationType="slide" onRequestClose={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
-        <Pressable style={styles.modalOverlay} onPress={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
-          <Pressable onPress={e => e.stopPropagation()}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Pressable style={styles.modalDismissArea} onPress={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
+            <Pressable onPress={e => e.stopPropagation()}>
+            <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('members.inviteMember')}</Text>
             {!generatedCode ? (
               <>
@@ -759,9 +762,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 </TouchableOpacity>
               </>
             )}
-          </View>
+            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── MODAL ÉDITION PROFIL (tous les users) ── */}
@@ -1175,6 +1179,7 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalDismissArea: { flex: 1, justifyContent: 'flex-end' },
   modalContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 4, textAlign: 'center' },
   modalSubtitle: { fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', textAlign: 'center', marginBottom: 16 },

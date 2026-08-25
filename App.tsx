@@ -310,21 +310,26 @@ function AppContent() {
     return () => { clearTimeout(hideNative); clearTimeout(timer); };
   }, []);
 
-  // Écouter les deep links d'invitation quand l'app est déjà ouverte (arrière-plan)
+  // Traiter aussi l’URL qui lance l’application : sans cette lecture initiale,
+  // un retour après vérification pouvait conserver l’ancien écran d’inscription.
+  const applyInvitationUrl = useCallback((url: string | null) => {
+    const code = extractInviteCode(url);
+    if (!code) return;
+    const verifiedInvitation = /[?&]verified=1(?:[&#]|$)/.test(url || '');
+    setInviteCodeFromLink(code);
+    setInviteEmailFromLink(extractInviteEmail(url));
+    setInviteHasExistingAccount(verifiedInvitation);
+    console.log('[DeepLink] invitation code appliqué dans AppContent:', code, { verifiedInvitation });
+  }, []);
+
+  // Écouter l'URL qui lance l'app et celles reçues ensuite en arrière-plan.
   useEffect(() => {
+    Linking.getInitialURL().then(applyInvitationUrl).catch(() => {});
     const subscription = Linking.addEventListener('url', (event) => {
-      const code = extractInviteCode(event.url);
-      if (code) {
-        setInviteCodeFromLink(code);
-        setInviteEmailFromLink(extractInviteEmail(event.url));
-        setInviteHasExistingAccount(
-          /[?&]verified=1(?:[&#]|$)/.test(event.url),
-        );
-        console.log('[DeepLink] invitation code mis à jour dans AppContent:', code);
-      }
+      applyInvitationUrl(event.url);
     });
     return () => subscription.remove();
-  }, []);
+  }, [applyInvitationUrl]);
 
   // Ne recréer le client tRPC QUE quand le token change
   // activeFamilyId est lu dynamiquement depuis AsyncStorage dans chaque requête (lib/trpc.ts)
