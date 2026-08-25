@@ -402,7 +402,10 @@ function AppContent() {
         currentUserEmail={user?.email ?? undefined}
         onInvitationFound={({ email, hasExistingAccount }) => {
           setInviteEmailFromLink(email);
-          setInviteHasExistingAccount(hasExistingAccount);
+          // Après vérification e-mail, toujours revenir sur la connexion. La
+          // réponse de l'invitation indique encore qu'il n'existait pas de
+          // compte au moment de l'envoi, mais ce compte vient d'être créé.
+          setInviteHasExistingAccount((wasVerified) => wasVerified || hasExistingAccount);
         }}
         onSwitchAccount={effectiveLogout}
         onFamilyJoined={() => {

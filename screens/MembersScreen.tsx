@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import * as Clipboard from 'expo-clipboard';
 import FreemiumLimitModal from '../components/FreemiumLimitModal';
 import MemberAvatar from '../components/MemberAvatar';
 
@@ -240,13 +241,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
 
   // Handlers
   const handleCopyCircleCode = async (code: string) => {
-    try {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      Clipboard.setString(code);
-      Alert.alert('✅', 'Code du cercle copié dans le presse-papier.');
-    } catch {
-      Alert.alert('Code du cercle', code);
-    }
+    if (!code) return;
+    await Clipboard.setStringAsync(code);
+    Alert.alert('✅', 'Code du cercle copié dans le presse-papier.');
   };
 
   const handleShareInvitationLink = async (code: string) => {
@@ -661,15 +658,8 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   <View style={styles.invitationRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.invitationEmail} numberOfLines={1}>{inv.email}</Text>
-                      <Text style={styles.invitationCode} numberOfLines={1}>{inv.invitationCode}</Text>
                     </View>
                     <Text style={styles.invitationRole}>{inv.role === 'admin' ? '👑' : '👤'}</Text>
-                    <TouchableOpacity onPress={() => handleCopyCode(inv.invitationCode)} style={styles.invActionBtn}>
-                      <Text style={styles.invActionIcon}>📋</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleShareCode(inv.invitationCode)} style={styles.invActionBtn}>
-                      <Text style={styles.invActionIcon}>📤</Text>
-                    </TouchableOpacity>
                     {currentUserIsAdmin && (
                       <TouchableOpacity
                         style={styles.invActionBtn}
