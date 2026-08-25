@@ -31,9 +31,13 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(app).toContain('onSwitchAccount={effectiveLogout}');
   });
 
-  it('partage le lien HTTPS et le code manuel pour les personnes ayant déjà un compte', () => {
-    expect(members).toContain('Tu as déjà un compte ?');
-    expect(members).toContain('saisis ce code : ${code}');
+  it('sépare le lien nominatif du code générique de cercle', () => {
+    expect(members).toContain('handleShareInvitationLink');
+    expect(members).toContain('handleShareCircleCode');
+    expect(members).toContain('handleCopyCircleCode');
+    expect(members).toContain('Code du cercle copié dans le presse-papier.');
+    expect(members).toContain('Dans l’application, choisis « Rejoindre un cercle » puis colle ce code.');
+    expect(members).toContain('Le code de cercle est distinct du code d\'invitation nominative.');
     expect(members).toContain('https://app.fri2plan.ch/invitation/${code}');
   });
 });

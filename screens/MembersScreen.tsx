@@ -237,21 +237,31 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   });
 
   // Handlers
-  const handleCopyCode = async (code: string) => {
-    const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
+  const handleCopyCircleCode = async (code: string) => {
     try {
-      await Share.share({ message: inviteLink, title: "Lien d'invitation" });
+      const Clipboard = require('@react-native-clipboard/clipboard').default;
+      Clipboard.setString(code);
+      Alert.alert('✅', 'Code du cercle copié dans le presse-papier.');
     } catch {
-      Alert.alert('Lien', inviteLink);
+      Alert.alert('Code du cercle', code);
     }
   };
 
-  const handleShareCode = async (code: string) => {
+  const handleShareInvitationLink = async (code: string) => {
     const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
     try {
       await Share.share({
-        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nOuvre ce lien pour créer ton compte ou rejoindre le cercle :\n${inviteLink}\n\nTu as déjà un compte ? Dans FRI2PLAN, choisis « Rejoindre un cercle » puis saisis ce code : ${code}`,
+        message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nOuvre ce lien pour créer ton compte et rejoindre le cercle :\n${inviteLink}`,
         title: 'Invitation FRI2PLAN',
+      });
+    } catch (e) {}
+  };
+
+  const handleShareCircleCode = async (code: string) => {
+    try {
+      await Share.share({
+        message: `Rejoins mon cercle FRI2PLAN avec ce code : ${code}\n\nDans l’application, choisis « Rejoindre un cercle » puis colle ce code.`,
+        title: 'Code de cercle FRI2PLAN',
       });
     } catch (e) {}
   };
@@ -477,9 +487,21 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               <Text style={styles.headerIcon}>✏️</Text>
             </TouchableOpacity>
           )}
-          {/* Partager le code */}
-          <TouchableOpacity onPress={() => handleShareCode(activeFamily?.inviteCode || '')} style={styles.headerIconBtn}>
+          {/* Partager le code générique de cercle */}
+          <TouchableOpacity onPress={() => handleShareCircleCode(activeFamily?.inviteCode || '')} style={styles.headerIconBtn}>
             <Text style={styles.headerIcon}>📤</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Le code de cercle est distinct du code d'invitation nominative. */}
+      <View style={styles.circleCodeDetailCard}>
+        <Text style={styles.circleCodeDetailLabel}>{t('members.circleCode')}</Text>
+        <Text style={styles.circleCodeDetailHint}>Pour une personne qui possède déjà un compte</Text>
+        <View style={styles.circleCodeDetailRow}>
+          <Text selectable style={styles.circleCodeDetailValue}>{activeFamily?.inviteCode || ''}</Text>
+          <TouchableOpacity onPress={() => handleCopyCircleCode(activeFamily?.inviteCode || '')} style={styles.circleCodeCopyBtn}>
+            <Text style={styles.circleCodeCopyBtnText}>📋 Copier</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -727,14 +749,9 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                 <View style={styles.successBanner}>
                   <Text style={styles.successText}>✅ Invitation créée !</Text>
                 </View>
-                <Text style={styles.modalLabel}>Code d'invitation</Text>
-                <View style={styles.codeBox}>
-                  <Text style={styles.codeBoxText} numberOfLines={1} adjustsFontSizeToFit>{generatedCode}</Text>
-                  <TouchableOpacity onPress={() => handleCopyCode(generatedCode)} style={styles.invActionBtn}>
-                    <Text style={styles.invActionIcon}>📋</Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity style={styles.shareFullBtn} onPress={() => handleShareCode(generatedCode)}>
+                <Text style={styles.modalLabel}>Lien d'invitation nominative</Text>
+                <Text style={styles.modalSubtitle}>Partagez-le avec la personne invitée. Le code du cercle reste disponible séparément dans sa fiche.</Text>
+                <TouchableOpacity style={styles.shareFullBtn} onPress={() => handleShareInvitationLink(generatedCode)}>
                   <Text style={styles.shareFullBtnText}>📤 Partager via WhatsApp / SMS</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowInviteModal(false); setGeneratedCode(null); setInviteEmail(''); }}>
@@ -1073,6 +1090,13 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
   tribeEyebrow: { fontSize: 11, fontWeight: '800', color: '#7C3AED', letterSpacing: 0.6, textTransform: 'uppercase' },
   tribeTitle: { fontSize: 22, fontWeight: '800', color: isDark ? '#FFFFFF' : '#2A1B3D', marginTop: 4 },
   tribeSubtitle: { fontSize: 13, color: isDark ? '#D8C7EE' : '#6D5A82', marginTop: 3 },
+  circleCodeDetailCard: { marginHorizontal: 14, marginBottom: 12, borderRadius: 16, padding: 14, backgroundColor: isDark ? '#1f2937' : '#fff', borderWidth: 1, borderColor: isDark ? '#374151' : '#e5e7eb' },
+  circleCodeDetailLabel: { fontSize: 13, fontWeight: '800', color: isDark ? '#f9fafb' : '#1f2937' },
+  circleCodeDetailHint: { fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginTop: 3, marginBottom: 10 },
+  circleCodeDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  circleCodeDetailValue: { flex: 1, fontFamily: 'monospace', fontSize: 14, fontWeight: '700', color: '#7c3aed', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: isDark ? '#2b2140' : '#f5f3ff' },
+  circleCodeCopyBtn: { backgroundColor: '#7c3aed', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10 },
+  circleCodeCopyBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
 
   // Member card
   memberCard: {
