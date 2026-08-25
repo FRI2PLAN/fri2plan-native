@@ -1807,3 +1807,8 @@ components/
 - [x] Ouvrir automatiquement l’inscription préremplie depuis un lien d’invitation pour un utilisateur non connecté.
 - [x] Accepter le cercle d’origine après vérification e-mail et connexion, sans afficher la création de cercle.
 - [x] Corriger les liens universels d’invitation afin de privilégier l’application Android/iOS installée avant la version web.
+- [ ] Faire ouvrir les liens d’invitation HTTPS dans l’application Android installée au lieu du WebView.
+- [x] Sortir le WebView utilisateur du parcours d’invitation et d’accès aux fonctionnalités gratuites.
+- [ ] Concevoir un accès d’administration séparé, réservé au superadmin, sans réintroduire le WebView dans le parcours utilisateur.
+- [ ] Permettre de partager et rouvrir un lien d’invitation WhatsApp tant qu’il est en attente et non expiré.
+- [x] Gérer explicitement les anciennes invitations lors de la réutilisation d’une adresse de test après suppression de son compte.
