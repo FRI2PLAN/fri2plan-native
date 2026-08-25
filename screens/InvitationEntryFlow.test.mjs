@@ -19,6 +19,8 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(login).toContain("setScreenMode(initialScreenMode || 'login');");
     expect(login).toContain('if (initialEmail) setEmail(initialEmail);');
     expect(register).toContain("const [inviteCode, setInviteCode] = useState(initialInviteCode || '');");
+    expect(register).toContain('if (initialEmail) setEmail(initialEmail);');
+    expect(register).toContain('if (initialInviteCode) {');
     expect(register).toContain('inviteCode: inviteCode || undefined,');
     expect(register).not.toContain('acceptInvitationMutation');
   });

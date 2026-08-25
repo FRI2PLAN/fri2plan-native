@@ -46,6 +46,14 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  useEffect(() => {
+    if (initialEmail) setEmail(initialEmail);
+    if (initialInviteCode) {
+      setInviteCode(initialInviteCode);
+      setShowInviteCode(true);
+    }
+  }, [initialEmail, initialInviteCode]);
+
   // Initialiser Google Sign-In
   useEffect(() => {
     GoogleSignin.configure({
