@@ -467,7 +467,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
               </View>
               </View>
               </Pressable>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
         </Modal>
       </View>
