@@ -433,9 +433,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </Modal>
 
         {/* ── MODAL REJOINDRE CERCLE ── */}
-        <Modal visible={showJoinCircleModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+        <Modal
+          visible={showJoinCircleModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowJoinCircleModal(false)}
+        >
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <Pressable style={styles.modalDismissArea} onPress={() => setShowJoinCircleModal(false)}>
+              <Pressable onPress={event => event.stopPropagation()}>
+              <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{t('members.joinCircle')}</Text>
               <Text style={styles.modalSubtitle}>{t('members.enterInviteCode')}</Text>
               <Text style={styles.modalLabel}>{t('members.inviteCodeLabel')}</Text>
@@ -458,8 +465,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   <Text style={styles.confirmBtnText}>{joinFamilyMutation.isPending ? '...' : t('members.joinCircleAction')}</Text>
                 </TouchableOpacity>
               </View>
+              </View>
+              </Pressable>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     );

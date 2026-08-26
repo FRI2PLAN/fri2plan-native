@@ -1833,7 +1833,9 @@ components/
 - [x] Garantir que le bouton « Continuer dans FRI2PLAN » ouvre toujours la connexion, même sans préremplissage d’adresse.
 - [x] Supprimer l’écran noir et copier exactement le code générique visible dans la fiche de cercle.
 - [ ] Intégrer une copie native fiable du code de cercle et fournir la preview Android correspondante.
-- [ ] Construire une nouvelle preview Android incluant le module de presse-papiers Expo pour valider la copie en un clic.
+- [ ] Construire et tester une nouvelle preview Android incluant le module de presse-papiers Expo pour valider la copie en un clic.
+- [x] Conserver la page de confirmation e-mail jusqu’au clic explicite sur « Continuer dans FRI2PLAN », sans redirection automatique vers le site.
+- [x] Remonter la saisie du code de cercle au-dessus du clavier Android dans la modale « Rejoindre un cercle ».
 - [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
 - [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.

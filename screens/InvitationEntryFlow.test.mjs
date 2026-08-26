@@ -52,9 +52,11 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(members).not.toContain('handleShareCode(inv.invitationCode)');
   });
 
-  it('remonte la saisie d’invitation au-dessus du clavier Android', () => {
+  it('remonte les saisies d’invitation et de code au-dessus du clavier Android', () => {
     expect(members).toContain('KeyboardAvoidingView');
     expect(members).toContain("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}");
     expect(members).toContain('modalDismissArea');
+    expect(members).toContain('visible={showJoinCircleModal}');
+    expect(members).toContain('onRequestClose={() => setShowJoinCircleModal(false)}');
   });
 });
