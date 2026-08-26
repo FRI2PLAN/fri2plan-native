@@ -54,6 +54,10 @@ export const pendingSubscriptionSuccess = { triggered: false };
 export const pendingInviteCode = { code: null as string | null };
 export const pendingInviteEmail = { email: null as string | null };
 export const pendingVerifiedInvitation = { value: false };
+export const pendingVerifiedLogin = {
+  value: false,
+  email: null as string | null,
+};
 
 // Extraire le code d'invitation d'une URL
 function extractInviteCode(url: string | null): string | null {
@@ -78,6 +82,13 @@ function extractInviteEmail(url: string | null): string | null {
   return null;
 }
 
+function isVerifiedLoginUrl(url: string | null): boolean {
+  return Boolean(
+    url?.startsWith('fri2plan://login') &&
+      /[?&]verified=1(?:[&#]|$)/.test(url),
+  );
+}
+
 // Intercepter les deep links dès le démarrage de l'app (avant le splash)
 Linking.getInitialURL().then((url) => {
   if (url && (url.startsWith('fri2plan://google-calendar/oauth-done') || url.startsWith('fri2plan://google-calendar/callback'))) {
@@ -92,6 +103,10 @@ Linking.getInitialURL().then((url) => {
     pendingInviteEmail.email = extractInviteEmail(url);
     pendingVerifiedInvitation.value = /[?&]verified=1(?:[&#]|$)/.test(url || '');
     console.log('[DeepLink] invitation code capturé au démarrage:', inviteCode);
+  } else if (isVerifiedLoginUrl(url)) {
+    pendingVerifiedLogin.value = true;
+    pendingVerifiedLogin.email = extractInviteEmail(url);
+    console.log('[DeepLink] confirmation e-mail sans invitation capturée au démarrage');
   }
 }).catch(() => {});
 
@@ -114,6 +129,10 @@ Linking.addEventListener('url', (event) => {
     pendingInviteEmail.email = extractInviteEmail(event.url);
     pendingVerifiedInvitation.value = /[?&]verified=1(?:[&#]|$)/.test(event.url);
     console.log('[DeepLink] invitation code reçu (app active):', inviteCode);
+  } else if (isVerifiedLoginUrl(event.url)) {
+    pendingVerifiedLogin.value = true;
+    pendingVerifiedLogin.email = extractInviteEmail(event.url);
+    console.log('[DeepLink] confirmation e-mail sans invitation reçue');
   }
 });
 
@@ -281,6 +300,12 @@ function AppContent() {
     pendingInviteEmail.email || undefined,
   );
   const [inviteHasExistingAccount, setInviteHasExistingAccount] = useState(pendingVerifiedInvitation.value);
+  const [loginEmailFromVerification, setLoginEmailFromVerification] = useState<string | undefined>(
+    pendingVerifiedLogin.email || undefined,
+  );
+  const [forceLoginAfterVerification, setForceLoginAfterVerification] = useState(
+    pendingVerifiedLogin.value,
+  );
   // Vérification de version au démarrage
   const { needsUpdate, forceUpdate, storeUrl, latestVersion, isLoading: versionLoading } = useVersionCheck();
   const [updateModalDismissed, setUpdateModalDismissed] = useState(false);
@@ -314,12 +339,22 @@ function AppContent() {
   // un retour après vérification pouvait conserver l’ancien écran d’inscription.
   const applyInvitationUrl = useCallback((url: string | null) => {
     const code = extractInviteCode(url);
-    if (!code) return;
-    const verifiedInvitation = /[?&]verified=1(?:[&#]|$)/.test(url || '');
-    setInviteCodeFromLink(code);
-    setInviteEmailFromLink(extractInviteEmail(url));
-    setInviteHasExistingAccount(verifiedInvitation);
-    console.log('[DeepLink] invitation code appliqué dans AppContent:', code, { verifiedInvitation });
+    if (code) {
+      const verifiedInvitation = /[?&]verified=1(?:[&#]|$)/.test(url || '');
+      setInviteCodeFromLink(code);
+      setInviteEmailFromLink(extractInviteEmail(url));
+      setInviteHasExistingAccount(verifiedInvitation);
+      console.log('[DeepLink] invitation code appliqué dans AppContent:', code, { verifiedInvitation });
+      return;
+    }
+
+    if (isVerifiedLoginUrl(url)) {
+      setInviteCodeFromLink(undefined);
+      setInviteEmailFromLink(undefined);
+      setLoginEmailFromVerification(extractInviteEmail(url) || undefined);
+      setForceLoginAfterVerification(true);
+      console.log('[DeepLink] connexion native demandée après confirmation e-mail');
+    }
   }, []);
 
   // Écouter l'URL qui lance l'app et celles reçues ensuite en arrière-plan.
@@ -450,9 +485,9 @@ function AppContent() {
           ) : (
             <LoginScreen
               initialInviteCode={inviteCodeFromLink}
-              initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : undefined}
+              initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : forceLoginAfterVerification ? 'login' : undefined}
               isEmailInvitation={!!inviteCodeFromLink}
-              initialEmail={inviteEmailFromLink}
+              initialEmail={inviteEmailFromLink || loginEmailFromVerification}
             />
           )}
         </View>

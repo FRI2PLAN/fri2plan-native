@@ -752,7 +752,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   <Text style={styles.successText}>✅ Invitation créée !</Text>
                 </View>
                 <Text style={styles.modalLabel}>Lien d'invitation nominative</Text>
-                <Text style={styles.modalSubtitle}>Partagez-le avec la personne invitée. Le code du cercle reste disponible séparément dans sa fiche.</Text>
+                <Text style={styles.modalSubtitle}>Partagez-le avec la personne invitée.</Text>
                 <TouchableOpacity style={styles.shareFullBtn} onPress={() => handleShareInvitationLink(generatedCode)}>
                   <Text style={styles.shareFullBtnText}>📤 Partager via WhatsApp / SMS</Text>
                 </TouchableOpacity>

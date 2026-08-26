@@ -1840,3 +1840,5 @@ components/
 - [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
 - [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.
+- [x] Appliquer la confirmation e-mail avec bouton « Continuer dans FRI2PLAN » au parcours d’adhésion par code de cercle, sans redirection automatique vers le web.
+- [x] Simplifier le texte de succès de l’invitation en retirant la mention du code de cercle et en centrant le texte restant.

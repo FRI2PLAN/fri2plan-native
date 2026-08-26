@@ -10,7 +10,7 @@ describe('Entrée d’invitation dans l’application mobile', () => {
   it('préserve le code reçu au démarrage et choisit l’inscription ou la connexion selon l’adresse invitée', () => {
     expect(app).toContain("export const pendingInviteCode = { code: null as string | null };");
     expect(app).toContain('pendingInviteCode.code = inviteCode;');
-    expect(app).toContain("initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : undefined}");
+    expect(app).toContain("initialScreenMode={inviteCodeFromLink ? (inviteHasExistingAccount ? 'login' : 'register') : forceLoginAfterVerification ? 'login' : undefined}");
     expect(app).toContain('hasExistingAccount: Boolean((getByCodeQuery.data as any).hasExistingAccount)');
   });
 
@@ -32,6 +32,14 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(app).toContain('setInviteHasExistingAccount((wasVerified) => wasVerified || hasExistingAccount)');
   });
 
+  it('ouvre la connexion native après une confirmation e-mail sans invitation nominative', () => {
+    expect(app).toContain('export const pendingVerifiedLogin = {');
+    expect(app).toContain("url?.startsWith('fri2plan://login')");
+    expect(app).toContain('setForceLoginAfterVerification(true);');
+    expect(app).toContain(": forceLoginAfterVerification ? 'login' : undefined}");
+    expect(app).toContain('initialEmail={inviteEmailFromLink || loginEmailFromVerification}');
+  });
+
   it('demande un changement de compte au lieu d’accepter une invitation destinée à une autre adresse', () => {
     expect(app).toContain("currentUserEmail?.toLowerCase() !== inv.email?.toLowerCase()");
     expect(app).toContain("t('invitation.switchAccount')");
@@ -50,6 +58,8 @@ describe('Entrée d’invitation dans l’application mobile', () => {
     expect(members).toContain('https://app.fri2plan.ch/invitation/${code}');
     expect(members).not.toContain('handleCopyCode(inv.invitationCode)');
     expect(members).not.toContain('handleShareCode(inv.invitationCode)');
+    expect(members).toContain('Partagez-le avec la personne invitée.');
+    expect(members).not.toContain('Le code du cercle reste disponible séparément dans sa fiche.');
   });
 
   it('remonte les saisies d’invitation et de code au-dessus du clavier Android', () => {
