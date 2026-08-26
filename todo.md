@@ -1842,3 +1842,6 @@ components/
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.
 - [x] Appliquer la confirmation e-mail avec bouton « Continuer dans FRI2PLAN » au parcours d’adhésion par code de cercle, sans redirection automatique vers le web.
 - [x] Simplifier le texte de succès de l’invitation en retirant la mention du code de cercle et en centrant le texte restant.
+- [ ] Préparer la version native 1.1.7, cohérente pour Android production et iOS TestFlight.
+- [ ] Valider une build Android 1.1.7 avant soumission Google Play et une build iOS 1.1.7 dans TestFlight avant soumission Apple.
+- [x] Passer uniquement `expo.version` à 1.1.7 en conservant `android.versionCode` à 76 et l’incrément iOS automatique.
