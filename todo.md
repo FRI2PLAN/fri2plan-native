@@ -1842,6 +1842,7 @@ components/
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.
 - [ ] Reconstruire le prototype dev des tâches communes après la réinitialisation de l’environnement, sans publication production.
 - [ ] Valider la création, la progression individuelle, les points, la récurrence et le bundle Android des tâches communes avant OTA preview.
+- [x] Déployer les endpoints serveur dormants des tâches communes sans publier l’interface en production, afin d’autoriser le test EAS preview.
 - [x] Appliquer la confirmation e-mail avec bouton « Continuer dans FRI2PLAN » au parcours d’adhésion par code de cercle, sans redirection automatique vers le web.
 - [x] Simplifier le texte de succès de l’invitation en retirant la mention du code de cercle et en centrant le texte restant.
 - [x] Préparer la version native 1.1.7, cohérente pour Android production et iOS TestFlight.
