@@ -30,6 +30,21 @@ describe('expérience des tâches communes', () => {
   it('conserve les tâches communes dans Mes tâches sans les dupliquer', () => {
     expect(source).toContain("t.assignmentMode === 'shared'");
     expect(source).toContain('(t.participants || []).some');
+    expect(source).toContain('const taskList = useMemo(() => {');
+    expect(source).toContain('const uniqueTasks = new Map<number, any>();');
+    expect(source).toContain("useState<FilterType>('myTasks')");
+  });
+
+  it('laisse une tâche commune accessible à son créateur et aux administrateurs', () => {
+    expect(source).toContain('const canManageSharedTasks = useMemo(() => {');
+    expect(source).toContain("currentMember?.role === 'admin'");
+    expect(source).toContain('t.createdBy === user?.id');
+    expect(source).toContain('|| canManageSharedTasks');
+  });
+
+  it('n’affiche pas une validation globale pour une progression seulement individuelle', () => {
+    expect(source).toContain("(!isSharedTask && isOptimisticallyCompleted)");
+    expect(source).toContain("disabled={isSharedTask && !myParticipation}");
   });
 
   it('expose les contrats de participants partagés', () => {

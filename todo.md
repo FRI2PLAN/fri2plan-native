@@ -1840,8 +1840,11 @@ components/
 - [x] Auditer la membership attendue du compte PP dans le cercle Ixari, sans modifier les données avant confirmation.
 - [x] Corriger l’affichage mobile si un cercle actif renvoyé par le serveur n’est pas chargé après connexion.
 - [x] Réparer la régression de démarrage introduite par l’OTA de récupération du cercle actif, sans effacer le stockage utilisateur.
-- [ ] Reconstruire le prototype dev des tâches communes après la réinitialisation de l’environnement, sans publication production.
-- [ ] Valider la création, la progression individuelle, les points, la récurrence et le bundle Android des tâches communes avant OTA preview.
+- [x] Reconstruire le prototype dev des tâches communes après la réinitialisation de l’environnement, sans publication production.
+- [x] Valider la création, la progression individuelle, les points, la récurrence et le bundle Android des tâches communes avant OTA preview.
+- [x] Remonter les modales Android « Créer un cercle » et « Rejoindre avec un code » au-dessus du clavier sans régression de fermeture.
+- [x] Supprimer le doublon visuel d’une tâche commune après la validation d’un participant.
+- [x] Conserver une tâche commune visible et administrable par son créateur ou administrateur, même s’il n’est pas participant.
 - [x] Déployer les endpoints serveur dormants des tâches communes sans publier l’interface en production, afin d’autoriser le test EAS preview.
 - [x] Appliquer la confirmation e-mail avec bouton « Continuer dans FRI2PLAN » au parcours d’adhésion par code de cercle, sans redirection automatique vers le web.
 - [x] Simplifier le texte de succès de l’invitation en retirant la mention du code de cercle et en centrant le texte restant.

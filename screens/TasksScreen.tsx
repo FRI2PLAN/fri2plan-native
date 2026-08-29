@@ -72,8 +72,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const styles = getStyles(isDark);
 
   // ── Filtres ──
-  const [filter, setFilter] = useState<FilterType>('inProgress');
-  const [favoriteFilter, setFavoriteFilter] = useState<FilterType>('inProgress');
+  const [filter, setFilter] = useState<FilterType>('myTasks');
+  const [favoriteFilter, setFavoriteFilter] = useState<FilterType>('myTasks');
 
   // ── Sections collapsibles ──
   const [overdueExpanded, setOverdueExpanded] = useState(true);
@@ -169,6 +169,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       return true;
     });
   }, [members]);
+  const canManageSharedTasks = useMemo(() => {
+    const currentMember = activeMembers.find((member: any) => member.id === user?.id);
+    return currentMember?.role === 'admin' || currentMember?.familyRole === 'admin';
+  }, [activeMembers, user?.id]);
 
   // ── Sélection multiple (taches terminées) ──
   const [taskSelectionMode, setTaskSelectionMode] = useState(false);
@@ -322,13 +326,18 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   // ── Filtrage ──
-  const overdueTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) < todayStr)
+  const taskList = useMemo(() => {
+    const uniqueTasks = new Map<number, any>();
+    (tasks || []).forEach((task: any) => uniqueTasks.set(Number(task.id), task));
+    return Array.from(uniqueTasks.values());
+  }, [tasks]);
+  const overdueTasks = taskList.filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) < todayStr)
     .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
-  const todayTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) === todayStr);
-  const allTodayTasks = (tasks || []).filter(t => t.dueDate && getDueDateStr(t.dueDate) === todayStr);
+  const todayTasks = taskList.filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) === todayStr);
+  const allTodayTasks = taskList.filter(t => t.dueDate && getDueDateStr(t.dueDate) === todayStr);
   const todayCompletedCount = allTodayTasks.filter(task => task.status === 'completed' || optimisticCompletedTaskIds.has(task.id)).length;
   const todayProgressPercent = allTodayTasks.length > 0 ? Math.round((todayCompletedCount / allTodayTasks.length) * 100) : 0;
-  const upcomingTasks = (tasks || []).filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) >= tomorrowStr)
+  const upcomingTasks = taskList.filter(t => t.status !== 'completed' && t.dueDate && getDueDateStr(t.dueDate) >= tomorrowStr)
     .sort((a, b) => parseLocalDate(a.dueDate!).getTime() - parseLocalDate(b.dueDate!).getTime());
 
   const upcomingGroups: { label: string; dateStr: string; tasks: typeof upcomingTasks }[] = [];
@@ -342,11 +351,18 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   });
 
   const filteredTasks = useMemo(() => {
-    const filtered = (tasks || []).filter(t => {
+    const filtered = taskList.filter(t => {
       // "Mes t\u00e2ches" = assign\u00e9es \u00e0 moi ET non termin\u00e9es (les termin\u00e9es vont dans l'onglet Termin\u00e9)
       // Les tâches datées sont déjà rendues dans En retard, Aujourd'hui ou À venir.
       // Cette liste générale conserve uniquement les tâches personnelles sans date afin d'éviter tout doublon.
-      if (filter === 'myTasks') return (t.assignedTo === user?.id || (t.assignmentMode === 'shared' && (t.participants || []).some((participant: any) => participant.userId === user?.id))) && t.status !== 'completed' && !t.dueDate;
+      if (filter === 'myTasks') {
+        const canSeeSharedTask = t.assignmentMode === 'shared' && (
+          (t.participants || []).some((participant: any) => participant.userId === user?.id)
+          || t.createdBy === user?.id
+          || canManageSharedTasks
+        );
+        return (t.assignedTo === user?.id || canSeeSharedTask) && t.status !== 'completed' && !t.dueDate;
+      }
       return t.status === filter;
     });
     // Trier les t\u00e2ches termin\u00e9es du plus r\u00e9cent au plus ancien
@@ -358,7 +374,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       });
     }
     return filtered;
-  }, [tasks, filter, user?.id]);
+  }, [taskList, filter, user?.id, canManageSharedTasks]);
 
   // ── Actions ──
   const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
@@ -451,7 +467,9 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     const points = Number(task.points) || 0;
     const assignedMember = getMemberById(task.assignedTo);
     const isImportant = task.priority === 'urgent' || task.priority === 'high' || points >= 30;
-    setOptimisticCompletedTaskIds(previous => new Set(previous).add(task.id));
+    if (task.assignmentMode !== 'shared') {
+      setOptimisticCompletedTaskIds(previous => new Set(previous).add(task.id));
+    }
     pendingPointDeltas.current.set(task.id, points);
     pendingCompletionFeedback.current.set(task.id, {
       points,
@@ -492,7 +510,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     const myParticipation = participants.find((participant: any) => participant.userId === user?.id);
     const completedParticipants = participants.filter((participant: any) => participant.status === 'completed');
     const isOptimisticallyCompleted = optimisticCompletedTaskIds.has(task.id);
-    const isCompleted = task.status === 'completed' || isOptimisticallyCompleted;
+    const isCompleted = task.status === 'completed' || (!isSharedTask && isOptimisticallyCompleted);
     return (
       <TouchableOpacity style={[styles.taskCard, isCompleted && styles.taskCardCompleted]} onPress={() => handleTaskPress(task)} activeOpacity={0.75}>
         {/* Barre priorité */}
@@ -502,6 +520,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         <TouchableOpacity
           style={styles.taskCheckbox}
           hitSlop={8}
+          disabled={isSharedTask && !myParticipation}
           onPress={(event) => {
             event.stopPropagation();
             if (isSharedTask ? myParticipation?.status === 'completed' : task.status === 'completed') handleUncompleteTask(task);
@@ -769,8 +788,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       {/* Filtres + bouton + sur la même ligne */}
       <View style={styles.filterContainer}>
         {([
-          { key: 'myTasks' as FilterType, label: t('tasks.myTasks') || 'Mes tâches', count: (tasks || []).filter(t => t.assignedTo === user?.id && t.status !== 'completed').length },
-          { key: 'completed' as FilterType, label: '✓ ' + (t('tasks.completed') || 'Terminé'), count: (tasks || []).filter(t => t.status === 'completed').length },
+          { key: 'myTasks' as FilterType, label: t('tasks.myTasks') || 'Mes tâches', count: taskList.filter(t => {
+            const canSeeSharedTask = t.assignmentMode === 'shared' && (
+              (t.participants || []).some((participant: any) => participant.userId === user?.id)
+              || t.createdBy === user?.id
+              || canManageSharedTasks
+            );
+            return (t.assignedTo === user?.id || canSeeSharedTask) && t.status !== 'completed';
+          }).length },
+          { key: 'completed' as FilterType, label: '✓ ' + (t('tasks.completed') || 'Terminé'), count: taskList.filter(t => t.status === 'completed').length },
         ]).map(({ key, label, count }) => (
           <TouchableOpacity
             key={key}
@@ -797,11 +823,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
               <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => {
-              const completedIds = new Set<number>((tasks || []).filter((task: any) => task.status === 'completed').map((task: any) => Number(task.id)));
+              const completedIds = new Set<number>(taskList.filter((task: any) => task.status === 'completed').map((task: any) => Number(task.id)));
               setSelectedTaskIds(selectedTaskIds.size === completedIds.size ? new Set() : completedIds);
             }} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: isDark ? '#374151' : '#e5e7eb' }}>
               <Text style={{ color: isDark ? '#f9fafb' : '#374151', fontWeight: '600', fontSize: 13 }}>
-                {selectedTaskIds.size === (tasks || []).filter(t => t.status === 'completed').length ? 'Désélectionner tout' : 'Tout sélectionner'}
+                {selectedTaskIds.size === taskList.filter(t => t.status === 'completed').length ? 'Désélectionner tout' : 'Tout sélectionner'}
               </Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }} />

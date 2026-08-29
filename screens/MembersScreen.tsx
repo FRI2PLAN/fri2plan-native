@@ -404,9 +404,16 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         </ScrollView>
 
         {/* ── MODAL NOUVEAU CERCLE ── */}
-        <Modal visible={showNewCircleModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+        <Modal visible={showNewCircleModal} transparent animationType="slide" onRequestClose={() => setShowNewCircleModal(false)}>
+          <KeyboardAvoidingView
+            style={styles.modalOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
+            contentContainerStyle={styles.modalKeyboardContent}
+            keyboardVerticalOffset={0}
+          >
+            <Pressable style={styles.modalDismissArea} onPress={() => setShowNewCircleModal(false)}>
+              <Pressable onPress={event => event.stopPropagation()}>
+                <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{t('members.createNewCircle')}</Text>
               <Text style={styles.modalSubtitle}>{t('members.createCircleDesc')}</Text>
               <Text style={styles.modalLabel}>{t('members.circleName')}</Text>
@@ -428,8 +435,10 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
                   <Text style={styles.confirmBtnText}>{createFamilyMutation.isPending ? '...' : t('members.createCircleAction')}</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
+                </View>
+              </Pressable>
+            </Pressable>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* ── MODAL REJOINDRE CERCLE ── */}
@@ -439,7 +448,12 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
           animationType="slide"
           onRequestClose={() => setShowJoinCircleModal(false)}
         >
-          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <KeyboardAvoidingView
+            style={styles.modalOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
+            contentContainerStyle={styles.modalKeyboardContent}
+            keyboardVerticalOffset={0}
+          >
             <Pressable style={styles.modalDismissArea} onPress={() => setShowJoinCircleModal(false)}>
               <Pressable onPress={event => event.stopPropagation()}>
               <View style={styles.modalContent}>
@@ -1178,6 +1192,7 @@ function getStyles(isDark: boolean) { return StyleSheet.create({
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalKeyboardContent: { flex: 1, justifyContent: 'flex-end' },
   modalDismissArea: { flex: 1, justifyContent: 'flex-end' },
   modalContent: { backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 4, textAlign: 'center' },
