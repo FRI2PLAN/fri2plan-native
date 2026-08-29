@@ -234,7 +234,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
       utils.family.list.invalidate();
       setShowJoinCircleModal(false);
       setJoinCode('');
-      Alert.alert('✅', 'Vous avez rejoint le cercle !');
+      Alert.alert(t('members.joinCircleSuccessTitle'), t('members.joinCircleSuccessMessage'));
     },
     onError: (err: any) => Alert.alert('Erreur', err.message),
   });
@@ -243,7 +243,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   const handleCopyCircleCode = async (code: string) => {
     if (!code) return;
     await Clipboard.setStringAsync(code);
-    Alert.alert('✅', 'Code du cercle copié dans le presse-papier.');
+    Alert.alert(t('members.circleCodeCopiedTitle'), t('members.circleCodeCopiedMessage'));
   };
 
   const handleShareInvitationLink = async (code: string) => {
@@ -450,8 +450,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
         >
           <KeyboardAvoidingView
             style={styles.modalOverlay}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
-            contentContainerStyle={styles.modalKeyboardContent}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
           >
             <Pressable style={styles.modalDismissArea} onPress={() => setShowJoinCircleModal(false)}>

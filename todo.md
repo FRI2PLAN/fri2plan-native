@@ -1858,3 +1858,6 @@ components/
 - [x] Passer uniquement `expo.version` à 1.1.7 en conservant `android.versionCode` à 76 et l’incrément iOS automatique.
 - [x] Clarifier dans les cinq langues le titre et le texte d’aide affichés lors de la modification du nombre de participants d’une tâche commune.
 - [x] Renvoyer un code d’erreur serveur stable lorsqu’un participant ayant terminé est retiré, puis l’afficher localisé dans les cinq langues de l’application.
+- [x] Transmettre la langue active lors de l’inscription afin que l’e-mail de confirmation et sa page web soient envoyés dans la langue de l’utilisateur.
+- [x] Localiser dans les cinq langues le message de confirmation après la copie d’un code de cercle.
+- [x] Corriger la modale Android « Rejoindre avec un code » afin que le champ reste visible au-dessus du clavier lorsqu’il reçoit le focus.

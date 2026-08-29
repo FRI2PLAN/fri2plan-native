@@ -2,6 +2,7 @@ import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Localization from 'expo-localization';
 import type { AppRouter } from './types';
 
 export const trpc = createTRPCReact<AppRouter>();
@@ -9,6 +10,14 @@ export const API_URL = 'https://app.fri2plan.ch/api/trpc';
 
 // Délai exponentiel entre les tentatives (ms)
 const RETRY_DELAYS = [1000, 2000, 4000]; // 3 tentatives max
+const SUPPORTED_LANGUAGES = ['fr', 'en', 'de', 'es', 'it'];
+
+const getActiveLanguageHeader = async () => {
+  const savedLanguage = await AsyncStorage.getItem('@fri2plan_language');
+  const deviceLanguage = Localization.getLocales()[0]?.languageCode;
+  const language = (savedLanguage || deviceLanguage || 'fr').toLowerCase().split('-')[0];
+  return SUPPORTED_LANGUAGES.includes(language) ? language : 'fr';
+};
 
 /**
  * fetch avec retry automatique pour les erreurs 503 / réseau.
@@ -54,8 +63,10 @@ export const createTRPCClient = () => {
         async headers() {
           const token = await AsyncStorage.getItem('authToken');
           const activeFamilyId = await AsyncStorage.getItem('active_family_id');
+          const language = await getActiveLanguageHeader();
           const headers: Record<string, string> = {
             authorization: token ? `Bearer ${token}` : '',
+            'accept-language': language,
           };
           if (activeFamilyId) {
             headers['x-active-family-id'] = activeFamilyId;
