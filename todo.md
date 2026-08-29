@@ -1856,3 +1856,5 @@ components/
 - [x] Préparer la version native 1.1.7, cohérente pour Android production et iOS TestFlight.
 - [ ] Valider une build Android 1.1.7 avant soumission Google Play et une build iOS 1.1.7 dans TestFlight avant soumission Apple.
 - [x] Passer uniquement `expo.version` à 1.1.7 en conservant `android.versionCode` à 76 et l’incrément iOS automatique.
+- [x] Clarifier dans les cinq langues le titre et le texte d’aide affichés lors de la modification du nombre de participants d’une tâche commune.
+- [x] Renvoyer un code d’erreur serveur stable lorsqu’un participant ayant terminé est retiré, puis l’afficher localisé dans les cinq langues de l’application.

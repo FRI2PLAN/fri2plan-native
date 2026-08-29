@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./TasksScreen.tsx', import.meta.url), 'utf8');
 const types = readFileSync(new URL('../lib/types.ts', import.meta.url), 'utf8');
+const locales = ['fr', 'en', 'de', 'it', 'es'].map((language) => [
+  language,
+  JSON.parse(readFileSync(new URL(`../locales/${language}.json`, import.meta.url), 'utf8')),
+]);
 
 describe('expérience des tâches communes', () => {
   it('conserve une distinction explicite entre tâche individuelle et commune', () => {
@@ -55,5 +59,19 @@ describe('expérience des tâches communes', () => {
     expect(types).toContain('export interface TaskParticipant');
     expect(types).toContain("assignmentMode?: 'personal' | 'shared'");
     expect(types).toContain('participants?: TaskParticipant[]');
+  });
+
+  it('explique clairement la sélection et localise le verrouillage d’un participant terminé dans cinq langues', () => {
+    expect(source).toContain("t('tasks.sharedParticipantsSelection')");
+    expect(source).toContain('SHARED_TASK_COMPLETED_PARTICIPANT_LOCKED');
+    expect(source).toContain("t('tasks.sharedCompletedParticipantLockedTitle')");
+    expect(source).toContain("t('tasks.sharedCompletedParticipantLockedMessage')");
+    for (const [, locale] of locales) {
+      expect(locale.tasks.sharedParticipantsSelection).toBeTruthy();
+      expect(locale.tasks.sharedParticipantsMinimum).toBeTruthy();
+      expect(locale.tasks.sharedParticipantsEditHelp).toBeTruthy();
+      expect(locale.tasks.sharedCompletedParticipantLockedTitle).toBeTruthy();
+      expect(locale.tasks.sharedCompletedParticipantLockedMessage).toBeTruthy();
+    }
   });
 });

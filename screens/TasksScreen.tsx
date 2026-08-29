@@ -41,6 +41,7 @@ type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type TaskStatus = 'todo' | 'inProgress' | 'completed';
 type FilterType = 'inProgress' | 'completed' | 'myTasks';
 type AssignmentMode = 'personal' | 'shared';
+const SHARED_TASK_COMPLETED_PARTICIPANT_LOCKED = 'SHARED_TASK_COMPLETED_PARTICIPANT_LOCKED';
 
 // ─── Composant Avatar ────────────────────────────────────────────────────────
 function AvatarCircle({ name, size = 28, color = '#7c3aed' }: { name: string; size?: number; color?: string }) {
@@ -225,7 +226,16 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const updateMutation = trpc.tasks.update.useMutation({
     onSuccess: () => { setEditModalVisible(false); setQuickActionsVisible(false); utils.tasks.list.invalidate(); },
-    onError: (e) => Alert.alert('Erreur', e.message)});
+    onError: (e) => {
+      if (e.message === SHARED_TASK_COMPLETED_PARTICIPANT_LOCKED) {
+        Alert.alert(
+          t('tasks.sharedCompletedParticipantLockedTitle'),
+          t('tasks.sharedCompletedParticipantLockedMessage'),
+        );
+        return;
+      }
+      Alert.alert('Erreur', e.message);
+    }});
 
   const deleteMutation = trpc.tasks.delete.useMutation({
     onSuccess: () => { setQuickActionsVisible(false); utils.tasks.list.invalidate(); },
@@ -494,7 +504,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     if (!selectedTask) return;
     if (!editFormData.title.trim()) { Alert.alert('Erreur', 'Le titre est requis'); return; }
     if (editFormData.assignmentMode === 'shared' && editFormData.participantUserIds.length < 2) {
-      Alert.alert(t('tasks.sharedParticipants'), t('tasks.sharedParticipantsMinimum'));
+      Alert.alert(
+        `${t('tasks.sharedParticipantsSelection')} · ${editFormData.participantUserIds.length}`,
+        t('tasks.sharedParticipantsMinimum'),
+      );
       return;
     }
     updateMutation.mutate({
@@ -648,7 +661,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       </View>
       {data.assignmentMode === 'shared' ? (
         <View style={styles.formGroup}>
-          <Text style={styles.label}>{t('tasks.sharedParticipants', { count: data.participantUserIds.length })}</Text>
+          <Text style={styles.label}>{t('tasks.sharedParticipantsSelection')} · {data.participantUserIds.length}</Text>
           {(activeMembers || []).map(member => {
             const selected = data.participantUserIds.includes(member.id);
             const mayEditParticipants = !isEdit || (selectedTask?.assignmentMode === 'shared' && selectedTask.status !== 'completed' && (selectedTask.createdBy === user?.id || canManageSharedTasks));
@@ -661,6 +674,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             </TouchableOpacity>;
           })}
           <Text style={{ marginTop: 4, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' }}>{t('tasks.sharedPointsHelp')}</Text>
+          {isEdit && <Text style={{ marginTop: 4, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' }}>{t('tasks.sharedParticipantsEditHelp')}</Text>}
         </View>
       ) : (
         <View style={styles.formGroup}>
