@@ -375,7 +375,15 @@
     "statusTodo": "⭕ Da fare",
     "statusDone": "✅ Completata",
     "titlePlaceholder": "Titolo dell'attività",
-    "statusInProgress": "🔵 In corso"
+    "statusInProgress": "🔵 In corso",
+    "assignmentType": "Tipo di attività",
+    "assignmentPersonal": "Attività personale",
+    "assignmentShared": "Attività condivisa",
+    "sharedParticipants": "Partecipanti ({{count}})",
+    "sharedProgress": "{{completed}}/{{total}} completate",
+    "sharedCompleted": "completata",
+    "sharedPending": "da fare",
+    "sharedPointsHelp": "Ogni partecipante conferma i propri progressi e riceve i punti dell'attività."
   },
   "tabs": {
     "home": "Home",

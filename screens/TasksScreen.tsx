@@ -40,6 +40,7 @@ type Priority = 'urgent' | 'high' | 'medium' | 'low';
 type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type TaskStatus = 'todo' | 'inProgress' | 'completed';
 type FilterType = 'inProgress' | 'completed' | 'myTasks';
+type AssignmentMode = 'personal' | 'shared';
 
 // ─── Composant Avatar ────────────────────────────────────────────────────────
 function AvatarCircle({ name, size = 28, color = '#7c3aed' }: { name: string; size?: number; color?: string }) {
@@ -114,6 +115,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const emptyForm = {
     title: '', description: '',
     assignedTo: undefined as number | undefined,
+    assignmentMode: 'personal' as AssignmentMode,
+    participantUserIds: [] as number[],
     dueDate: undefined as Date | undefined,
     recurrence: 'none' as Recurrence,
     points: 10, priority: 'medium' as Priority, isPrivate: false};
@@ -235,9 +238,15 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         next.delete(variables.taskId);
         return next;
       });
-      utils.tasks.list.setData(undefined, (previous) => previous?.map((task: any) => task.id === variables.taskId
-        ? { ...task, status: 'completed', completedAt: new Date().toISOString() }
-        : task));
+      utils.tasks.list.setData(undefined, (previous) => previous?.map((task: any) => {
+        if (task.id !== variables.taskId) return task;
+        if (task.assignmentMode !== 'shared') return { ...task, status: 'completed', completedAt: new Date().toISOString() };
+        const participants = (task.participants || []).map((participant: any) => participant.userId === user?.id
+          ? { ...participant, status: 'completed', completedAt: new Date().toISOString() }
+          : participant);
+        const taskCompleted = participants.length > 0 && participants.every((participant: any) => participant.status === 'completed');
+        return { ...task, participants, status: taskCompleted ? 'completed' : 'inProgress', completedAt: taskCompleted ? new Date().toISOString() : null };
+      }));
       setQuickActionsVisible(false);
       utils.tasks.list.invalidate();
       // Mettre à jour les points immédiatement sans déconnexion
@@ -337,7 +346,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       // "Mes t\u00e2ches" = assign\u00e9es \u00e0 moi ET non termin\u00e9es (les termin\u00e9es vont dans l'onglet Termin\u00e9)
       // Les tâches datées sont déjà rendues dans En retard, Aujourd'hui ou À venir.
       // Cette liste générale conserve uniquement les tâches personnelles sans date afin d'éviter tout doublon.
-      if (filter === 'myTasks') return t.assignedTo === user?.id && t.status !== 'completed' && !t.dueDate;
+      if (filter === 'myTasks') return (t.assignedTo === user?.id || (t.assignmentMode === 'shared' && (t.participants || []).some((participant: any) => participant.userId === user?.id))) && t.status !== 'completed' && !t.dueDate;
       return t.status === filter;
     });
     // Trier les t\u00e2ches termin\u00e9es du plus r\u00e9cent au plus ancien
@@ -365,6 +374,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       title: selectedTask.title,
       description: selectedTask.description || '',
       assignedTo: selectedTask.assignedTo,
+      assignmentMode: selectedTask.assignmentMode || 'personal',
+      participantUserIds: (selectedTask.participants || []).map((participant: any) => participant.userId),
       dueDate: selectedTask.dueDate ? parseLocalDate(selectedTask.dueDate) : undefined,
       recurrence: selectedTask.recurrence || 'none',
       points: selectedTask.points || 10,
@@ -413,12 +424,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
     const payload = {
       title: formData.title,
       description: formData.description || undefined,
-      assignedTo: formData.assignedTo,
+      assignedTo: formData.assignmentMode === 'shared' ? undefined : formData.assignedTo,
+      assignmentMode: formData.assignmentMode,
+      participantUserIds: formData.assignmentMode === 'shared' ? formData.participantUserIds : undefined,
       dueDate: formData.dueDate,
       recurrence: formData.recurrence,
       points: formData.points,
       priority: formData.priority,
-      isPrivate: formData.isPrivate ? 1 : 0
+      isPrivate: formData.assignmentMode === 'shared' ? 0 : formData.isPrivate ? 1 : 0
     };
     if (!isConnected) {
       enqueue({ type: 'task.create', payload });
@@ -431,6 +444,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   const handleCompleteTask = (task: any) => {
+    const myParticipation = (task.participants || []).find((participant: any) => participant.userId === user?.id);
+    if (task.assignmentMode === 'shared' && (!myParticipation || myParticipation.status === 'completed')) return;
     if (task.status === 'completed' || optimisticCompletedTaskIds.has(task.id)) return;
 
     const points = Number(task.points) || 0;
@@ -447,7 +462,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   };
 
   const handleUncompleteTask = (task: any) => {
-    if (!task || task.status !== 'completed') return;
+    const myParticipation = (task?.participants || []).find((participant: any) => participant.userId === user?.id);
+    if (!task || (task.assignmentMode === 'shared' ? myParticipation?.status !== 'completed' : task.status !== 'completed')) return;
     pendingPointDeltas.current.set(task.id, -(Number(task.points) || 0));
     uncompleteMutation.mutate({ taskId: task.id });
   };
@@ -471,6 +487,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const TaskCard = ({ task }: { task: any }) => {
     const assignedMember = getMemberById(task.assignedTo);
     const isAssignedToMe = task.assignedTo === user?.id;
+    const isSharedTask = task.assignmentMode === 'shared';
+    const participants = task.participants || [];
+    const myParticipation = participants.find((participant: any) => participant.userId === user?.id);
+    const completedParticipants = participants.filter((participant: any) => participant.status === 'completed');
     const isOptimisticallyCompleted = optimisticCompletedTaskIds.has(task.id);
     const isCompleted = task.status === 'completed' || isOptimisticallyCompleted;
     return (
@@ -484,12 +504,12 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           hitSlop={8}
           onPress={(event) => {
             event.stopPropagation();
-            if (task.status === 'completed') handleUncompleteTask(task);
+            if (isSharedTask ? myParticipation?.status === 'completed' : task.status === 'completed') handleUncompleteTask(task);
             else handleCompleteTask(task);
           }}
         >
-          <View style={[styles.checkbox, isCompleted && styles.checkboxChecked, isOptimisticallyCompleted && styles.checkboxCelebrating]}>
-            {isCompleted && <Text style={styles.checkmark}>✓</Text>}
+          <View style={[styles.checkbox, (isSharedTask ? myParticipation?.status === 'completed' : isCompleted) && styles.checkboxChecked, isOptimisticallyCompleted && styles.checkboxCelebrating]}>
+            {(isSharedTask ? myParticipation?.status === 'completed' : isCompleted) && <Text style={styles.checkmark}>✓</Text>}
           </View>
         </TouchableOpacity>
 
@@ -509,6 +529,18 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
             {task.recurrence && task.recurrence !== 'none' && <Text style={{ fontSize: 13 }}>🔁</Text>}
             {task.points > 0 && <Text style={styles.pointsText}>⭐ {task.points}pts</Text>}
           </View>
+          {isSharedTask && (
+            <View style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: isDark ? '#e5e7eb' : '#4b5563' }}>{t('tasks.sharedProgress', { completed: completedParticipants.length, total: participants.length })}</Text>
+              <View style={{ flexDirection: 'row', marginTop: 5 }}>
+                {participants.map((participant: any, index: number) => (
+                  <View key={participant.userId} style={{ marginLeft: index === 0 ? 0 : -7, borderWidth: 2, borderColor: isDark ? '#1f2937' : '#fff', borderRadius: 18, opacity: participant.status === 'completed' ? 1 : 0.45 }}>
+                    <MemberAvatar member={{ id: participant.userId, name: participant.name, avatarUrl: participant.avatarUrl, userColor: participant.status === 'completed' ? '#16a34a' : participant.userColor }} size={27} />
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
           {assignedMember && (
             <View style={styles.assigneeMeta}>
               <Text style={styles.assigneeMetaText}>{assignedMember.name || t('tasks.assignedTo')}</Text>
@@ -570,19 +602,51 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         <TextInput style={[styles.input, styles.textArea]} placeholder="Description..." placeholderTextColor={isDark ? '#9ca3af' : '#9ca3af'}
           value={data.description} onChangeText={text => setData({ ...data, description: text })} multiline numberOfLines={3} />
       </View>
-      {/* Assigner à */}
+      {/* Attribution : personnelle ou commune */}
       <View style={styles.formGroup}>
-        <Text style={styles.label}>{t('tasks.assignTo') || 'Assigner à'}</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => { setPickerTarget(isEdit ? 'edit' : 'create'); setShowAssignPicker(true); }}>
-          {data.assignedTo ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <AvatarCircle name={getMemberName(data.assignedTo)} size={24} />
-              <Text style={styles.pickerButtonText}>{getMemberName(data.assignedTo)}</Text>
-            </View>
-          ) : <Text style={styles.pickerButtonText}>{t('tasks.chooseMember')}</Text>}
-          <Text style={styles.pickerArrow}>▼</Text>
-        </TouchableOpacity>
+        <Text style={styles.label}>Type de tâche</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            disabled={isEdit}
+            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'personal' && { borderColor: '#7c3aed', borderWidth: 2 }]}
+            onPress={() => setData({ ...data, assignmentMode: 'personal', participantUserIds: [] })}
+          ><Text style={styles.pickerButtonText}>{t('tasks.assignmentPersonal')}</Text></TouchableOpacity>
+          <TouchableOpacity
+            disabled={isEdit}
+            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'shared' && { borderColor: '#7c3aed', borderWidth: 2 }]}
+            onPress={() => setData({ ...data, assignmentMode: 'shared', assignedTo: undefined, isPrivate: false })}
+          ><Text style={styles.pickerButtonText}>{t('tasks.assignmentShared')}</Text></TouchableOpacity>
+        </View>
       </View>
+      {data.assignmentMode === 'shared' ? (
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('tasks.sharedParticipants', { count: data.participantUserIds.length })}</Text>
+          {(activeMembers || []).map(member => {
+            const selected = data.participantUserIds.includes(member.id);
+            return <TouchableOpacity key={member.id} disabled={isEdit} style={[styles.pickerButton, { marginBottom: 6 }, selected && { borderColor: '#16a34a', borderWidth: 2 }]} onPress={() => setData({
+              ...data,
+              participantUserIds: selected ? data.participantUserIds.filter(id => id !== member.id) : [...data.participantUserIds, member.id],
+            })}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><MemberAvatar member={member} size={24} /><Text style={styles.pickerButtonText}>{member.name || member.email}</Text></View>
+              <Text style={[styles.pickerArrow, selected && { color: '#16a34a' }]}>{selected ? '✓' : ''}</Text>
+            </TouchableOpacity>;
+          })}
+          <Text style={{ marginTop: 4, fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280' }}>{t('tasks.sharedPointsHelp')}</Text>
+        </View>
+      ) : (
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('tasks.assignTo') || 'Assigner à'}</Text>
+          <TouchableOpacity style={styles.pickerButton} onPress={() => { setPickerTarget(isEdit ? 'edit' : 'create'); setShowAssignPicker(true); }}>
+            {data.assignedTo ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <AvatarCircle name={getMemberName(data.assignedTo)} size={24} />
+                <Text style={styles.pickerButtonText}>{getMemberName(data.assignedTo)}</Text>
+              </View>
+            ) : <Text style={styles.pickerButtonText}>{t('tasks.chooseMember')}</Text>}
+            <Text style={styles.pickerArrow}>▼</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {/* Date d'échéance */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>{t('tasks.dueDate') || "Date d'échéance"}</Text>
@@ -679,14 +743,16 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <View style={[styles.priorityDot, { backgroundColor: getPriorityColor(data.priority) }]} />
         </TouchableOpacity>
       </View>
-      {/* Privé */}
-      <View style={styles.formGroup}>
-        <View style={styles.switchRow}>
-          <Text style={styles.label}>{t('common.private') || 'Privé'}</Text>
-          <Switch value={data.isPrivate} onValueChange={v => setData({ ...data, isPrivate: v })}
-            trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={data.isPrivate ? '#fff' : '#f3f4f6'} />
+      {/* Une tâche commune est toujours visible par ses participants */}
+      {data.assignmentMode !== 'shared' && (
+        <View style={styles.formGroup}>
+          <View style={styles.switchRow}>
+            <Text style={styles.label}>{t('common.private') || 'Privé'}</Text>
+            <Switch value={data.isPrivate} onValueChange={v => setData({ ...data, isPrivate: v })}
+              trackColor={{ false: '#d1d5db', true: '#7c3aed' }} thumbColor={data.isPrivate ? '#fff' : '#f3f4f6'} />
+          </View>
         </View>
-      </View>
+      )}
     </ScrollView>
   );
 
@@ -897,25 +963,37 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                 <Text style={styles.quickTaskTitle} numberOfLines={2}>{selectedTask.title}</Text>
                 <View style={styles.quickDivider} />
 
-                {/* Assigné à */}
-                <View style={styles.quickAssignRow}>
-                  <Text style={styles.quickAssignLabel}>{t('tasks.assignedTo')}</Text>
-                  {selectedTask.assignedTo ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <AvatarCircle name={getMemberName(selectedTask.assignedTo)} size={24} color={selectedTask.assignedTo === user?.id ? '#7c3aed' : '#6b7280'} />
-                      <Text style={styles.quickAssignName}>{getMemberName(selectedTask.assignedTo)}</Text>
-                    </View>
-                  ) : (
-                    <Text style={[styles.quickAssignName, { color: '#9ca3af' }]}>{t('tasks.unassigned')}</Text>
-                  )}
-                </View>
+                {/* Attribution personnelle ou progression commune */}
+                {selectedTask.assignmentMode === 'shared' ? (
+                  <View style={{ gap: 8 }}>
+                    <Text style={styles.quickAssignLabel}>{t('tasks.assignmentShared')} · {t('tasks.sharedProgress', { completed: (selectedTask.participants || []).filter((participant: any) => participant.status === 'completed').length, total: (selectedTask.participants || []).length })}</Text>
+                    {(selectedTask.participants || []).map((participant: any) => (
+                      <View key={participant.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ opacity: participant.status === 'completed' ? 1 : 0.5 }}><MemberAvatar member={{ id: participant.userId, name: participant.name, avatarUrl: participant.avatarUrl, userColor: participant.status === 'completed' ? '#16a34a' : participant.userColor }} size={26} /></View>
+                        <Text style={[styles.quickAssignName, participant.status === 'completed' && { color: '#16a34a' }]}>{participant.status === 'completed' ? '✓ ' : '○ '}{participant.name || t('common.unknown')}{participant.completedAt ? ` — ${t('tasks.sharedCompleted')}` : ` — ${t('tasks.sharedPending')}`}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.quickAssignRow}>
+                    <Text style={styles.quickAssignLabel}>{t('tasks.assignedTo')}</Text>
+                    {selectedTask.assignedTo ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <AvatarCircle name={getMemberName(selectedTask.assignedTo)} size={24} color={selectedTask.assignedTo === user?.id ? '#7c3aed' : '#6b7280'} />
+                        <Text style={styles.quickAssignName}>{getMemberName(selectedTask.assignedTo)}</Text>
+                      </View>
+                    ) : <Text style={[styles.quickAssignName, { color: '#9ca3af' }]}>{t('tasks.unassigned')}</Text>}
+                  </View>
+                )}
 
                 <View style={styles.quickDivider} />
 
                 {/* Boutons actions — icônes uniquement */}
                 <View style={styles.quickActions}>
                   {/* ✅ Valider / ↩️ Annuler validation selon statut */}
-                  {selectedTask.status !== 'completed' ? (
+                  {(selectedTask.assignmentMode === 'shared'
+                    ? (selectedTask.participants || []).find((participant: any) => participant.userId === user?.id)?.status !== 'completed'
+                    : selectedTask.status !== 'completed') ? (
                     <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#10b981' }]}
                       onPress={() => handleCompleteTask(selectedTask)}>
                       <Text style={styles.quickBtnIcon}>✅</Text>
@@ -945,14 +1023,14 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
                     <Text style={styles.quickBtnLabel}>Reporter</Text>
                   </TouchableOpacity>
 
-                  {/* 👤 S'attribuer */}
-                  <TouchableOpacity style={[styles.quickBtn, { backgroundColor: selectedTask.assignedTo === user?.id ? '#7c3aed' : '#6b7280' }]}
-                    onPress={handleAssignToMe}>
-                    {user ? (
-                      <AvatarCircle name={user.name || 'Moi'} size={26} color="transparent" />
-                    ) : <Text style={styles.quickBtnIcon}>👤</Text>}
-                    <Text style={styles.quickBtnLabel}>{selectedTask.assignedTo === user?.id ? 'Me retirer' : 'M\'attribuer'}</Text>
-                  </TouchableOpacity>
+                  {/* Une tâche commune conserve sa liste de participants */}
+                  {selectedTask.assignmentMode !== 'shared' && (
+                    <TouchableOpacity style={[styles.quickBtn, { backgroundColor: selectedTask.assignedTo === user?.id ? '#7c3aed' : '#6b7280' }]}
+                      onPress={handleAssignToMe}>
+                      {user ? <AvatarCircle name={user.name || 'Moi'} size={26} color="transparent" /> : <Text style={styles.quickBtnIcon}>👤</Text>}
+                      <Text style={styles.quickBtnLabel}>{selectedTask.assignedTo === user?.id ? 'Me retirer' : 'M\'attribuer'}</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {/* 🗑 Supprimer */}
                   <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#ef4444' }]} onPress={handleDeleteTask}>

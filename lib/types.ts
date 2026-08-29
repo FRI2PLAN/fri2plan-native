@@ -39,6 +39,16 @@ export interface Event {
   familyId: number;
 }
 
+export interface TaskParticipant {
+  userId: number;
+  name?: string | null;
+  avatarUrl?: string | null;
+  userColor?: string | null;
+  status: 'todo' | 'completed';
+  completedAt?: string | null;
+  pointsGrantedAt?: string | null;
+}
+
 export interface Task {
   id: number;
   title: string;
@@ -47,6 +57,8 @@ export interface Task {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'todo' | 'inProgress' | 'completed';
   assignedTo?: number;
+  assignmentMode?: 'personal' | 'shared';
+  participants?: TaskParticipant[];
   familyId: number;
   points?: number;
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';

@@ -317,7 +317,15 @@
     "statusTodo": "⭕ À faire",
     "statusDone": "✅ Terminée",
     "titlePlaceholder": "Titre de la tâche",
-    "statusInProgress": "🔵 En cours"
+    "statusInProgress": "🔵 En cours",
+    "assignmentType": "Type de tâche",
+    "assignmentPersonal": "Tâche personnelle",
+    "assignmentShared": "Tâche commune",
+    "sharedParticipants": "Participants ({{count}})",
+    "sharedProgress": "{{completed}}/{{total}} terminée(s)",
+    "sharedCompleted": "terminé",
+    "sharedPending": "à faire",
+    "sharedPointsHelp": "Chaque participant valide sa progression et reçoit les points de la tâche."
   },
   "shopping": {
     "title": "Courses",

@@ -317,7 +317,15 @@
     "statusTodo": "⭕ To do",
     "statusDone": "✅ Done",
     "titlePlaceholder": "Task title",
-    "statusInProgress": "🔵 In progress"
+    "statusInProgress": "🔵 In progress",
+    "assignmentType": "Task type",
+    "assignmentPersonal": "Personal task",
+    "assignmentShared": "Shared task",
+    "sharedParticipants": "Participants ({{count}})",
+    "sharedProgress": "{{completed}}/{{total}} completed",
+    "sharedCompleted": "completed",
+    "sharedPending": "to do",
+    "sharedPointsHelp": "Each participant confirms their own progress and receives the task points."
   },
   "shopping": {
     "title": "Shopping",

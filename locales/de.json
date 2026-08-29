@@ -317,7 +317,15 @@
     "statusTodo": "⭕ Zu erledigen",
     "statusDone": "✅ Erledigt",
     "titlePlaceholder": "Aufgabentitel",
-    "statusInProgress": "🔵 In Bearbeitung"
+    "statusInProgress": "🔵 In Bearbeitung",
+    "assignmentType": "Aufgabentyp",
+    "assignmentPersonal": "Persönliche Aufgabe",
+    "assignmentShared": "Gemeinsame Aufgabe",
+    "sharedParticipants": "Teilnehmende ({{count}})",
+    "sharedProgress": "{{completed}}/{{total}} erledigt",
+    "sharedCompleted": "erledigt",
+    "sharedPending": "zu erledigen",
+    "sharedPointsHelp": "Jede teilnehmende Person bestätigt den eigenen Fortschritt und erhält die Aufgabenpunkte."
   },
   "shopping": {
     "title": "Einkaufen",
