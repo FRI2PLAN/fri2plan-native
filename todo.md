@@ -1849,6 +1849,7 @@ components/
 - [x] Permettre à l’administrateur de modifier la liste des participants d’une tâche commune tant qu’elle n’est pas clôturée.
 - [x] Renommer « Tâche personnelle » en « Tâche individuelle » dans les cinq langues de l’application.
 - [ ] Pousser le correctif serveur et le correctif mobile preview des tâches communes avant le test Android.
+- [x] Diagnostiquer et corriger l’échec de déploiement Railway causé par les endpoints de tâches communes avant toute OTA preview.
 - [x] Déployer les endpoints serveur dormants des tâches communes sans publier l’interface en production, afin d’autoriser le test EAS preview.
 - [x] Appliquer la confirmation e-mail avec bouton « Continuer dans FRI2PLAN » au parcours d’adhésion par code de cercle, sans redirection automatique vers le web.
 - [x] Simplifier le texte de succès de l’invitation en retirant la mention du code de cercle et en centrant le texte restant.
