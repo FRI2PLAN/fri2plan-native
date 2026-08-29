@@ -377,13 +377,16 @@
     "titlePlaceholder": "Título de la tarea",
     "statusInProgress": "🔵 En curso",
     "assignmentType": "Tipo de tarea",
-    "assignmentPersonal": "Tarea personal",
+    "assignmentPersonal": "Tarea individual",
     "assignmentShared": "Tarea compartida",
     "sharedParticipants": "Participantes ({{count}})",
     "sharedProgress": "{{completed}}/{{total}} completadas",
     "sharedCompleted": "completada",
     "sharedPending": "por hacer",
-    "sharedPointsHelp": "Cada participante confirma su propio progreso y recibe los puntos de la tarea."
+    "sharedPointsHelp": "Cada participante confirma su propio progreso y recibe los puntos de la tarea.",
+    "sharedParticipantsMinimum": "Selecciona al menos dos participantes.",
+    "sharedValidationRestrictedTitle": "Finalización reservada a los participantes",
+    "sharedValidationRestrictedMessage": "Puedes gestionar esta tarea compartida, pero solo un participante seleccionado puede completar su propia parte."
   },
   "tabs": {
     "home": "Inicio",

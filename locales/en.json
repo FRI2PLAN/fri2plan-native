@@ -319,13 +319,16 @@
     "titlePlaceholder": "Task title",
     "statusInProgress": "🔵 In progress",
     "assignmentType": "Task type",
-    "assignmentPersonal": "Personal task",
+    "assignmentPersonal": "Individual task",
     "assignmentShared": "Shared task",
     "sharedParticipants": "Participants ({{count}})",
     "sharedProgress": "{{completed}}/{{total}} completed",
     "sharedCompleted": "completed",
     "sharedPending": "to do",
-    "sharedPointsHelp": "Each participant confirms their own progress and receives the task points."
+    "sharedPointsHelp": "Each participant confirms their own progress and receives the task points.",
+    "sharedParticipantsMinimum": "Select at least two participants.",
+    "sharedValidationRestrictedTitle": "Completion reserved for participants",
+    "sharedValidationRestrictedMessage": "You can manage this shared task, but only a selected participant can complete their own part."
   },
   "shopping": {
     "title": "Shopping",

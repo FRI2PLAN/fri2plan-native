@@ -319,13 +319,16 @@
     "titlePlaceholder": "Aufgabentitel",
     "statusInProgress": "🔵 In Bearbeitung",
     "assignmentType": "Aufgabentyp",
-    "assignmentPersonal": "Persönliche Aufgabe",
+    "assignmentPersonal": "Individuelle Aufgabe",
     "assignmentShared": "Gemeinsame Aufgabe",
     "sharedParticipants": "Teilnehmende ({{count}})",
     "sharedProgress": "{{completed}}/{{total}} erledigt",
     "sharedCompleted": "erledigt",
     "sharedPending": "zu erledigen",
-    "sharedPointsHelp": "Jede teilnehmende Person bestätigt den eigenen Fortschritt und erhält die Aufgabenpunkte."
+    "sharedPointsHelp": "Jede teilnehmende Person bestätigt den eigenen Fortschritt und erhält die Aufgabenpunkte.",
+    "sharedParticipantsMinimum": "Wählen Sie mindestens zwei Teilnehmende aus.",
+    "sharedValidationRestrictedTitle": "Abschluss nur für Teilnehmende",
+    "sharedValidationRestrictedMessage": "Sie können diese gemeinsame Aufgabe verwalten, aber nur ausgewählte Teilnehmende können ihren eigenen Anteil abschließen."
   },
   "shopping": {
     "title": "Einkaufen",

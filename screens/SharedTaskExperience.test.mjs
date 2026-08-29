@@ -5,7 +5,7 @@ const source = readFileSync(new URL('./TasksScreen.tsx', import.meta.url), 'utf8
 const types = readFileSync(new URL('../lib/types.ts', import.meta.url), 'utf8');
 
 describe('expérience des tâches communes', () => {
-  it('conserve une distinction explicite entre tâche personnelle et commune', () => {
+  it('conserve une distinction explicite entre tâche individuelle et commune', () => {
     expect(source).toContain("assignmentMode: 'personal'");
     expect(source).toContain("t('tasks.assignmentShared')");
     expect(source).toContain("t('tasks.assignmentPersonal')");
@@ -25,6 +25,8 @@ describe('expérience des tâches communes', () => {
   it('permet uniquement au membre connecté de valider sa propre participation', () => {
     expect(source).toContain('participant.userId === user?.id');
     expect(source).toContain("myParticipation?.status === 'completed'");
+    expect(source).toContain("t('tasks.sharedValidationRestrictedTitle')");
+    expect(source).toContain("t('tasks.sharedValidationRestrictedMessage')");
   });
 
   it('conserve les tâches communes dans Mes tâches sans les dupliquer', () => {
@@ -40,6 +42,8 @@ describe('expérience des tâches communes', () => {
     expect(source).toContain("currentMember?.role === 'admin'");
     expect(source).toContain('t.createdBy === user?.id');
     expect(source).toContain('|| canManageSharedTasks');
+    expect(source).toContain('mayEditParticipants');
+    expect(source).toContain('participantUserIds: editFormData.assignmentMode === \'shared\'');
   });
 
   it('n’affiche pas une validation globale pour une progression seulement individuelle', () => {

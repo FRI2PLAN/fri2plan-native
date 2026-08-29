@@ -377,13 +377,16 @@
     "titlePlaceholder": "Titolo dell'attività",
     "statusInProgress": "🔵 In corso",
     "assignmentType": "Tipo di attività",
-    "assignmentPersonal": "Attività personale",
+    "assignmentPersonal": "Attività individuale",
     "assignmentShared": "Attività condivisa",
     "sharedParticipants": "Partecipanti ({{count}})",
     "sharedProgress": "{{completed}}/{{total}} completate",
     "sharedCompleted": "completata",
     "sharedPending": "da fare",
-    "sharedPointsHelp": "Ogni partecipante conferma i propri progressi e riceve i punti dell'attività."
+    "sharedPointsHelp": "Ogni partecipante conferma i propri progressi e riceve i punti dell'attività.",
+    "sharedParticipantsMinimum": "Seleziona almeno due partecipanti.",
+    "sharedValidationRestrictedTitle": "Completamento riservato ai partecipanti",
+    "sharedValidationRestrictedMessage": "Puoi gestire questa attività condivisa, ma solo un partecipante selezionato può completare la propria parte."
   },
   "tabs": {
     "home": "Home",

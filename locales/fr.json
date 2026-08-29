@@ -319,13 +319,16 @@
     "titlePlaceholder": "Titre de la tâche",
     "statusInProgress": "🔵 En cours",
     "assignmentType": "Type de tâche",
-    "assignmentPersonal": "Tâche personnelle",
+    "assignmentPersonal": "Tâche individuelle",
     "assignmentShared": "Tâche commune",
     "sharedParticipants": "Participants ({{count}})",
     "sharedProgress": "{{completed}}/{{total}} terminée(s)",
     "sharedCompleted": "terminé",
     "sharedPending": "à faire",
-    "sharedPointsHelp": "Chaque participant valide sa progression et reçoit les points de la tâche."
+    "sharedPointsHelp": "Chaque participant valide sa progression et reçoit les points de la tâche.",
+    "sharedParticipantsMinimum": "Sélectionnez au moins deux participants.",
+    "sharedValidationRestrictedTitle": "Validation réservée au participant",
+    "sharedValidationRestrictedMessage": "Vous pouvez gérer cette tâche commune, mais seul un participant sélectionné peut valider sa propre part."
   },
   "shopping": {
     "title": "Courses",

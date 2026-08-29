@@ -461,7 +461,11 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
 
   const handleCompleteTask = (task: any) => {
     const myParticipation = (task.participants || []).find((participant: any) => participant.userId === user?.id);
-    if (task.assignmentMode === 'shared' && (!myParticipation || myParticipation.status === 'completed')) return;
+    if (task.assignmentMode === 'shared' && !myParticipation) {
+      Alert.alert(t('tasks.sharedValidationRestrictedTitle'), t('tasks.sharedValidationRestrictedMessage'));
+      return;
+    }
+    if (task.assignmentMode === 'shared' && myParticipation.status === 'completed') return;
     if (task.status === 'completed' || optimisticCompletedTaskIds.has(task.id)) return;
 
     const points = Number(task.points) || 0;
@@ -489,6 +493,10 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const handleUpdateTask = () => {
     if (!selectedTask) return;
     if (!editFormData.title.trim()) { Alert.alert('Erreur', 'Le titre est requis'); return; }
+    if (editFormData.assignmentMode === 'shared' && editFormData.participantUserIds.length < 2) {
+      Alert.alert(t('tasks.sharedParticipants'), t('tasks.sharedParticipantsMinimum'));
+      return;
+    }
     updateMutation.mutate({
       taskId: selectedTask.id,
       title: editFormData.title,
@@ -498,7 +506,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       recurrence: editFormData.recurrence,
       points: editFormData.points,
       priority: editFormData.priority,
-      isPrivate: editFormData.isPrivate ? 1 : 0});
+      isPrivate: editFormData.isPrivate ? 1 : 0,
+      participantUserIds: editFormData.assignmentMode === 'shared' ? editFormData.participantUserIds : undefined});
   };
 
   // ── Composant carte tâche ────────────────────────────────────────────────
@@ -623,7 +632,7 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       </View>
       {/* Attribution : personnelle ou commune */}
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Type de tâche</Text>
+        <Text style={styles.label}>{t('tasks.assignmentType')}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity
             disabled={isEdit}
@@ -642,7 +651,8 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
           <Text style={styles.label}>{t('tasks.sharedParticipants', { count: data.participantUserIds.length })}</Text>
           {(activeMembers || []).map(member => {
             const selected = data.participantUserIds.includes(member.id);
-            return <TouchableOpacity key={member.id} disabled={isEdit} style={[styles.pickerButton, { marginBottom: 6 }, selected && { borderColor: '#16a34a', borderWidth: 2 }]} onPress={() => setData({
+            const mayEditParticipants = !isEdit || (selectedTask?.assignmentMode === 'shared' && selectedTask.status !== 'completed' && (selectedTask.createdBy === user?.id || canManageSharedTasks));
+            return <TouchableOpacity key={member.id} disabled={!mayEditParticipants} style={[styles.pickerButton, { marginBottom: 6 }, selected && { borderColor: '#16a34a', borderWidth: 2 }, !mayEditParticipants && { opacity: 0.55 }]} onPress={() => setData({
               ...data,
               participantUserIds: selected ? data.participantUserIds.filter(id => id !== member.id) : [...data.participantUserIds, member.id],
             })}>

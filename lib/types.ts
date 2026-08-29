@@ -336,6 +336,7 @@ export type AppRouter = {
         title?: string;
         description?: string;
         assignedTo?: number;
+        participantUserIds?: number[];
         dueDate?: Date;
         recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
         points?: number;
