@@ -327,7 +327,13 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
   const getPriorityColor = (p: string) => ({ urgent: '#dc2626', high: '#f97316', medium: '#eab308', low: '#10b981' }[p] || '#6b7280');
   const getPriorityEmoji = (p: string) => ({ urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' }[p] || '⚪');
   const getPriorityLabel = (p: string) => ({ urgent: t('tasks.urgent') || 'Urgent', high: t('tasks.high') || 'Haute', medium: t('tasks.medium') || 'Moyenne', low: t('tasks.low') || 'Basse' }[p] || '');
-  const getRecurrenceLabel = (r: Recurrence) => ({ none: '🚫 Aucune', daily: '📅 Quotidienne', weekly: '📆 Hebdomadaire', monthly: '🗓️ Mensuelle', yearly: '🎉 Annuelle' }[r]);
+  const getRecurrenceLabel = (r: Recurrence) => ({
+    none: `🚫 ${t('tasks.recurrenceNone')}`,
+    daily: `📅 ${t('tasks.recurrenceDaily')}`,
+    weekly: `📆 ${t('tasks.recurrenceWeekly')}`,
+    monthly: `🗓️ ${t('tasks.recurrenceMonthly')}`,
+    yearly: `🎉 ${t('tasks.recurrenceYearly')}`,
+  }[r]);
   const getStatusLabel = (s: string) => ({ todo: t('tasks.statusTodo'), inProgress: t('tasks.statusInProgress') || '🔵 En cours', completed: t('tasks.statusDone') }[s] || s);
 
   const formatDueDate = (d: string) => {

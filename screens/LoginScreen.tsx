@@ -173,17 +173,19 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
 
       const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
       const hasFaceId = supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
-      const biometricName = Platform.OS === 'ios' ? (hasFaceId ? 'Face ID' : 'Touch ID') : 'empreinte digitale';
+      const biometricName = Platform.OS === 'ios'
+        ? (hasFaceId ? 'Face ID' : 'Touch ID')
+        : t('auth.biometricName');
 
       // Utiliser une Promise pour rendre l'Alert bloquante (attendre la réponse utilisateur)
       await new Promise<void>((resolve) => {
         Alert.alert(
-          `Activer ${biometricName} ?`,
-          `Voulez-vous utiliser ${biometricName} pour vous connecter rapidement à FRI2PLAN ?`,
+          t('auth.biometricActivationTitle', { biometric: biometricName }),
+          t('auth.biometricActivationMessage', { biometric: biometricName }),
           [
-            { text: 'Non merci', style: 'cancel', onPress: () => resolve() },
+            { text: t('auth.biometricNotNow'), style: 'cancel', onPress: () => resolve() },
             {
-              text: 'Activer',
+              text: t('auth.biometricEnable'),
               onPress: async () => {
                 await SecureStore.setItemAsync(BIOMETRIC_TOKEN_KEY, token);
                 await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, JSON.stringify(user));

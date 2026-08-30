@@ -1867,3 +1867,6 @@ components/
 - [x] Ajouter et vérifier les clés de règles de mot de passe manquantes afin qu’aucune clé technique `auth.pwd…` ne soit affichée.
 - [x] Localiser tous les textes du parcours « Rejoindre une famille » dans les cinq langues de l’application.
 - [x] Remplacer la feuille de saisie du code par une modale Android qui reste entièrement visible au-dessus du clavier.
+- [x] Localiser dans les cinq langues les messages Android de l’authentification biométrique affichés depuis la connexion.
+- [ ] Remplacer la feuille « Rejoindre une famille » par un dialogue Android fiable, distinct de la page et toujours visible avec le clavier.
+- [x] Conserver les sélecteurs Android de date et d’heure dans la langue du téléphone ; un utilisateur anglais avec un téléphone anglais verra donc le dialogue Android en anglais.
