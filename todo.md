@@ -1863,3 +1863,7 @@ components/
 - [x] Corriger la modale Android « Rejoindre avec un code » afin que le champ reste visible au-dessus du clavier lorsqu’il reçoit le focus.
 - [x] Garantir dans tous les modules qu’une même action ne peut envoyer qu’une notification push par destinataire, même lorsqu’un utilisateur appartient à plusieurs cercles.
 - [x] Ajouter une couverture de non-régression pour les doublons de push au niveau du service central de notification.
+- [x] Remplacer tous les libellés et textes écrits en dur de l’écran d’inscription par des clés i18n dans les cinq langues.
+- [x] Ajouter et vérifier les clés de règles de mot de passe manquantes afin qu’aucune clé technique `auth.pwd…` ne soit affichée.
+- [x] Localiser tous les textes du parcours « Rejoindre une famille » dans les cinq langues de l’application.
+- [x] Remplacer la feuille de saisie du code par une modale Android qui reste entièrement visible au-dessus du clavier.

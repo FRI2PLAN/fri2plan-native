@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image, TextInput, Alert, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -351,7 +351,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
       queryClient.invalidateQueries();
     },
     onError: (err: any) => {
-      Alert.alert('Erreur', err.message || 'Code invalide ou expiré');
+      Alert.alert(t('common.error'), err.message || t('dashboard.joinFamilyInvalidCode'));
     },
   });
 
@@ -447,7 +447,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
               <Text style={styles.createFamilyButtonText}>{t('dashboard.createFamily')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.createFamilyButton, { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#7c3aed', marginTop: 10 }]} onPress={() => setShowJoinModal(true)}>
-              <Text style={[styles.createFamilyButtonText, { color: '#7c3aed' }]}>Rejoindre une famille</Text>
+              <Text style={[styles.createFamilyButtonText, { color: '#7c3aed' }]}>{t('dashboard.joinFamily')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -657,35 +657,53 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Modal Rejoindre une famille */}
-      <Modal visible={showJoinModal} transparent animationType="slide" onRequestClose={() => setShowJoinModal(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 6 }}>Rejoindre une famille</Text>
-            <Text style={{ fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 20 }}>Entrez le code d’invitation reçu d’un membre de la famille.</Text>
-            <TextInput
-              style={{ backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, padding: 14, fontSize: 16, color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 16, letterSpacing: 2 }}
-              value={joinCode}
-              onChangeText={setJoinCode}
-              placeholder="Code d’invitation"
-              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity style={{ flex: 1, padding: 14, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center' }} onPress={() => { setShowJoinModal(false); setJoinCode(''); }}>
-                <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontWeight: '600' }}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ flex: 1, padding: 14, borderRadius: 8, backgroundColor: (!joinCode.trim() || joinFamilyMutation.isPending) ? '#a78bfa' : '#7c3aed', alignItems: 'center' }}
-                onPress={() => joinCode.trim() && joinFamilyMutation.mutate({ inviteCode: joinCode.trim() })}
-                disabled={!joinCode.trim() || joinFamilyMutation.isPending}
-              >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>{joinFamilyMutation.isPending ? '...' : 'Rejoindre'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+      {/* Modale centrée : elle et le clavier Android se redimensionnent ensemble. */}
+      <Modal
+        visible={showJoinModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => { setShowJoinModal(false); setJoinCode(''); }}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 }}
+            onPress={() => { setShowJoinModal(false); setJoinCode(''); }}
+          >
+            <Pressable
+              style={{ backgroundColor: isDark ? '#1f2937' : '#fff', borderRadius: 20, padding: 24, maxWidth: 520, width: '100%', alignSelf: 'center' }}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 6 }}>{t('dashboard.joinFamily')}</Text>
+              <Text style={{ fontSize: 14, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 20 }}>{t('dashboard.joinFamilyDescription')}</Text>
+              <TextInput
+                style={{ backgroundColor: isDark ? '#374151' : '#f3f4f6', borderRadius: 8, padding: 14, fontSize: 16, color: isDark ? '#f9fafb' : '#1f2937', marginBottom: 16, letterSpacing: 2 }}
+                value={joinCode}
+                onChangeText={setJoinCode}
+                placeholder={t('dashboard.joinFamilyCodePlaceholder')}
+                placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity style={{ flex: 1, padding: 14, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#4b5563' : '#d1d5db', alignItems: 'center' }} onPress={() => { setShowJoinModal(false); setJoinCode(''); }}>
+                  <Text style={{ color: isDark ? '#9ca3af' : '#6b7280', fontWeight: '600' }}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ flex: 1, padding: 14, borderRadius: 8, backgroundColor: (!joinCode.trim() || joinFamilyMutation.isPending) ? '#a78bfa' : '#7c3aed', alignItems: 'center' }}
+                  onPress={() => joinCode.trim() && joinFamilyMutation.mutate({ inviteCode: joinCode.trim() })}
+                  disabled={!joinCode.trim() || joinFamilyMutation.isPending}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>{joinFamilyMutation.isPending ? '...' : t('dashboard.joinFamily')}</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal FamilySetup */}

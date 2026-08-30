@@ -68,7 +68,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
-      if (!idToken) throw new Error('Pas de token Google');
+      if (!idToken) throw new Error(t('register.googleTokenMissing'));
 
       const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
       const resp = await fetch(`${baseUrl}/api/google/native-signin`, {
@@ -80,7 +80,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
       if (data.token && data.user) {
         await login(data.user, data.token);
       } else {
-        throw new Error(data.error || 'Erreur de connexion Google');
+        throw new Error(data.error || t('register.googleSignInFailed'));
       }
     } catch (err: any) {
       if (err.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -88,9 +88,9 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
       } else if (err.code === statusCodes.IN_PROGRESS) {
         // en cours
       } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Erreur', 'Google Play Services non disponible');
+        Alert.alert(t('common.error'), t('register.googlePlayServicesUnavailable'));
       } else {
-        Alert.alert('❌', err.message || 'Impossible de se connecter avec Google');
+        Alert.alert(t('common.error'), err.message || t('register.googleSignInFailed'));
       }
     } finally {
       setGoogleLoading(false);
@@ -137,7 +137,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
       return;
     }
     if (!EMAIL_REGEX.test(value)) {
-      setEmailError(t('auth.invalidEmail') || 'Adresse email invalide');
+      setEmailError(t('auth.invalidEmail'));
     } else {
       setEmailError('');
     }
@@ -145,22 +145,22 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
 
   const handleRegister = async () => {
     if (!email || !password || !name) {
-      Alert.alert(t('common.error'), t('auth.fillAllFields') || 'Veuillez remplir tous les champs obligatoires');
+      Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      Alert.alert(t('common.error'), t('auth.invalidEmail') || 'Adresse email invalide');
+      Alert.alert(t('common.error'), t('auth.invalidEmail'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(t('common.error'), t('auth.passwordMismatch') || 'Les mots de passe ne correspondent pas');
+      Alert.alert(t('common.error'), t('auth.passwordMismatch'));
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert(t('common.error'), t('register.passwordMinLength') || 'Le mot de passe doit contenir au moins 8 caractères');
+      Alert.alert(t('common.error'), t('register.passwordMinLength'));
       return;
     }
 
@@ -196,18 +196,18 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
               resizeMode="contain"
             />
 
-            <Text style={styles.title}>Inscription</Text>
+            <Text style={styles.title}>{t('register.title')}</Text>
             <Text style={styles.subtitle}>
-              Créez votre compte Fri2Plan - Votre agenda familial
+              {t('register.subtitle')}
             </Text>
 
             {/* Nom complet */}
-            <Text style={styles.label}>Nom complet</Text>
+            <Text style={styles.label}>{t('register.fullName')}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="person-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Jean Dupont"
+                placeholder={t('register.fullNamePlaceholder')}
                 placeholderTextColor="#6b7280"
                 value={name}
                 onChangeText={setName}
@@ -217,12 +217,12 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
             </View>
 
             {/* Email */}
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('auth.email')}</Text>
             <View style={[styles.inputWrapper, emailError ? styles.inputWrapperError : null]}>
               <Ionicons name="mail-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="votre@email.com"
+                placeholder={t('register.emailPlaceholder')}
                 placeholderTextColor="#6b7280"
                 value={email}
                 onChangeText={(v) => { setEmail(v); validateEmail(v); }}
@@ -263,13 +263,13 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
 
             {/* Règles du mot de passe */}
             <View style={styles.passwordRules}>
-              <Text style={styles.passwordRulesTitle}>{t('auth.passwordMustContain') || 'Le mot de passe doit contenir :'}</Text>
+              <Text style={styles.passwordRulesTitle}>{t('auth.passwordMustContain')}</Text>
               {[
                 { label: t('register.passwordMinLength'), ok: password.length >= 8 },
-                { label: t('auth.pwdUppercase') || 'Une majuscule (A-Z)', ok: /[A-Z]/.test(password) },
-                { label: t('auth.pwdLowercase') || 'Une minuscule (a-z)', ok: /[a-z]/.test(password) },
-                { label: t('auth.pwdDigit') || 'Un chiffre (0-9)', ok: /[0-9]/.test(password) },
-                { label: t('auth.pwdSpecial') || 'Un caractère spécial (!@#$...)', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) },
+                { label: t('auth.pwdUppercase'), ok: /[A-Z]/.test(password) },
+                { label: t('auth.pwdLowercase'), ok: /[a-z]/.test(password) },
+                { label: t('auth.pwdDigit'), ok: /[0-9]/.test(password) },
+                { label: t('auth.pwdSpecial'), ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) },
               ].map((rule, i) => (
                 <View key={i} style={styles.passwordRule}>
                   <Ionicons
@@ -321,7 +321,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
                 size={16} color="#7c3aed"
               />
               <Text style={styles.inviteToggleText}>
-                {showInviteCode ? 'Masquer le code d\'invitation' : 'J\'ai un code d\'invitation'}
+                {showInviteCode ? t('register.hideInviteCode') : t('register.haveInviteCode')}
               </Text>
             </TouchableOpacity>
             {showInviteCode && (
@@ -329,7 +329,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
                 <Ionicons name="key-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Code d'invitation (optionnel)"
+                  placeholder={t('register.inviteCodePlaceholder')}
                   placeholderTextColor="#6b7280"
                   value={inviteCode}
                   onChangeText={setInviteCode}
@@ -349,21 +349,21 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>S'inscrire</Text>
+                <Text style={styles.buttonText}>{t('auth.register')}</Text>
               )}
             </TouchableOpacity>
 
             {/* Déjà un compte */}
             <TouchableOpacity onPress={onBackToLogin} disabled={loading}>
               <Text style={styles.backText}>
-                Déjà un compte ? <Text style={styles.backLink}>Se connecter</Text>
+                {t('auth.alreadyHaveAccount')} <Text style={styles.backLink}>{t('auth.login')}</Text>
               </Text>
             </TouchableOpacity>
 
             {/* Séparateur OU */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OU</Text>
+              <Text style={styles.dividerText}>{t('register.or')}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -376,7 +376,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
               {googleLoading ? (
                 <View style={styles.oauthLoadingRow}>
                   <ActivityIndicator color="#fff" size="small" />
-                  <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>Connexion en cours...</Text>
+                  <Text style={[styles.oauthButtonText, { marginLeft: 8 }]}>{t('register.googleSigningIn')}</Text>
                 </View>
               ) : (
                 <View style={styles.oauthLoadingRow}>
