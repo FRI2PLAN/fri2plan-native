@@ -1870,3 +1870,5 @@ components/
 - [x] Localiser dans les cinq langues les messages Android de l’authentification biométrique affichés depuis la connexion.
 - [ ] Remplacer la feuille « Rejoindre une famille » par un dialogue Android fiable, distinct de la page et toujours visible avec le clavier.
 - [x] Conserver les sélecteurs Android de date et d’heure dans la langue du téléphone ; un utilisateur anglais avec un téléphone anglais verra donc le dialogue Android en anglais.
+- [ ] Fusionner les correctifs validés de `feature/shared-tasks-dev` vers `main` pour la diffusion production 1.1.7.
+- [ ] Publier l’OTA production iOS et Android uniquement après contrôle du commit fusionné sur `main`.
