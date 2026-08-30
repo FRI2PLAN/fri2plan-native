@@ -1861,3 +1861,5 @@ components/
 - [x] Transmettre la langue active lors de l’inscription afin que l’e-mail de confirmation et sa page web soient envoyés dans la langue de l’utilisateur.
 - [x] Localiser dans les cinq langues le message de confirmation après la copie d’un code de cercle.
 - [x] Corriger la modale Android « Rejoindre avec un code » afin que le champ reste visible au-dessus du clavier lorsqu’il reçoit le focus.
+- [x] Garantir dans tous les modules qu’une même action ne peut envoyer qu’une notification push par destinataire, même lorsqu’un utilisateur appartient à plusieurs cercles.
+- [x] Ajouter une couverture de non-régression pour les doublons de push au niveau du service central de notification.
