@@ -1872,3 +1872,9 @@ components/
 - [x] Conserver les sélecteurs Android de date et d’heure dans la langue du téléphone ; un utilisateur anglais avec un téléphone anglais verra donc le dialogue Android en anglais.
 - [x] Fusionner les correctifs validés de `feature/shared-tasks-dev` vers `main` pour la diffusion production 1.1.7.
 - [ ] Publier l’OTA production iOS et Android uniquement après contrôle du commit fusionné sur `main`.
+
+## Liens de recettes partagés — incident production
+- [x] Diagnostiquer, sans modifier de données, pourquoi un membre non créateur voit une recette planifiée mais ne peut pas ouvrir son lien externe.
+- [x] Garantir que chaque membre actif du même cercle peut ouvrir le lien public associé à une recette partagée, sans dépendre de l’identité de son créateur.
+- [x] Ajouter une couverture de non-régression pour l’ouverture d’un lien de recette depuis le compte d’un membre non créateur.
+- [ ] Valider le correctif sur Android avec un membre non créateur avant toute OTA de production.

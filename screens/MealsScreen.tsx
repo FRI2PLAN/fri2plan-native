@@ -573,8 +573,9 @@ export default function MealsScreen({
     const url = meal.sourceUrl?.trim();
     if (!url) return;
     try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (!canOpen) throw new Error('unsupported-url');
+      // Pour une recette web http(s), ouvrir directement le lien et gérer l'échec réel.
+      // Sur Android 11+, canOpenURL peut échouer si la visibilité des navigateurs n'est
+      // pas déclarée dans le manifeste, même lorsqu'un navigateur peut ouvrir l'URL.
       await Linking.openURL(url);
     } catch {
       Alert.alert(

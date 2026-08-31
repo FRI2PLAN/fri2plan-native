@@ -10,9 +10,10 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('s.weekPlanFill');
   });
 
-  it('conserve et ouvre visiblement le lien source de la recette', () => {
+  it('ouvre directement le lien web partagé sans le contrôle Android canOpenURL', () => {
     expect(mealsScreen).toContain('const openRecipeSource = useCallback');
     expect(mealsScreen).toContain('Linking.openURL(url)');
+    expect(mealsScreen).not.toContain('Linking.canOpenURL(url)');
     expect(mealsScreen).toContain("t('meals.viewRecipe')");
     expect(mealsScreen).toContain('recipeImageLink');
     expect(mealsScreen).toContain('recipeSourceButton');
