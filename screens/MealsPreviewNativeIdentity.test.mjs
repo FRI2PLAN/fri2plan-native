@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const appConfig = JSON.parse(readFileSync(new URL('../app.json', import.meta.url), 'utf8'));
 const easConfig = JSON.parse(readFileSync(new URL('../eas.json', import.meta.url), 'utf8'));
+const pushHookSource = readFileSync(new URL('../hooks/usePushNotifications.ts', import.meta.url), 'utf8');
 
 describe('identité native FRI2PLAN Meals Preview', () => {
   it('utilise un paquet Android distinct de la production', () => {
@@ -18,5 +19,13 @@ describe('identité native FRI2PLAN Meals Preview', () => {
     expect(easConfig.build['meals-preview'].channel).toBe('meals-preview');
     expect(easConfig.build['meals-preview'].android.buildType).toBe('apk');
     expect(easConfig.build.production.channel).toBe('production');
+  });
+
+  it('ne réutilise pas la configuration Firebase de production', () => {
+    expect(appConfig.expo.extra.isMealsPreview).toBe(true);
+    expect(appConfig.expo.android.googleServicesFile).toBeUndefined();
+    expect(appConfig.expo.ios.googleServicesFile).toBeUndefined();
+    expect(pushHookSource).toContain('const isMealsPreview = Constants.expoConfig?.extra?.isMealsPreview === true');
+    expect(pushHookSource).toContain('Meals Preview : notifications désactivées');
   });
 });

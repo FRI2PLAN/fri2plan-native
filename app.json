@@ -60,7 +60,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "ch.fri2plan.app.meals.preview",
       "buildNumber": "9",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification",
@@ -90,7 +89,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#7c3aed"
       },
-      "googleServicesFile": "./google-services.json",
       "package": "app.fri2plan.meals.preview",
       "versionCode": 1,
       "edgeToEdgeEnabled": false,
@@ -122,6 +120,7 @@
       ]
     },
     "extra": {
+      "isMealsPreview": true,
       "eas": {
         "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
       }

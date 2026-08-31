@@ -1895,3 +1895,4 @@ components/
 - [ ] Remplacer les valeurs par défaut d’horodatage envoyées comme texte par des expressions Drizzle compatibles TiDB dans la branche preview.
 - [x] Créer une application Android FRI2PLAN Meals Preview avec identifiant distinct, installable à côté de la production.
 - [x] Réserver un canal EAS preview propre à Meals, relié uniquement à Railway et TiDB de préproduction.
+- [x] Retirer les intégrations Firebase de notification de la build Android Meals Preview, car elles appartiennent à l’application de production.

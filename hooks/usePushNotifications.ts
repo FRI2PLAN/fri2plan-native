@@ -6,7 +6,10 @@
 import { useState, useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform, PermissionsAndroid } from 'react-native';
+
+const isMealsPreview = Constants.expoConfig?.extra?.isMealsPreview === true;
 
 // Configure le comportement des notifications en foreground
 Notifications.setNotificationHandler({
@@ -63,6 +66,13 @@ async function createAndroidChannels(): Promise<void> {
  * Retourne le token FCM natif (ExponentPushToken ou FCM token selon la config).
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
+  // La build Meals Preview n’est reliée à aucun projet Firebase de production
+  // et ne doit jamais enregistrer son appareil auprès des transports push.
+  if (isMealsPreview) {
+    console.log('[Push] Meals Preview : notifications désactivées');
+    return null;
+  }
+
   try {
     if (!Device.isDevice) {
       console.log('[Push] Simulateur détecté, skip push notifications');
