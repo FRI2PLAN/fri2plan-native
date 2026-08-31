@@ -453,6 +453,17 @@ export type AppRouter = {
       mutateAsync: (input: { url: string }) => Promise<any>;
     };
   };
+  mealPreferences: {
+    mine: {
+      useQuery: (input: { familyId?: number }, opts?: any) => any;
+    };
+    list: {
+      useQuery: (input: { familyId?: number }, opts?: any) => any;
+    };
+    updateMine: {
+      useMutation: (opts?: any) => any;
+    };
+  };
   messages: {
     list: {
       query: (input?: { familyId?: number; limit?: number; offset?: number }) => Promise<{ messages: Message[]; hasMore: boolean }>;

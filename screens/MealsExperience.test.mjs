@@ -18,4 +18,12 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('recipeImageLink');
     expect(mealsScreen).toContain('recipeSourceButton');
   });
+
+  it('propose un profil alimentaire individuel avec avertissement et visibilité', () => {
+    expect(mealsScreen).toContain('trpc.mealPreferences.mine.useQuery');
+    expect(mealsScreen).toContain('trpc.mealPreferences.updateMine.useMutation');
+    expect(mealsScreen).toContain("acknowledgeDisclaimer: true");
+    expect(mealsScreen).toContain("['family', 'private'] as ProfileVisibility[]");
+    expect(mealsScreen).toContain("t('meals.foodDisclaimer')");
+  });
 });
