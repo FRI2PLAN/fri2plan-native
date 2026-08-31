@@ -122,7 +122,7 @@
     "extra": {
       "isMealsPreview": true,
       "eas": {
-        "projectId": "e57f2b3e-818f-4962-9479-6bf670caca94"
+        "projectId": "a6f0b386-1025-4732-bf3d-65b0abde4410"
       }
     },
     "owner": "fri2plan",
@@ -130,7 +130,7 @@
       "enabled": true,
       "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_LOAD",
-      "url": "https://u.expo.dev/e57f2b3e-818f-4962-9479-6bf670caca94"
+      "url": "https://u.expo.dev/a6f0b386-1025-4732-bf3d-65b0abde4410"
     }
   }
 }
