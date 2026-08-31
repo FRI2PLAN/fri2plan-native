@@ -28,6 +28,17 @@ import { fr, de, enUS, es, it } from 'date-fns/locale';
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 type MealsTab = 'week' | 'history' | 'settings';
+type DietaryStyle = 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'flexitarian';
+type ProfileVisibility = 'family' | 'private';
+
+interface MealPreferenceProfile {
+  dietaryStyle: DietaryStyle;
+  exclusions: string | string[];
+  preferences: string | string[];
+  notes?: string | null;
+  visibility?: ProfileVisibility;
+  disclaimerAcknowledgedAt?: string | null;
+}
 
 interface Meal {
   id: number;
@@ -80,6 +91,19 @@ const MEAL_EMOJIS: Record<MealType, string> = {
   lunch: '🥗',
   dinner: '🍽️',
   snack: '🍎'};
+
+const DIETARY_STYLES: DietaryStyle[] = ['omnivore', 'vegetarian', 'vegan', 'pescatarian', 'flexitarian'];
+
+const parseFoodProfileItems = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+};
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function MealsScreen({
@@ -171,6 +195,22 @@ export default function MealsScreen({
   const mealLabels = getMealLabels(t);
   const [customLabels, setCustomLabels] = useState<Record<MealType, string>>({ ...mealLabels });
   const [customTimes, setCustomTimes] = useState<Record<MealType, string>>({ ...DEFAULT_TIMES });
+  const [showFoodPreferences, setShowFoodPreferences] = useState(false);
+  const [foodProfile, setFoodProfile] = useState({
+    dietaryStyle: 'omnivore' as DietaryStyle,
+    exclusions: [] as string[],
+    preferences: [] as string[],
+    notes: '',
+    visibility: 'family' as ProfileVisibility,
+  });
+  const [foodExclusionInput, setFoodExclusionInput] = useState('');
+  const [foodPreferenceInput, setFoodPreferenceInput] = useState('');
+  const [foodDisclaimerAccepted, setFoodDisclaimerAccepted] = useState(false);
+
+  const { data: savedFoodProfile, isLoading: foodProfileLoading } = trpc.mealPreferences.mine.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId && showFoodPreferences },
+  );
 
   useEffect(() => {
     if (!familyId) return;
@@ -199,6 +239,18 @@ export default function MealsScreen({
     Alert.alert('✓', t('common.saved') || 'Paramètres sauvegardés');
   }, [familyId, defaultServings, customLabels, customTimes]);
 
+  useEffect(() => {
+    if (!savedFoodProfile) return;
+    const profile = savedFoodProfile as MealPreferenceProfile;
+    setFoodProfile({
+      dietaryStyle: DIETARY_STYLES.includes(profile.dietaryStyle) ? profile.dietaryStyle : 'omnivore',
+      exclusions: parseFoodProfileItems(profile.exclusions),
+      preferences: parseFoodProfileItems(profile.preferences),
+      notes: profile.notes || '',
+      visibility: profile.visibility === 'private' ? 'private' : 'family',
+    });
+  }, [savedFoodProfile]);
+
   // ─── Mutations ─────────────────────────────────────────────────────────────
   const createMeal = trpc.meals.create.useMutation({ onSuccess: () => utils.meals.list.invalidate() });
   const updateMeal = trpc.meals.update.useMutation({ onSuccess: () => { utils.meals.list.invalidate(); utils.meals.history.invalidate(); } });
@@ -208,6 +260,55 @@ export default function MealsScreen({
   const translateRecipeMutation = trpc.meals.translateRecipe.useMutation();
   const [translating, setTranslating] = useState(false);
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
+  const updateFoodProfile = trpc.mealPreferences.updateMine.useMutation();
+
+  const addFoodProfileItem = (field: 'exclusions' | 'preferences') => {
+    const value = (field === 'exclusions' ? foodExclusionInput : foodPreferenceInput).trim();
+    if (!value) return;
+    setFoodProfile(current => {
+      const values = current[field];
+      if (values.length >= 30 || values.some(item => item.toLocaleLowerCase() === value.toLocaleLowerCase())) {
+        return current;
+      }
+      return { ...current, [field]: [...values, value] };
+    });
+    if (field === 'exclusions') setFoodExclusionInput('');
+    else setFoodPreferenceInput('');
+  };
+
+  const removeFoodProfileItem = (field: 'exclusions' | 'preferences', value: string) => {
+    setFoodProfile(current => ({ ...current, [field]: current[field].filter(item => item !== value) }));
+  };
+
+  const openFoodPreferences = () => {
+    setFoodDisclaimerAccepted(false);
+    setFoodExclusionInput('');
+    setFoodPreferenceInput('');
+    setShowFoodPreferences(true);
+  };
+
+  const saveFoodPreferences = async () => {
+    if (!familyId) return;
+    if (!foodDisclaimerAccepted) {
+      Alert.alert(t('meals.foodDisclaimerTitle'), t('meals.foodDisclaimerRequired'));
+      return;
+    }
+    try {
+      await updateFoodProfile.mutateAsync({
+        familyId,
+        dietaryStyle: foodProfile.dietaryStyle,
+        exclusions: foodProfile.exclusions,
+        preferences: foodProfile.preferences,
+        notes: foodProfile.notes.trim() || undefined,
+        visibility: foodProfile.visibility,
+        acknowledgeDisclaimer: true,
+      });
+      setShowFoodPreferences(false);
+      Alert.alert('✓', t('common.saved') || 'Paramètres sauvegardés');
+    } catch (error: any) {
+      Alert.alert(t('common.error') || 'Erreur', error?.message || t('meals.foodPreferencesSaveError'));
+    }
+  };
 
   // ── Sélection multiple (historique) ──
   const [selectionMode, setSelectionMode] = useState(false);
@@ -856,7 +957,142 @@ export default function MealsScreen({
       <TouchableOpacity style={s.saveSettingsBtn} onPress={saveSettings}>
         <Text style={s.saveSettingsBtnText}>✓ {t('common.save') || 'Sauvegarder'}</Text>
       </TouchableOpacity>
+
+      <Text style={s.sectionTitle}>{t('meals.foodPreferences')}</Text>
+      <Text style={s.foodPreferencesDescription}>{t('meals.foodPreferencesDescription')}</Text>
+      <TouchableOpacity style={s.foodPreferencesButton} onPress={openFoodPreferences} disabled={!familyId}>
+        <Text style={s.foodPreferencesButtonText}>🥕 {t('meals.manageFoodPreferences')}</Text>
+      </TouchableOpacity>
     </ScrollView>
+  );
+
+  const renderFoodPreferencesModal = () => (
+    <Modal visible={showFoodPreferences} transparent animationType="slide" onRequestClose={() => setShowFoodPreferences(false)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setShowFoodPreferences(false)} />
+        <View style={s.foodPreferencesSheet}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalHeaderTitle}>🥕 {t('meals.foodPreferences')}</Text>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowFoodPreferences(false)}>
+              <Text style={s.modalCloseBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {foodProfileLoading ? (
+            <ActivityIndicator style={{ marginVertical: 48 }} color="#7c3aed" />
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={s.foodDisclaimerCard}>
+                <Text style={s.foodDisclaimerTitle}>{t('meals.foodDisclaimerTitle')}</Text>
+                <Text style={s.foodDisclaimerText}>{t('meals.foodDisclaimer')}</Text>
+              </View>
+
+              <Text style={s.label}>{t('meals.dietaryStyle')}</Text>
+              <View style={s.dietaryStyleGrid}>
+                {DIETARY_STYLES.map(style => (
+                  <TouchableOpacity
+                    key={style}
+                    style={[s.dietaryStyleButton, foodProfile.dietaryStyle === style && s.dietaryStyleButtonActive]}
+                    onPress={() => setFoodProfile(current => ({ ...current, dietaryStyle: style }))}
+                  >
+                    <Text style={[s.dietaryStyleButtonText, foodProfile.dietaryStyle === style && s.dietaryStyleButtonTextActive]}>
+                      {t(`meals.dietaryStyle_${style}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.label}>{t('meals.exclusions')}</Text>
+              <View style={s.foodItemInputRow}>
+                <TextInput
+                  style={[s.input, s.foodItemInput]}
+                  value={foodExclusionInput}
+                  onChangeText={setFoodExclusionInput}
+                  placeholder={t('meals.exclusionsPlaceholder')}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  returnKeyType="done"
+                  onSubmitEditing={() => addFoodProfileItem('exclusions')}
+                />
+                <TouchableOpacity style={s.foodItemAddButton} onPress={() => addFoodProfileItem('exclusions')}>
+                  <Text style={s.foodItemAddButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={s.foodTagList}>
+                {foodProfile.exclusions.map(value => (
+                  <TouchableOpacity key={`exclusion-${value}`} style={s.foodTag} onPress={() => removeFoodProfileItem('exclusions', value)}>
+                    <Text style={s.foodTagText}>{value}  ×</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.label}>{t('meals.foodLikes')}</Text>
+              <View style={s.foodItemInputRow}>
+                <TextInput
+                  style={[s.input, s.foodItemInput]}
+                  value={foodPreferenceInput}
+                  onChangeText={setFoodPreferenceInput}
+                  placeholder={t('meals.foodLikesPlaceholder')}
+                  placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                  returnKeyType="done"
+                  onSubmitEditing={() => addFoodProfileItem('preferences')}
+                />
+                <TouchableOpacity style={s.foodItemAddButton} onPress={() => addFoodProfileItem('preferences')}>
+                  <Text style={s.foodItemAddButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={s.foodTagList}>
+                {foodProfile.preferences.map(value => (
+                  <TouchableOpacity key={`preference-${value}`} style={s.foodTag} onPress={() => removeFoodProfileItem('preferences', value)}>
+                    <Text style={s.foodTagText}>{value}  ×</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.label}>{t('meals.foodNotes')}</Text>
+              <TextInput
+                style={[s.input, s.foodNotesInput]}
+                value={foodProfile.notes}
+                onChangeText={notes => setFoodProfile(current => ({ ...current, notes }))}
+                placeholder={t('meals.foodNotesPlaceholder')}
+                placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+                multiline
+                maxLength={500}
+              />
+
+              <Text style={s.label}>{t('meals.profileVisibility')}</Text>
+              <Text style={s.visibilityDescription}>{t('meals.profileVisibilityDescription')}</Text>
+              <View style={s.visibilityRow}>
+                {(['family', 'private'] as ProfileVisibility[]).map(visibility => (
+                  <TouchableOpacity
+                    key={visibility}
+                    style={[s.visibilityButton, foodProfile.visibility === visibility && s.visibilityButtonActive]}
+                    onPress={() => setFoodProfile(current => ({ ...current, visibility }))}
+                  >
+                    <Text style={[s.visibilityButtonText, foodProfile.visibility === visibility && s.visibilityButtonTextActive]}>
+                      {t(`meals.profileVisibility_${visibility}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity style={s.disclaimerAckRow} onPress={() => setFoodDisclaimerAccepted(value => !value)}>
+                <View style={[s.disclaimerCheck, foodDisclaimerAccepted && s.disclaimerCheckActive]}>
+                  {foodDisclaimerAccepted ? <Text style={s.disclaimerCheckText}>✓</Text> : null}
+                </View>
+                <Text style={s.disclaimerAckText}>{t('meals.foodDisclaimerAcknowledge')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[s.saveSettingsBtn, (!foodDisclaimerAccepted || updateFoodProfile.isPending) && s.saveSettingsBtnDisabled]}
+                onPress={() => void saveFoodPreferences()}
+                disabled={!foodDisclaimerAccepted || updateFoodProfile.isPending}
+              >
+                {updateFoodProfile.isPending ? <ActivityIndicator color="#fff" /> : <Text style={s.saveSettingsBtnText}>✓ {t('common.save') || 'Sauvegarder'}</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 
   // ─── Formulaire repas (modal) ──────────────────────────────────────────────
@@ -1056,6 +1292,7 @@ export default function MealsScreen({
 
       {renderForm()}
       {renderAddToShoppingModal()}
+      {renderFoodPreferencesModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
@@ -1177,6 +1414,38 @@ function getStyles(isDark: boolean) {
     counterValue: { fontSize: 18, fontWeight: '700', color: text, minWidth: 40, textAlign: 'center' },
     saveSettingsBtn: { backgroundColor: '#7c3aed', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 20 },
     saveSettingsBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    saveSettingsBtnDisabled: { opacity: 0.55 },
+    foodPreferencesDescription: { color: subtext, fontSize: 13, lineHeight: 19, marginBottom: 10 },
+    foodPreferencesButton: { borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: isDark ? '#312e81' : '#ede9fe' },
+    foodPreferencesButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 15, fontWeight: '700' },
+    foodPreferencesSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '94%' },
+    foodDisclaimerCard: { backgroundColor: isDark ? '#3f2d11' : '#fff7ed', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#854d0e' : '#fed7aa' },
+    foodDisclaimerTitle: { color: isDark ? '#fde68a' : '#9a3412', fontWeight: '800', fontSize: 14, marginBottom: 6 },
+    foodDisclaimerText: { color: isDark ? '#fed7aa' : '#9a3412', fontSize: 12, lineHeight: 18 },
+    dietaryStyleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
+    dietaryStyleButton: { width: '48%', paddingVertical: 10, paddingHorizontal: 8, borderRadius: 10, alignItems: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    dietaryStyleButtonActive: { backgroundColor: '#7c3aed' },
+    dietaryStyleButtonText: { color: subtext, fontSize: 12, fontWeight: '700' },
+    dietaryStyleButtonTextActive: { color: '#fff' },
+    foodItemInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    foodItemInput: { flex: 1, marginBottom: 0 },
+    foodItemAddButton: { width: 46, height: 46, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    foodItemAddButtonText: { color: '#fff', fontSize: 24, lineHeight: 28, fontWeight: '700' },
+    foodTagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, minHeight: 8, marginTop: 8, marginBottom: 4 },
+    foodTag: { backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
+    foodTagText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 12, fontWeight: '700' },
+    foodNotesInput: { minHeight: 74, textAlignVertical: 'top' },
+    visibilityDescription: { color: subtext, fontSize: 12, lineHeight: 17, marginBottom: 8 },
+    visibilityRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+    visibilityButton: { flex: 1, alignItems: 'center', borderRadius: 10, padding: 11, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    visibilityButtonActive: { backgroundColor: '#7c3aed' },
+    visibilityButtonText: { color: subtext, fontSize: 13, fontWeight: '700' },
+    visibilityButtonTextActive: { color: '#fff' },
+    disclaimerAckRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 10 },
+    disclaimerCheck: { width: 22, height: 22, marginTop: 1, borderWidth: 1.5, borderColor: isDark ? '#9ca3af' : '#6b7280', borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
+    disclaimerCheckActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
+    disclaimerCheckText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+    disclaimerAckText: { color: text, flex: 1, fontSize: 13, lineHeight: 19 },
     // Formulaire
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center' },
     sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
