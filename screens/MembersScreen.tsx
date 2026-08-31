@@ -14,6 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { trpc } from '../lib/trpc';
+import { WEB_APP_URL } from '../lib/apiConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -247,7 +248,7 @@ export default function MembersScreen({ onNavigate, onPrevious, onNext }: Member
   };
 
   const handleShareInvitationLink = async (code: string) => {
-    const inviteLink = `https://app.fri2plan.ch/invitation/${code}`;
+    const inviteLink = `${WEB_APP_URL}/invitation/${code}`;
     try {
       await Share.share({
         message: `Rejoins notre famille sur FRI2PLAN ! 🎉\n\nOuvre ce lien pour créer ton compte et rejoindre le cercle :\n${inviteLink}`,

@@ -4,9 +4,10 @@ import superjson from 'superjson';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import type { AppRouter } from './types';
+import { TRPC_API_URL } from './apiConfig';
 
 export const trpc = createTRPCReact<AppRouter>();
-export const API_URL = 'https://app.fri2plan.ch/api/trpc';
+export const API_URL = TRPC_API_URL;
 
 // Délai exponentiel entre les tentatives (ms)
 const RETRY_DELAYS = [1000, 2000, 4000]; // 3 tentatives max
@@ -58,7 +59,7 @@ export const createTRPCClient = () => {
   return trpc.createClient({
     links: [
       httpBatchLink({
-        url: 'https://app.fri2plan.ch/api/trpc',
+        url: TRPC_API_URL,
         transformer: superjson,
         async headers() {
           const token = await AsyncStorage.getItem('authToken');

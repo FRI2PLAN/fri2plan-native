@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, AppStateStatus } from 'react-native';
 import { User } from '../lib/types';
+import { API_ORIGIN } from '../lib/apiConfig';
 
 interface AuthContextType {
   user: User | null;
@@ -22,7 +23,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_URL = 'https://app.fri2plan.ch';
+const API_URL = API_ORIGIN;
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);

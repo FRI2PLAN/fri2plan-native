@@ -13,6 +13,7 @@ import PremiumOverlay from '../components/PremiumOverlay';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { trpc } from '../lib/trpc';
+import { WEB_APP_URL } from '../lib/apiConfig';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr, de, enUS } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -414,7 +415,7 @@ export default function BudgetScreen({ onNavigate, onPrevious, onNext }: BudgetS
   };
   const handleShareProject = async (project: any) => {
     const displayName = getProjectDisplayName(project);
-    const appUrl = 'https://app.fri2plan.ch';
+    const appUrl = WEB_APP_URL;
     const message = t('budget.shareInviteMessage', { projectName: displayName, appUrl });
     try {
       await Share.share({ message, title: displayName });

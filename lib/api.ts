@@ -1,5 +1,5 @@
 // Simple API client using fetch
-const API_URL = 'https://app.fri2plan.ch';
+import { API_ORIGIN as API_URL } from './apiConfig';
 
 export const api = {
   // Health check

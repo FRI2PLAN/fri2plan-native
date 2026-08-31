@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
+import { WEB_APP_URL } from '../lib/apiConfig';
 import { useFamily } from '../contexts/FamilyContext';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -109,7 +110,7 @@ export default function FamilySetupScreen({ onComplete, onSkip }: FamilySetupScr
   const handleShareCode = async () => {
     try {
       await Share.share({
-        message: `Rejoins ma famille sur FRI2PLAN ! 🏠\n\nCode d'invitation : ${createdInviteCode}\n\nTélécharge l'app sur https://app.fri2plan.ch`,
+        message: `Rejoins ma famille sur FRI2PLAN ! 🏠\n\nCode d'invitation : ${createdInviteCode}\n\nOuvre FRI2PLAN : ${WEB_APP_URL}`,
         title: 'Invitation FRI2PLAN',
       });
     } catch { /* ignorer */ }

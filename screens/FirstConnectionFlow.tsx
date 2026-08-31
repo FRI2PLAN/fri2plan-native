@@ -21,11 +21,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
+import { WEB_APP_URL as APP_URL } from '../lib/apiConfig';
 import { useFamily } from '../contexts/FamilyContext';
 import { useQueryClient } from '@tanstack/react-query';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const APP_URL = 'https://app.fri2plan.ch';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

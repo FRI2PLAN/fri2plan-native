@@ -1872,7 +1872,15 @@ components/
 - [x] Conserver les sélecteurs Android de date et d’heure dans la langue du téléphone ; un utilisateur anglais avec un téléphone anglais verra donc le dialogue Android en anglais.
 - [x] Fusionner les correctifs validés de `feature/shared-tasks-dev` vers `main` pour la diffusion production 1.1.7.
 - [ ] Publier l’OTA production iOS et Android uniquement après contrôle du commit fusionné sur `main`.
-- [ ] Créer une branche mobile et serveur dédiée à la préproduction Repas, dérivée de la production 1.1.7 stable.
-- [ ] Créer un service Railway et une base TiDB de préproduction entièrement séparés de la production.
-- [ ] Renseigner les variables de préproduction et vérifier que l’application mobile preview cible exclusivement l’API de test.
-- [ ] Utiliser uniquement une architecture Railway et TiDB de préproduction séparée pour les essais Repas, sans réutiliser la base ni les secrets de production.
+- [x] Créer une branche mobile et serveur dédiée à la préproduction Repas, dérivée de la production 1.1.7 stable.
+- [x] Créer un service Railway et une base TiDB de préproduction entièrement séparés de la production.
+- [x] Renseigner les variables de préproduction et vérifier que l’application mobile preview cible exclusivement l’API de test.
+- [x] Utiliser uniquement une architecture Railway et TiDB de préproduction séparée pour les essais Repas, sans réutiliser la base ni les secrets de production.
+- [x] Rétablir l’accès Railway après l’erreur 500 de connexion avant de créer toute ressource de préproduction.
+- [x] Diagnostiquer le crash du service Railway de préproduction à partir des logs avant toute relance ou modification de variables.
+- [ ] Rendre l’initialisation des e-mails et de l’OAuth externe optionnelle dans la branche Repas de préproduction, sans importer les secrets de production.
+- [x] Configurer le service Railway de préproduction pour suivre `feature/meal-generator-preview` au lieu de la branche de production.
+- [x] Analyser et corriger le nouveau crash Railway preview survenu après le démarrage initial du service.
+- [x] Rendre l’initialisation Stripe optionnelle dans la branche Repas de préproduction afin de ne jamais importer les clés de paiement de production.
+- [x] Identifier et corriger l’intégration restante qui bloque le démarrage Railway après la désactivation de Resend et Stripe.
+- [x] Configurer la branche mobile Repas pour utiliser le domaine Railway preview et vérifier par test qu’aucune cible production n’est utilisée.

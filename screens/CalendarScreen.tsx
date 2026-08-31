@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, addDays, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameHour, isWithinInterval } from 'date-fns';
 import { fr, de, enUS, es, it } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
+import { API_ORIGIN } from '../lib/apiConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -192,7 +193,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
     setGoogleCalendarLoading(true);
     try {
-      const response = await fetch(`https://app.fri2plan.ch/api/google-calendar/poll?sessionId=${encodeURIComponent(sessionId)}`, {
+      const response = await fetch(`${API_ORIGIN}/api/google-calendar/poll?sessionId=${encodeURIComponent(sessionId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -236,7 +237,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
     setGoogleCalendarLoading(true);
     try {
-      const response = await fetch('https://app.fri2plan.ch/api/google-calendar/start', {
+      const response = await fetch(`${API_ORIGIN}/api/google-calendar/start`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -846,7 +847,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         const stored = await AsyncStorage.getItem('googleOAuthToken');
         if (stored) googleToken = JSON.parse(stored);
       } catch {}
-      const response = await fetch('https://app.fri2plan.ch/api/google-calendar/subscribe', {
+      const response = await fetch(`${API_ORIGIN}/api/google-calendar/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -14,8 +14,7 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-
-const SERVER_URL = 'https://app.fri2plan.ch';
+import { API_ORIGIN as SERVER_URL } from '../lib/apiConfig';
 
 interface AppVersionResponse {
   minVersion: string;
