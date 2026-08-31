@@ -1884,3 +1884,14 @@ components/
 - [x] Rendre l’initialisation Stripe optionnelle dans la branche Repas de préproduction afin de ne jamais importer les clés de paiement de production.
 - [x] Identifier et corriger l’intégration restante qui bloque le démarrage Railway après la désactivation de Resend et Stripe.
 - [x] Configurer la branche mobile Repas pour utiliser le domaine Railway preview et vérifier par test qu’aucune cible production n’est utilisée.
+- [ ] Appliquer les migrations Drizzle uniquement sur la base TiDB `test` du cluster `fri2plan-meals-preview` avant de tester l’application mobile.
+- [ ] Ajouter la configuration TLS requise à `DATABASE_URL` du seul service Railway preview avant de relancer les migrations.
+- [ ] Identifier et corriger la compatibilité TiDB de la première migration avant d’initialiser la base preview `test`.
+- [ ] Initialiser uniquement la base TiDB preview avec le schéma Drizzle courant si l’historique de migrations hérité ne peut pas s’appliquer à un cluster vierge.
+- [ ] Créer une base TiDB preview vide distincte de `test`, puis y initialiser le schéma Repas sans appliquer les migrations héritées ambiguës.
+- [ ] Identifier pourquoi `promoCampaigns` est créée dans la nouvelle base TiDB preview avant toute décision de conservation ou de suppression.
+- [ ] Désactiver la création automatique de `promoCampaigns` uniquement dans Railway preview avant l’initialisation de schéma.
+- [ ] Corriger la relation `stripePrices` vers `stripeProducts` dans la branche Repas preview avant d’exécuter le schéma Drizzle sur TiDB.
+- [ ] Remplacer les valeurs par défaut d’horodatage envoyées comme texte par des expressions Drizzle compatibles TiDB dans la branche preview.
+- [x] Créer une application Android FRI2PLAN Meals Preview avec identifiant distinct, installable à côté de la production.
+- [x] Réserver un canal EAS preview propre à Meals, relié uniquement à Railway et TiDB de préproduction.

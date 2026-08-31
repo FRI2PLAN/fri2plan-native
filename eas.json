@@ -20,6 +20,13 @@
         "buildType": "apk"
       }
     },
+    "meals-preview": {
+      "distribution": "internal",
+      "channel": "meals-preview",
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "production": {
       "channel": "production",
       "cache": {
