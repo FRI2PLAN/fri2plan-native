@@ -25,4 +25,18 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain("['family', 'private'] as ProfileVisibility[]");
     expect(mealsScreen).toContain("t('meals.foodDisclaimer')");
   });
+
+  it('conserve l’attestation et propose des aliments sans bloquer la saisie libre', () => {
+    expect(mealsScreen).toContain('setFoodDisclaimerAccepted(Boolean(profile.disclaimerAcknowledgedAt))');
+    expect(mealsScreen).toContain('utils.mealPreferences.mine.invalidate({ familyId })');
+    expect(mealsScreen).toContain('STANDARD_FOOD_SUGGESTION_KEYS');
+    expect(mealsScreen).toContain("onSubmitEditing={() => addFoodProfileItem('exclusions')}");
+    expect(mealsScreen).toContain("t('meals.foodNoSuggestion')");
+  });
+
+  it('illustre les régimes sans supprimer leurs libellés accessibles', () => {
+    expect(mealsScreen).toContain('DIETARY_STYLE_PRESENTATION');
+    expect(mealsScreen).toContain('dietaryStyleIcon');
+    expect(mealsScreen).toContain('accessibilityState={{ selected: foodProfile.dietaryStyle === style }}');
+  });
 });

@@ -94,6 +94,19 @@ const MEAL_EMOJIS: Record<MealType, string> = {
 
 const DIETARY_STYLES: DietaryStyle[] = ['omnivore', 'vegetarian', 'vegan', 'pescatarian', 'flexitarian'];
 
+const DIETARY_STYLE_PRESENTATION: Record<DietaryStyle, { icon: string; hintKey: string }> = {
+  omnivore: { icon: '🍗', hintKey: 'dietaryStyleHint_omnivore' },
+  vegetarian: { icon: '🥬', hintKey: 'dietaryStyleHint_vegetarian' },
+  vegan: { icon: '🌱', hintKey: 'dietaryStyleHint_vegan' },
+  pescatarian: { icon: '🐟', hintKey: 'dietaryStyleHint_pescatarian' },
+  flexitarian: { icon: '🥗', hintKey: 'dietaryStyleHint_flexitarian' },
+};
+
+const STANDARD_FOOD_SUGGESTION_KEYS = {
+  exclusions: ['peanuts', 'gluten', 'dairy', 'pork', 'mushrooms', 'broccoli'],
+  preferences: ['pasta', 'chicken', 'vegetables', 'rice', 'pizza', 'curry'],
+} as const;
+
 const parseFoodProfileItems = (value: unknown): string[] => {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
   if (typeof value !== 'string') return [];
@@ -249,6 +262,7 @@ export default function MealsScreen({
       notes: profile.notes || '',
       visibility: profile.visibility === 'private' ? 'private' : 'family',
     });
+    setFoodDisclaimerAccepted(Boolean(profile.disclaimerAcknowledgedAt));
   }, [savedFoodProfile]);
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
@@ -262,8 +276,8 @@ export default function MealsScreen({
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
   const updateFoodProfile = trpc.mealPreferences.updateMine.useMutation();
 
-  const addFoodProfileItem = (field: 'exclusions' | 'preferences') => {
-    const value = (field === 'exclusions' ? foodExclusionInput : foodPreferenceInput).trim();
+  const addFoodProfileValue = (field: 'exclusions' | 'preferences', rawValue: string) => {
+    const value = rawValue.trim();
     if (!value) return;
     setFoodProfile(current => {
       const values = current[field];
@@ -272,8 +286,22 @@ export default function MealsScreen({
       }
       return { ...current, [field]: [...values, value] };
     });
+  };
+
+  const addFoodProfileItem = (field: 'exclusions' | 'preferences') => {
+    const value = field === 'exclusions' ? foodExclusionInput : foodPreferenceInput;
+    addFoodProfileValue(field, value);
     if (field === 'exclusions') setFoodExclusionInput('');
     else setFoodPreferenceInput('');
+  };
+
+  const getFoodSuggestions = (field: 'exclusions' | 'preferences') => {
+    const query = (field === 'exclusions' ? foodExclusionInput : foodPreferenceInput).trim().toLocaleLowerCase();
+    const selected = foodProfile[field].map(item => item.toLocaleLowerCase());
+    return STANDARD_FOOD_SUGGESTION_KEYS[field]
+      .map(key => t(`meals.foodItem_${key}`))
+      .filter(value => !selected.includes(value.toLocaleLowerCase()))
+      .filter(value => !query || value.toLocaleLowerCase().includes(query));
   };
 
   const removeFoodProfileItem = (field: 'exclusions' | 'preferences', value: string) => {
@@ -281,7 +309,6 @@ export default function MealsScreen({
   };
 
   const openFoodPreferences = () => {
-    setFoodDisclaimerAccepted(false);
     setFoodExclusionInput('');
     setFoodPreferenceInput('');
     setShowFoodPreferences(true);
@@ -294,7 +321,7 @@ export default function MealsScreen({
       return;
     }
     try {
-      await updateFoodProfile.mutateAsync({
+      const savedProfile = await updateFoodProfile.mutateAsync({
         familyId,
         dietaryStyle: foodProfile.dietaryStyle,
         exclusions: foodProfile.exclusions,
@@ -303,6 +330,8 @@ export default function MealsScreen({
         visibility: foodProfile.visibility,
         acknowledgeDisclaimer: true,
       });
+      setFoodDisclaimerAccepted(Boolean((savedProfile as MealPreferenceProfile | null)?.disclaimerAcknowledgedAt));
+      await utils.mealPreferences.mine.invalidate({ familyId });
       setShowFoodPreferences(false);
       Alert.alert('✓', t('common.saved') || 'Paramètres sauvegardés');
     } catch (error: any) {
@@ -988,17 +1017,27 @@ export default function MealsScreen({
 
               <Text style={s.label}>{t('meals.dietaryStyle')}</Text>
               <View style={s.dietaryStyleGrid}>
-                {DIETARY_STYLES.map(style => (
-                  <TouchableOpacity
-                    key={style}
-                    style={[s.dietaryStyleButton, foodProfile.dietaryStyle === style && s.dietaryStyleButtonActive]}
-                    onPress={() => setFoodProfile(current => ({ ...current, dietaryStyle: style }))}
-                  >
-                    <Text style={[s.dietaryStyleButtonText, foodProfile.dietaryStyle === style && s.dietaryStyleButtonTextActive]}>
-                      {t(`meals.dietaryStyle_${style}`)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {DIETARY_STYLES.map(style => {
+                  const presentation = DIETARY_STYLE_PRESENTATION[style];
+                  return (
+                    <TouchableOpacity
+                      key={style}
+                      style={[s.dietaryStyleButton, foodProfile.dietaryStyle === style && s.dietaryStyleButtonActive]}
+                      onPress={() => setFoodProfile(current => ({ ...current, dietaryStyle: style }))}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: foodProfile.dietaryStyle === style }}
+                      accessibilityLabel={`${t(`meals.dietaryStyle_${style}`)} — ${t(`meals.${presentation.hintKey}`)}`}
+                    >
+                      <Text style={s.dietaryStyleIcon}>{presentation.icon}</Text>
+                      <Text style={[s.dietaryStyleButtonText, foodProfile.dietaryStyle === style && s.dietaryStyleButtonTextActive]}>
+                        {t(`meals.dietaryStyle_${style}`)}
+                      </Text>
+                      <Text style={[s.dietaryStyleHint, foodProfile.dietaryStyle === style && s.dietaryStyleHintActive]}>
+                        {t(`meals.${presentation.hintKey}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               <Text style={s.label}>{t('meals.exclusions')}</Text>
@@ -1016,6 +1055,17 @@ export default function MealsScreen({
                   <Text style={s.foodItemAddButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
+              <Text style={s.foodSuggestionLabel}>{t('meals.foodSuggestions')}</Text>
+              <View style={s.foodSuggestionList}>
+                {getFoodSuggestions('exclusions').map(value => (
+                  <TouchableOpacity key={`suggested-exclusion-${value}`} style={s.foodSuggestionChip} onPress={() => addFoodProfileValue('exclusions', value)}>
+                    <Text style={s.foodSuggestionChipText}>+ {value}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {foodExclusionInput.trim().length > 0 && getFoodSuggestions('exclusions').length === 0 ? (
+                <Text style={s.foodSuggestionHelp}>{t('meals.foodNoSuggestion')}</Text>
+              ) : null}
               <View style={s.foodTagList}>
                 {foodProfile.exclusions.map(value => (
                   <TouchableOpacity key={`exclusion-${value}`} style={s.foodTag} onPress={() => removeFoodProfileItem('exclusions', value)}>
@@ -1039,6 +1089,17 @@ export default function MealsScreen({
                   <Text style={s.foodItemAddButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
+              <Text style={s.foodSuggestionLabel}>{t('meals.foodSuggestions')}</Text>
+              <View style={s.foodSuggestionList}>
+                {getFoodSuggestions('preferences').map(value => (
+                  <TouchableOpacity key={`suggested-preference-${value}`} style={s.foodSuggestionChip} onPress={() => addFoodProfileValue('preferences', value)}>
+                    <Text style={s.foodSuggestionChipText}>+ {value}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {foodPreferenceInput.trim().length > 0 && getFoodSuggestions('preferences').length === 0 ? (
+                <Text style={s.foodSuggestionHelp}>{t('meals.foodNoSuggestion')}</Text>
+              ) : null}
               <View style={s.foodTagList}>
                 {foodProfile.preferences.map(value => (
                   <TouchableOpacity key={`preference-${value}`} style={s.foodTag} onPress={() => removeFoodProfileItem('preferences', value)}>
@@ -1423,14 +1484,22 @@ function getStyles(isDark: boolean) {
     foodDisclaimerTitle: { color: isDark ? '#fde68a' : '#9a3412', fontWeight: '800', fontSize: 14, marginBottom: 6 },
     foodDisclaimerText: { color: isDark ? '#fed7aa' : '#9a3412', fontSize: 12, lineHeight: 18 },
     dietaryStyleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
-    dietaryStyleButton: { width: '48%', paddingVertical: 10, paddingHorizontal: 8, borderRadius: 10, alignItems: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    dietaryStyleButton: { width: '48%', minHeight: 104, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderWidth: 1, borderColor: 'transparent' },
     dietaryStyleButtonActive: { backgroundColor: '#7c3aed' },
+    dietaryStyleIcon: { fontSize: 25, marginBottom: 4 },
     dietaryStyleButtonText: { color: subtext, fontSize: 12, fontWeight: '700' },
     dietaryStyleButtonTextActive: { color: '#fff' },
+    dietaryStyleHint: { color: subtext, fontSize: 10, lineHeight: 14, textAlign: 'center', marginTop: 3 },
+    dietaryStyleHintActive: { color: '#ede9fe' },
     foodItemInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     foodItemInput: { flex: 1, marginBottom: 0 },
     foodItemAddButton: { width: 46, height: 46, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
     foodItemAddButtonText: { color: '#fff', fontSize: 24, lineHeight: 28, fontWeight: '700' },
+    foodSuggestionLabel: { color: subtext, fontSize: 11, fontWeight: '700', marginTop: 7, marginBottom: 5 },
+    foodSuggestionList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, minHeight: 4 },
+    foodSuggestionChip: { backgroundColor: isDark ? '#253047' : '#eff6ff', borderColor: isDark ? '#3b82f6' : '#bfdbfe', borderWidth: 1, borderRadius: 15, paddingHorizontal: 9, paddingVertical: 5 },
+    foodSuggestionChipText: { color: isDark ? '#bfdbfe' : '#1d4ed8', fontSize: 12, fontWeight: '700' },
+    foodSuggestionHelp: { color: subtext, fontSize: 11, fontStyle: 'italic', marginTop: 6 },
     foodTagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, minHeight: 8, marginTop: 8, marginBottom: 4 },
     foodTag: { backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
     foodTagText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 12, fontWeight: '700' },
