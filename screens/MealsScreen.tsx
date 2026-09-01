@@ -30,6 +30,7 @@ type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 type MealsTab = 'week' | 'history' | 'settings';
 type DietaryStyle = 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'flexitarian';
 type ProfileVisibility = 'family' | 'private';
+type RecipeVisibility = 'family' | 'private';
 
 interface MealPreferenceProfile {
   dietaryStyle: DietaryStyle;
@@ -53,6 +54,22 @@ interface Meal {
   isCompleted?: boolean | number;
   assignedTo?: number;
   familyId?: number;
+}
+
+interface RecipeLibraryEntry {
+  id: number;
+  familyId: number;
+  createdBy: number;
+  title: string;
+  description?: string | null;
+  prepTimeMinutes?: number | null;
+  cookTimeMinutes?: number | null;
+  servings?: number | null;
+  instructions?: string | null;
+  sourceUrl?: string | null;
+  visibility?: RecipeVisibility | null;
+  creatorName?: string | null;
+  ingredients?: Array<{ id?: number; name: string }>;
 }
 
 // Spoonacular remplace TheMealDB pour le support multilingue FR/EN/DE
@@ -219,10 +236,30 @@ export default function MealsScreen({
   const [foodExclusionInput, setFoodExclusionInput] = useState('');
   const [foodPreferenceInput, setFoodPreferenceInput] = useState('');
   const [foodDisclaimerAccepted, setFoodDisclaimerAccepted] = useState(false);
+  const [showRecipeLibrary, setShowRecipeLibrary] = useState(false);
+  const [showRecipeDetails, setShowRecipeDetails] = useState(false);
+  const [showRecipeForm, setShowRecipeForm] = useState(false);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
+  const [editingRecipe, setEditingRecipe] = useState<RecipeLibraryEntry | null>(null);
+  const [recipeLibrarySearch, setRecipeLibrarySearch] = useState('');
+  const [recipeIngredientInput, setRecipeIngredientInput] = useState('');
+  const [recipeForm, setRecipeForm] = useState({
+    title: '', description: '', prepTimeMinutes: '', cookTimeMinutes: '', servings: defaultServings,
+    instructions: '', sourceUrl: '', visibility: 'family' as RecipeVisibility, ingredients: [] as string[],
+  });
 
   const { data: savedFoodProfile, isLoading: foodProfileLoading } = trpc.mealPreferences.mine.useQuery(
     { familyId: familyId! },
     { enabled: !!familyId && showFoodPreferences },
+  );
+  const { data: currentUser } = trpc.user.me.useQuery();
+  const { data: recipeLibrary = [], isLoading: recipeLibraryLoading } = trpc.meals.recipeLibrary.list.useQuery(
+    { familyId: familyId! },
+    { enabled: !!familyId && showRecipeLibrary },
+  );
+  const { data: selectedRecipe, isLoading: recipeDetailsLoading } = trpc.meals.recipeLibrary.get.useQuery(
+    { recipeId: selectedRecipeId! },
+    { enabled: !!selectedRecipeId && showRecipeDetails },
   );
 
   useEffect(() => {
@@ -275,6 +312,96 @@ export default function MealsScreen({
   const [translating, setTranslating] = useState(false);
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
   const updateFoodProfile = trpc.mealPreferences.updateMine.useMutation();
+  const createRecipeLibraryEntry = trpc.meals.recipeLibrary.create.useMutation();
+  const updateRecipeLibraryEntry = trpc.meals.recipeLibrary.update.useMutation();
+  const deleteRecipeLibraryEntry = trpc.meals.recipeLibrary.delete.useMutation();
+
+  const visibleRecipeLibrary = useMemo(() => {
+    const query = recipeLibrarySearch.trim().toLocaleLowerCase();
+    return (recipeLibrary as RecipeLibraryEntry[]).filter(recipe => {
+      if (!query) return true;
+      return [recipe.title, recipe.description, recipe.creatorName]
+        .filter((value): value is string => Boolean(value))
+        .some(value => value.toLocaleLowerCase().includes(query));
+    });
+  }, [recipeLibrary, recipeLibrarySearch]);
+
+  const addRecipeIngredient = () => {
+    const ingredient = recipeIngredientInput.trim();
+    if (!ingredient) return;
+    setRecipeForm(current => {
+      if (current.ingredients.length >= 80 || current.ingredients.some(value => value.toLocaleLowerCase() === ingredient.toLocaleLowerCase())) return current;
+      return { ...current, ingredients: [...current.ingredients, ingredient] };
+    });
+    setRecipeIngredientInput('');
+  };
+
+  const openNewRecipe = () => {
+    setEditingRecipe(null);
+    setRecipeIngredientInput('');
+    setRecipeForm({ title: '', description: '', prepTimeMinutes: '', cookTimeMinutes: '', servings: defaultServings, instructions: '', sourceUrl: '', visibility: 'family', ingredients: [] });
+    setShowRecipeForm(true);
+  };
+
+  const openRecipeDetails = (recipeId: number) => {
+    setSelectedRecipeId(recipeId);
+    setShowRecipeDetails(true);
+  };
+
+  const openRecipeEditor = (recipe: RecipeLibraryEntry) => {
+    setEditingRecipe(recipe);
+    setRecipeIngredientInput('');
+    setRecipeForm({
+      title: recipe.title || '', description: recipe.description || '', prepTimeMinutes: recipe.prepTimeMinutes?.toString() || '',
+      cookTimeMinutes: recipe.cookTimeMinutes?.toString() || '', servings: recipe.servings || defaultServings,
+      instructions: recipe.instructions || '', sourceUrl: recipe.sourceUrl || '', visibility: recipe.visibility === 'private' ? 'private' : 'family',
+      ingredients: (recipe.ingredients || []).map(ingredient => ingredient.name),
+    });
+    setShowRecipeDetails(false);
+    setShowRecipeForm(true);
+  };
+
+  const saveRecipeLibraryEntry = async () => {
+    if (!familyId || !recipeForm.title.trim()) {
+      Alert.alert(t('common.error') || 'Erreur', t('meals.recipeTitleRequired'));
+      return;
+    }
+    const asMinutes = (value: string) => value.trim() ? Math.max(0, Number.parseInt(value, 10) || 0) : null;
+    const baseInput = {
+      title: recipeForm.title.trim(), description: recipeForm.description.trim() || null,
+      prepTimeMinutes: asMinutes(recipeForm.prepTimeMinutes), cookTimeMinutes: asMinutes(recipeForm.cookTimeMinutes),
+      servings: Math.max(1, recipeForm.servings), instructions: recipeForm.instructions.trim() || null,
+      sourceUrl: recipeForm.sourceUrl.trim() || null, visibility: recipeForm.visibility,
+    };
+    try {
+      if (editingRecipe) {
+        await updateRecipeLibraryEntry.mutateAsync({ recipeId: editingRecipe.id, ...baseInput, ingredients: recipeForm.ingredients });
+        await utils.meals.recipeLibrary.get.invalidate({ recipeId: editingRecipe.id });
+      } else {
+        await createRecipeLibraryEntry.mutateAsync({ familyId, ...baseInput, ingredients: recipeForm.ingredients });
+      }
+      await utils.meals.recipeLibrary.list.invalidate({ familyId });
+      setShowRecipeForm(false);
+      Alert.alert('✓', t('common.saved') || 'Enregistré');
+    } catch (error: any) {
+      Alert.alert(t('common.error') || 'Erreur', error?.message || t('meals.recipeSaveError'));
+    }
+  };
+
+  const removeRecipeLibraryEntry = (recipe: RecipeLibraryEntry) => {
+    Alert.alert(t('common.delete') || 'Supprimer', recipe.title, [
+      { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+      { text: t('common.delete') || 'Supprimer', style: 'destructive', onPress: async () => {
+        try {
+          await deleteRecipeLibraryEntry.mutateAsync({ recipeId: recipe.id });
+          await utils.meals.recipeLibrary.list.invalidate({ familyId });
+          setShowRecipeDetails(false);
+        } catch (error: any) {
+          Alert.alert(t('common.error') || 'Erreur', error?.message || t('meals.recipeDeleteError'));
+        }
+      } },
+    ]);
+  };
 
   const addFoodProfileValue = (field: 'exclusions' | 'preferences', rawValue: string) => {
     const value = rawValue.trim();
@@ -987,6 +1114,16 @@ export default function MealsScreen({
         <Text style={s.saveSettingsBtnText}>✓ {t('common.save') || 'Sauvegarder'}</Text>
       </TouchableOpacity>
 
+      <Text style={s.sectionTitle}>{t('meals.recipeLibrary')}</Text>
+      <Text style={s.recipeLibraryDescription}>{t('meals.recipeLibraryDescription')}</Text>
+      <TouchableOpacity
+        style={s.recipeLibraryButton}
+        onPress={() => { setRecipeLibrarySearch(''); setShowRecipeLibrary(true); }}
+        disabled={!familyId}
+      >
+        <Text style={s.recipeLibraryButtonText}>📚 {t('meals.openRecipeLibrary')}</Text>
+      </TouchableOpacity>
+
       <Text style={s.sectionTitle}>{t('meals.foodPreferences')}</Text>
       <Text style={s.foodPreferencesDescription}>{t('meals.foodPreferencesDescription')}</Text>
       <TouchableOpacity style={s.foodPreferencesButton} onPress={openFoodPreferences} disabled={!familyId}>
@@ -1151,6 +1288,159 @@ export default function MealsScreen({
               </TouchableOpacity>
             </ScrollView>
           )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  const renderRecipeLibraryModal = () => (
+    <Modal visible={showRecipeLibrary} transparent animationType="slide" onRequestClose={() => setShowRecipeLibrary(false)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setShowRecipeLibrary(false)} />
+        <View style={s.recipeLibrarySheet}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalHeaderTitle}>📚 {t('meals.recipeLibrary')}</Text>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowRecipeLibrary(false)}>
+              <Text style={s.modalCloseBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.recipeLibraryToolbar}>
+            <TextInput
+              style={[s.input, s.recipeLibrarySearch]}
+              value={recipeLibrarySearch}
+              onChangeText={setRecipeLibrarySearch}
+              placeholder={t('meals.searchRecipeLibrary')}
+              placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'}
+              returnKeyType="search"
+            />
+            <TouchableOpacity style={s.recipeLibraryCreateButton} onPress={openNewRecipe} accessibilityLabel={t('meals.newRecipe')}>
+              <Text style={s.recipeLibraryCreateButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {recipeLibraryLoading ? <ActivityIndicator style={{ marginVertical: 48 }} color="#7c3aed" /> : null}
+            {!recipeLibraryLoading && visibleRecipeLibrary.length === 0 ? (
+              <View style={s.recipeLibraryEmpty}>
+                <Text style={s.recipeLibraryEmptyTitle}>{t('meals.recipeLibraryEmpty')}</Text>
+                <Text style={s.recipeLibraryEmptyText}>{t('meals.recipeLibraryEmptyHint')}</Text>
+              </View>
+            ) : null}
+            {visibleRecipeLibrary.map(recipe => (
+              <TouchableOpacity key={recipe.id} style={s.recipeLibraryCard} onPress={() => openRecipeDetails(recipe.id)}>
+                <View style={s.recipeLibraryCardTop}>
+                  <Text style={s.recipeLibraryCardTitle} numberOfLines={2}>{recipe.title}</Text>
+                  <View style={[s.recipeVisibilityBadge, recipe.visibility === 'private' && s.recipeVisibilityBadgePrivate]}>
+                    <Text style={[s.recipeVisibilityBadgeText, recipe.visibility === 'private' && s.recipeVisibilityBadgeTextPrivate]}>
+                      {recipe.visibility === 'private' ? `🔒 ${t('meals.recipeVisibility_private')}` : `👥 ${t('meals.recipeVisibility_family')}`}
+                    </Text>
+                  </View>
+                </View>
+                {recipe.description ? <Text style={s.recipeLibraryCardDescription} numberOfLines={2}>{recipe.description}</Text> : null}
+                <Text style={s.recipeLibraryCardMeta}>
+                  {recipe.servings ? `${recipe.servings} ${t('meals.servings')}` : t('meals.recipeNoServings')}
+                  {recipe.prepTimeMinutes || recipe.cookTimeMinutes ? ` · ${t('meals.recipeDuration', { count: (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0) })}` : ''}
+                  {recipe.creatorName ? ` · ${t('meals.recipeBy', { name: recipe.creatorName })}` : ''}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  const renderRecipeDetailsModal = () => {
+    const recipe = selectedRecipe as RecipeLibraryEntry | undefined;
+    const canManageRecipe = recipe?.createdBy === (currentUser as any)?.id;
+    return (
+      <Modal visible={showRecipeDetails} transparent animationType="slide" onRequestClose={() => setShowRecipeDetails(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
+          <Pressable style={s.sheetBackdrop} onPress={() => setShowRecipeDetails(false)} />
+          <View style={s.recipeDetailSheet}>
+            <View style={s.modalHeader}>
+              <Text style={s.modalHeaderTitle}>{recipe?.title || t('meals.recipeDetails')}</Text>
+              <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowRecipeDetails(false)}>
+                <Text style={s.modalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {recipeDetailsLoading || !recipe ? <ActivityIndicator style={{ marginVertical: 48 }} color="#7c3aed" /> : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={[s.recipeDetailVisibility, recipe.visibility === 'private' && s.recipeDetailVisibilityPrivate]}>
+                  <Text style={[s.recipeDetailVisibilityText, recipe.visibility === 'private' && s.recipeDetailVisibilityTextPrivate]}>
+                    {recipe.visibility === 'private' ? `🔒 ${t('meals.recipeVisibilityPrivateDetail')}` : `👥 ${t('meals.recipeVisibilityFamilyDetail')}`}
+                  </Text>
+                </View>
+                {recipe.description ? <Text style={s.recipeDetailDescription}>{recipe.description}</Text> : null}
+                <Text style={s.recipeDetailMeta}>
+                  {recipe.servings ? `${recipe.servings} ${t('meals.servings')}` : t('meals.recipeNoServings')}
+                  {recipe.prepTimeMinutes || recipe.cookTimeMinutes ? ` · ${t('meals.recipeDuration', { count: (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0) })}` : ''}
+                </Text>
+                {recipe.creatorName ? <Text style={s.recipeDetailBy}>{t('meals.recipeBy', { name: recipe.creatorName })}</Text> : null}
+                <Text style={s.label}>{t('meals.ingredients')}</Text>
+                {(recipe.ingredients || []).length === 0 ? <Text style={s.recipeDetailEmpty}>{t('meals.recipeNoIngredients')}</Text> : (
+                  <View style={s.recipeDetailIngredients}>{(recipe.ingredients || []).map((ingredient, index) => <Text key={`${ingredient.name}-${index}`} style={s.ingredientItem}>• {ingredient.name}</Text>)}</View>
+                )}
+                {recipe.instructions ? <><Text style={s.label}>{t('meals.recipeInstructions')}</Text><Text style={s.recipeDetailInstructions}>{recipe.instructions}</Text></> : null}
+                {recipe.sourceUrl ? (
+                  <TouchableOpacity style={s.recipeSourceButton} onPress={() => void Linking.openURL(recipe.sourceUrl!).catch(() => Alert.alert(t('meals.recipeUnavailable'), t('meals.recipeUnavailableMessage')))}>
+                    <Text style={s.recipeSourceButtonText}>🔗 {t('meals.recipeSource')}</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {canManageRecipe ? (
+                  <View style={s.recipeOwnerActions}>
+                    <TouchableOpacity style={s.recipeEditButton} onPress={() => openRecipeEditor(recipe)}><Text style={s.recipeEditButtonText}>✏️ {t('meals.editRecipe')}</Text></TouchableOpacity>
+                    <TouchableOpacity style={s.recipeDeleteButton} onPress={() => removeRecipeLibraryEntry(recipe)} disabled={deleteRecipeLibraryEntry.isPending}><Text style={s.recipeDeleteButtonText}>🗑 {t('common.delete')}</Text></TouchableOpacity>
+                  </View>
+                ) : null}
+              </ScrollView>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    );
+  };
+
+  const renderRecipeFormModal = () => (
+    <Modal visible={showRecipeForm} transparent animationType="slide" onRequestClose={() => setShowRecipeForm(false)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setShowRecipeForm(false)} />
+        <View style={s.recipeFormSheet}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalHeaderTitle}>{editingRecipe ? t('meals.editRecipe') : t('meals.newRecipe')}</Text>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowRecipeForm(false)}><Text style={s.modalCloseBtnText}>✕</Text></TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <Text style={s.label}>{t('meals.recipeTitle')}</Text>
+            <TextInput style={s.input} value={recipeForm.title} onChangeText={title => setRecipeForm(current => ({ ...current, title }))} placeholder={t('meals.recipeTitlePlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
+            <Text style={s.label}>{t('meals.recipeDescription')}</Text>
+            <TextInput style={[s.input, s.recipeDescriptionInput]} value={recipeForm.description} onChangeText={description => setRecipeForm(current => ({ ...current, description }))} placeholder={t('meals.recipeDescriptionPlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} multiline maxLength={5000} />
+            <Text style={s.label}>{t('meals.ingredients')}</Text>
+            <View style={s.foodItemInputRow}>
+              <TextInput style={[s.input, s.foodItemInput]} value={recipeIngredientInput} onChangeText={setRecipeIngredientInput} placeholder={t('meals.recipeIngredientPlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} returnKeyType="done" onSubmitEditing={addRecipeIngredient} />
+              <TouchableOpacity style={s.foodItemAddButton} onPress={addRecipeIngredient}><Text style={s.foodItemAddButtonText}>+</Text></TouchableOpacity>
+            </View>
+            <View style={s.foodTagList}>{recipeForm.ingredients.map(ingredient => <TouchableOpacity key={ingredient} style={s.foodTag} onPress={() => setRecipeForm(current => ({ ...current, ingredients: current.ingredients.filter(value => value !== ingredient) }))}><Text style={s.foodTagText}>{ingredient}  ×</Text></TouchableOpacity>)}</View>
+            <Text style={s.label}>{t('meals.servings')}</Text>
+            <View style={s.settingsRow}>
+              <TouchableOpacity onPress={() => setRecipeForm(current => ({ ...current, servings: Math.max(1, current.servings - 1) }))} style={s.counterBtn}><Text style={s.counterBtnText}>−</Text></TouchableOpacity>
+              <Text style={s.counterValue}>{recipeForm.servings}</Text>
+              <TouchableOpacity onPress={() => setRecipeForm(current => ({ ...current, servings: Math.min(50, current.servings + 1) }))} style={s.counterBtn}><Text style={s.counterBtnText}>+</Text></TouchableOpacity>
+            </View>
+            <View style={s.recipeTimeRow}>
+              <View style={s.recipeTimeCell}><Text style={s.label}>{t('meals.recipePrepTime')}</Text><TextInput style={s.input} value={recipeForm.prepTimeMinutes} onChangeText={prepTimeMinutes => setRecipeForm(current => ({ ...current, prepTimeMinutes }))} keyboardType="number-pad" placeholder="0" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} /></View>
+              <View style={s.recipeTimeCell}><Text style={s.label}>{t('meals.recipeCookTime')}</Text><TextInput style={s.input} value={recipeForm.cookTimeMinutes} onChangeText={cookTimeMinutes => setRecipeForm(current => ({ ...current, cookTimeMinutes }))} keyboardType="number-pad" placeholder="0" placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} /></View>
+            </View>
+            <Text style={s.label}>{t('meals.recipeInstructions')}</Text>
+            <TextInput style={[s.input, s.recipeInstructionsInput]} value={recipeForm.instructions} onChangeText={instructions => setRecipeForm(current => ({ ...current, instructions }))} placeholder={t('meals.recipeInstructionsPlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} multiline maxLength={12000} />
+            <Text style={s.label}>{t('meals.recipeSourceOptional')}</Text>
+            <TextInput style={s.input} value={recipeForm.sourceUrl} onChangeText={sourceUrl => setRecipeForm(current => ({ ...current, sourceUrl }))} placeholder="https://..." placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} autoCapitalize="none" keyboardType="url" />
+            <Text style={s.label}>{t('meals.recipeVisibility')}</Text>
+            <Text style={s.visibilityDescription}>{t('meals.recipeVisibilityDescription')}</Text>
+            <View style={s.visibilityRow}>{(['family', 'private'] as RecipeVisibility[]).map(visibility => <TouchableOpacity key={visibility} style={[s.visibilityButton, recipeForm.visibility === visibility && s.visibilityButtonActive]} onPress={() => setRecipeForm(current => ({ ...current, visibility }))}><Text style={[s.visibilityButtonText, recipeForm.visibility === visibility && s.visibilityButtonTextActive]}>{t(`meals.recipeVisibility_${visibility}`)}</Text></TouchableOpacity>)}</View>
+          </ScrollView>
+          <TouchableOpacity style={[s.saveSettingsBtn, (createRecipeLibraryEntry.isPending || updateRecipeLibraryEntry.isPending) && s.saveSettingsBtnDisabled]} onPress={() => void saveRecipeLibraryEntry()} disabled={createRecipeLibraryEntry.isPending || updateRecipeLibraryEntry.isPending}>
+            {createRecipeLibraryEntry.isPending || updateRecipeLibraryEntry.isPending ? <ActivityIndicator color="#fff" /> : <Text style={s.saveSettingsBtnText}>✓ {t('common.save')}</Text>}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -1354,6 +1644,9 @@ export default function MealsScreen({
       {renderForm()}
       {renderAddToShoppingModal()}
       {renderFoodPreferencesModal()}
+      {renderRecipeLibraryModal()}
+      {renderRecipeDetailsModal()}
+      {renderRecipeFormModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
@@ -1479,6 +1772,47 @@ function getStyles(isDark: boolean) {
     foodPreferencesDescription: { color: subtext, fontSize: 13, lineHeight: 19, marginBottom: 10 },
     foodPreferencesButton: { borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: isDark ? '#312e81' : '#ede9fe' },
     foodPreferencesButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 15, fontWeight: '700' },
+    recipeLibraryDescription: { color: subtext, fontSize: 13, lineHeight: 19, marginBottom: 10 },
+    recipeLibraryButton: { borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' },
+    recipeLibraryButtonText: { color: isDark ? '#bfdbfe' : '#1d4ed8', fontSize: 15, fontWeight: '700' },
+    recipeLibrarySheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
+    recipeDetailSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
+    recipeFormSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 22, maxHeight: '96%' },
+    recipeLibraryToolbar: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 },
+    recipeLibrarySearch: { flex: 1, marginBottom: 0 },
+    recipeLibraryCreateButton: { width: 46, height: 46, borderRadius: 12, backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    recipeLibraryCreateButtonText: { color: '#fff', fontSize: 25, fontWeight: '700', lineHeight: 29 },
+    recipeLibraryEmpty: { alignItems: 'center', paddingHorizontal: 18, paddingVertical: 50 },
+    recipeLibraryEmptyTitle: { color: text, fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 },
+    recipeLibraryEmptyText: { color: subtext, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+    recipeLibraryCard: { backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 14, padding: 13, marginBottom: 9 },
+    recipeLibraryCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    recipeLibraryCardTitle: { color: text, fontSize: 16, fontWeight: '800', flex: 1 },
+    recipeLibraryCardDescription: { color: subtext, fontSize: 13, lineHeight: 18, marginTop: 7 },
+    recipeLibraryCardMeta: { color: subtext, fontSize: 11, fontWeight: '600', marginTop: 8 },
+    recipeVisibilityBadge: { backgroundColor: isDark ? '#174a3a' : '#dcfce7', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+    recipeVisibilityBadgePrivate: { backgroundColor: isDark ? '#4c1d3f' : '#fce7f3' },
+    recipeVisibilityBadgeText: { color: isDark ? '#86efac' : '#166534', fontSize: 10, fontWeight: '800' },
+    recipeVisibilityBadgeTextPrivate: { color: isDark ? '#f9a8d4' : '#9d174d' },
+    recipeDetailVisibility: { alignSelf: 'flex-start', backgroundColor: isDark ? '#174a3a' : '#dcfce7', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 12 },
+    recipeDetailVisibilityPrivate: { backgroundColor: isDark ? '#4c1d3f' : '#fce7f3' },
+    recipeDetailVisibilityText: { color: isDark ? '#86efac' : '#166534', fontSize: 12, fontWeight: '800' },
+    recipeDetailVisibilityTextPrivate: { color: isDark ? '#f9a8d4' : '#9d174d' },
+    recipeDetailDescription: { color: text, fontSize: 14, lineHeight: 21, marginBottom: 10 },
+    recipeDetailMeta: { color: subtext, fontSize: 13, fontWeight: '700' },
+    recipeDetailBy: { color: subtext, fontSize: 12, marginTop: 5 },
+    recipeDetailIngredients: { backgroundColor: isDark ? '#111827' : '#f8fafc', borderRadius: 10, padding: 10 },
+    recipeDetailEmpty: { color: subtext, fontSize: 13, fontStyle: 'italic' },
+    recipeDetailInstructions: { color: text, fontSize: 14, lineHeight: 22, marginBottom: 8 },
+    recipeOwnerActions: { flexDirection: 'row', gap: 8, marginTop: 20, marginBottom: 8 },
+    recipeEditButton: { flex: 1, backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 10, padding: 12, alignItems: 'center' },
+    recipeEditButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 13, fontWeight: '800' },
+    recipeDeleteButton: { backgroundColor: isDark ? '#4c1d1d' : '#fef2f2', borderRadius: 10, padding: 12, alignItems: 'center' },
+    recipeDeleteButtonText: { color: '#dc2626', fontSize: 13, fontWeight: '800' },
+    recipeDescriptionInput: { minHeight: 72, textAlignVertical: 'top' },
+    recipeInstructionsInput: { minHeight: 130, textAlignVertical: 'top' },
+    recipeTimeRow: { flexDirection: 'row', gap: 10 },
+    recipeTimeCell: { flex: 1 },
     foodPreferencesSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '94%' },
     foodDisclaimerCard: { backgroundColor: isDark ? '#3f2d11' : '#fff7ed', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#854d0e' : '#fed7aa' },
     foodDisclaimerTitle: { color: isDark ? '#fde68a' : '#9a3412', fontWeight: '800', fontSize: 14, marginBottom: 6 },

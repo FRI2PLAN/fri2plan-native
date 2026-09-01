@@ -39,4 +39,21 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('dietaryStyleIcon');
     expect(mealsScreen).toContain('accessibilityState={{ selected: foodProfile.dietaryStyle === style }}');
   });
+
+  it('relie la bibliothèque à ses routes protégées et distingue les recettes privées', () => {
+    expect(mealsScreen).toContain('trpc.meals.recipeLibrary.list.useQuery');
+    expect(mealsScreen).toContain('trpc.meals.recipeLibrary.get.useQuery');
+    expect(mealsScreen).toContain('trpc.meals.recipeLibrary.create.useMutation');
+    expect(mealsScreen).toContain('trpc.meals.recipeLibrary.update.useMutation');
+    expect(mealsScreen).toContain('trpc.meals.recipeLibrary.delete.useMutation');
+    expect(mealsScreen).toContain("['family', 'private'] as RecipeVisibility[]");
+  });
+
+  it('conserve une création manuelle avec ingrédients libres, détails et recherche locale', () => {
+    expect(mealsScreen).toContain('addRecipeIngredient');
+    expect(mealsScreen).toContain('recipeForm.ingredients');
+    expect(mealsScreen).toContain('visibleRecipeLibrary');
+    expect(mealsScreen).toContain('renderRecipeDetailsModal');
+    expect(mealsScreen).toContain('recipeLibrarySearch');
+  });
 });

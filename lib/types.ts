@@ -427,6 +427,39 @@ export type AppRouter = {
     };
   };
   meals: {
+    recipeLibrary: {
+      list: {
+        useQuery: (input: { familyId: number }, opts?: any) => any;
+        query: (input: { familyId: number }) => Promise<any[]>;
+      };
+      get: {
+        useQuery: (input: { recipeId: number }, opts?: any) => any;
+        query: (input: { recipeId: number }) => Promise<any>;
+      };
+      create: {
+        useMutation: (opts?: any) => any;
+        mutateAsync: (input: {
+          familyId: number;
+          title: string;
+          description?: string | null;
+          prepTimeMinutes?: number | null;
+          cookTimeMinutes?: number | null;
+          servings?: number;
+          instructions?: string | null;
+          sourceUrl?: string | null;
+          visibility: 'family' | 'private';
+          ingredients: string[];
+        }) => Promise<{ recipeId: number }>;
+      };
+      update: {
+        useMutation: (opts?: any) => any;
+        mutateAsync: (input: { recipeId: number; title?: string; description?: string | null; prepTimeMinutes?: number | null; cookTimeMinutes?: number | null; servings?: number; instructions?: string | null; sourceUrl?: string | null; visibility?: 'family' | 'private'; ingredients?: string[] }) => Promise<{ success: boolean }>;
+      };
+      delete: {
+        useMutation: (opts?: any) => any;
+        mutateAsync: (input: { recipeId: number }) => Promise<{ success: boolean }>;
+      };
+    };
     list: {
       useQuery: (input: { familyId: number; startDate: string; endDate: string }) => any;
       query: (input: { familyId: number; startDate: string; endDate: string }) => Promise<any[]>;
