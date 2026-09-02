@@ -57,4 +57,12 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('renderRecipeDetailsModal');
     expect(mealsScreen).toContain('recipeLibrarySearch');
   });
+
+  it('réutilise le catalogue commun hors ligne sans confondre ses recettes avec celles du cercle', () => {
+    expect(mealsScreen).toContain("import recipeCatalogData from '../data/fri2plan_recipes_500_multilingual.json'");
+    expect(mealsScreen).toContain('visibleCatalogRecipes');
+    expect(mealsScreen).toContain('openCatalogRecipeDetails');
+    expect(mealsScreen).toContain('recipeCatalogSummary');
+    expect(mealsScreen).toContain('<FlatList');
+  });
 });
