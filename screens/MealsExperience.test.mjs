@@ -82,4 +82,14 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('recipeEditButtonText}>✏️</Text>');
     expect(mealsScreen).toContain('recipeDeleteButtonText}>🗑</Text>');
   });
+
+  it('propose cinq recettes du cercle, permet de renouveler et confirme un remplacement', () => {
+    expect(mealsScreen).toContain('trpc.meals.menuSuggestions.useQuery');
+    expect(mealsScreen).toContain('menuSuggestionRound');
+    expect(mealsScreen).toContain('suggestedCatalogRecipes');
+    expect(mealsScreen).toContain('setMenuSuggestionRound(round => round + 1)');
+    expect(mealsScreen).toContain("t('meals.mealAlreadyPlanned')");
+    expect(mealsScreen).toContain("t('meals.replaceMeal')");
+    expect(mealsScreen).toContain('addSuggestedRecipeToMenu');
+  });
 });

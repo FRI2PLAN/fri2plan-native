@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 const locales = ['fr', 'en', 'de', 'es', 'it'];
 const recipeLibraryKeys = [
   'recipeLibrary', 'recipeLibraryDescription', 'openRecipeLibrary', 'newRecipe', 'searchRecipeLibrary',
-  'recipeCatalog', 'recipeCatalogSummary', 'recipePersonalSection',
+  'recipeCatalog', 'recipeCatalogSummary', 'recipePersonalSection', 'menuSuggestions', 'openMenuSuggestions',
+  'menuSuggestionHint', 'menuSuggestionEmpty', 'refreshMenuSuggestions', 'mealAlreadyPlanned', 'replaceMealMessage',
+  'replaceMeal', 'menuSuggestionAdded', 'menuSuggestionSaveError',
   'recipeLibraryEmpty', 'recipeLibraryEmptyHint', 'recipeVisibility_family', 'recipeVisibility_private',
   'recipeVisibilityFamilyDetail', 'recipeVisibilityPrivateDetail', 'recipeNoServings', 'recipeDuration',
   'recipeBy', 'recipeDetails', 'recipeNoIngredients', 'recipeInstructions', 'recipeSource', 'recipeTitle',

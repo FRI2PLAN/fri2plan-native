@@ -100,6 +100,11 @@ interface CatalogRecipe {
   i18n: Record<CatalogLanguage, CatalogTranslation>;
 }
 
+type MenuSuggestionTarget = {
+  day: Date;
+  mealType: MealType;
+};
+
 const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
 
@@ -281,6 +286,9 @@ export default function MealsScreen({
   const [showRecipeLibrary, setShowRecipeLibrary] = useState(false);
   const [showRecipeDetails, setShowRecipeDetails] = useState(false);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
+  const [showMenuSuggestions, setShowMenuSuggestions] = useState(false);
+  const [menuSuggestionTarget, setMenuSuggestionTarget] = useState<MenuSuggestionTarget | null>(null);
+  const [menuSuggestionRound, setMenuSuggestionRound] = useState(0);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
   const [selectedCatalogRecipeId, setSelectedCatalogRecipeId] = useState<string | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<RecipeLibraryEntry | null>(null);
@@ -304,6 +312,21 @@ export default function MealsScreen({
     { recipeId: selectedRecipeId! },
     { enabled: !!selectedRecipeId && showRecipeDetails },
   );
+  const { data: menuSuggestionResult, isLoading: menuSuggestionsLoading } = trpc.meals.menuSuggestions.useQuery(
+    {
+      familyId: familyId || 0,
+      date: format(menuSuggestionTarget?.day || new Date(), 'yyyy-MM-dd'),
+      mealType: menuSuggestionTarget?.mealType || 'dinner',
+      round: menuSuggestionRound,
+    },
+    { enabled: !!familyId && !!menuSuggestionTarget && showMenuSuggestions },
+  );
+  const suggestedCatalogRecipes = useMemo(() => {
+    const byId = new Map(recipeCatalog.recipes.map(recipe => [recipe.id, recipe]));
+    return (menuSuggestionResult?.recipeIds || [])
+      .map(recipeId => byId.get(recipeId))
+      .filter((recipe): recipe is CatalogRecipe => Boolean(recipe));
+  }, [menuSuggestionResult]);
 
   useEffect(() => {
     if (!familyId) return;
@@ -716,6 +739,71 @@ export default function MealsScreen({
     setShowForm(false);
   };
 
+  const openMenuSuggestions = (day: Date) => {
+    setMenuSuggestionTarget({ day, mealType: 'dinner' });
+    setMenuSuggestionRound(0);
+    setShowMenuSuggestions(true);
+  };
+
+  const addSuggestedRecipeToMenu = (recipe: CatalogRecipe) => {
+    if (!familyId || !menuSuggestionTarget) return;
+    const translation = getCatalogTranslation(recipe, i18n.language);
+    const targetDate = format(menuSuggestionTarget.day, 'yyyy-MM-dd');
+    const mealTime = customTimes[menuSuggestionTarget.mealType] || DEFAULT_TIMES[menuSuggestionTarget.mealType];
+    const date = `${targetDate}T${mealTime}:00`;
+    const existingMeal = (weekMeals as Meal[]).find((meal) => {
+      try {
+        return format(parseISO(meal.date), 'yyyy-MM-dd') === targetDate && meal.mealType === menuSuggestionTarget.mealType;
+      } catch {
+        return false;
+      }
+    });
+    const notes = `${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(ingredient)}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+    const persistSuggestion = async () => {
+      try {
+        if (existingMeal) {
+          await updateMeal.mutateAsync({
+            mealId: existingMeal.id,
+            name: translation.title,
+            mealType: menuSuggestionTarget.mealType,
+            date,
+            servings: recipe.servings_default,
+            notes,
+            imageUrl: null,
+            sourceUrl: null,
+          });
+        } else {
+          await createMeal.mutateAsync({
+            familyId,
+            name: translation.title,
+            mealType: menuSuggestionTarget.mealType,
+            date,
+            servings: recipe.servings_default,
+            notes,
+          });
+        }
+        setShowMenuSuggestions(false);
+        await utils.meals.list.invalidate();
+        Alert.alert('✓', t('meals.menuSuggestionAdded'));
+      } catch (error: any) {
+        Alert.alert(t('common.error') || 'Erreur', error?.message || t('meals.menuSuggestionSaveError'));
+      }
+    };
+
+    if (existingMeal) {
+      Alert.alert(
+        t('meals.mealAlreadyPlanned'),
+        t('meals.replaceMealMessage', { meal: existingMeal.name }),
+        [
+          { text: t('common.cancel') || 'Annuler', style: 'cancel' },
+          { text: t('meals.replaceMeal'), style: 'destructive', onPress: () => void persistSuggestion() },
+        ],
+      );
+      return;
+    }
+    void persistSuggestion();
+  };
+
   // ─── Recherche TheMealDB ───────────────────────────────────────────────────
   const [recipeSearch, setRecipeSearch] = useState('');
   const [recipeSuggestions, setRecipeSuggestions] = useState<SpoonacularResult[]>([]);
@@ -1019,9 +1107,14 @@ export default function MealsScreen({
                 <Text style={[s.dayName, isToday && s.dayNameToday]}>
                   {format(day, 'EEE d', { locale: dateFnsLocale })}
                 </Text>
-                <TouchableOpacity onPress={() => openCreate(day)} style={s.addDayBtn}>
-                  <Text style={s.addDayBtnText}>+</Text>
-                </TouchableOpacity>
+                <View style={s.dayHeaderActions}>
+                  <TouchableOpacity onPress={() => openMenuSuggestions(day)} style={s.menuSuggestionDayBtn} accessibilityLabel={t('meals.openMenuSuggestions')}>
+                    <Text style={s.menuSuggestionDayBtnText}>✨</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => openCreate(day)} style={s.addDayBtn}>
+                    <Text style={s.addDayBtnText}>+</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               {dayMeals.length === 0 ? (
                 <Text style={s.noMealText}>{t('meals.noMeal') || 'Aucun repas'}</Text>
@@ -1503,6 +1596,54 @@ export default function MealsScreen({
     );
   };
 
+  const renderMenuSuggestionsModal = () => (
+    <Modal visible={showMenuSuggestions} transparent animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={() => setShowMenuSuggestions(false)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
+        <Pressable style={s.sheetBackdrop} onPress={() => setShowMenuSuggestions(false)} />
+        <View style={s.menuSuggestionsSheet}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalHeaderTitle}>✨ {t('meals.menuSuggestions')}</Text>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setShowMenuSuggestions(false)}><Text style={s.modalCloseBtnText}>✕</Text></TouchableOpacity>
+          </View>
+          {menuSuggestionTarget ? <Text style={s.menuSuggestionsTarget}>{format(menuSuggestionTarget.day, 'EEEE d MMMM', { locale: dateFnsLocale })}</Text> : null}
+          <Text style={s.menuSuggestionHint}>{t('meals.menuSuggestionHint')}</Text>
+          <View style={s.menuSuggestionMealTypes}>
+            {(Object.keys(MEAL_EMOJIS) as MealType[]).map((mealType) => (
+              <TouchableOpacity key={mealType} style={[s.menuSuggestionMealType, menuSuggestionTarget?.mealType === mealType && s.menuSuggestionMealTypeActive]} onPress={() => { setMenuSuggestionTarget(current => current ? { ...current, mealType } : current); setMenuSuggestionRound(0); }}>
+                <Text style={[s.menuSuggestionMealTypeText, menuSuggestionTarget?.mealType === mealType && s.menuSuggestionMealTypeTextActive]}>{MEAL_EMOJIS[mealType]} {customLabels[mealType]}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {menuSuggestionsLoading ? <ActivityIndicator style={{ marginVertical: 48 }} color="#7c3aed" /> : suggestedCatalogRecipes.length === 0 ? (
+            <View style={s.menuSuggestionEmpty}><Text style={s.menuSuggestionEmptyText}>{t('meals.menuSuggestionEmpty')}</Text></View>
+          ) : (
+            <FlatList
+              style={s.menuSuggestionList}
+              data={suggestedCatalogRecipes}
+              keyExtractor={(recipe) => recipe.id}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const translation = getCatalogTranslation(item, i18n.language);
+                return (
+                  <TouchableOpacity style={s.menuSuggestionCard} onPress={() => addSuggestedRecipeToMenu(item)}>
+                    <Text style={s.menuSuggestionCardTitle}>{translation.title}</Text>
+                    <Text style={s.menuSuggestionCardDescription} numberOfLines={2}>{translation.description}</Text>
+                    <Text style={s.menuSuggestionCardMeta}>{item.servings_default} {t('meals.servings')} · {t('meals.recipeDuration', { count: item.prep_time_min + item.cook_time_min })}</Text>
+                  </TouchableOpacity>
+                );
+              }}
+              ListFooterComponent={menuSuggestionResult && menuSuggestionResult.eligibleCount > suggestedCatalogRecipes.length ? (
+                <TouchableOpacity style={s.refreshMenuSuggestionsButton} onPress={() => setMenuSuggestionRound(round => round + 1)}>
+                  <Text style={s.refreshMenuSuggestionsText}>↻ {t('meals.refreshMenuSuggestions')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
   const renderRecipeFormModal = () => (
     <Modal visible={showRecipeForm} transparent animationType="slide" onRequestClose={() => setShowRecipeForm(false)}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
@@ -1750,6 +1891,7 @@ export default function MealsScreen({
       {renderRecipeLibraryModal()}
       {renderRecipeDetailsModal()}
       {renderRecipeFormModal()}
+      {renderMenuSuggestionsModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
@@ -1834,10 +1976,13 @@ function getStyles(isDark: boolean) {
     dayBlockToday: { borderLeftWidth: 3, borderLeftColor: '#7c3aed' },
     dayBlockDragOver: { backgroundColor: isDark ? '#2d1b69' : '#ede9fe', borderStyle: 'dashed', borderWidth: 2, borderColor: '#7c3aed' },
     dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+    dayHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     dayName: { fontSize: 14, fontWeight: '700', color: text, textTransform: 'capitalize' },
     dayNameToday: { color: '#7c3aed' },
     addDayBtn: { backgroundColor: '#7c3aed', borderRadius: 14, width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
     addDayBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
+    menuSuggestionDayBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#3f2d11' : '#fff7ed', borderWidth: 1, borderColor: isDark ? '#854d0e' : '#fed7aa' },
+    menuSuggestionDayBtnText: { fontSize: 15 },
     noMealText: { fontSize: 12, color: subtext, fontStyle: 'italic', paddingLeft: 4 },
     // Carte repas
     mealCard: { backgroundColor: card, borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: border },
@@ -1879,6 +2024,23 @@ function getStyles(isDark: boolean) {
     recipeLibraryButton: { borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' },
     recipeLibraryButtonText: { color: isDark ? '#bfdbfe' : '#1d4ed8', fontSize: 15, fontWeight: '700' },
     recipeLibrarySheet: { flex: 1, marginTop: 112, backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34 },
+    menuSuggestionsSheet: { flex: 1, marginTop: 112, backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34 },
+    menuSuggestionsTarget: { color: text, fontSize: 16, fontWeight: '800', textTransform: 'capitalize', marginBottom: 4 },
+    menuSuggestionHint: { color: subtext, fontSize: 12, lineHeight: 18, marginBottom: 12 },
+    menuSuggestionMealTypes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 12 },
+    menuSuggestionMealType: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    menuSuggestionMealTypeActive: { backgroundColor: '#7c3aed' },
+    menuSuggestionMealTypeText: { color: subtext, fontSize: 12, fontWeight: '800' },
+    menuSuggestionMealTypeTextActive: { color: '#fff' },
+    menuSuggestionList: { flex: 1 },
+    menuSuggestionCard: { backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 14, padding: 13, marginBottom: 9 },
+    menuSuggestionCardTitle: { color: text, fontSize: 16, fontWeight: '800' },
+    menuSuggestionCardDescription: { color: subtext, fontSize: 13, lineHeight: 18, marginTop: 7 },
+    menuSuggestionCardMeta: { color: subtext, fontSize: 11, fontWeight: '700', marginTop: 8 },
+    menuSuggestionEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 },
+    menuSuggestionEmptyText: { color: subtext, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+    refreshMenuSuggestionsButton: { alignItems: 'center', backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 12, padding: 13, marginTop: 4, marginBottom: 10 },
+    refreshMenuSuggestionsText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 14, fontWeight: '800' },
     recipeDetailSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
     recipeFormSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 22, maxHeight: '96%' },
     recipeLibraryToolbar: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 },
