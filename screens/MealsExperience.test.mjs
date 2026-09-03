@@ -65,4 +65,14 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('recipeCatalogSummary');
     expect(mealsScreen).toContain('<FlatList');
   });
+
+  it('identifie le créateur avec la route auth.me réellement exposée par le serveur', () => {
+    expect(mealsScreen).toContain('trpc.auth.me.useQuery()');
+    expect(mealsScreen).not.toContain('trpc.user.me.useQuery()');
+  });
+
+  it('garde la fenêtre de bibliothèque au-dessus de tout le contenu de paramètres', () => {
+    expect(mealsScreen).toContain('statusBarTranslucent navigationBarTranslucent');
+    expect(mealsScreen).toContain("recipeLibrarySheet: { flex: 1, marginTop: 112");
+  });
 });
