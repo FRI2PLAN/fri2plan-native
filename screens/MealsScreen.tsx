@@ -109,12 +109,16 @@ type MenuSuggestionTarget = {
 const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
 const RECIPE_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+const CATALOG_RECIPE_REFERENCE = /^\[fri2plan-catalog:([a-z0-9_-]+)\]\n?/im;
 
 const parseRecipeMealTypes = (tags?: string | null): MealType[] =>
   (tags || '')
     .split(',')
     .map(tag => tag.trim())
     .filter((tag): tag is MealType => RECIPE_MEAL_TYPES.includes(tag as MealType));
+
+const getCatalogRecipeIdFromNotes = (notes?: string | null): string | null =>
+  notes?.match(CATALOG_RECIPE_REFERENCE)?.[1] || null;
 
 const getCatalogTranslation = (recipe: CatalogRecipe, language: string) => {
   const preferredLanguage = language.slice(0, 2) as CatalogLanguage;
@@ -421,6 +425,24 @@ export default function MealsScreen({
     [selectedCatalogRecipeId],
   );
 
+  const getCatalogMealPresentation = useCallback((meal: Meal) => {
+    const recipeId = getCatalogRecipeIdFromNotes(meal.notes);
+    const recipe = recipeId
+      ? recipeCatalog.recipes.find(entry => entry.id === recipeId)
+      : recipeCatalog.recipes.find(entry =>
+          Object.values(entry.i18n).some(translation => translation.title.trim() === meal.name.trim()),
+        );
+    if (!recipe) return null;
+    const translation = getCatalogTranslation(recipe, i18n.language);
+    const servings = Math.max(1, meal.servings || recipe.servings_default);
+    const portionsRatio = servings / recipe.servings_default;
+    const ingredients = translation.ingredients.map(ingredient =>
+      formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio)),
+    );
+    const notes = `${t('meals.ingredients')}:\n${ingredients.map(ingredient => `• ${ingredient}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+    return { recipeId: recipe.id, title: translation.title, description: translation.description, ingredients, instructions: translation.instructions, notes };
+  }, [i18n.language, t]);
+
   const addRecipeIngredient = () => {
     const ingredient = recipeIngredientInput.trim();
     if (!ingredient) return;
@@ -646,6 +668,7 @@ export default function MealsScreen({
     mealType: 'dinner' as MealType,
     servings: defaultServings,
     notes: '',
+    catalogRecipeId: '',
     sourceUrl: '',
     imageUrl: '',
     ingredients: [] as string[]});
@@ -654,7 +677,7 @@ export default function MealsScreen({
     requirePremium(() => {
     setEditingMeal(null);
     setSelectedDay(day || new Date());
-    setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', sourceUrl: '', imageUrl: '', ingredients: [] });
+    setForm({ name: '', mealType: 'dinner', servings: defaultServings, notes: '', catalogRecipeId: '', sourceUrl: '', imageUrl: '', ingredients: [] });
     setShowForm(true);
     setRecipeSearch('');
     setRecipeSuggestions([]);
@@ -673,10 +696,12 @@ export default function MealsScreen({
   }, [triggerCreate]);
 
   const shareMeal = async (meal: Meal) => {
+    const catalogPresentation = getCatalogMealPresentation(meal);
+    const displayName = catalogPresentation?.title || meal.name;
     const lines: string[] = [];
-    lines.push(`🍽️ ${meal.name}`);
-    lines.push(`${customLabels[meal.mealType]} · ${meal.servings || 2} ${t('meals.servings') || 'pers.'}`);
-    const notes = meal.notes || '';
+    lines.push(`🍽️ ${displayName}`);
+    lines.push(`${mealLabels[meal.mealType]} · ${meal.servings || 2} ${t('meals.servings') || 'pers.'}`);
+    const notes = catalogPresentation?.notes || meal.notes || '';
     // Extraire les ingrédients depuis les notes si présents
     const ingredientMatch = notes.match(/Ingrédients\s*:\s*([\s\S]*?)(?:\n\n|Instructions|$)/i);
     if (ingredientMatch) {
@@ -693,20 +718,22 @@ export default function MealsScreen({
     }
     const message = lines.join('\n');
     try {
-      await Share.share({ message, title: meal.name });
+      await Share.share({ message, title: displayName });
     } catch (e) {
       // ignoré si l'utilisateur annule
     }
   };
 
   const openEdit = (meal: Meal) => {
+    const catalogPresentation = getCatalogMealPresentation(meal);
     setEditingMeal(meal);
     setSelectedDay(parseISO(meal.date));
     setForm({
-      name: meal.name,
+      name: catalogPresentation?.title || meal.name,
       mealType: meal.mealType,
       servings: meal.servings || defaultServings,
-      notes: meal.notes || '',
+      notes: catalogPresentation?.notes || meal.notes || '',
+      catalogRecipeId: catalogPresentation?.recipeId || getCatalogRecipeIdFromNotes(meal.notes) || '',
       sourceUrl: meal.sourceUrl || '',
       imageUrl: meal.imageUrl || '',
       ingredients: []});
@@ -733,6 +760,9 @@ export default function MealsScreen({
         finalNotes = ingSection;
       }
       // Si notes contient déjà une section ingrédients (import URL), on garde les notes telles quelles
+    }
+    if (form.catalogRecipeId) {
+      finalNotes = `[fri2plan-catalog:${form.catalogRecipeId}]\n${finalNotes.replace(CATALOG_RECIPE_REFERENCE, '')}`;
     }
 
     if (editingMeal) {
@@ -780,7 +810,7 @@ export default function MealsScreen({
         return false;
       }
     });
-    const notes = `${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio))}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+    const notes = `[fri2plan-catalog:${recipe.id}]\n${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio))}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
     const persistSuggestion = async () => {
       try {
         if (existingMeal) {
@@ -943,6 +973,13 @@ export default function MealsScreen({
   const [targetMealForShopping, setTargetMealForShopping] = useState<Meal | null>(null);
 
   const openAddToShopping = (meal: Meal) => {
+    const catalogPresentation = getCatalogMealPresentation(meal);
+    if (catalogPresentation) {
+      setIngredientsToAdd(catalogPresentation.ingredients);
+      setTargetMealForShopping(meal);
+      setShowAddToShopping(true);
+      return;
+    }
     // Parser les ingrédients depuis les notes (toutes formes possibles)
     // Note: les ingrédients sont toujours stockés dans notes au format "Ingrédients :\n• ..."
     const notes = meal.notes || '';
@@ -1015,7 +1052,9 @@ export default function MealsScreen({
     }
   }, [t]);
 
-  const renderMealCard = (meal: Meal) => (
+  const renderMealCard = (meal: Meal) => {
+    const displayName = getCatalogMealPresentation(meal)?.title || meal.name;
+    return (
     <View key={meal.id} style={s.mealCard}>
       {meal.imageUrl ? (
         <View style={s.mealImageWrap}>
@@ -1039,8 +1078,8 @@ export default function MealsScreen({
       <View style={s.mealCardHeader}>
         <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
         <View style={s.mealCardInfo}>
-          <Text style={s.mealName} numberOfLines={1}>{meal.name}</Text>
-          <Text style={s.mealMeta}>{customLabels[meal.mealType]} · {meal.servings} pers.</Text>
+          <Text style={s.mealName} numberOfLines={1}>{displayName}</Text>
+          <Text style={s.mealMeta}>{mealLabels[meal.mealType]} · {meal.servings} {t('meals.servings')}</Text>
         </View>
         <View style={s.mealCardActions}>
           <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
@@ -1057,7 +1096,7 @@ export default function MealsScreen({
           >
             <Text style={s.mealActionBtn}>✏️</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', meal.name, [
+          <TouchableOpacity onPress={() => Alert.alert(t('common.delete') || 'Supprimer', displayName, [
             { text: t('common.cancel') || 'Annuler', style: 'cancel' },
             { text: '🗑', style: 'destructive', onPress: () => deleteMeal.mutate({ mealId: meal.id }) },
           ])}>
@@ -1082,7 +1121,8 @@ export default function MealsScreen({
         <Text style={s.moveMealBtnText}>⋮ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   // ─── Vue semaine ─────────────────────────────────────────────────────────────
   const renderWeekView = () => (
@@ -1220,14 +1260,16 @@ export default function MealsScreen({
                   section.filter((l: string) => l.startsWith('•') || l.startsWith('-') || l.startsWith('*'))
                     .forEach((l: string) => extractedIngredients.push(l.replace(/^[•\-\*]\s*/, '').trim()));
                 }
+                const catalogPresentation = getCatalogMealPresentation(m);
                 setForm({
-                  name: m.name,
+                  name: catalogPresentation?.title || m.name,
                   mealType: m.mealType,
                   servings: m.servings || defaultServings,
-                  notes: '',
+                  notes: catalogPresentation?.notes || '',
+                  catalogRecipeId: catalogPresentation?.recipeId || getCatalogRecipeIdFromNotes(m.notes) || '',
                   sourceUrl: m.sourceUrl || '',
                   imageUrl: m.imageUrl || '',
-                  ingredients: extractedIngredients
+                  ingredients: catalogPresentation?.ingredients || extractedIngredients
                 });
                 setShowForm(true);
                 setRecipeSearch('');
@@ -1631,7 +1673,8 @@ export default function MealsScreen({
           <View style={s.menuSuggestionMealTypes}>
             {(Object.keys(MEAL_EMOJIS) as MealType[]).map((mealType) => (
               <TouchableOpacity key={mealType} style={[s.menuSuggestionMealType, menuSuggestionTarget?.mealType === mealType && s.menuSuggestionMealTypeActive]} onPress={() => { setMenuSuggestionTarget(current => current ? { ...current, mealType } : current); setMenuSuggestionRound(0); }}>
-                <Text style={[s.menuSuggestionMealTypeText, menuSuggestionTarget?.mealType === mealType && s.menuSuggestionMealTypeTextActive]}>{MEAL_EMOJIS[mealType]} {customLabels[mealType]}</Text>
+                <Text style={s.menuSuggestionMealTypeIcon}>{MEAL_EMOJIS[mealType]}</Text>
+                <Text style={[s.menuSuggestionMealTypeText, menuSuggestionTarget?.mealType === mealType && s.menuSuggestionMealTypeTextActive]}>{mealLabels[mealType]}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1697,6 +1740,7 @@ export default function MealsScreen({
                         : [...current.mealTypes, mealType],
                     }))}
                   >
+                    <Text style={s.recipeMealTypeIcon}>{MEAL_EMOJIS[mealType]}</Text>
                     <Text style={[s.recipeMealTypeButtonText, selected && s.recipeMealTypeButtonTextActive]}>
                       {t(`meals.${mealType}`)}
                     </Text>
@@ -1760,7 +1804,7 @@ export default function MealsScreen({
               style={s.input}
               value={form.name}
               onChangeText={n => {
-                setForm(p => ({ ...p, name: n }));
+                setForm(p => ({ ...p, name: n, catalogRecipeId: p.catalogRecipeId && n !== p.name ? '' : p.catalogRecipeId }));
                 filterHistorySuggestions(n);
               }}
               placeholder={t('meals.mealName') || 'Nom du repas'}
@@ -2072,10 +2116,11 @@ function getStyles(isDark: boolean) {
     menuSuggestionsSheet: { flex: 1, marginTop: 112, backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34 },
     menuSuggestionsTarget: { color: text, fontSize: 16, fontWeight: '800', textTransform: 'capitalize', marginBottom: 4 },
     menuSuggestionHint: { color: subtext, fontSize: 12, lineHeight: 18, marginBottom: 12 },
-    menuSuggestionMealTypes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 12 },
-    menuSuggestionMealType: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    menuSuggestionMealTypes: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
+    menuSuggestionMealType: { width: '48.5%', minHeight: 68, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
     menuSuggestionMealTypeActive: { backgroundColor: '#7c3aed' },
-    menuSuggestionMealTypeText: { color: subtext, fontSize: 12, fontWeight: '800' },
+    menuSuggestionMealTypeIcon: { fontSize: 21, lineHeight: 24, marginBottom: 2 },
+    menuSuggestionMealTypeText: { color: subtext, fontSize: 12, fontWeight: '800', textAlign: 'center' },
     menuSuggestionMealTypeTextActive: { color: '#fff' },
     menuSuggestionList: { flex: 1 },
     menuSuggestionCard: { backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 14, padding: 13, marginBottom: 9 },
@@ -2164,10 +2209,11 @@ function getStyles(isDark: boolean) {
     visibilityButtonActive: { backgroundColor: '#7c3aed' },
     visibilityButtonText: { color: subtext, fontSize: 13, fontWeight: '700' },
     visibilityButtonTextActive: { color: '#fff' },
-    recipeMealTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-    recipeMealTypeButton: { alignItems: 'center', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    recipeMealTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 10 },
+    recipeMealTypeButton: { width: '48.5%', minHeight: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
     recipeMealTypeButtonActive: { backgroundColor: '#7c3aed' },
-    recipeMealTypeButtonText: { color: subtext, fontSize: 13, fontWeight: '700' },
+    recipeMealTypeIcon: { fontSize: 20, lineHeight: 23, marginBottom: 2 },
+    recipeMealTypeButtonText: { color: subtext, fontSize: 13, fontWeight: '700', textAlign: 'center' },
     recipeMealTypeButtonTextActive: { color: '#fff' },
     disclaimerAckRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 10 },
     disclaimerCheck: { width: 22, height: 22, marginTop: 1, borderWidth: 1.5, borderColor: isDark ? '#9ca3af' : '#6b7280', borderRadius: 5, alignItems: 'center', justifyContent: 'center' },

@@ -107,4 +107,19 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain("t('meals.recipeMealTypeRequired')");
     expect(mealsScreen).toContain('tags: recipeForm.mealTypes');
   });
+
+  it('reconstruit les repas issus du catalogue dans la langue active sans traduire le texte libre', () => {
+    expect(mealsScreen).toContain('CATALOG_RECIPE_REFERENCE');
+    expect(mealsScreen).toContain('getCatalogMealPresentation');
+    expect(mealsScreen).toContain('[fri2plan-catalog:${recipe.id}]');
+    expect(mealsScreen).toContain('catalogPresentation?.title || meal.name');
+    expect(mealsScreen).toContain('catalogPresentation?.ingredients');
+  });
+
+  it('présente les types de repas en grille uniforme avec leurs libellés traduits actifs', () => {
+    expect(mealsScreen).toContain("menuSuggestionMealType: { width: '48.5%'");
+    expect(mealsScreen).toContain("recipeMealTypeButton: { width: '48.5%'");
+    expect(mealsScreen).toContain('{mealLabels[mealType]}');
+    expect(mealsScreen).toContain('{MEAL_EMOJIS[mealType]}');
+  });
 });
