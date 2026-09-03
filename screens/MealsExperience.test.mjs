@@ -74,4 +74,11 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('statusBarTranslucent navigationBarTranslucent');
     expect(mealsScreen).toContain("recipeLibrarySheet: { flex: 1, marginTop: 112");
   });
+
+  it('utilise des icônes accessibles pour les actions du créateur', () => {
+    expect(mealsScreen).toContain("accessibilityLabel={t('meals.editRecipe')}");
+    expect(mealsScreen).toContain("accessibilityLabel={t('common.delete')}");
+    expect(mealsScreen).toContain('recipeEditButtonText}>✏️</Text>');
+    expect(mealsScreen).toContain('recipeDeleteButtonText}>🗑</Text>');
+  });
 });
