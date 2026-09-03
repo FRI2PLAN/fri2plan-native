@@ -295,7 +295,7 @@ export default function MealsScreen({
     { familyId: familyId! },
     { enabled: !!familyId && showFoodPreferences },
   );
-  const { data: currentUser } = trpc.user.me.useQuery();
+  const { data: currentUser } = trpc.auth.me.useQuery();
   const { data: recipeLibrary = [], isLoading: recipeLibraryLoading } = trpc.meals.recipeLibrary.list.useQuery(
     { familyId: familyId! },
     { enabled: !!familyId && showRecipeLibrary },
@@ -1363,7 +1363,7 @@ export default function MealsScreen({
       ...visibleRecipeLibrary.map(recipe => ({ kind: 'personal' as const, recipe })),
     ];
     return (
-      <Modal visible={showRecipeLibrary} transparent animationType="slide" onRequestClose={() => setShowRecipeLibrary(false)}>
+      <Modal visible={showRecipeLibrary} transparent animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={() => setShowRecipeLibrary(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
           <Pressable style={s.sheetBackdrop} onPress={() => setShowRecipeLibrary(false)} />
           <View style={s.recipeLibrarySheet}>
@@ -1877,7 +1877,7 @@ function getStyles(isDark: boolean) {
     recipeLibraryDescription: { color: subtext, fontSize: 13, lineHeight: 19, marginBottom: 10 },
     recipeLibraryButton: { borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' },
     recipeLibraryButtonText: { color: isDark ? '#bfdbfe' : '#1d4ed8', fontSize: 15, fontWeight: '700' },
-    recipeLibrarySheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, height: '92%' },
+    recipeLibrarySheet: { flex: 1, marginTop: 112, backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34 },
     recipeDetailSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
     recipeFormSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 22, maxHeight: '96%' },
     recipeLibraryToolbar: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 },
