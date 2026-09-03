@@ -427,6 +427,10 @@ export type AppRouter = {
     };
   };
   meals: {
+    menuSuggestions: {
+      useQuery: (input: { familyId: number; date: string; mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'; round?: number }, opts?: any) => any;
+      query: (input: { familyId: number; date: string; mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'; round?: number }) => Promise<{ recipeIds: string[]; eligibleCount: number }>;
+    };
     recipeLibrary: {
       list: {
         useQuery: (input: { familyId: number }, opts?: any) => any;
@@ -472,7 +476,7 @@ export type AppRouter = {
       mutate: (input: { familyId: number; name: string; mealType: string; date: string; servings?: number; notes?: string; ingredients?: string }) => Promise<any>;
     };
     update: {
-      mutate: (input: { mealId: number; name?: string; mealType?: string; date?: string; servings?: number; notes?: string; ingredients?: string }) => Promise<any>;
+      mutate: (input: { mealId: number; name?: string; mealType?: string; date?: string; servings?: number; notes?: string | null; ingredients?: string; imageUrl?: string | null; sourceUrl?: string | null }) => Promise<any>;
     };
     delete: {
       mutate: (input: { mealId: number }) => Promise<void>;
