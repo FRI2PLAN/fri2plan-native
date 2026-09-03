@@ -1491,8 +1491,8 @@ export default function MealsScreen({
                 ) : null}
                 {canManageRecipe ? (
                   <View style={s.recipeOwnerActions}>
-                    <TouchableOpacity style={s.recipeEditButton} onPress={() => openRecipeEditor(recipe)}><Text style={s.recipeEditButtonText}>✏️ {t('meals.editRecipe')}</Text></TouchableOpacity>
-                    <TouchableOpacity style={s.recipeDeleteButton} onPress={() => removeRecipeLibraryEntry(recipe)} disabled={deleteRecipeLibraryEntry.isPending}><Text style={s.recipeDeleteButtonText}>🗑 {t('common.delete')}</Text></TouchableOpacity>
+                    <TouchableOpacity style={s.recipeEditButton} onPress={() => openRecipeEditor(recipe)} accessibilityLabel={t('meals.editRecipe')}><Text style={s.recipeEditButtonText}>✏️</Text></TouchableOpacity>
+                    <TouchableOpacity style={s.recipeDeleteButton} onPress={() => removeRecipeLibraryEntry(recipe)} disabled={deleteRecipeLibraryEntry.isPending} accessibilityLabel={t('common.delete')}><Text style={s.recipeDeleteButtonText}>🗑</Text></TouchableOpacity>
                   </View>
                 ) : null}
               </ScrollView>
@@ -1917,11 +1917,11 @@ function getStyles(isDark: boolean) {
     recipeDetailEmpty: { color: subtext, fontSize: 13, fontStyle: 'italic' },
     recipeDetailInstructions: { color: text, fontSize: 14, lineHeight: 22, marginBottom: 8 },
     recipeCatalogInstructions: { marginBottom: 6 },
-    recipeOwnerActions: { flexDirection: 'row', gap: 8, marginTop: 20, marginBottom: 8 },
-    recipeEditButton: { flex: 1, backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 10, padding: 12, alignItems: 'center' },
-    recipeEditButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 13, fontWeight: '800' },
-    recipeDeleteButton: { backgroundColor: isDark ? '#4c1d1d' : '#fef2f2', borderRadius: 10, padding: 12, alignItems: 'center' },
-    recipeDeleteButtonText: { color: '#dc2626', fontSize: 13, fontWeight: '800' },
+    recipeOwnerActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 20, marginBottom: 8 },
+    recipeEditButton: { width: 52, height: 52, backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+    recipeEditButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 21, fontWeight: '800' },
+    recipeDeleteButton: { width: 52, height: 52, backgroundColor: isDark ? '#4c1d1d' : '#fef2f2', borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+    recipeDeleteButtonText: { color: '#dc2626', fontSize: 21, fontWeight: '800' },
     recipeDescriptionInput: { minHeight: 72, textAlignVertical: 'top' },
     recipeInstructionsInput: { minHeight: 130, textAlignVertical: 'top' },
     recipeTimeRow: { flexDirection: 'row', gap: 10 },
