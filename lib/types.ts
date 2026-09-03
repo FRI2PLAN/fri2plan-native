@@ -452,12 +452,13 @@ export type AppRouter = {
           instructions?: string | null;
           sourceUrl?: string | null;
           visibility: 'family' | 'private';
+          tags?: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'>;
           ingredients: string[];
         }) => Promise<{ recipeId: number }>;
       };
       update: {
         useMutation: (opts?: any) => any;
-        mutateAsync: (input: { recipeId: number; title?: string; description?: string | null; prepTimeMinutes?: number | null; cookTimeMinutes?: number | null; servings?: number; instructions?: string | null; sourceUrl?: string | null; visibility?: 'family' | 'private'; ingredients?: string[] }) => Promise<{ success: boolean }>;
+        mutateAsync: (input: { recipeId: number; title?: string; description?: string | null; prepTimeMinutes?: number | null; cookTimeMinutes?: number | null; servings?: number; instructions?: string | null; sourceUrl?: string | null; visibility?: 'family' | 'private'; tags?: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'>; ingredients?: string[] }) => Promise<{ success: boolean }>;
       };
       delete: {
         useMutation: (opts?: any) => any;

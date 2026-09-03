@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const locales = ['fr', 'en', 'de', 'es', 'it'];
 const recipeLibraryKeys = [
-  'recipeLibrary', 'recipeLibraryDescription', 'openRecipeLibrary', 'newRecipe', 'searchRecipeLibrary',
+  'recipeLibrary', 'recipeLibraryDescription', 'openRecipeLibrary', 'newRecipe', 'searchRecipeLibrary', 'recipeMealTypes', 'recipeMealTypeRequired',
   'recipeCatalog', 'recipeCatalogSummary', 'recipePersonalSection', 'menuSuggestions', 'openMenuSuggestions',
   'menuSuggestionHint', 'menuSuggestionEmpty', 'refreshMenuSuggestions', 'mealAlreadyPlanned', 'replaceMealMessage',
   'replaceMeal', 'menuSuggestionAdded', 'menuSuggestionSaveError',

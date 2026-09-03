@@ -15,6 +15,9 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '../lib/trpc';
@@ -29,13 +32,14 @@ interface ShoppingList {
 interface AddToShoppingModalProps {
   visible: boolean;
   onClose: () => void;
-  mealName: string;
   mealServings: number;
   ingredients: string[]; // liste déjà parsée depuis openAddToShopping
   activeLists: ShoppingList[];
   familyId: number;
   onListCreated?: () => void; // callback pour invalider la query des listes
 }
+
+type ShoppingIngredient = { name: string; quantity?: string };
 
 /** Recalcule les valeurs numériques dans une chaîne d'ingrédient selon le ratio */
 function scaleIngredient(ing: string, ratio: number): string {
@@ -46,6 +50,14 @@ function scaleIngredient(ing: string, ratio: number): string {
     const result = Math.round(scaled * 10) / 10;
     return result % 1 === 0 ? String(result) : String(result).replace('.', ',');
   });
+}
+
+/** Sépare « 560 g pâtes » en quantité et article pour permettre la fusion côté serveur. */
+function toShoppingIngredient(ingredient: string): ShoppingIngredient {
+  const normalized = ingredient.trim().replace(/\s+/g, ' ');
+  const match = normalized.match(/^((?:\d+(?:[.,]\d+)?|\d+\/\d+)(?:\s*(?:kg|g|mg|l|ml|cl|dl|pcs?|pi[eè]ces?|tranches?|bo[iî]tes?|sachets?|cuill[eè]res?))?)\s+(.+)$/iu);
+  if (!match) return { name: normalized };
+  return { quantity: match[1].trim(), name: match[2].trim() };
 }
 
 export function AddToShoppingModal({
@@ -66,6 +78,7 @@ export function AddToShoppingModal({
   // Ingrédients sélectionnés (index)
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [isCreatingList, setIsCreatingList] = useState(false);
+  const [newListName, setNewListName] = useState('');
 
   const addItemsMerged = trpc.shopping.addItemsMerged.useMutation();
   const createListMutation = trpc.shopping.createList.useMutation();
@@ -76,6 +89,7 @@ export function AddToShoppingModal({
       setServings(mealServings || 2);
       setSelected(new Set(ingredients.map((_, i) => i)));
       setIsCreatingList(false);
+      setNewListName('');
     }
   }, [visible, mealServings, ingredients]);
 
@@ -101,7 +115,7 @@ export function AddToShoppingModal({
   const doAdd = async (listId: number) => {
     const items = scaledIngredients
       .filter((_, i) => selected.has(i))
-      .map(name => ({ name }));
+      .map(toShoppingIngredient);
     if (items.length === 0) {
       Alert.alert('', t('meals.noIngredients') || 'Aucun ingrédient sélectionné');
       return;
@@ -118,14 +132,21 @@ export function AddToShoppingModal({
   const doCreateAndAdd = async () => {
     const items = scaledIngredients
       .filter((_, i) => selected.has(i))
-      .map(name => ({ name }));
+      .map(toShoppingIngredient);
     if (items.length === 0) {
       Alert.alert('', t('meals.noIngredients') || 'Aucun ingrédient sélectionné');
       return;
     }
+    const listName = newListName.trim();
+    if (!listName) {
+      Alert.alert(
+        t('shopping.listName') || 'Nom de la liste',
+        t('shopping.listNameRequired') || 'Veuillez donner un nom à la liste.',
+      );
+      return;
+    }
     try {
       setIsCreatingList(true);
-      const listName = `${t('meals.shoppingListFor') || 'Courses pour'} ${mealName}`;
       const { listId } = await createListMutation.mutateAsync({ familyId, name: listName });
       await addItemsMerged.mutateAsync({ listId, items });
       onListCreated?.();
@@ -149,7 +170,10 @@ export function AddToShoppingModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={[styles.modal, { backgroundColor: bg }]}>
 
           {/* Header */}
@@ -257,10 +281,22 @@ export function AddToShoppingModal({
           )}
 
           {/* Créer une nouvelle liste */}
+          <Text style={[styles.sectionLabel, { color: subColor }]}>
+            {t('shopping.listName') || 'Nom de la liste'}
+          </Text>
+          <TextInput
+            value={newListName}
+            onChangeText={setNewListName}
+            placeholder={t('shopping.listName') || 'Nom de la liste'}
+            placeholderTextColor={subColor}
+            style={[styles.listNameInput, { color: textColor, borderColor, backgroundColor: checkBg }]}
+            maxLength={255}
+            returnKeyType="done"
+          />
           <TouchableOpacity
-            style={styles.createListBtn}
+            style={[styles.createListBtn, !newListName.trim() && styles.createListBtnDisabled]}
             onPress={doCreateAndAdd}
-            disabled={isCreatingList || createListMutation.isPending}
+            disabled={!newListName.trim() || isCreatingList || createListMutation.isPending}
           >
             {isCreatingList ? (
               <ActivityIndicator size="small" color={accentColor} />
@@ -272,7 +308,7 @@ export function AddToShoppingModal({
           </TouchableOpacity>
 
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -414,6 +450,17 @@ const styles = StyleSheet.create({
   createListBtn: {
     paddingVertical: 10,
     alignItems: 'center',
+  },
+  createListBtnDisabled: {
+    opacity: 0.45,
+  },
+  listNameInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    marginBottom: 4,
   },
   createListText: {
     fontSize: 14,

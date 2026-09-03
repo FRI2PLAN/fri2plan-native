@@ -69,6 +69,7 @@ interface RecipeLibraryEntry {
   instructions?: string | null;
   sourceUrl?: string | null;
   visibility?: RecipeVisibility | null;
+  tags?: string | null;
   creatorName?: string | null;
   ingredients?: Array<{ id?: number; name: string }>;
 }
@@ -107,6 +108,13 @@ type MenuSuggestionTarget = {
 
 const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
+const RECIPE_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+const parseRecipeMealTypes = (tags?: string | null): MealType[] =>
+  (tags || '')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter((tag): tag is MealType => RECIPE_MEAL_TYPES.includes(tag as MealType));
 
 const getCatalogTranslation = (recipe: CatalogRecipe, language: string) => {
   const preferredLanguage = language.slice(0, 2) as CatalogLanguage;
@@ -118,6 +126,13 @@ const formatCatalogIngredient = (ingredient: CatalogIngredient) => {
   const unit = ingredient.unit ? `${ingredient.unit} ` : '';
   return `${quantity}${unit}${ingredient.name}`.trim();
 };
+
+const scaleCatalogIngredient = (ingredient: CatalogIngredient, ratio: number): CatalogIngredient => ({
+  ...ingredient,
+  quantity: Number.isFinite(ingredient.quantity)
+    ? Math.round(ingredient.quantity * ratio * 100) / 100
+    : ingredient.quantity,
+});
 
 // Spoonacular remplace TheMealDB pour le support multilingue FR/EN/DE
 interface SpoonacularResult {
@@ -296,7 +311,7 @@ export default function MealsScreen({
   const [recipeIngredientInput, setRecipeIngredientInput] = useState('');
   const [recipeForm, setRecipeForm] = useState({
     title: '', description: '', prepTimeMinutes: '', cookTimeMinutes: '', servings: defaultServings,
-    instructions: '', sourceUrl: '', visibility: 'family' as RecipeVisibility, ingredients: [] as string[],
+    instructions: '', sourceUrl: '', visibility: 'family' as RecipeVisibility, mealTypes: [] as MealType[], ingredients: [] as string[],
   });
 
   const { data: savedFoodProfile, isLoading: foodProfileLoading } = trpc.mealPreferences.mine.useQuery(
@@ -419,7 +434,7 @@ export default function MealsScreen({
   const openNewRecipe = () => {
     setEditingRecipe(null);
     setRecipeIngredientInput('');
-    setRecipeForm({ title: '', description: '', prepTimeMinutes: '', cookTimeMinutes: '', servings: defaultServings, instructions: '', sourceUrl: '', visibility: 'family', ingredients: [] });
+    setRecipeForm({ title: '', description: '', prepTimeMinutes: '', cookTimeMinutes: '', servings: defaultServings, instructions: '', sourceUrl: '', visibility: 'family', mealTypes: [], ingredients: [] });
     setShowRecipeForm(true);
   };
 
@@ -442,6 +457,7 @@ export default function MealsScreen({
       title: recipe.title || '', description: recipe.description || '', prepTimeMinutes: recipe.prepTimeMinutes?.toString() || '',
       cookTimeMinutes: recipe.cookTimeMinutes?.toString() || '', servings: recipe.servings || defaultServings,
       instructions: recipe.instructions || '', sourceUrl: recipe.sourceUrl || '', visibility: recipe.visibility === 'private' ? 'private' : 'family',
+      mealTypes: parseRecipeMealTypes(recipe.tags),
       ingredients: (recipe.ingredients || []).map(ingredient => ingredient.name),
     });
     setShowRecipeDetails(false);
@@ -453,12 +469,16 @@ export default function MealsScreen({
       Alert.alert(t('common.error') || 'Erreur', t('meals.recipeTitleRequired'));
       return;
     }
+    if (recipeForm.mealTypes.length === 0) {
+      Alert.alert(t('common.error') || 'Erreur', t('meals.recipeMealTypeRequired'));
+      return;
+    }
     const asMinutes = (value: string) => value.trim() ? Math.max(0, Number.parseInt(value, 10) || 0) : null;
     const baseInput = {
       title: recipeForm.title.trim(), description: recipeForm.description.trim() || null,
       prepTimeMinutes: asMinutes(recipeForm.prepTimeMinutes), cookTimeMinutes: asMinutes(recipeForm.cookTimeMinutes),
       servings: Math.max(1, recipeForm.servings), instructions: recipeForm.instructions.trim() || null,
-      sourceUrl: recipeForm.sourceUrl.trim() || null, visibility: recipeForm.visibility,
+      sourceUrl: recipeForm.sourceUrl.trim() || null, visibility: recipeForm.visibility, tags: recipeForm.mealTypes,
     };
     try {
       if (editingRecipe) {
@@ -748,6 +768,8 @@ export default function MealsScreen({
   const addSuggestedRecipeToMenu = (recipe: CatalogRecipe) => {
     if (!familyId || !menuSuggestionTarget) return;
     const translation = getCatalogTranslation(recipe, i18n.language);
+    const servings = Math.max(1, defaultServings || recipe.servings_default);
+    const portionsRatio = servings / recipe.servings_default;
     const targetDate = format(menuSuggestionTarget.day, 'yyyy-MM-dd');
     const mealTime = customTimes[menuSuggestionTarget.mealType] || DEFAULT_TIMES[menuSuggestionTarget.mealType];
     const date = `${targetDate}T${mealTime}:00`;
@@ -758,7 +780,7 @@ export default function MealsScreen({
         return false;
       }
     });
-    const notes = `${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(ingredient)}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+    const notes = `${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio))}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
     const persistSuggestion = async () => {
       try {
         if (existingMeal) {
@@ -767,7 +789,7 @@ export default function MealsScreen({
             name: translation.title,
             mealType: menuSuggestionTarget.mealType,
             date,
-            servings: recipe.servings_default,
+            servings,
             notes,
             imageUrl: null,
             sourceUrl: null,
@@ -778,7 +800,7 @@ export default function MealsScreen({
             name: translation.title,
             mealType: menuSuggestionTarget.mealType,
             date,
-            servings: recipe.servings_default,
+            servings,
             notes,
           });
         }
@@ -917,7 +939,7 @@ export default function MealsScreen({
 
   // ─── Ajout ingrédients aux courses ────────────────────────────────────────
   const [showAddToShopping, setShowAddToShopping] = useState(false);
-  const [ingredientsToAdd, setIngredientsToAdd] = useState<Meal[]>([]);
+  const [ingredientsToAdd, setIngredientsToAdd] = useState<string[]>([]);
   const [targetMealForShopping, setTargetMealForShopping] = useState<Meal | null>(null);
 
   const openAddToShopping = (meal: Meal) => {
@@ -1628,7 +1650,7 @@ export default function MealsScreen({
                   <TouchableOpacity style={s.menuSuggestionCard} onPress={() => addSuggestedRecipeToMenu(item)}>
                     <Text style={s.menuSuggestionCardTitle}>{translation.title}</Text>
                     <Text style={s.menuSuggestionCardDescription} numberOfLines={2}>{translation.description}</Text>
-                    <Text style={s.menuSuggestionCardMeta}>{item.servings_default} {t('meals.servings')} · {t('meals.recipeDuration', { count: item.prep_time_min + item.cook_time_min })}</Text>
+                    <Text style={s.menuSuggestionCardMeta}>{Math.max(1, defaultServings || item.servings_default)} {t('meals.servings')} · {t('meals.recipeDuration', { count: item.prep_time_min + item.cook_time_min })}</Text>
                   </TouchableOpacity>
                 );
               }}
@@ -1658,6 +1680,31 @@ export default function MealsScreen({
             <TextInput style={s.input} value={recipeForm.title} onChangeText={title => setRecipeForm(current => ({ ...current, title }))} placeholder={t('meals.recipeTitlePlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} />
             <Text style={s.label}>{t('meals.recipeDescription')}</Text>
             <TextInput style={[s.input, s.recipeDescriptionInput]} value={recipeForm.description} onChangeText={description => setRecipeForm(current => ({ ...current, description }))} placeholder={t('meals.recipeDescriptionPlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} multiline maxLength={5000} />
+            <Text style={s.label}>{t('meals.recipeMealTypes')}</Text>
+            <Text style={s.visibilityDescription}>{t('meals.recipeMealTypeRequired')}</Text>
+            <View style={s.recipeMealTypeRow}>
+              {RECIPE_MEAL_TYPES.map(mealType => {
+                const selected = recipeForm.mealTypes.includes(mealType);
+                return (
+                  <TouchableOpacity
+                    key={mealType}
+                    style={[s.recipeMealTypeButton, selected && s.recipeMealTypeButtonActive]}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
+                    onPress={() => setRecipeForm(current => ({
+                      ...current,
+                      mealTypes: selected
+                        ? current.mealTypes.filter(value => value !== mealType)
+                        : [...current.mealTypes, mealType],
+                    }))}
+                  >
+                    <Text style={[s.recipeMealTypeButtonText, selected && s.recipeMealTypeButtonTextActive]}>
+                      {t(`meals.${mealType}`)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <Text style={s.label}>{t('meals.ingredients')}</Text>
             <View style={s.foodItemInputRow}>
               <TextInput style={[s.input, s.foodItemInput]} value={recipeIngredientInput} onChangeText={setRecipeIngredientInput} placeholder={t('meals.recipeIngredientPlaceholder')} placeholderTextColor={isDark ? '#6b7280' : '#9ca3af'} returnKeyType="done" onSubmitEditing={addRecipeIngredient} />
@@ -1865,9 +1912,8 @@ export default function MealsScreen({
     <AddToShoppingModal
       visible={showAddToShopping}
       onClose={() => setShowAddToShopping(false)}
-      mealName={targetMealForShopping?.name || ''}
       mealServings={targetMealForShopping?.servings || 2}
-      ingredients={ingredientsToAdd as unknown as string[]}
+      ingredients={ingredientsToAdd}
       activeLists={activeLists}
       familyId={familyId || 0}
       onListCreated={() => utils.shopping.listsByFamily.invalidate()}
@@ -2119,6 +2165,11 @@ function getStyles(isDark: boolean) {
     visibilityButtonActive: { backgroundColor: '#7c3aed' },
     visibilityButtonText: { color: subtext, fontSize: 13, fontWeight: '700' },
     visibilityButtonTextActive: { color: '#fff' },
+    recipeMealTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+    recipeMealTypeButton: { alignItems: 'center', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    recipeMealTypeButtonActive: { backgroundColor: '#7c3aed' },
+    recipeMealTypeButtonText: { color: subtext, fontSize: 13, fontWeight: '700' },
+    recipeMealTypeButtonTextActive: { color: '#fff' },
     disclaimerAckRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 10 },
     disclaimerCheck: { width: 22, height: 22, marginTop: 1, borderWidth: 1.5, borderColor: isDark ? '#9ca3af' : '#6b7280', borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
     disclaimerCheckActive: { borderColor: '#7c3aed', backgroundColor: '#7c3aed' },
