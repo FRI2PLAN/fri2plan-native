@@ -5,17 +5,21 @@ const source = readFileSync(new URL('./AddToShoppingModal.tsx', import.meta.url)
 const fr = JSON.parse(readFileSync(new URL('../locales/fr.json', import.meta.url), 'utf8'));
 const en = JSON.parse(readFileSync(new URL('../locales/en.json', import.meta.url), 'utf8'));
 const de = JSON.parse(readFileSync(new URL('../locales/de.json', import.meta.url), 'utf8'));
+const es = JSON.parse(readFileSync(new URL('../locales/es.json', import.meta.url), 'utf8'));
+const italian = JSON.parse(readFileSync(new URL('../locales/it.json', import.meta.url), 'utf8'));
 
 describe('Repas vers Courses — traductions', () => {
-  it('utilise des clés dédiées pour la confirmation et le titre de liste', () => {
+  it('demande un nom de liste et transmet quantité et article séparément', () => {
     expect(source).toContain("t('meals.ingredientsAdded')");
-    expect(source).toContain("t('meals.shoppingListFor')");
+    expect(source).toContain("t('shopping.listName')");
+    expect(source).toContain("t('shopping.listNameRequired')");
+    expect(source).toContain('toShoppingIngredient');
+    expect(source).toContain('disabled={!newListName.trim()');
   });
 
-  it('définit ces deux clés dans les trois langues prises en charge', () => {
-    for (const locale of [fr, en, de]) {
-      expect(locale.meals.ingredientsAdded).toBeTruthy();
-      expect(locale.meals.shoppingListFor).toBeTruthy();
+  it('définit le message de nom obligatoire dans les cinq langues', () => {
+    for (const locale of [fr, en, de, es, italian]) {
+      expect(locale.shopping.listNameRequired).toBeTruthy();
     }
   });
 });

@@ -91,4 +91,20 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain("t('meals.replaceMeal')");
     expect(mealsScreen).toContain('addSuggestedRecipeToMenu');
   });
+
+  it('adapte une suggestion au nombre de convives configuré avant de l’enregistrer', () => {
+    expect(mealsScreen).toContain('const scaleCatalogIngredient');
+    expect(mealsScreen).toContain('const servings = Math.max(1, defaultServings || recipe.servings_default)');
+    expect(mealsScreen).toContain('const portionsRatio = servings / recipe.servings_default');
+    expect(mealsScreen).toContain('formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio))');
+    expect(mealsScreen).toContain('Math.max(1, defaultServings || item.servings_default)');
+  });
+
+  it('demande au créateur de taguer une recette manuelle par type de repas', () => {
+    expect(mealsScreen).toContain('const RECIPE_MEAL_TYPES');
+    expect(mealsScreen).toContain('parseRecipeMealTypes(recipe.tags)');
+    expect(mealsScreen).toContain("t('meals.recipeMealTypes')");
+    expect(mealsScreen).toContain("t('meals.recipeMealTypeRequired')");
+    expect(mealsScreen).toContain('tags: recipeForm.mealTypes');
+  });
 });
