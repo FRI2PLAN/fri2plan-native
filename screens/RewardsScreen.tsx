@@ -348,17 +348,16 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                           <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(reward.id)}>
                             <Text style={styles.deleteBtnText}>🗑️</Text>
                           </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={[styles.claimBtn, (!canAfford || alreadyClaimed) && styles.claimBtnDisabled]}
-                            onPress={() => handleClaim(reward.id, reward.name || reward.title)}
-                            disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}
-                          >
-                            <Text style={styles.claimBtnText}>
-                              {alreadyClaimed ? t('rewards.pending') : canAfford ? t('rewards.claimBtn') : t('rewards.insufficient')}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
+                        ) : null}
+                        <TouchableOpacity
+                          style={[styles.claimBtn, (!canAfford || alreadyClaimed) && styles.claimBtnDisabled]}
+                          onPress={() => handleClaim(reward.id, reward.name || reward.title)}
+                          disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}
+                        >
+                          <Text style={styles.claimBtnText}>
+                            {alreadyClaimed ? t('rewards.pending') : canAfford ? t('rewards.claimBtn') : t('rewards.insufficient')}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>

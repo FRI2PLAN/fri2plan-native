@@ -44,4 +44,11 @@ describe('Récompenses — vitrine de progression', () => {
     expect(rewardsScreen).toContain('!pointsByUserId.has(userId)');
     expect(rewardsScreen).toContain('key={`reward-rank-${activeFamilyId}-${m.userId}`}');
   });
+
+  it('laisse un administrateur réclamer une récompense disponible tout en conservant son action de suppression', () => {
+    expect(rewardsScreen).toContain("{isAdmin ? (");
+    expect(rewardsScreen).toContain('onPress={() => handleDelete(reward.id)}');
+    expect(rewardsScreen).toContain('onPress={() => handleClaim(reward.id, reward.name || reward.title)}');
+    expect(rewardsScreen).toContain('disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}');
+  });
 });

@@ -323,6 +323,8 @@ export type AppRouter = {
         title: string;
         description?: string;
         assignedTo?: number;
+        assignmentMode?: 'personal' | 'shared';
+        participantUserIds?: number[];
         dueDate?: Date;
         recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
         points?: number;
@@ -336,6 +338,7 @@ export type AppRouter = {
         title?: string;
         description?: string;
         assignedTo?: number;
+        assignmentMode?: 'personal' | 'shared';
         participantUserIds?: number[];
         dueDate?: Date;
         recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';

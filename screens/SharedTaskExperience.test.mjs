@@ -74,4 +74,11 @@ describe('expérience des tâches communes', () => {
       expect(locale.tasks.sharedCompletedParticipantLockedMessage).toBeTruthy();
     }
   });
+
+  it('permet de convertir une tâche commune non réalisée en tâche individuelle', () => {
+    expect(source).toContain("assignmentMode: editFormData.assignmentMode");
+    expect(source).toContain("participantUserIds: editFormData.assignmentMode === 'shared' ? editFormData.participantUserIds : []");
+    expect(source).toContain("onPress={() => setData({ ...data, assignmentMode: 'personal', participantUserIds: [] })}");
+    expect(types).toContain("assignmentMode?: 'personal' | 'shared'");
+  });
 });

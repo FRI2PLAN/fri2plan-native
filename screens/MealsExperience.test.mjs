@@ -123,4 +123,19 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('{mealLabels[mealType]}');
     expect(mealsScreen).toContain('{MEAL_EMOJIS[mealType]}');
   });
+
+  it('présente les nouveautés Repas une fois par utilisateur après confirmation de lecture', () => {
+    expect(mealsScreen).toContain("MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v1'");
+    expect(mealsScreen).toContain('mealFeatureNotice_${MEALS_FEATURE_NOTICE_VERSION}_${userId}');
+    expect(mealsScreen).toContain('renderMealsFeatureNoticeModal');
+    expect(mealsScreen).toContain("accessibilityRole=\"checkbox\"");
+    expect(mealsScreen).toContain("t('meals.featureNoticeAcknowledgement')");
+  });
+
+  it('affiche une recette en feuille haute avec des étapes numérotées lisibles pendant la cuisine', () => {
+    expect(mealsScreen).toContain("recipeDetailSheet: { flex: 1, marginTop: 48");
+    expect(mealsScreen).toContain('recipeInstructionCard');
+    expect(mealsScreen).toContain('recipeInstructionNumber');
+    expect(mealsScreen).toContain('contentContainerStyle={s.recipeDetailScrollContent}');
+  });
 });

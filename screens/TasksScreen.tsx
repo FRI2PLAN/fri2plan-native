@@ -521,12 +521,13 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
       title: editFormData.title,
       description: editFormData.description || undefined,
       assignedTo: editFormData.assignedTo,
+      assignmentMode: editFormData.assignmentMode,
       dueDate: editFormData.dueDate,
       recurrence: editFormData.recurrence,
       points: editFormData.points,
       priority: editFormData.priority,
-      isPrivate: editFormData.isPrivate ? 1 : 0,
-      participantUserIds: editFormData.assignmentMode === 'shared' ? editFormData.participantUserIds : undefined});
+      isPrivate: editFormData.assignmentMode === 'shared' ? 0 : editFormData.isPrivate ? 1 : 0,
+      participantUserIds: editFormData.assignmentMode === 'shared' ? editFormData.participantUserIds : []});
   };
 
   // ── Composant carte tâche ────────────────────────────────────────────────
@@ -654,16 +655,19 @@ export default function TasksScreen({ onNavigate, onPrevious, onNext }: TasksScr
         <Text style={styles.label}>{t('tasks.assignmentType')}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity
-            disabled={isEdit}
-            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'personal' && { borderColor: '#7c3aed', borderWidth: 2 }]}
+            disabled={isEdit && selectedTask?.status === 'completed'}
+            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'personal' && { borderColor: '#7c3aed', borderWidth: 2 }, isEdit && selectedTask?.status === 'completed' && { opacity: 0.55 }]}
             onPress={() => setData({ ...data, assignmentMode: 'personal', participantUserIds: [] })}
           ><Text style={styles.pickerButtonText}>{t('tasks.assignmentPersonal')}</Text></TouchableOpacity>
           <TouchableOpacity
-            disabled={isEdit}
-            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'shared' && { borderColor: '#7c3aed', borderWidth: 2 }]}
+            disabled={isEdit && selectedTask?.status === 'completed'}
+            style={[styles.pickerButton, { flex: 1 }, data.assignmentMode === 'shared' && { borderColor: '#7c3aed', borderWidth: 2 }, isEdit && selectedTask?.status === 'completed' && { opacity: 0.55 }]}
             onPress={() => setData({ ...data, assignmentMode: 'shared', assignedTo: undefined, isPrivate: false })}
           ><Text style={styles.pickerButtonText}>{t('tasks.assignmentShared')}</Text></TouchableOpacity>
         </View>
+        {isEdit && selectedTask?.assignmentMode === 'shared' && (selectedTask.participants || []).some((participant: any) => participant.status === 'completed') ? (
+          <Text style={{ marginTop: 6, fontSize: 12, color: isDark ? '#fbbf24' : '#92400e' }}>{t('tasks.sharedCompletedParticipantLockedMessage')}</Text>
+        ) : null}
       </View>
       {data.assignmentMode === 'shared' ? (
         <View style={styles.formGroup}>

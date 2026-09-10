@@ -110,6 +110,7 @@ const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
 const RECIPE_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const CATALOG_RECIPE_REFERENCE = /^\[fri2plan-catalog:([a-z0-9_-]+)\]\n?/im;
+const MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v1';
 
 const parseRecipeMealTypes = (tags?: string | null): MealType[] =>
   (tags || '')
@@ -292,6 +293,8 @@ export default function MealsScreen({
   const [customLabels, setCustomLabels] = useState<Record<MealType, string>>({ ...mealLabels });
   const [customTimes, setCustomTimes] = useState<Record<MealType, string>>({ ...DEFAULT_TIMES });
   const [showFoodPreferences, setShowFoodPreferences] = useState(false);
+  const [showMealsFeatureNotice, setShowMealsFeatureNotice] = useState(false);
+  const [mealsFeatureNoticeAcknowledged, setMealsFeatureNoticeAcknowledged] = useState(false);
   const [foodProfile, setFoodProfile] = useState({
     dietaryStyle: 'omnivore' as DietaryStyle,
     exclusions: [] as string[],
@@ -340,6 +343,25 @@ export default function MealsScreen({
     },
     { enabled: !!familyId && !!menuSuggestionTarget && showMenuSuggestions },
   );
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadMealsFeatureNotice = async () => {
+      const userId = (currentUser as any)?.id;
+      if (!userId) return;
+      try {
+        const acknowledged = await AsyncStorage.getItem(`mealFeatureNotice_${MEALS_FEATURE_NOTICE_VERSION}_${userId}`);
+        if (isMounted && acknowledged !== 'acknowledged') {
+          setMealsFeatureNoticeAcknowledged(false);
+          setShowMealsFeatureNotice(true);
+        }
+      } catch {
+        if (isMounted) setShowMealsFeatureNotice(true);
+      }
+    };
+    void loadMealsFeatureNotice();
+    return () => { isMounted = false; };
+  }, [(currentUser as any)?.id]);
   const suggestedCatalogRecipes = useMemo(() => {
     const byId = new Map(recipeCatalog.recipes.map(recipe => [recipe.id, recipe]));
     return (menuSuggestionResult?.recipeIds || [])
@@ -470,6 +492,19 @@ export default function MealsScreen({
     setSelectedRecipeId(null);
     setSelectedCatalogRecipeId(recipeId);
     setShowRecipeDetails(true);
+  };
+
+  const acknowledgeMealsFeatureNotice = async () => {
+    if (!mealsFeatureNoticeAcknowledged) return;
+    const userId = (currentUser as any)?.id;
+    if (userId) {
+      try {
+        await AsyncStorage.setItem(`mealFeatureNotice_${MEALS_FEATURE_NOTICE_VERSION}_${userId}`, 'acknowledged');
+      } catch {
+        // La notice reste informative même si le stockage local est indisponible.
+      }
+    }
+    setShowMealsFeatureNotice(false);
   };
 
   const openRecipeEditor = (recipe: RecipeLibraryEntry) => {
@@ -1602,6 +1637,9 @@ export default function MealsScreen({
     const recipe = selectedRecipe as RecipeLibraryEntry | undefined;
     const catalogTranslation = selectedCatalogRecipe ? getCatalogTranslation(selectedCatalogRecipe, i18n.language) : null;
     const canManageRecipe = recipe?.createdBy === (currentUser as any)?.id;
+    const instructionSteps = selectedCatalogRecipe && catalogTranslation
+      ? catalogTranslation.instructions
+      : (recipe?.instructions || '').split(/\n+/).map(step => step.trim()).filter(Boolean);
     return (
       <Modal visible={showRecipeDetails} transparent animationType="slide" onRequestClose={() => setShowRecipeDetails(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.sheetOverlay}>
@@ -1614,17 +1652,17 @@ export default function MealsScreen({
               </TouchableOpacity>
             </View>
             {recipeDetailsLoading || (!recipe && !selectedCatalogRecipe) ? <ActivityIndicator style={{ marginVertical: 48 }} color="#7c3aed" /> : selectedCatalogRecipe && catalogTranslation ? (
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.recipeDetailScrollContent}>
                 <View style={s.recipeCatalogDetailBadge}><Text style={s.recipeCatalogDetailBadgeText}>{t('meals.recipeCatalog')}</Text></View>
                 <Text style={s.recipeDetailDescription}>{catalogTranslation.description}</Text>
                 <Text style={s.recipeDetailMeta}>{selectedCatalogRecipe.servings_default} {t('meals.servings')} · {t('meals.recipeDuration', { count: selectedCatalogRecipe.prep_time_min + selectedCatalogRecipe.cook_time_min })}</Text>
                 <Text style={s.label}>{t('meals.ingredients')}</Text>
                 <View style={s.recipeDetailIngredients}>{catalogTranslation.ingredients.map((ingredient, index) => <Text key={`${ingredient.name}-${index}`} style={s.ingredientItem}>• {formatCatalogIngredient(ingredient)}</Text>)}</View>
                 <Text style={s.label}>{t('meals.recipeInstructions')}</Text>
-                <View style={s.recipeCatalogInstructions}>{catalogTranslation.instructions.map((instruction, index) => <Text key={`${index}-${instruction}`} style={s.recipeDetailInstructions}>{index + 1}. {instruction}</Text>)}</View>
+                <View style={s.recipeCatalogInstructions}>{instructionSteps.map((instruction, index) => <View key={`${index}-${instruction}`} style={s.recipeInstructionCard}><Text style={s.recipeInstructionNumber}>{index + 1}</Text><Text style={s.recipeDetailInstructions}>{instruction.replace(/^\s*\d+[.)]\s*/, '')}</Text></View>)}</View>
               </ScrollView>
             ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.recipeDetailScrollContent}>
                 <View style={[s.recipeDetailVisibility, recipe.visibility === 'private' && s.recipeDetailVisibilityPrivate]}>
                   <Text style={[s.recipeDetailVisibilityText, recipe.visibility === 'private' && s.recipeDetailVisibilityTextPrivate]}>
                     {recipe.visibility === 'private' ? `🔒 ${t('meals.recipeVisibilityPrivateDetail')}` : `👥 ${t('meals.recipeVisibilityFamilyDetail')}`}
@@ -1640,7 +1678,7 @@ export default function MealsScreen({
                 {(recipe.ingredients || []).length === 0 ? <Text style={s.recipeDetailEmpty}>{t('meals.recipeNoIngredients')}</Text> : (
                   <View style={s.recipeDetailIngredients}>{(recipe.ingredients || []).map((ingredient, index) => <Text key={`${ingredient.name}-${index}`} style={s.ingredientItem}>• {ingredient.name}</Text>)}</View>
                 )}
-                {recipe.instructions ? <><Text style={s.label}>{t('meals.recipeInstructions')}</Text><Text style={s.recipeDetailInstructions}>{recipe.instructions}</Text></> : null}
+                {instructionSteps.length > 0 ? <><Text style={s.label}>{t('meals.recipeInstructions')}</Text><View style={s.recipeCatalogInstructions}>{instructionSteps.map((instruction, index) => <View key={`${index}-${instruction}`} style={s.recipeInstructionCard}><Text style={s.recipeInstructionNumber}>{index + 1}</Text><Text style={s.recipeDetailInstructions}>{instruction.replace(/^\s*\d+[.)]\s*/, '')}</Text></View>)}</View></> : null}
                 {recipe.sourceUrl ? (
                   <TouchableOpacity style={s.recipeSourceButton} onPress={() => void Linking.openURL(recipe.sourceUrl!).catch(() => Alert.alert(t('meals.recipeUnavailable'), t('meals.recipeUnavailableMessage')))}>
                     <Text style={s.recipeSourceButtonText}>🔗 {t('meals.recipeSource')}</Text>
@@ -1964,6 +2002,38 @@ export default function MealsScreen({
     />
   );
 
+  const renderMealsFeatureNoticeModal = () => (
+    <Modal visible={showMealsFeatureNotice} transparent animationType="fade" statusBarTranslucent onRequestClose={() => undefined}>
+      <View style={s.mealsFeatureNoticeOverlay}>
+        <View style={s.mealsFeatureNoticeCard}>
+          <Text style={s.mealsFeatureNoticeTitle}>✨ {t('meals.featureNoticeTitle')}</Text>
+          <Text style={s.mealsFeatureNoticeIntro}>{t('meals.featureNoticeIntro')}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.mealsFeatureNoticeContent}>
+            <View style={s.mealsFeatureNoticeItem}>
+              <Text style={s.mealsFeatureNoticeIcon}>🥕</Text>
+              <View style={s.mealsFeatureNoticeTextWrap}><Text style={s.mealsFeatureNoticeItemTitle}>{t('meals.featureNoticePreferencesTitle')}</Text><Text style={s.mealsFeatureNoticeItemText}>{t('meals.featureNoticePreferencesText')}</Text></View>
+            </View>
+            <View style={s.mealsFeatureNoticeItem}>
+              <Text style={s.mealsFeatureNoticeIcon}>📚</Text>
+              <View style={s.mealsFeatureNoticeTextWrap}><Text style={s.mealsFeatureNoticeItemTitle}>{t('meals.featureNoticeLibraryTitle')}</Text><Text style={s.mealsFeatureNoticeItemText}>{t('meals.featureNoticeLibraryText')}</Text></View>
+            </View>
+            <View style={s.mealsFeatureNoticeItem}>
+              <Text style={s.mealsFeatureNoticeIcon}>✨</Text>
+              <View style={s.mealsFeatureNoticeTextWrap}><Text style={s.mealsFeatureNoticeItemTitle}>{t('meals.featureNoticeSuggestionsTitle')}</Text><Text style={s.mealsFeatureNoticeItemText}>{t('meals.featureNoticeSuggestionsText')}</Text></View>
+            </View>
+          </ScrollView>
+          <TouchableOpacity style={s.mealsFeatureNoticeCheck} onPress={() => setMealsFeatureNoticeAcknowledged(current => !current)} accessibilityRole="checkbox" accessibilityState={{ checked: mealsFeatureNoticeAcknowledged }}>
+            <View style={[s.mealsFeatureNoticeCheckBox, mealsFeatureNoticeAcknowledged && s.mealsFeatureNoticeCheckBoxActive]}><Text style={s.mealsFeatureNoticeCheckMark}>{mealsFeatureNoticeAcknowledged ? '✓' : ''}</Text></View>
+            <Text style={s.mealsFeatureNoticeCheckText}>{t('meals.featureNoticeAcknowledgement')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.mealsFeatureNoticeButton, !mealsFeatureNoticeAcknowledged && s.mealsFeatureNoticeButtonDisabled]} onPress={() => void acknowledgeMealsFeatureNotice()} disabled={!mealsFeatureNoticeAcknowledged}>
+            <Text style={s.mealsFeatureNoticeButtonText}>{t('meals.featureNoticeContinue')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
@@ -1982,6 +2052,7 @@ export default function MealsScreen({
       {renderRecipeDetailsModal()}
       {renderRecipeFormModal()}
       {renderMenuSuggestionsModal()}
+      {renderMealsFeatureNoticeModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
@@ -2132,7 +2203,7 @@ function getStyles(isDark: boolean) {
     menuSuggestionEmptyText: { color: subtext, fontSize: 14, lineHeight: 20, textAlign: 'center' },
     refreshMenuSuggestionsButton: { alignItems: 'center', backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 12, padding: 13, marginTop: 4, marginBottom: 10 },
     refreshMenuSuggestionsText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 14, fontWeight: '800' },
-    recipeDetailSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '92%' },
+    recipeDetailSheet: { flex: 1, marginTop: 48, backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 0 },
     recipeFormSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 22, maxHeight: '96%' },
     recipeLibraryToolbar: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 },
     recipeLibrarySearch: { flex: 1, marginBottom: 0 },
@@ -2168,8 +2239,11 @@ function getStyles(isDark: boolean) {
     recipeDetailBy: { color: subtext, fontSize: 12, marginTop: 5 },
     recipeDetailIngredients: { backgroundColor: isDark ? '#111827' : '#f8fafc', borderRadius: 10, padding: 10 },
     recipeDetailEmpty: { color: subtext, fontSize: 13, fontStyle: 'italic' },
-    recipeDetailInstructions: { color: text, fontSize: 14, lineHeight: 22, marginBottom: 8 },
-    recipeCatalogInstructions: { marginBottom: 6 },
+    recipeDetailInstructions: { color: text, flex: 1, fontSize: 15, lineHeight: 23 },
+    recipeCatalogInstructions: { marginBottom: 16, gap: 10 },
+    recipeDetailScrollContent: { paddingBottom: 42 },
+    recipeInstructionCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 12, padding: 12 },
+    recipeInstructionNumber: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', textAlign: 'center', textAlignVertical: 'center', color: '#fff', backgroundColor: '#7c3aed', fontSize: 14, lineHeight: 28, fontWeight: '800' },
     recipeOwnerActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 20, marginBottom: 8 },
     recipeEditButton: { width: 52, height: 52, backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
     recipeEditButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 21, fontWeight: '800' },
@@ -2183,6 +2257,24 @@ function getStyles(isDark: boolean) {
     foodDisclaimerCard: { backgroundColor: isDark ? '#3f2d11' : '#fff7ed', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: isDark ? '#854d0e' : '#fed7aa' },
     foodDisclaimerTitle: { color: isDark ? '#fde68a' : '#9a3412', fontWeight: '800', fontSize: 14, marginBottom: 6 },
     foodDisclaimerText: { color: isDark ? '#fed7aa' : '#9a3412', fontSize: 12, lineHeight: 18 },
+    mealsFeatureNoticeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.58)', justifyContent: 'center', padding: 20 },
+    mealsFeatureNoticeCard: { maxHeight: '88%', backgroundColor: card, borderRadius: 22, padding: 20 },
+    mealsFeatureNoticeTitle: { color: text, fontSize: 22, fontWeight: '800', marginBottom: 8 },
+    mealsFeatureNoticeIntro: { color: subtext, fontSize: 14, lineHeight: 20, marginBottom: 14 },
+    mealsFeatureNoticeContent: { gap: 10, paddingBottom: 8 },
+    mealsFeatureNoticeItem: { flexDirection: 'row', gap: 10, backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 14, padding: 12 },
+    mealsFeatureNoticeIcon: { fontSize: 22, lineHeight: 28 },
+    mealsFeatureNoticeTextWrap: { flex: 1 },
+    mealsFeatureNoticeItemTitle: { color: text, fontSize: 14, fontWeight: '800', marginBottom: 3 },
+    mealsFeatureNoticeItemText: { color: subtext, fontSize: 12, lineHeight: 18 },
+    mealsFeatureNoticeCheck: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, marginBottom: 12 },
+    mealsFeatureNoticeCheckBox: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: isDark ? '#a78bfa' : '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+    mealsFeatureNoticeCheckBoxActive: { backgroundColor: '#7c3aed' },
+    mealsFeatureNoticeCheckMark: { color: '#fff', fontSize: 16, fontWeight: '900' },
+    mealsFeatureNoticeCheckText: { color: text, flex: 1, fontSize: 13, lineHeight: 18 },
+    mealsFeatureNoticeButton: { backgroundColor: '#7c3aed', alignItems: 'center', borderRadius: 12, paddingVertical: 14 },
+    mealsFeatureNoticeButtonDisabled: { opacity: 0.5 },
+    mealsFeatureNoticeButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
     dietaryStyleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 },
     dietaryStyleButton: { width: '48%', minHeight: 104, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6', borderWidth: 1, borderColor: 'transparent' },
     dietaryStyleButtonActive: { backgroundColor: '#7c3aed' },
