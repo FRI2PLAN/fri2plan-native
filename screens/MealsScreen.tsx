@@ -25,6 +25,7 @@ import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS, es, it } from 'date-fns/locale';
 import recipeCatalogData from '../data/fri2plan_recipes_500_multilingual.json';
+import extendedRecipeCatalogData from '../data/fri2plan_recipes_501_1000_multilingual.json';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -106,7 +107,12 @@ type MenuSuggestionTarget = {
   mealType: MealType;
 };
 
-const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
+const recipeCatalog = {
+  recipes: [
+    ...(recipeCatalogData as { recipes: CatalogRecipe[] }).recipes,
+    ...(extendedRecipeCatalogData as { recipes: CatalogRecipe[] }).recipes,
+  ],
+};
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
 const RECIPE_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const CATALOG_RECIPE_REFERENCE = /^\[fri2plan-catalog:([a-z0-9_-]+)\]\n?/im;
