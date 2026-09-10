@@ -148,4 +148,11 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain("notes: catalogPresentation ? '' : meal.notes || ''");
     expect(mealsScreen).toContain("const notes = `[fri2plan-catalog:${recipe.id}]`;");
   });
+
+  it('réserve la ligne supérieure au titre et place les actions sur la ligne de déplacement', () => {
+    expect(mealsScreen).toContain('<View style={s.mealCardFooter}>');
+    expect(mealsScreen).toContain("mealCardFooter: { flexDirection: 'row'");
+    expect(mealsScreen).toContain("justifyContent: 'space-between'");
+    expect(mealsScreen).not.toContain('<Text style={s.mealName} numberOfLines={1}>{displayName}</Text>');
+  });
 });

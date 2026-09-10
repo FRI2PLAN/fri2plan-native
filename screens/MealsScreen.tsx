@@ -1155,9 +1155,27 @@ export default function MealsScreen({
       <View style={s.mealCardHeader}>
         <Text style={s.mealEmoji}>{MEAL_EMOJIS[meal.mealType]}</Text>
         <View style={s.mealCardInfo}>
-          <Text style={s.mealName} numberOfLines={1}>{displayName}</Text>
+          <Text style={s.mealName}>{displayName}</Text>
           <Text style={s.mealMeta}>{mealLabels[meal.mealType]} · {meal.servings} {t('meals.servings')}</Text>
         </View>
+      </View>
+      {!meal.imageUrl && meal.sourceUrl ? (
+        <TouchableOpacity
+          style={s.recipeSourceButton}
+          onPress={() => void openRecipeSource(meal)}
+          accessibilityRole="link"
+          accessibilityLabel={t('meals.viewRecipe')}
+        >
+          <Text style={s.recipeSourceButtonText}>🔗 {t('meals.viewRecipe')}</Text>
+        </TouchableOpacity>
+      ) : null}
+      <View style={s.mealCardFooter}>
+        <TouchableOpacity
+          style={s.moveMealBtn}
+          onPress={() => setMovingMeal(meal)}
+        >
+          <Text style={s.moveMealBtnText}>⋮ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
+        </TouchableOpacity>
         <View style={s.mealCardActions}>
           <TouchableOpacity onPress={() => toggleFavorite.mutate({ mealId: meal.id, isFavorite: !meal.isFavorite })}>
             <Text style={s.mealActionBtn}>{meal.isFavorite ? '❤️' : '🤍'}</Text>
@@ -1186,22 +1204,6 @@ export default function MealsScreen({
           </TouchableOpacity>
         </View>
       </View>
-      {!meal.imageUrl && meal.sourceUrl ? (
-        <TouchableOpacity
-          style={s.recipeSourceButton}
-          onPress={() => void openRecipeSource(meal)}
-          accessibilityRole="link"
-          accessibilityLabel={t('meals.viewRecipe')}
-        >
-          <Text style={s.recipeSourceButtonText}>🔗 {t('meals.viewRecipe')}</Text>
-        </TouchableOpacity>
-      ) : null}
-      <TouchableOpacity
-        style={s.moveMealBtn}
-        onPress={() => setMovingMeal(meal)}
-      >
-        <Text style={s.moveMealBtnText}>⋮ {t('meals.moveTo') || 'Déplacer vers...'}</Text>
-      </TouchableOpacity>
     </View>
     );
   };
@@ -2264,14 +2266,15 @@ function getStyles(isDark: boolean) {
     recipeImageLinkText: { color: '#fff', fontSize: 12, fontWeight: '700' },
     recipeSourceButton: { alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: isDark ? '#312e81' : '#ede9fe' },
     recipeSourceButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 12, fontWeight: '700' },
-    mealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    mealCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
     mealEmoji: { fontSize: 22 },
     mealCardInfo: { flex: 1 },
     mealName: { fontSize: 14, fontWeight: '700', color: text },
     mealMeta: { fontSize: 12, color: subtext, marginTop: 2 },
-    mealCardActions: { flexDirection: 'row', gap: 4 },
-    mealActionBtn: { fontSize: 18, padding: 2 },
-    moveMealBtn: { marginTop: 4, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: isDark ? '#2d1b69' : '#ede9fe', borderRadius: 8, alignSelf: 'flex-start' },
+    mealCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 },
+    mealCardActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, flexShrink: 1 },
+    mealActionBtn: { fontSize: 18, lineHeight: 24, padding: 2 },
+    moveMealBtn: { paddingVertical: 4, paddingHorizontal: 8, backgroundColor: isDark ? '#2d1b69' : '#ede9fe', borderRadius: 8, flexShrink: 0 },
     moveMealBtnText: { fontSize: 12, color: '#7c3aed', fontWeight: '600' },
     reuseBtn: { alignSelf: 'flex-end', marginBottom: 4 },
     reuseBtnText: { fontSize: 12, color: '#7c3aed' },
