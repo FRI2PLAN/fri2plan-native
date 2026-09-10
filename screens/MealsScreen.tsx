@@ -25,6 +25,7 @@ import {
   format, addDays, startOfWeek, endOfWeek, isSameDay, parseISO, addWeeks, subWeeks} from 'date-fns';
 import { fr, de, enUS, es, it } from 'date-fns/locale';
 import recipeCatalogData from '../data/fri2plan_recipes_500_multilingual.json';
+import { parseMealCookingNotes } from '../lib/mealCookingPresentation.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -110,7 +111,7 @@ const recipeCatalog = recipeCatalogData as { recipes: CatalogRecipe[] };
 const CATALOG_LANGUAGES: CatalogLanguage[] = ['fr', 'en', 'de', 'es', 'it'];
 const RECIPE_MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const CATALOG_RECIPE_REFERENCE = /^\[fri2plan-catalog:([a-z0-9_-]+)\]\n?/im;
-const MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v1';
+const MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v2';
 
 const parseRecipeMealTypes = (tags?: string | null): MealType[] =>
   (tags || '')
@@ -307,6 +308,7 @@ export default function MealsScreen({
   const [foodDisclaimerAccepted, setFoodDisclaimerAccepted] = useState(false);
   const [showRecipeLibrary, setShowRecipeLibrary] = useState(false);
   const [showRecipeDetails, setShowRecipeDetails] = useState(false);
+  const [cookingMeal, setCookingMeal] = useState<Meal | null>(null);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
   const [showMenuSuggestions, setShowMenuSuggestions] = useState(false);
   const [menuSuggestionTarget, setMenuSuggestionTarget] = useState<MenuSuggestionTarget | null>(null);
@@ -462,8 +464,41 @@ export default function MealsScreen({
       formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio)),
     );
     const notes = `${t('meals.ingredients')}:\n${ingredients.map(ingredient => `• ${ingredient}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
-    return { recipeId: recipe.id, title: translation.title, description: translation.description, ingredients, instructions: translation.instructions, notes };
+    return {
+      recipeId: recipe.id,
+      title: translation.title,
+      description: translation.description,
+      ingredients,
+      instructions: translation.instructions,
+      notes,
+      durationMinutes: recipe.prep_time_min + recipe.cook_time_min,
+    };
   }, [i18n.language, t]);
+
+  const getMealCookingPresentation = useCallback((meal: Meal) => {
+    const catalogPresentation = getCatalogMealPresentation(meal);
+    if (catalogPresentation) {
+      return {
+        title: catalogPresentation.title,
+        description: catalogPresentation.description,
+        servings: meal.servings || undefined,
+        durationMinutes: catalogPresentation.durationMinutes,
+        ingredients: catalogPresentation.ingredients,
+        instructions: catalogPresentation.instructions,
+        sourceUrl: meal.sourceUrl,
+      };
+    }
+    const parsedNotes = parseMealCookingNotes(meal.notes);
+    return {
+      title: meal.name,
+      description: undefined,
+      servings: meal.servings || undefined,
+      durationMinutes: undefined,
+      ingredients: parsedNotes.ingredients,
+      instructions: parsedNotes.instructions,
+      sourceUrl: meal.sourceUrl,
+    };
+  }, [getCatalogMealPresentation]);
 
   const addRecipeIngredient = () => {
     const ingredient = recipeIngredientInput.trim();
@@ -767,7 +802,9 @@ export default function MealsScreen({
       name: catalogPresentation?.title || meal.name,
       mealType: meal.mealType,
       servings: meal.servings || defaultServings,
-      notes: catalogPresentation?.notes || meal.notes || '',
+      // Les étapes catalogue restent dans le mode cuisine : elles ne doivent pas
+      // envahir la zone Notes du formulaire de planification.
+      notes: catalogPresentation ? '' : meal.notes || '',
       catalogRecipeId: catalogPresentation?.recipeId || getCatalogRecipeIdFromNotes(meal.notes) || '',
       sourceUrl: meal.sourceUrl || '',
       imageUrl: meal.imageUrl || '',
@@ -845,7 +882,9 @@ export default function MealsScreen({
         return false;
       }
     });
-    const notes = `[fri2plan-catalog:${recipe.id}]\n${t('meals.ingredients')}:\n${translation.ingredients.map((ingredient) => `• ${formatCatalogIngredient(scaleCatalogIngredient(ingredient, portionsRatio))}`).join('\n')}\n\n${t('meals.recipeInstructions')}:\n${translation.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+    // La référence suffit : les ingrédients, portions et étapes sont reconstruits
+    // dans la langue active par le mode cuisine, sans remplir Notes.
+    const notes = `[fri2plan-catalog:${recipe.id}]`;
     const persistSuggestion = async () => {
       try {
         if (existingMeal) {
@@ -1089,7 +1128,9 @@ export default function MealsScreen({
   }, [t]);
 
   const renderMealCard = (meal: Meal) => {
-    const displayName = getCatalogMealPresentation(meal)?.title || meal.name;
+    const cookingPresentation = getMealCookingPresentation(meal);
+    const displayName = cookingPresentation.title;
+    const canOpenCookingMode = cookingPresentation.ingredients.length > 0 || cookingPresentation.instructions.length > 0;
     return (
     <View key={meal.id} style={s.mealCard}>
       {meal.imageUrl ? (
@@ -1127,6 +1168,11 @@ export default function MealsScreen({
           <TouchableOpacity onPress={() => openAddToShopping(meal)}>
             <Text style={s.mealActionBtn}>🛒</Text>
           </TouchableOpacity>
+          {canOpenCookingMode ? (
+            <TouchableOpacity onPress={() => setCookingMeal(meal)} accessibilityLabel={t('meals.openCookingMode')}>
+              <Text style={s.mealActionBtn}>📖</Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             onPress={() => openEdit(meal)}
           >
@@ -1301,11 +1347,11 @@ export default function MealsScreen({
                   name: catalogPresentation?.title || m.name,
                   mealType: m.mealType,
                   servings: m.servings || defaultServings,
-                  notes: catalogPresentation?.notes || '',
+                  notes: '',
                   catalogRecipeId: catalogPresentation?.recipeId || getCatalogRecipeIdFromNotes(m.notes) || '',
                   sourceUrl: m.sourceUrl || '',
                   imageUrl: m.imageUrl || '',
-                  ingredients: catalogPresentation?.ingredients || extractedIngredients
+                  ingredients: catalogPresentation ? [] : extractedIngredients
                 });
                 setShowForm(true);
                 setRecipeSearch('');
@@ -1856,12 +1902,14 @@ export default function MealsScreen({
                     key={i}
                     style={s.historySuggestionItem}
                     onPress={() => {
+                      const catalogPresentation = getCatalogMealPresentation(meal);
                       setForm(p => ({
                         ...p,
-                        name: meal.name,
+                        name: catalogPresentation?.title || meal.name,
                         mealType: meal.mealType || p.mealType,
                         servings: meal.servings || p.servings,
-                        notes: meal.notes || '',
+                        notes: catalogPresentation ? '' : meal.notes || '',
+                        catalogRecipeId: catalogPresentation?.recipeId || getCatalogRecipeIdFromNotes(meal.notes) || '',
                         sourceUrl: meal.sourceUrl || '',
                         imageUrl: meal.imageUrl || '',
                         ingredients: p.ingredients,
@@ -1952,8 +2000,13 @@ export default function MealsScreen({
               </TouchableOpacity>
             </View>
 
-            {/* Notes */}
-            <Text style={s.label}>{t('common.notes') || 'Notes'}</Text>
+            {form.catalogRecipeId ? (
+              <View style={s.catalogRecipeEditHint}>
+                <Text style={s.catalogRecipeEditHintText}>📖 {t('meals.catalogRecipeEditHint')}</Text>
+              </View>
+            ) : null}
+            {/* Les notes restent réservées à l'organisation du repas ; les étapes sont lues en mode cuisine. */}
+            <Text style={s.label}>{form.catalogRecipeId ? t('meals.planningNotes') : (t('common.notes') || 'Notes')}</Text>
             <TextInput
               style={[s.input, { height: 80 }]}
               value={form.notes}
@@ -2034,6 +2087,63 @@ export default function MealsScreen({
     </Modal>
   );
 
+  const renderCookingModeModal = () => {
+    const presentation = cookingMeal ? getMealCookingPresentation(cookingMeal) : null;
+    return (
+      <Modal visible={!!cookingMeal} animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={() => setCookingMeal(null)}>
+        <View style={s.cookingModeScreen}>
+          <View style={s.cookingModeHeader}>
+            <View style={s.cookingModeHeaderText}>
+              <Text style={s.cookingModeEyebrow}>🍳 {t('meals.cookingMode')}</Text>
+              <Text style={s.cookingModeTitle} numberOfLines={2}>{presentation?.title || t('meals.recipeDetails')}</Text>
+            </View>
+            <TouchableOpacity style={s.cookingModeCloseButton} onPress={() => setCookingMeal(null)} accessibilityLabel={t('common.close')}>
+              <Text style={s.cookingModeCloseButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {presentation ? (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.cookingModeScrollContent}>
+              {presentation.description ? <Text style={s.cookingModeDescription}>{presentation.description}</Text> : null}
+              {presentation.servings || presentation.durationMinutes ? (
+                <Text style={s.cookingModeMeta}>
+                  {presentation.servings ? `${presentation.servings} ${t('meals.servings')}` : ''}
+                  {presentation.servings && presentation.durationMinutes ? ' · ' : ''}
+                  {presentation.durationMinutes ? t('meals.recipeDuration', { count: presentation.durationMinutes }) : ''}
+                </Text>
+              ) : null}
+              {presentation.ingredients.length > 0 ? (
+                <>
+                  <Text style={s.cookingModeSectionTitle}>{t('meals.ingredients')}</Text>
+                  <View style={s.cookingModeIngredients}>
+                    {presentation.ingredients.map((ingredient, index) => <Text key={`${ingredient}-${index}`} style={s.cookingModeIngredient}>• {ingredient}</Text>)}
+                  </View>
+                </>
+              ) : null}
+              {presentation.instructions.length > 0 ? (
+                <>
+                  <Text style={s.cookingModeSectionTitle}>{t('meals.recipeInstructions')}</Text>
+                  <View style={s.cookingModeInstructions}>
+                    {presentation.instructions.map((instruction, index) => (
+                      <View key={`${instruction}-${index}`} style={s.cookingModeInstructionCard}>
+                        <Text style={s.cookingModeInstructionNumber}>{index + 1}</Text>
+                        <Text style={s.cookingModeInstructionText}>{instruction}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              ) : null}
+              {presentation.sourceUrl ? (
+                <TouchableOpacity style={s.recipeSourceButton} onPress={() => void openRecipeSource(cookingMeal!)} accessibilityRole="link" accessibilityLabel={t('meals.recipeSource')}>
+                  <Text style={s.recipeSourceButtonText}>🔗 {t('meals.recipeSource')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </ScrollView>
+          ) : null}
+        </View>
+      </Modal>
+    );
+  };
+
   // ─── Rendu principal ───────────────────────────────────────────────────────
   const content = (
     <View style={s.container}>
@@ -2053,6 +2163,7 @@ export default function MealsScreen({
       {renderRecipeFormModal()}
       {renderMenuSuggestionsModal()}
       {renderMealsFeatureNoticeModal()}
+      {renderCookingModeModal()}
 
       {/* Modal déplacer repas vers un autre jour */}
       <Modal visible={!!movingMeal} transparent animationType="slide">
@@ -2244,6 +2355,23 @@ function getStyles(isDark: boolean) {
     recipeDetailScrollContent: { paddingBottom: 42 },
     recipeInstructionCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 12, padding: 12 },
     recipeInstructionNumber: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden', textAlign: 'center', textAlignVertical: 'center', color: '#fff', backgroundColor: '#7c3aed', fontSize: 14, lineHeight: 28, fontWeight: '800' },
+    cookingModeScreen: { flex: 1, backgroundColor: card, paddingTop: Platform.OS === 'ios' ? 56 : 28, paddingHorizontal: 20 },
+    cookingModeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: border },
+    cookingModeHeaderText: { flex: 1 },
+    cookingModeEyebrow: { color: '#7c3aed', fontSize: 13, fontWeight: '800', marginBottom: 4 },
+    cookingModeTitle: { color: text, fontSize: 23, fontWeight: '900', lineHeight: 30 },
+    cookingModeCloseButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#374151' : '#f3f4f6' },
+    cookingModeCloseButtonText: { color: text, fontSize: 21, fontWeight: '700' },
+    cookingModeScrollContent: { paddingTop: 18, paddingBottom: Platform.OS === 'ios' ? 58 : 38 },
+    cookingModeDescription: { color: text, fontSize: 16, lineHeight: 24, marginBottom: 8 },
+    cookingModeMeta: { color: subtext, fontSize: 14, fontWeight: '800', marginBottom: 8 },
+    cookingModeSectionTitle: { color: text, fontSize: 17, fontWeight: '900', marginTop: 16, marginBottom: 8 },
+    cookingModeIngredients: { backgroundColor: isDark ? '#111827' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 15, padding: 14 },
+    cookingModeIngredient: { color: text, fontSize: 16, lineHeight: 24, marginBottom: 5 },
+    cookingModeInstructions: { gap: 14 },
+    cookingModeInstructionCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 13, backgroundColor: isDark ? '#253047' : '#f8fafc', borderWidth: 1, borderColor: border, borderRadius: 16, padding: 16 },
+    cookingModeInstructionNumber: { width: 38, height: 38, borderRadius: 19, overflow: 'hidden', textAlign: 'center', textAlignVertical: 'center', color: '#fff', backgroundColor: '#7c3aed', fontSize: 17, lineHeight: 38, fontWeight: '900' },
+    cookingModeInstructionText: { color: text, flex: 1, fontSize: 18, lineHeight: 27, paddingTop: 3 },
     recipeOwnerActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 20, marginBottom: 8 },
     recipeEditButton: { width: 52, height: 52, backgroundColor: isDark ? '#312e81' : '#ede9fe', borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
     recipeEditButtonText: { color: isDark ? '#ddd6fe' : '#5b21b6', fontSize: 21, fontWeight: '800' },
@@ -2251,6 +2379,8 @@ function getStyles(isDark: boolean) {
     recipeDeleteButtonText: { color: '#dc2626', fontSize: 21, fontWeight: '800' },
     recipeDescriptionInput: { minHeight: 72, textAlignVertical: 'top' },
     recipeInstructionsInput: { minHeight: 130, textAlignVertical: 'top' },
+    catalogRecipeEditHint: { backgroundColor: isDark ? '#1e3a5f' : '#eff6ff', borderWidth: 1, borderColor: isDark ? '#1d4ed8' : '#bfdbfe', borderRadius: 10, padding: 10, marginTop: 8 },
+    catalogRecipeEditHintText: { color: isDark ? '#bfdbfe' : '#1d4ed8', fontSize: 12, fontWeight: '700', lineHeight: 18 },
     recipeTimeRow: { flexDirection: 'row', gap: 10 },
     recipeTimeCell: { flex: 1 },
     foodPreferencesSheet: { backgroundColor: card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 20, paddingBottom: 34, maxHeight: '94%' },

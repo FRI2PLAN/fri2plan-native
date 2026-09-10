@@ -114,7 +114,7 @@ describe('Repas — planification chaleureuse', () => {
     expect(mealsScreen).toContain('getCatalogMealPresentation');
     expect(mealsScreen).toContain('[fri2plan-catalog:${recipe.id}]');
     expect(mealsScreen).toContain('catalogPresentation?.title || meal.name');
-    expect(mealsScreen).toContain('catalogPresentation?.ingredients');
+    expect(mealsScreen).toContain('catalogPresentation ? [] : extractedIngredients');
   });
 
   it('présente les types de repas en grille uniforme avec leurs libellés traduits actifs', () => {
@@ -125,17 +125,27 @@ describe('Repas — planification chaleureuse', () => {
   });
 
   it('présente les nouveautés Repas une fois par utilisateur après confirmation de lecture', () => {
-    expect(mealsScreen).toContain("MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v1'");
+    expect(mealsScreen).toContain("MEALS_FEATURE_NOTICE_VERSION = 'meals-library-menu-v2'");
     expect(mealsScreen).toContain('mealFeatureNotice_${MEALS_FEATURE_NOTICE_VERSION}_${userId}');
     expect(mealsScreen).toContain('renderMealsFeatureNoticeModal');
     expect(mealsScreen).toContain("accessibilityRole=\"checkbox\"");
     expect(mealsScreen).toContain("t('meals.featureNoticeAcknowledgement')");
   });
 
-  it('affiche une recette en feuille haute avec des étapes numérotées lisibles pendant la cuisine', () => {
-    expect(mealsScreen).toContain("recipeDetailSheet: { flex: 1, marginTop: 48");
-    expect(mealsScreen).toContain('recipeInstructionCard');
-    expect(mealsScreen).toContain('recipeInstructionNumber');
-    expect(mealsScreen).toContain('contentContainerStyle={s.recipeDetailScrollContent}');
+  it('guide explicitement vers les préférences et la bibliothèque depuis les paramètres Repas', () => {
+    expect(mealsScreen).toContain("t('meals.featureNoticePreferencesText')");
+    expect(mealsScreen).toContain("t('meals.featureNoticeLibraryText')");
+    expect(mealsScreen).toContain("📚 {t('meals.openRecipeLibrary')}");
+    expect(mealsScreen).toContain("🥕 {t('meals.manageFoodPreferences')}");
+  });
+
+  it('ouvre une fiche cuisine dédiée depuis une carte planifiée sans remplir les Notes catalogue', () => {
+    expect(mealsScreen).toContain('const getMealCookingPresentation = useCallback');
+    expect(mealsScreen).toContain("accessibilityLabel={t('meals.openCookingMode')}");
+    expect(mealsScreen).toContain('renderCookingModeModal');
+    expect(mealsScreen).toContain('cookingModeInstructionCard');
+    expect(mealsScreen).toContain('cookingModeInstructionNumber');
+    expect(mealsScreen).toContain("notes: catalogPresentation ? '' : meal.notes || ''");
+    expect(mealsScreen).toContain("const notes = `[fri2plan-catalog:${recipe.id}]`;");
   });
 });

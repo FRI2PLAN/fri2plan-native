@@ -16,7 +16,8 @@ const recipeLibraryKeys = [
   'recipeDeleteError',
   'featureNoticeTitle', 'featureNoticeIntro', 'featureNoticePreferencesTitle', 'featureNoticePreferencesText',
   'featureNoticeLibraryTitle', 'featureNoticeLibraryText', 'featureNoticeSuggestionsTitle', 'featureNoticeSuggestionsText',
-  'featureNoticeAcknowledgement', 'featureNoticeContinue',
+  'featureNoticeAcknowledgement', 'featureNoticeContinue', 'openCookingMode', 'cookingMode',
+  'planningNotes', 'catalogRecipeEditHint',
 ];
 
 describe('Bibliothèque de recettes — i18n', () => {
