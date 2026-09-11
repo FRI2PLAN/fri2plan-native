@@ -18,6 +18,7 @@ import FamilySetupScreen from './FamilySetupScreen';
 import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
+import { getMemberTaskSummary } from '../lib/dashboardTaskSummary.js';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
@@ -183,18 +184,12 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
     setRefreshing(false);
   };
 
-  // Calculate statistics
-  const pendingTasks = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return tasks.filter(t => {
-      if (t.status === 'completed') return false;
-      if (!t.dueDate) return false;
-      const dueDate = parseLocalDate(t.dueDate);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() === today.getTime();
-    }).length;
-  }, [tasks]);
+  // Résumé personnel : les tâches communes sont rattachées à leur participant
+  // et les points suivent l’attribution réelle, pas seulement l’échéance.
+  const taskSummary = useMemo(
+    () => getMemberTaskSummary(user?.id, tasks as any[], new Date(), viewMode),
+    [user?.id, tasks, viewMode],
+  );
 
   // Une seule carte met en avant le prochain rendez-vous, quel que soit son jour.
   // Le bloc de synthèse garde les autres rendez-vous proches selon le filtre choisi.
@@ -532,9 +527,16 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
                       onPress={() => onNavigate && onNavigate(2)}
                     >
                       <Text style={{ fontSize: 22 }}>✅</Text>
-                      <View>
-                        <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{pendingTasks}</Text>
-                        <Text style={styles.compactWidgetLabel}>{t('dashboard.tasksTodo')}</Text>
+                      <View style={styles.taskSummaryContent}>
+                        <Text style={[styles.compactWidgetCount, { fontSize: 22, marginTop: 0 }]}>{taskSummary.pendingTaskCount}</Text>
+                        <Text style={styles.compactWidgetLabel} numberOfLines={1}>
+                          {viewMode === 'day' ? t('dashboard.tasksToday') : t('dashboard.tasksThisWeek')}
+                        </Text>
+                        {taskSummary.overdueTaskCount > 0 && (
+                          <View style={styles.overduePill}>
+                            <Text style={styles.overduePillText}>⚠️ {t('dashboard.tasksOverdue', { count: taskSummary.overdueTaskCount })}</Text>
+                          </View>
+                        )}
                       </View>
                     </TouchableOpacity>
 
@@ -979,6 +981,22 @@ function getStyles(isDark: boolean) {
       fontSize: 11,
       color: isDark ? '#9CA3AF' : '#6B7280',
       fontWeight: '600',
+    },
+    taskSummaryContent: {
+      flexShrink: 1,
+    },
+    overduePill: {
+      alignSelf: 'flex-start',
+      marginTop: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 7,
+      backgroundColor: isDark ? '#7C2D12' : '#FFF2D8',
+    },
+    overduePillText: {
+      color: isDark ? '#FCD34D' : '#B45309',
+      fontSize: 10,
+      fontWeight: '800',
     },
     eventsSection: {
       marginBottom: 8,

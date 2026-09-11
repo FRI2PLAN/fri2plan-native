@@ -6,6 +6,8 @@ const memberSummaryModal = readFileSync(new URL('../components/MemberSummaryModa
 const fr = JSON.parse(readFileSync(new URL('../locales/fr.json', import.meta.url), 'utf8'));
 const en = JSON.parse(readFileSync(new URL('../locales/en.json', import.meta.url), 'utf8'));
 const de = JSON.parse(readFileSync(new URL('../locales/de.json', import.meta.url), 'utf8'));
+const es = JSON.parse(readFileSync(new URL('../locales/es.json', import.meta.url), 'utf8'));
+const italian = JSON.parse(readFileSync(new URL('../locales/it.json', import.meta.url), 'utf8'));
 
 describe('Accueil — expérience familiale et chargement progressif', () => {
   it('laisse le tableau de bord se précharger derrière le sas familial affiché au niveau supérieur', () => {
@@ -55,7 +57,9 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
 
   it('présente le résumé individuel et conserve la croix de fermeture en bas', () => {
     expect(memberSummaryModal).toContain('getMemberDailySummary');
-    expect(memberSummaryModal).toContain('task.assignedTo');
+    expect(memberSummaryModal).toContain('getMemberTaskSummary');
+    expect(memberSummaryModal).toContain('summary.overdueTasks');
+    expect(memberSummaryModal).toContain('task.memberStatus');
     expect(memberSummaryModal).toContain('event.userId');
     expect(memberSummaryModal).toContain("{currentMember.name || ''}");
     expect(memberSummaryModal).toContain("t('dashboard.today')");
@@ -70,14 +74,24 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(memberSummaryModal).toContain('<Text style={styles.closeIcon}>✕</Text>');
   });
 
-  it('traduit les sections du résumé individuel dans les trois langues', () => {
-    for (const locale of [fr, en, de]) {
+  it('traduit les sections du résumé individuel dans les cinq langues', () => {
+    for (const locale of [fr, en, de, es, italian]) {
       expect(locale.dashboard.memberSummaryTitle).toContain('{{name}}');
       expect(locale.dashboard.memberTasks).toBeTruthy();
       expect(locale.dashboard.memberPoints).toBeTruthy();
       expect(locale.dashboard.memberEvents).toBeTruthy();
       expect(locale.dashboard.memberAchievements).toBeTruthy();
+      expect(locale.dashboard.tasksToday).toBeTruthy();
+      expect(locale.dashboard.tasksThisWeek).toBeTruthy();
+      expect(locale.dashboard.tasksOverdue).toContain('{{count}}');
     }
+  });
+
+  it('relie le résumé principal au calcul personnel qui inclut les tâches communes et les retards', () => {
+    expect(screen).toContain('getMemberTaskSummary(user?.id, tasks as any[], new Date(), viewMode)');
+    expect(screen).toContain('taskSummary.pendingTaskCount');
+    expect(screen).toContain('taskSummary.overdueTaskCount');
+    expect(screen).toContain("t('dashboard.tasksOverdue'");
   });
 
   it('passe la liste des membres à la fenêtre afin de permettre le balayage entre cartes', () => {

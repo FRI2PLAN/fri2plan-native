@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import MemberAvatar from './MemberAvatar';
+import { getMemberTaskSummary } from '../lib/dashboardTaskSummary.js';
 
 interface MemberSummaryModalProps {
   member: any | null;
@@ -37,19 +38,20 @@ function isToday(value: unknown, today: Date, isUtc?: boolean): boolean {
 
 export function getMemberDailySummary(memberId: number | string | undefined, tasks: any[], events: any[], today = new Date()) {
   const hasSameId = (value: unknown) => value !== null && value !== undefined && String(value) === String(memberId);
-  const memberTasks = (tasks || [])
-    .filter((task) => hasSameId(task.assignedTo) && isToday(task.dueDate, today))
-    .sort((first, second) => Number(first.status === 'completed') - Number(second.status === 'completed'));
-  const completedTasks = memberTasks.filter((task) => task.status === 'completed');
+  const taskSummary = getMemberTaskSummary(memberId, tasks, today, 'day');
+  const memberTasks = taskSummary.scheduledTasks
+    .sort((first, second) => Number(first.memberStatus === 'completed') - Number(second.memberStatus === 'completed'));
   const memberEvents = (events || [])
     .filter((event) => hasSameId(event.userId) && isToday(event.startDate, today, !!event.isUtc))
     .sort((first, second) => (parseLocalDate(first.startDate, !!first.isUtc)?.getTime() || 0) - (parseLocalDate(second.startDate, !!second.isUtc)?.getTime() || 0));
 
   return {
     memberTasks,
-    completedTasks,
+    overdueTasks: taskSummary.overdueTasks,
+    completedTasks: taskSummary.completedTasks,
+    completedScheduledTaskCount: taskSummary.completedScheduledTaskCount,
     memberEvents,
-    pointsEarned: completedTasks.reduce((total, task) => total + (Number(task.points) || 0), 0),
+    pointsEarned: taskSummary.pointsEarned,
   };
 }
 
@@ -146,7 +148,7 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
 
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>{summary.completedTasks.length}/{summary.memberTasks.length}</Text>
+                <Text style={styles.statValue}>{summary.completedScheduledTaskCount}/{summary.memberTasks.length}</Text>
                 <Text style={styles.statLabel}>{t('dashboard.memberTasks')}</Text>
               </View>
               <View style={styles.statCard}>
@@ -166,11 +168,23 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               ) : (
                 summary.memberTasks.map((task) => (
                   <View key={`task-${task.id}`} style={styles.listRow}>
-                    <Text style={[styles.rowIcon, task.status === 'completed' && styles.rowIconCompleted]}>{task.status === 'completed' ? '✓' : '○'}</Text>
-                    <Text style={[styles.rowTitle, task.status === 'completed' && styles.rowTitleCompleted]} numberOfLines={1}>{task.title}</Text>
+                    <Text style={[styles.rowIcon, task.memberStatus === 'completed' && styles.rowIconCompleted]}>{task.memberStatus === 'completed' ? '✓' : '○'}</Text>
+                    <Text style={[styles.rowTitle, task.memberStatus === 'completed' && styles.rowTitleCompleted]} numberOfLines={1}>{task.title}</Text>
                     {Number(task.points) > 0 && <Text style={styles.rowMeta}>+{task.points}</Text>}
                   </View>
                 ))
+              )}
+              {summary.overdueTasks.length > 0 && (
+                <View style={styles.overdueSection}>
+                  <Text style={styles.overdueTitle}>⚠️ {t('dashboard.tasksOverdue', { count: summary.overdueTasks.length })}</Text>
+                  {summary.overdueTasks.map((task) => (
+                    <View key={`overdue-task-${task.id}`} style={styles.listRow}>
+                      <Text style={styles.rowIcon}>○</Text>
+                      <Text style={styles.rowTitle} numberOfLines={1}>{task.title}</Text>
+                      {Number(task.points) > 0 && <Text style={styles.rowMeta}>+{task.points}</Text>}
+                    </View>
+                  ))}
+                </View>
               )}
             </View>
 
@@ -335,6 +349,15 @@ function getStyles(isDark: boolean) {
     },
     achievementSection: {
       marginBottom: 4,
+    },
+    overdueSection: {
+      marginTop: 12,
+    },
+    overdueTitle: {
+      color: isDark ? '#FCD34D' : '#B45309',
+      fontSize: 13,
+      fontWeight: '800',
+      marginBottom: 7,
     },
     sectionTitle: {
       color: isDark ? '#FFFFFF' : '#281A42',
