@@ -665,7 +665,8 @@
     "rewardDescPlaceholder": "Details...",
     "ranking": "Rang",
     "badgesObtained": "{{earned}} / {{total}} Abzeichen erhalten",
-    "pendingClaims": "Ausstehende Anfragen ({{count}})"
+    "pendingClaims": "Ausstehende Anfragen ({{count}})",
+    "selfClaimReviewBlocked": "Ein anderer Administrator muss deine Anfrage prüfen."
   },
   "members": {
     "ourTribe": "Unser Stamm",

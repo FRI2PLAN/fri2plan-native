@@ -665,7 +665,8 @@
     "rewardDescPlaceholder": "Details...",
     "ranking": "ranking",
     "badgesObtained": "{{earned}} / {{total}} badges earned",
-    "pendingClaims": "Pending claims ({{count}})"
+    "pendingClaims": "Pending claims ({{count}})",
+    "selfClaimReviewBlocked": "Another administrator must review your claim."
   },
   "members": {
     "ourTribe": "Our tribe",

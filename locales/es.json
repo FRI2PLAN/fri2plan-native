@@ -333,7 +333,8 @@
     "rewardDescPlaceholder": "Detalles...",
     "ranking": "clasificación",
     "badgesObtained": "{{earned}} / {{total}} insignias obtenidas",
-    "pendingClaims": "Reclamaciones pendientes ({{count}})"
+    "pendingClaims": "Reclamaciones pendientes ({{count}})",
+    "selfClaimReviewBlocked": "Otro administrador debe revisar tu solicitud."
   },
   "tasks": {
     "rewardUnlocked": "¡Nueva recompensa desbloqueada!",

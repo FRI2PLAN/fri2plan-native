@@ -665,7 +665,8 @@
     "rewardDescPlaceholder": "Détails...",
     "ranking": "classement",
     "badgesObtained": "{{earned}} / {{total}} badges obtenus",
-    "pendingClaims": "Réclamations en attente ({{count}})"
+    "pendingClaims": "Réclamations en attente ({{count}})",
+    "selfClaimReviewBlocked": "Un autre administrateur doit valider votre demande."
   },
   "members": {
     "ourTribe": "Notre tribu",

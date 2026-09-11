@@ -333,7 +333,8 @@
     "rewardDescPlaceholder": "Dettagli...",
     "ranking": "classifica",
     "badgesObtained": "{{earned}} / {{total}} badge ottenuti",
-    "pendingClaims": "Richieste in sospeso ({{count}})"
+    "pendingClaims": "Richieste in sospeso ({{count}})",
+    "selfClaimReviewBlocked": "Un altro amministratore deve esaminare la tua richiesta."
   },
   "tasks": {
     "rewardUnlocked": "Nuova ricompensa sbloccata!",

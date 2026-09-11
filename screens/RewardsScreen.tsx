@@ -103,6 +103,7 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const claimMutation = trpc.rewardClaims.claim.useMutation({
     onSuccess: () => {
       utils.rewardClaims.listByUser.invalidate();
+      utils.rewardClaims.listPending.invalidate();
       utils.rewards.list.invalidate();
       Alert.alert("✅", "Réclamation envoyée ! En attente d'approbation.");
     },
@@ -111,8 +112,11 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const approveMutation = trpc.rewardClaims.approve.useMutation({
     onSuccess: () => {
       utils.rewardClaims.listPending.invalidate();
+      utils.rewardClaims.listByUser.invalidate();
       utils.badges.myBadges.invalidate();
       utils.rewards.familyPoints.invalidate();
+      utils.rewards.myPoints.invalidate();
+      utils.rewards.list.invalidate();
       utils.rewards.myEarnedRewards.invalidate();
       Alert.alert("🎉", "Réclamation approuvée !");
     },
@@ -344,20 +348,22 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                         <View style={styles.rewardPtsBadge}>
                           <Text style={styles.rewardPtsText}>⭐ {reward.pointsCost} pts</Text>
                         </View>
-                        {isAdmin ? (
-                          <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(reward.id)}>
-                            <Text style={styles.deleteBtnText}>🗑️</Text>
+                        <View style={styles.rewardActions}>
+                          <TouchableOpacity
+                            style={[styles.claimBtn, (!canAfford || alreadyClaimed) && styles.claimBtnDisabled]}
+                            onPress={() => handleClaim(reward.id, reward.name || reward.title)}
+                            disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}
+                          >
+                            <Text style={styles.claimBtnText}>
+                              {alreadyClaimed ? t('rewards.pending') : canAfford ? t('rewards.claimBtn') : t('rewards.insufficient')}
+                            </Text>
                           </TouchableOpacity>
-                        ) : null}
-                        <TouchableOpacity
-                          style={[styles.claimBtn, (!canAfford || alreadyClaimed) && styles.claimBtnDisabled]}
-                          onPress={() => handleClaim(reward.id, reward.name || reward.title)}
-                          disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}
-                        >
-                          <Text style={styles.claimBtnText}>
-                            {alreadyClaimed ? t('rewards.pending') : canAfford ? t('rewards.claimBtn') : t('rewards.insufficient')}
-                          </Text>
-                        </TouchableOpacity>
+                          {isAdmin ? (
+                            <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(reward.id)}>
+                              <Text style={styles.deleteBtnText}>🗑️</Text>
+                            </TouchableOpacity>
+                          ) : null}
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -438,7 +444,9 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                 <Text style={styles.emptyText}>{t('rewards.noClaims')}</Text>
               </View>
             ) : (
-              (pendingClaims as any[]).map((claim: any) => (
+              (pendingClaims as any[]).map((claim: any) => {
+                const canReviewClaim = Number(claim.userId) !== Number(user?.id);
+                return (
                 <View key={claim.id} style={styles.claimCard}>
                   <View style={styles.claimBody}>
                     <Text style={styles.claimUser}>👤 {claim.userName || "Membre"}</Text>
@@ -446,15 +454,20 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
                     <Text style={styles.claimDate}>{claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString(dateLocale) : "—"}</Text>
                   </View>
                   <View style={styles.claimActions}>
-                    <TouchableOpacity style={styles.approveBtn} onPress={() => approveMutation.mutate({ claimId: claim.id })} disabled={approveMutation.isLoading}>
-                      <Text style={styles.approveBtnText}>✅</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.rejectBtn} onPress={() => rejectMutation.mutate({ claimId: claim.id })} disabled={rejectMutation.isLoading}>
-                      <Text style={styles.rejectBtnText}>❌</Text>
-                    </TouchableOpacity>
+                    {canReviewClaim ? (
+                      <>
+                        <TouchableOpacity style={styles.approveBtn} onPress={() => approveMutation.mutate({ claimId: claim.id })} disabled={approveMutation.isLoading}>
+                          <Text style={styles.approveBtnText}>✅</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.rejectBtn} onPress={() => rejectMutation.mutate({ claimId: claim.id })} disabled={rejectMutation.isLoading}>
+                          <Text style={styles.rejectBtnText}>❌</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : <Text style={styles.selfClaimReviewBlocked}>{t('rewards.selfClaimReviewBlocked')}</Text>}
                   </View>
                 </View>
-              ))
+                );
+              })
             )}
           </>
         )}
@@ -550,6 +563,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   rewardProgressFill: { height: '100%', borderRadius: 3, backgroundColor: '#A78BFA' },
   rewardProgressText: { color: isDark ? '#CFC4DC' : '#756080', fontSize: 10, fontWeight: '700' },
   rewardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  rewardActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rewardPtsBadge: { backgroundColor: isDark ? "#374151" : "#fef3c7", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   rewardPtsText: { fontSize: 13, fontWeight: "600", color: isDark ? "#fbbf24" : "#92400e" },
   claimBtn: { backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
@@ -584,6 +598,7 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   claimReward: { fontSize: 13, color: isDark ? "#d1d5db" : "#374151", marginTop: 2 },
   claimDate: { fontSize: 11, color: isDark ? "#9ca3af" : "#6b7280", marginTop: 2 },
   claimActions: { flexDirection: "row", gap: 8 },
+  selfClaimReviewBlocked: { color: isDark ? '#FCD34D' : '#92400E', fontSize: 11, fontWeight: '700', maxWidth: 130, textAlign: 'right' },
   approveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#d1fae5", alignItems: "center", justifyContent: "center" },
   approveBtnText: { fontSize: 18 },
   rejectBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fee2e2", alignItems: "center", justifyContent: "center" },

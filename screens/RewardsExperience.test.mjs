@@ -45,10 +45,13 @@ describe('Récompenses — vitrine de progression', () => {
     expect(rewardsScreen).toContain('key={`reward-rank-${activeFamilyId}-${m.userId}`}');
   });
 
-  it('laisse un administrateur réclamer une récompense disponible tout en conservant son action de suppression', () => {
-    expect(rewardsScreen).toContain("{isAdmin ? (");
+  it('laisse un administrateur réclamer une récompense disponible, mais lui masque toute auto-validation', () => {
+    expect(rewardsScreen).toContain('styles.rewardActions');
     expect(rewardsScreen).toContain('onPress={() => handleDelete(reward.id)}');
     expect(rewardsScreen).toContain('onPress={() => handleClaim(reward.id, reward.name || reward.title)}');
     expect(rewardsScreen).toContain('disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}');
+    expect(rewardsScreen).toContain('const canReviewClaim = Number(claim.userId) !== Number(user?.id);');
+    expect(rewardsScreen).toContain("t('rewards.selfClaimReviewBlocked')");
+    expect(rewardsScreen).toContain('utils.rewards.myPoints.invalidate();');
   });
 });
