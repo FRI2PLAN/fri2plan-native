@@ -1,10 +1,9 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import MemberAvatar from './MemberAvatar';
 import { getMemberTaskSummary } from '../lib/dashboardTaskSummary.js';
-import { PanResponder } from 'react-native';
 
 interface MemberSummaryModalProps {
   member: any | null;
@@ -81,20 +80,23 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
     () => getMemberDailySummary(currentMember?.id, tasks, events),
     [currentMember?.id, tasks, events]
   );
-  const shiftMember = useCallback((direction: 1 | -1) => {
+  const shiftMember = (direction: 1 | -1) => {
     if (uniqueMembers.length < 2) return;
     setActiveMemberIndex((currentIndex) => (currentIndex + direction + uniqueMembers.length) % uniqueMembers.length);
-  }, [uniqueMembers.length]);
-  const memberPanResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponderCapture: (_event, gestureState) => (
-      Math.abs(gestureState.dx) > 18 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
-    ),
-    onPanResponderTerminationRequest: () => false,
-    onPanResponderRelease: (_event, gestureState) => {
-      if (Math.abs(gestureState.dx) < 45 || Math.abs(gestureState.dx) <= Math.abs(gestureState.dy)) return;
-      shiftMember(gestureState.dx < 0 ? 1 : -1);
-    },
-  }), [shiftMember]);
+  };
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const handleSwipeStart = (event: any) => {
+    swipeStart.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
+  };
+  const handleSwipeEnd = (event: any) => {
+    if (!swipeStart.current) return;
+    const horizontalDistance = event.nativeEvent.pageX - swipeStart.current.x;
+    const verticalDistance = event.nativeEvent.pageY - swipeStart.current.y;
+    swipeStart.current = null;
+
+    if (Math.abs(horizontalDistance) < 45 || Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+    shiftMember(horizontalDistance < 0 ? 1 : -1);
+  };
   const stackedMembers = uniqueMembers.length > 1
     ? [1, 2].map((offset) => uniqueMembers[(activeMemberIndex + offset) % uniqueMembers.length])
     : [];
@@ -118,11 +120,13 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               <MemberAvatar member={stackedMember} size={30} />
             </View>
           ))}
-        <View style={styles.panel} {...memberPanResponder.panHandlers}>
+        <View style={styles.panel}>
           <ScrollView
             bounces={false}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.content}
+            onTouchStart={handleSwipeStart}
+            onTouchEnd={handleSwipeEnd}
           >
             <View style={styles.memberHeader}>
               <View style={styles.avatarRing}>

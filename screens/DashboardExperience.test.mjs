@@ -63,12 +63,11 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(memberSummaryModal).toContain('event.userId');
     expect(memberSummaryModal).toContain("{currentMember.name || ''}");
     expect(memberSummaryModal).toContain("t('dashboard.today')");
-    expect(memberSummaryModal).toContain('PanResponder.create');
-    expect(memberSummaryModal).toContain('onMoveShouldSetPanResponderCapture');
-    expect(memberSummaryModal).toContain('Math.abs(gestureState.dx) < 45');
+    expect(memberSummaryModal).toContain('onTouchStart={handleSwipeStart}');
+    expect(memberSummaryModal).toContain('onTouchEnd={handleSwipeEnd}');
+    expect(memberSummaryModal).toContain('Math.abs(horizontalDistance) < 45');
     expect(memberSummaryModal).toContain('styles.stackCard');
-    expect(memberSummaryModal).toContain("shiftMember(gestureState.dx < 0 ? 1 : -1)");
-    expect(memberSummaryModal).toContain('...memberPanResponder.panHandlers');
+    expect(memberSummaryModal).toContain("shiftMember(horizontalDistance < 0 ? 1 : -1)");
     expect(memberSummaryModal).not.toContain('memberSummaryTitle');
     expect(memberSummaryModal).toContain('Pressable style={StyleSheet.absoluteFill} onPress={onClose}');
     expect(memberSummaryModal).toContain('style={styles.closeButton}');
