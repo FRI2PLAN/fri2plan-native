@@ -65,10 +65,12 @@ describe('Accueil — expérience familiale et chargement progressif', () => {
     expect(memberSummaryModal).toContain("t('dashboard.today')");
     expect(memberSummaryModal).toContain('onTouchStart={handleSwipeStart}');
     expect(memberSummaryModal).toContain('onTouchEnd={handleSwipeEnd}');
-    expect(memberSummaryModal).toContain('<View style={styles.panel} onTouchStart={handleSwipeStart} onTouchEnd={handleSwipeEnd}>');
-    expect(memberSummaryModal).not.toContain('<ScrollView');
-    expect(memberSummaryModal).toContain('summary.memberTasks.slice(0, 2)');
-    expect(memberSummaryModal).toContain('summary.memberEvents.slice(0, 2)');
+    expect(memberSummaryModal).toContain('style={styles.summaryScroll}');
+    expect(memberSummaryModal).toContain('summary.memberTasks.slice(0, 5)');
+    expect(memberSummaryModal).toContain('summary.overdueTasks.slice(0, 5)');
+    expect(memberSummaryModal).toContain('summary.memberEvents.slice(0, 5)');
+    expect(memberSummaryModal).toContain('summary.completedTasks.slice(0, 5)');
+    expect(memberSummaryModal).toContain("marginTop: 'auto'");
     expect(memberSummaryModal).toContain('Math.abs(horizontalDistance) < 45');
     expect(memberSummaryModal).toContain('styles.stackCard');
     expect(memberSummaryModal).toContain("shiftMember(horizontalDistance < 0 ? 1 : -1)");

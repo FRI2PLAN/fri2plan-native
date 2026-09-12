@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
@@ -120,8 +120,15 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               <MemberAvatar member={stackedMember} size={30} />
             </View>
           ))}
-        <View style={styles.panel} onTouchStart={handleSwipeStart} onTouchEnd={handleSwipeEnd}>
-          <View style={styles.content}>
+        <View style={styles.panel}>
+          <ScrollView
+            style={styles.summaryScroll}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.content}
+            onTouchStart={handleSwipeStart}
+            onTouchEnd={handleSwipeEnd}
+          >
             <View style={styles.memberHeader}>
               <View style={styles.avatarRing}>
                 <MemberAvatar member={currentMember} size={64} />
@@ -160,7 +167,7 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               {summary.memberTasks.length === 0 ? (
                 <Text style={styles.emptyText}>{t('dashboard.memberNoTasks')}</Text>
               ) : (
-                summary.memberTasks.slice(0, 2).map((task) => (
+                summary.memberTasks.slice(0, 5).map((task) => (
                   <View key={`task-${task.id}`} style={styles.listRow}>
                     <Text style={[styles.rowIcon, task.memberStatus === 'completed' && styles.rowIconCompleted]}>{task.memberStatus === 'completed' ? '✓' : '○'}</Text>
                     <Text style={[styles.rowTitle, task.memberStatus === 'completed' && styles.rowTitleCompleted]} numberOfLines={1}>{task.title}</Text>
@@ -171,6 +178,13 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               {summary.overdueTasks.length > 0 && (
                 <View style={styles.overdueSection}>
                   <Text style={styles.overdueTitle}>⚠️ {t('dashboard.tasksOverdue', { count: summary.overdueTasks.length })}</Text>
+                  {summary.overdueTasks.slice(0, 5).map((task) => (
+                    <View key={`overdue-task-${task.id}`} style={styles.listRow}>
+                      <Text style={styles.rowIcon}>○</Text>
+                      <Text style={styles.rowTitle} numberOfLines={1}>{task.title}</Text>
+                      {Number(task.points) > 0 && <Text style={styles.rowMeta}>+{task.points}</Text>}
+                    </View>
+                  ))}
                 </View>
               )}
             </View>
@@ -180,7 +194,7 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               {summary.memberEvents.length === 0 ? (
                 <Text style={styles.emptyText}>{t('dashboard.memberNoEvents')}</Text>
               ) : (
-                summary.memberEvents.slice(0, 2).map((event) => (
+                summary.memberEvents.slice(0, 5).map((event) => (
                     <View key={`event-${event.id}`} style={styles.listRow}>
                     <View style={[styles.eventDot, { backgroundColor: event.color || currentMember.userColor || '#7C3AED' }]} />
                     <Text style={styles.rowTitle} numberOfLines={1}>{event.title}</Text>
@@ -194,12 +208,12 @@ const MemberSummaryModal = ({ member, familyMembers = [], tasks, events, onClose
               {summary.completedTasks.length === 0 ? (
                 <Text style={styles.emptyText}>{t('dashboard.memberNoAchievements')}</Text>
               ) : (
-                summary.completedTasks.slice(0, 2).map((task) => (
+                summary.completedTasks.slice(0, 5).map((task) => (
                   <Text key={`achievement-${task.id}`} style={styles.achievementText}>• {task.title}</Text>
                 ))
               )}
             </View>
-          </View>
+          </ScrollView>
 
           <TouchableOpacity
             onPress={onClose}
@@ -242,7 +256,7 @@ function getStyles(isDark: boolean) {
     },
     cardStage: {
       width: '100%',
-      height: '88%',
+      height: '92%',
       position: 'relative',
     },
     stackCard: {
@@ -261,7 +275,10 @@ function getStyles(isDark: boolean) {
     },
     content: {
       padding: 20,
-      paddingBottom: 4,
+      paddingBottom: 8,
+    },
+    summaryScroll: {
+      flex: 1,
     },
     memberHeader: {
       flexDirection: 'row',
@@ -409,7 +426,7 @@ function getStyles(isDark: boolean) {
       borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 10,
+      marginTop: 'auto',
       marginBottom: 16,
       backgroundColor: isDark ? '#332744' : '#EEE7FA',
     },
