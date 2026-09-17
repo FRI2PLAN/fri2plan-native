@@ -645,6 +645,7 @@
     "location": "Luogo",
     "description": "Descrizione",
     "reminder": "Promemoria",
+    "reminderNone": "Nessuno",
     "reminder5min": "5 minuti",
     "reminder15min": "15 minuti",
     "reminder30min": "30 minuti",

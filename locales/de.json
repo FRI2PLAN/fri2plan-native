@@ -208,6 +208,7 @@
     "location": "Ort",
     "description": "Beschreibung",
     "reminder": "Erinnerung",
+    "reminderNone": "Keine",
     "reminder5min": "5 Minuten",
     "reminder15min": "15 Minuten",
     "reminder30min": "30 Minuten",

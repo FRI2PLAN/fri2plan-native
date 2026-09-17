@@ -75,16 +75,16 @@ const RECURRENCES = [
   { value: 'yearly', label: '🎉 Annuelle' },
 ] as const;
 
-const REMINDER_OPTIONS = [
-  { value: '0', label: 'Aucun' },
-  { value: '5', label: '5 minutes' },
-  { value: '15', label: '15 minutes' },
-  { value: '30', label: '30 minutes' },
-  { value: '60', label: '1 heure' },
-  { value: '120', label: '2 heures' },
-  { value: '1440', label: '1 jour' },
-  { value: '10080', label: '1 semaine' },
-] as const;
+const getReminderOptions = (translate: (key: string) => string) => [
+  { value: '0', label: translate('calendar.reminderNone') },
+  { value: '5', label: translate('calendar.reminder5min') },
+  { value: '15', label: translate('calendar.reminder15min') },
+  { value: '30', label: translate('calendar.reminder30min') },
+  { value: '60', label: translate('calendar.reminder1h') },
+  { value: '120', label: translate('calendar.reminder2h') },
+  { value: '1440', label: translate('calendar.reminder1d') },
+  { value: '10080', label: translate('calendar.reminder1w') },
+];
 
 // ── Composant Dropdown générique ─────────────────────────────────────────────
 interface DropdownProps {
@@ -131,6 +131,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   const { user } = useAuth();
   const { activeFamilyId: ctxFamilyId } = useFamily();
   const styles = getStyles(isDark);
+  const reminderOptions = useMemo(() => getReminderOptions(t), [t]);
 
   // ── Settings utilisateur (rappel par défaut) ──
   const { data: userSettings } = (trpc.settings as any).get?.useQuery?.(undefined, { enabled: visible }) || { data: null };
@@ -589,7 +590,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
             <Dropdown
               label={`🔔 ${t('calendar.reminder')}`}
               value={eventReminder}
-              options={REMINDER_OPTIONS as unknown as { value: string; label: string }[]}
+              options={reminderOptions}
               onChange={setEventReminder}
               isDark={isDark}
               styles={styles}

@@ -208,6 +208,7 @@
     "location": "Location",
     "description": "Description",
     "reminder": "Reminder",
+    "reminderNone": "None",
     "reminder5min": "5 minutes",
     "reminder15min": "15 minutes",
     "reminder30min": "30 minutes",

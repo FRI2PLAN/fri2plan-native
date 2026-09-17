@@ -645,6 +645,7 @@
     "location": "Lugar",
     "description": "Descripción",
     "reminder": "Recordatorio",
+    "reminderNone": "Ninguno",
     "reminder5min": "5 minutos",
     "reminder15min": "15 minutos",
     "reminder30min": "30 minutos",
