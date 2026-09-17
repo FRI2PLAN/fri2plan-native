@@ -705,6 +705,8 @@
     "past": "Pasado",
     "multiDay": "Varios días",
     "endDate": "Fecha de fin",
+    "recurrenceEndDate": "Repetir hasta (opcional)",
+    "recurrenceNoEndDate": "Sin fecha de fin",
     "nativeCalendar": "Calendario Apple / Nativo",
     "nativeCalendarAdd": "+ Agregar",
     "nativeCalendarTitle": "Calendarios nativos",
@@ -725,6 +727,8 @@
     "importSuccessMessage": "{{count}} evento(s) importado(s) con éxito.",
     "deleteEventTitle": "Eliminar el evento",
     "deleteEventConfirm": "¿Quieres eliminar «{{title}}»?",
+    "deleteSeriesTitle": "Eliminar toda la serie",
+    "deleteSeriesConfirm": "¿Quieres eliminar todas las ocurrencias de «{{title}}»?",
     "saveError": "No se pudieron guardar los cambios.",
     "deleteError": "No se pudo eliminar el evento. Comprueba tu conexión."
     ,"syncComplete": "Sincronización completada",

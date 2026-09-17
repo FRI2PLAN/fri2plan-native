@@ -268,6 +268,8 @@
     "past": "Past",
     "multiDay": "Multiple days",
     "endDate": "End date",
+    "recurrenceEndDate": "Repeat until (optional)",
+    "recurrenceNoEndDate": "No end date",
     "nativeCalendar": "Apple / Native Calendar",
     "nativeCalendarAdd": "+ Add",
     "nativeCalendarTitle": "Native Calendars",
@@ -288,6 +290,8 @@
     "importSuccessMessage": "{{count}} event(s) successfully imported.",
     "deleteEventTitle": "Delete event",
     "deleteEventConfirm": "Do you want to delete “{{title}}”?",
+    "deleteSeriesTitle": "Delete entire series",
+    "deleteSeriesConfirm": "Do you want to delete every occurrence of “{{title}}”?",
     "saveError": "Unable to save your changes.",
     "deleteError": "Unable to delete the event. Please check your connection."
     ,"syncComplete": "Sync complete",

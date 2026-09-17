@@ -172,17 +172,20 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   const [endTime, setEndTime] = useState(() => { const d = new Date(); d.setHours(10, 0, 0, 0); return d; });
   const [showEventDatePicker, setShowEventDatePicker] = useState(false);
   const [showEventEndDatePicker, setShowEventEndDatePicker] = useState(false);
+  const [showEventRecurrenceEndDatePicker, setShowEventRecurrenceEndDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [eventPrivate, setEventPrivate] = useState(false);
   const [eventReminder, setEventReminder] = useState('15');
+  const [eventRecurrence, setEventRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'>('none');
+  const [eventRecurrenceEndDate, setEventRecurrenceEndDate] = useState<Date | null>(null);
   // ── Time picker modal iOS robuste ──
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
   const [tempTimeValue, setTempTimeValue] = useState(new Date());
   // ── Date picker modal iOS robuste ──
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
-  const [datePickerTarget, setDatePickerTarget] = useState<'event' | 'eventEnd' | 'task' | 'expense' | 'request'>('event');
+  const [datePickerTarget, setDatePickerTarget] = useState<'event' | 'eventEnd' | 'eventRecurrenceEnd' | 'task' | 'expense' | 'request'>('event');
   const [tempDateValue, setTempDateValue] = useState(new Date());
 
   // ── Tâche ──
@@ -259,7 +262,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
     setIsAllDay(false); setIsMultiDay(false);
     const s = new Date(); s.setHours(9, 0, 0, 0); setStartTime(s);
     const e = new Date(); e.setHours(10, 0, 0, 0); setEndTime(e);
-    setEventPrivate(false); setEventReminder(defaultReminderStr);
+    setEventPrivate(false); setEventReminder(defaultReminderStr); setEventRecurrence('none'); setEventRecurrenceEndDate(null);
     setTaskPriority('medium'); setTaskAssignedTo(undefined); setTaskDueDate(undefined);
     setTaskPrivate(false); setTaskRecurrence('none');
     setNotePrivate(false);
@@ -301,6 +304,10 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
           endDate: format(endDateTime, 'yyyy-MM-dd HH:mm:ss'),
           durationMinutes,
           category: eventCategory,
+          recurrence: eventRecurrence,
+          recurrenceEndDate: eventRecurrence !== 'none' && eventRecurrenceEndDate
+            ? format(eventRecurrenceEndDate, 'yyyy-MM-dd 23:59:59')
+            : undefined,
           reminderMinutes: parseInt(eventReminder),
           isPrivate: eventPrivate ? 1 : 0,
         });
@@ -401,10 +408,55 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
               label={t('calendar.category')}
               value={eventCategory}
               options={EVENT_CATEGORIES.map(c => ({ value: c.value, label: `${c.icon} ${c.label}` }))}
-              onChange={setEventCategory}
+              onChange={(category) => {
+                setEventCategory(category);
+                if (category === 'birthday' && eventRecurrence === 'none') setEventRecurrence('yearly');
+              }}
               isDark={isDark}
               styles={styles}
             />
+            <Dropdown
+              label={t('calendar.repeat')}
+              value={eventRecurrence}
+              options={[
+                { value: 'none', label: `🚫 ${t('tasks.recurrenceNone')}` },
+                { value: 'daily', label: `📅 ${t('tasks.recurrenceDaily')}` },
+                { value: 'weekly', label: `📆 ${t('tasks.recurrenceWeekly')}` },
+                { value: 'monthly', label: `🗓️ ${t('tasks.recurrenceMonthly')}` },
+                { value: 'yearly', label: `🎉 ${t('tasks.recurrenceYearly')}` },
+              ]}
+              onChange={(recurrence) => setEventRecurrence(recurrence as typeof eventRecurrence)}
+              isDark={isDark}
+              styles={styles}
+            />
+            {eventRecurrence !== 'none' && (
+              <>
+                <Text style={styles.label}>{t('calendar.recurrenceEndDate')}</Text>
+                <View style={styles.row}>
+                  <TouchableOpacity style={[styles.dateBtn, { flex: 1 }]} onPress={() => {
+                    const value = eventRecurrenceEndDate || eventDate;
+                    if (Platform.OS === 'ios') { setDatePickerTarget('eventRecurrenceEnd'); setTempDateValue(value); setShowDatePickerModal(true); }
+                    else setShowEventRecurrenceEndDatePicker(true);
+                  }}>
+                    <Text style={styles.dateBtnText}>🏁 {eventRecurrenceEndDate ? format(eventRecurrenceEndDate, 'dd/MM/yyyy') : t('calendar.recurrenceNoEndDate')}</Text>
+                  </TouchableOpacity>
+                  {eventRecurrenceEndDate && (
+                    <TouchableOpacity style={[styles.dateBtn, { marginLeft: 8, paddingHorizontal: 12 }]} onPress={() => setEventRecurrenceEndDate(null)}>
+                      <Text style={styles.dateBtnText}>✕</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {Platform.OS === 'android' && showEventRecurrenceEndDatePicker && (
+                  <DateTimePicker
+                    value={eventRecurrenceEndDate || eventDate}
+                    mode="date"
+                    display="default"
+                    minimumDate={eventDate}
+                    onChange={(_, date) => { setShowEventRecurrenceEndDatePicker(false); if (date) setEventRecurrenceEndDate(date); }}
+                  />
+                )}
+              </>
+            )}
 
             {/* Options jour entier + multi-jours */}
             <View style={styles.switchRow}>
@@ -846,6 +898,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
                 value={tempDateValue}
                 mode="date"
                 display="spinner"
+                minimumDate={datePickerTarget === 'eventRecurrenceEnd' ? eventDate : undefined}
                 onChange={(_, d) => { if (d) setTempDateValue(d); }}
                 textColor={isDark ? '#f9fafb' : '#111827'}
                 style={{ width: 280 }}
@@ -861,6 +914,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
                   onPress={() => {
                     if (datePickerTarget === 'event') setEventDate(tempDateValue);
                     else if (datePickerTarget === 'eventEnd') setEventEndDate(tempDateValue);
+                    else if (datePickerTarget === 'eventRecurrenceEnd') setEventRecurrenceEndDate(tempDateValue);
                     else if (datePickerTarget === 'task') setTaskDueDate(tempDateValue);
                     else if (datePickerTarget === 'expense') setExpenseDate(tempDateValue);
                     else if (datePickerTarget === 'request') setRequestDate(tempDateValue);

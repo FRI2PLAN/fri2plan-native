@@ -18,6 +18,7 @@ import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import QuickCreateModal from '../components/QuickCreateModal';
 import MemberAvatar from '../components/MemberAvatar';
+import { getNextRecurringEventDate, hasNativeRecurrence, isRecurringEventOnDay } from '../lib/eventRecurrence.js';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GOOGLE_OAUTH_PENDING_SESSION_KEY = 'googleOAuthPendingSessionId';
 
@@ -42,6 +43,12 @@ const GOOGLE_OAUTH_PENDING_SESSION_KEY = 'googleOAuthPendingSessionId';
  */
 function isEventOnDay(event: any, day: Date): boolean {
   const start = parseLocalDate(event.startTime, !!event.isUtc);
+  if (hasNativeRecurrence(event)) {
+    const recurrenceEndDate = event.recurrenceEndDate
+      ? parseLocalDate(event.recurrenceEndDate, !!event.isUtc)
+      : null;
+    return isRecurringEventOnDay(start, event.recurrence, day, recurrenceEndDate);
+  }
   if (!event.endTime) return isSameDay(start, day);
   const end = parseLocalDate(event.endTime, !!event.isUtc);
   // Si start === end (ou end < 1 jour après start) : événement normal
@@ -496,6 +503,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     startTime: '09:00',
     endTime: '10:00',
     category: 'other',
+    recurrence: 'none',
     reminder: defaultReminderStr,
     isPrivate: false});
   // Pickers date/heure
@@ -510,6 +518,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end'>('start');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showReminderDropdown, setShowReminderDropdown] = useState(false);
+  const [showRecurrenceDropdown, setShowRecurrenceDropdown] = useState(false);
 
   // Met à jour le rappel par défaut quand les settings arrivent (userSettings est null au montage)
   useEffect(() => {
@@ -565,21 +574,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
     if (!events || events.length === 0) return map;
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
     for (const event of events) {
       const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
-      if (eventDate < weekStart || eventDate > weekEnd) continue;
-      if (!isEventOnDay(event, eventDate)) {
-        // événement multi-jours : indexer sur chaque jour de la semaine
-        const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
-        for (const day of days) {
-          if (isEventOnDay(event, day)) {
-            const key = `${format(day, 'yyyy-MM-dd')}-${eventDate.getHours().toString().padStart(2, '0')}`;
-            if (!map[key]) map[key] = [];
-            map[key].push(event);
-          }
-        }
-      } else {
-        const key = `${format(eventDate, 'yyyy-MM-dd')}-${eventDate.getHours().toString().padStart(2, '0')}`;
+      for (const day of weekDays) {
+        if (!isEventOnDay(event, day)) continue;
+        const key = `${format(day, 'yyyy-MM-dd')}-${eventDate.getHours().toString().padStart(2, '0')}`;
         if (!map[key]) map[key] = [];
         map[key].push(event);
       }
@@ -939,6 +939,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         endDate: endDateUtc,
         durationMinutes,
         category: formData.category,
+        recurrence: formData.recurrence,
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
         isUtc: 1,
@@ -986,6 +987,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       // Envoyer en UTC (ISO string sans millisecondes) pour un stockage cohérent en base
       const startDateUtc = startDateTime.toISOString().slice(0, 19).replace('T', ' ');
       const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
+      const isExternallyManagedEvent = Boolean(selectedEvent.icalUid || selectedEvent.calendarSubscriptionId || selectedEvent.syncedCalendarId);
       const payload = {
         eventId: selectedEvent.id,
         title: formData.title,
@@ -994,6 +996,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         endDate: endDateUtc,
         durationMinutes,
         category: formData.category,
+        ...(isExternallyManagedEvent ? {} : { recurrence: formData.recurrence }),
         reminderMinutes: parseInt(formData.reminder),
         isPrivate: formData.isPrivate ? 1 : 0,
         isUtc: 1,
@@ -1019,9 +1022,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   const handleDeleteEvent = () => {
     if (!selectedEvent) return;
+    const isRecurringSeries = hasNativeRecurrence(selectedEvent);
     Alert.alert(
-      t('calendar.deleteEventTitle'),
-      t('calendar.deleteEventConfirm', { title: selectedEvent.title }),
+      isRecurringSeries ? t('calendar.deleteSeriesTitle') : t('calendar.deleteEventTitle'),
+      isRecurringSeries
+        ? t('calendar.deleteSeriesConfirm', { title: selectedEvent.title })
+        : t('calendar.deleteEventConfirm', { title: selectedEvent.title }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -1045,13 +1051,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', reminder: defaultReminderStr, isPrivate: false });
+    setFormData({ title: '', description: '', startTime: '09:00', endTime: '10:00', category: 'other', recurrence: 'none', reminder: defaultReminderStr, isPrivate: false });
     const now = new Date();
     setEventDate(selectedDate);
     const s = new Date(selectedDate); s.setHours(9, 0, 0, 0); setStartTimeDate(s);
     const e = new Date(selectedDate); e.setHours(10, 0, 0, 0); setEndTimeDate(e);
     setShowDatePicker(false); setShowTimePicker(false);
-    setShowCategoryDropdown(false); setShowReminderDropdown(false);
+    setShowCategoryDropdown(false); setShowReminderDropdown(false); setShowRecurrenceDropdown(false);
   };
 
   // La fermeture doit rendre le calendrier tout de suite. Le reset du formulaire
@@ -1081,6 +1087,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       startTime: format(startTime, 'HH:mm'),
       endTime: format(endTime, 'HH:mm'),
       category: event.category || 'other',
+      recurrence: event.recurrence || 'none',
       reminder: (event.reminderMinutes ?? event.reminder)?.toString() || defaultReminderStr,
       isPrivate: event.isPrivate || false});
     });
@@ -1093,10 +1100,20 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const agendaEvents = useMemo(() => {
     const now = new Date();
     return (events || [])
-      .filter(event => parseLocalDate(event.startTime, !!event.isUtc) >= now)
+      .map(event => {
+        if (!hasNativeRecurrence(event)) return parseLocalDate(event.startTime, !!event.isUtc) >= now ? event : null;
+        const nextOccurrence = getNextRecurringEventDate(
+          parseLocalDate(event.startTime, !!event.isUtc),
+          event.recurrence,
+          now,
+          event.recurrenceEndDate ? parseLocalDate(event.recurrenceEndDate, !!event.isUtc) : null,
+        );
+        return nextOccurrence ? { ...event, occurrenceStart: nextOccurrence } : null;
+      })
+      .filter(Boolean)
       .filter(event => selectedCategories.length === 0 || selectedCategories.includes(event.category))
       .filter(event => selectedMembers.length === 0 || selectedMembers.includes(event.userId))
-      .sort((a, b) => parseLocalDate(a.startTime, !!a.isUtc).getTime() - parseLocalDate(b.startTime, !!b.isUtc).getTime());
+      .sort((a, b) => (a.occurrenceStart || parseLocalDate(a.startTime, !!a.isUtc)).getTime() - (b.occurrenceStart || parseLocalDate(b.startTime, !!b.isUtc)).getTime());
   }, [events, selectedCategories, selectedMembers]);
   const hasActiveFilters = selectedCategories.length > 0 || selectedMembers.length > 0;
 
@@ -1336,7 +1353,11 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
                       }
                       return (event as any).color || category.color;
                     })();
-                    const isEventPast = parseLocalDate(event.startTime, !!event.isUtc) < new Date();
+                    const sourceStart = parseLocalDate(event.startTime, !!event.isUtc);
+                    const occurrenceStart = hasNativeRecurrence(event)
+                      ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), sourceStart.getHours(), sourceStart.getMinutes(), sourceStart.getSeconds())
+                      : sourceStart;
+                    const isEventPast = occurrenceStart < new Date();
                     return (
                       <TouchableOpacity key={event.id} style={[styles.eventCard, isEventPast && { opacity: 0.6 }]} onPress={() => openEditModal(event)}>
                         <View style={[styles.eventColorBar, { backgroundColor: barColor }]} />
@@ -1384,13 +1405,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           <View style={styles.agendaContainer}>
             {agendaEvents.length > 0 ? (
               agendaEvents.map((event, index, arr) => {
-                  const eventDate = parseLocalDate(event.startTime, !!event.isUtc);
-                  const prevEventDate = index > 0 ? parseLocalDate(arr[index - 1].startTime, !!arr[index - 1].isUtc) : null;
+                  const eventDate = event.occurrenceStart || parseLocalDate(event.startTime, !!event.isUtc);
+                  const prevEventDate = index > 0 ? (arr[index - 1].occurrenceStart || parseLocalDate(arr[index - 1].startTime, !!arr[index - 1].isUtc)) : null;
                   const showDateHeader = !prevEventDate || !isSameDay(eventDate, prevEventDate);
                   const category = getCategoryInfo(event.category);
                   const desc = cleanDescription(event.description);
                   return (
-                    <View key={event.id}>
+                    <View key={`${event.id}-${eventDate.getTime()}`}>
                       {showDateHeader && (
                         <View style={styles.agendaDateHeader}>
                           <Text style={styles.agendaDateText}>
@@ -1591,6 +1612,21 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
                 <Text style={styles.dropdownTriggerText}>{getCategoryLabel(getCategoryInfo(formData.category))} {getCategoryInfo(formData.category).icon}</Text>
                 <Text style={styles.dropdownChevron}>▼</Text>
               </TouchableOpacity>
+              {!selectedEvent?.icalUid && !selectedEvent?.calendarSubscriptionId && !selectedEvent?.syncedCalendarId && (
+                <>
+                  <Text style={styles.label}>{t('calendar.repeat') || 'Récurrence'}</Text>
+                  <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowRecurrenceDropdown(true)}>
+                    <Text style={styles.dropdownTriggerText}>🔁 {[
+                      { value: 'none', label: t('tasks.recurrenceNone') },
+                      { value: 'daily', label: t('tasks.recurrenceDaily') },
+                      { value: 'weekly', label: t('tasks.recurrenceWeekly') },
+                      { value: 'monthly', label: t('tasks.recurrenceMonthly') },
+                      { value: 'yearly', label: t('tasks.recurrenceYearly') },
+                    ].find(option => option.value === formData.recurrence)?.label}</Text>
+                    <Text style={styles.dropdownChevron}>▼</Text>
+                  </TouchableOpacity>
+                </>
+              )}
               {/* Date */}
               <Text style={styles.label}>{t('common.date') || 'Date'}</Text>
               <TouchableOpacity style={[styles.input, styles.dropdownTrigger]} onPress={() => setShowDatePicker(true)}>
@@ -2110,6 +2146,31 @@ const startT = parseLocalDate(event.startTime, !!event.isUtc);
               >
                 <Text style={styles.pickerOptionText}>🔔 {option.label}</Text>
                 {formData.reminder === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Récurrence native : les événements ICS restent pilotés par leur source. */}
+      <Modal visible={showRecurrenceDropdown} animationType="fade" transparent>
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setShowRecurrenceDropdown(false)}>
+          <View style={[styles.dropdownContent, { paddingVertical: 8 }]} onStartShouldSetResponder={() => true}>
+            <Text style={styles.dropdownTitle}>{t('calendar.repeat') || 'Récurrence'}</Text>
+            {[
+              { value: 'none', label: t('tasks.recurrenceNone'), icon: '🚫' },
+              { value: 'daily', label: t('tasks.recurrenceDaily'), icon: '📅' },
+              { value: 'weekly', label: t('tasks.recurrenceWeekly'), icon: '📆' },
+              { value: 'monthly', label: t('tasks.recurrenceMonthly'), icon: '🗓️' },
+              { value: 'yearly', label: t('tasks.recurrenceYearly'), icon: '🎉' },
+            ].map(option => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.pickerOption, formData.recurrence === option.value && { backgroundColor: isDark ? '#374151' : '#ede9fe' }]}
+                onPress={() => { setFormData(p => ({ ...p, recurrence: option.value })); setShowRecurrenceDropdown(false); }}
+              >
+                <Text style={styles.pickerOptionText}>{option.icon} {option.label}</Text>
+                {formData.recurrence === option.value && <Text style={{ color: '#7c3aed', fontSize: 18 }}>✓</Text>}
               </TouchableOpacity>
             ))}
           </View>

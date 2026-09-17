@@ -13,6 +13,6 @@ describe('Calendrier — transition entre vues', () => {
   it('rafraîchit aussi la fiche ICS après une synchronisation réussie', () => {
     expect(calendarScreen).toContain('const syncSubscription = trpc.events.syncSubscription.useMutation');
     expect(calendarScreen).toContain('await Promise.all([refetch(), refetchSubscriptions()]);');
-    expect(calendarScreen).toContain('Synchronisation terminée');
+    expect(calendarScreen).toContain("t('calendar.syncComplete')");
   });
 });
