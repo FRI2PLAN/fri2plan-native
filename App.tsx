@@ -289,6 +289,8 @@ function AppContent() {
   const [familyCacheReady, setFamilyCacheReady] = useState(false);
   const [showFamilyLoading, setShowFamilyLoading] = useState(true);
   const [familyLoadingPhase, setFamilyLoadingPhase] = useState<'intro' | 'glass'>('intro');
+  // Évite de rejouer le sas d’accueil lors de la restauration silencieuse d’une session.
+  const hasCompletedInitialAuthRestore = useRef(false);
   // Durée minimale du splash : 800ms pour que le logo soit visible sans bloquer l'utilisateur
   const [splashMinDone, setSplashMinDone] = useState(false);
   // Code d'invitation depuis deep link (capturé avant le montage React)
@@ -395,15 +397,29 @@ function AppContent() {
     return () => { cancelled = true; };
   }, [isAuthenticated, isLoading, user?.id]);
 
-  // Une nouvelle connexion doit toujours passer par le sas familial. Lors
-  // d’une simple fermeture/réouverture, l’interface est déjà préchargée sous
-  // cette couche pendant que le cache local est restauré.
+  // Une session restaurée au démarrage ouvre immédiatement l’interface déjà
+  // mise en cache. Le sas familial reste réservé à une vraie connexion après
+  // l’écran de login (ou après une déconnexion), pas à chaque retour Android.
   useEffect(() => {
+    if (isLoading) return;
+
+    if (!hasCompletedInitialAuthRestore.current) {
+      hasCompletedInitialAuthRestore.current = true;
+      if (isAuthenticated) {
+        setShowFamilyLoading(false);
+        return;
+      }
+    }
+
     if (!isAuthenticated) {
       setShowFamilyLoading(true);
       setFamilyLoadingPhase('intro');
+      return;
     }
-  }, [isAuthenticated]);
+
+    setShowFamilyLoading(true);
+    setFamilyLoadingPhase('intro');
+  }, [isAuthenticated, isLoading]);
 
   const completeFirstConnectionOnboarding = useCallback(async () => {
     // L'onboarding est toujours le premier écran. Le logo et le verre ne
