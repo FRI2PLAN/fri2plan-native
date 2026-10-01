@@ -21,8 +21,10 @@ interface HelpScreenProps {
   onNavigate?: (pageIndex: number) => void;
 }
 
-const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=space.manus.fri2plan.twa';
-const APP_STORE_URL = 'https://apps.apple.com/app/id6766338121';
+// Fiches des applications natives actuellement publiées (pas l’ancienne WebView).
+const GOOGLE_PLAY_PACKAGE = 'app.fri2plan.ch';
+const GOOGLE_PLAY_URL = `https://play.google.com/store/apps/details?id=${GOOGLE_PLAY_PACKAGE}&reviewId=0`;
+const APP_STORE_URL = 'https://apps.apple.com/app/id6766338121?action=write-review';
 
 type TicketCategory = 'technique' | 'facturation' | 'fonctionnalite' | 'test_ferme' | 'autre';
 
@@ -98,7 +100,7 @@ export default function HelpScreen({
       );
       return;
     }
-    const marketUrl = 'market://details?id=space.manus.fri2plan.twa';
+    const marketUrl = `market://details?id=${GOOGLE_PLAY_PACKAGE}&reviewId=0`;
     try {
       const canOpenMarket = await Linking.canOpenURL(marketUrl);
       if (canOpenMarket) {
