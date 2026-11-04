@@ -550,7 +550,8 @@
     "biometricNotNow": "Ahora no",
     "biometricEnable": "Activar",
     "sessionExpired": "Sesión caducada",
-    "sessionExpiredMessage": "Vuelve a iniciar sesión con tu contraseña."
+    "sessionExpiredMessage": "Vuelve a iniciar sesión con tu contraseña.",
+    "sessionVerificationUnavailable": "No se puede verificar tu sesión. Comprueba tu conexión e inténtalo de nuevo."
   },
   "requests": {
     "title": "Solicitudes",
@@ -1004,6 +1005,7 @@
     "eventsToday": "Eventos hoy",
     "eventsThisWeek": "Eventos esta semana",
     "noBirthdays": "Ningún cumpleaños próximamente este mes",
+    "circlesLoadError": "No se pueden cargar tus círculos. Comprueba tu conexión y actualiza.",
     "noFamilyText": "Para empezar, crea una familia o únete a una familia existente.",
     "todayMeals": "Comidas del día",
     "noMeals": "No hay comidas previstas hoy",

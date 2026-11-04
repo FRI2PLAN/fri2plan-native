@@ -176,10 +176,9 @@ const asyncStoragePersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
-// Le contenu du cache React Query est conservé après une déconnexion pour que
-// le même compte retrouve immédiatement ses données. Cette clé associe le
-// cache persistant à son propriétaire et impose une purge avant tout rendu si
-// un autre compte se connecte sur le même appareil.
+// Le cache reste utile pour une restauration revalidée, mais une déconnexion
+// supprime les données privées. Le propriétaire isole aussi les anciens caches
+// persistants créés par une version antérieure de l'application.
 const QUERY_CACHE_OWNER_KEY = '@fri2plan:query_cache_owner';
 const FAMILY_CACHE_SCOPE_KEY = '@fri2plan:query_cache_family_scope';
 
@@ -372,13 +371,13 @@ function AppContent() {
   // activeFamilyId est lu dynamiquement depuis AsyncStorage dans chaque requête (lib/trpc.ts)
   const trpcClient = useMemo(() => createTRPCClient(), [token]);
 
-  // Ne jamais vider le cache lors d’une simple déconnexion : il est utile au
-  // prochain accès du même compte. En revanche, un cache appartenant à un
-  // autre utilisateur est purgé AVANT le montage de l’interface authentifiée.
+  // La restauration validée conserve son cache. Une déconnexion ou un autre
+  // propriétaire interdit tout rendu de l'ancien cache authentifié.
   useEffect(() => {
     let cancelled = false;
     if (isLoading) return () => { cancelled = true; };
     if (!isAuthenticated || !user?.id) {
+      queryClient.clear();
       setSessionCacheReady(false);
       return () => { cancelled = true; };
     }

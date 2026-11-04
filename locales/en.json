@@ -98,7 +98,8 @@
     "biometricNotNow": "Not now",
     "biometricEnable": "Enable",
     "sessionExpired": "Session expired",
-    "sessionExpiredMessage": "Please sign in again with your password."
+    "sessionExpiredMessage": "Please sign in again with your password.",
+    "sessionVerificationUnavailable": "Unable to verify your session. Check your connection and try again."
   },
   "invitation": {
     "wrongAccountTitle": "Invitation pending",
@@ -164,6 +165,7 @@
     "eventsToday": "Events today",
     "eventsThisWeek": "Events this week",
     "noBirthdays": "No upcoming birthdays this month",
+    "circlesLoadError": "Unable to load your circles. Check your connection and refresh.",
     "noFamilyText": "To get started, create a family or join an existing one.",
     "todayMeals": "Today's Meals",
     "noMeals": "No meals planned today",

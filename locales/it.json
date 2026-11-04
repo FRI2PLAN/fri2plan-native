@@ -550,7 +550,8 @@
     "biometricNotNow": "Non ora",
     "biometricEnable": "Attiva",
     "sessionExpired": "Sessione scaduta",
-    "sessionExpiredMessage": "Accedi di nuovo con la password."
+    "sessionExpiredMessage": "Accedi di nuovo con la password.",
+    "sessionVerificationUnavailable": "Impossibile verificare la sessione. Controlla la connessione e riprova."
   },
   "requests": {
     "title": "Richieste",
@@ -1004,6 +1005,7 @@
     "eventsToday": "Eventi di oggi",
     "eventsThisWeek": "Eventi di questa settimana",
     "noBirthdays": "Nessun compleanno in questo mese",
+    "circlesLoadError": "Impossibile caricare i tuoi cerchi. Controlla la connessione e aggiorna.",
     "noFamilyText": "Per iniziare, crea una famiglia o unisciti a una famiglia esistente.",
     "todayMeals": "Pasti di oggi",
     "noMeals": "Nessun pasto previsto oggi",

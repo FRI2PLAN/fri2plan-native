@@ -18,7 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trpc } from '../lib/trpc';
 import { useAuth } from '../contexts/AuthContext';
-import { useFamily } from '../contexts/FamilyContext';
+import { SessionValidationError } from '../lib/sessionAuth';
 import RegisterScreen from './RegisterScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +51,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0)
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const resp = await fetch(url, { ...options, signal: controller.signal });
+    const resp = await fetch(url, { ...options, credentials: 'omit', signal: controller.signal });
     clearTimeout(timer);
     if (resp.status === 503 && retryCount < 3) {
       const delay = [2000, 4000, 7000][retryCount];
@@ -78,8 +78,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retryCount = 0)
 
 export default function LoginScreen({ initialInviteCode, initialScreenMode, isEmailInvitation, initialEmail }: LoginScreenProps = {}) {
   const { t } = useTranslation();
-  const { login } = useAuth();
-  const { setActiveFamilyId } = useFamily();
+  const { login, sessionError, retrySession } = useAuth();
   const [email, setEmail] = useState(initialEmail || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -116,7 +115,7 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
         if (enabled === 'true') {
           setBiometricEnabled(true);
           // Déclencher automatiquement la biométrie si activée
-          handleBiometricLogin(true);
+          if (!sessionError) handleBiometricLogin(true);
         }
       } catch (e) {
         // Ignorer les erreurs
@@ -151,7 +150,16 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
         }
       }
     } catch (e) {
-      // Erreur biométrie
+      if (e instanceof SessionValidationError && e.reason === 'invalid') {
+        await Promise.all([BIOMETRIC_ENABLED_KEY, BIOMETRIC_TOKEN_KEY, BIOMETRIC_USER_KEY].map(
+          key => SecureStore.deleteItemAsync(key).catch(() => {}),
+        ));
+        setBiometricEnabled(false);
+        if (!silent) Alert.alert(t('auth.sessionExpired'), t('auth.sessionExpiredMessage'));
+      } else if (!silent) {
+        // Network failure must not discard a possibly valid biometric credential.
+        Alert.alert(t('common.error'), t('auth.sessionVerificationUnavailable'));
+      }
     } finally {
       setBiometricLoading(false);
     }
@@ -267,10 +275,8 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
       });
       const data = await resp.json();
       if (data.token && data.user) {
-        // Proposer la biométrie AVANT le login pour que l'Alert reste visible
-        await saveBiometricCredentials(data.user, data.token);
         await login(data.user, data.token);
-        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
+        await saveBiometricCredentials(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Apple');
       }
@@ -309,13 +315,8 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
       });
       const data = await resp.json();
       if (data.token && data.user) {
-        // Proposer la biométrie AVANT le login pour que l'Alert reste visible
-        await saveBiometricCredentials(data.user, data.token);
         await login(data.user, data.token);
-        // Définir la famille active immédiatement pour éviter l'écran "Créer une famille"
-        if (data.user.familyId) {
-          await setActiveFamilyId(data.user.familyId);
-        }
+        await saveBiometricCredentials(data.user, data.token);
       } else {
         throw new Error(data.error || 'Erreur de connexion Google');
       }
@@ -363,7 +364,6 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
 
         // Store token and user data using AuthContext
         await login(data.user, data.token);
-        if (data.user.familyId) await setActiveFamilyId(data.user.familyId);
         // Proposer d'activer la biométrie après connexion réussie
         await saveBiometricCredentials(data.user, data.token);
         setLoading(false);
@@ -371,7 +371,9 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
       } catch (error) {
         console.error('Error saving user data:', error);
         setLoading(false);
-        Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde des données');
+        Alert.alert(t('common.error'), error instanceof SessionValidationError
+          ? t(error.reason === 'invalid' ? 'auth.sessionExpiredMessage' : 'auth.sessionVerificationUnavailable')
+          : t('auth.sessionVerificationUnavailable'));
       }
     },
     onError: (error) => {
@@ -447,6 +449,19 @@ export default function LoginScreen({ initialInviteCode, initialScreenMode, isEm
 
             <Text style={styles.title}>{t('auth.loginTitle')}</Text>
             {/* Sous-titre supprimé pour tenir sur une page sans scroll */}
+
+            {sessionError && (
+              <View accessibilityRole="alert" style={{ marginBottom: 16 }}>
+                <Text style={{ color: '#fbbf24', textAlign: 'center' }}>
+                  {t(sessionError === 'invalid' ? 'auth.sessionExpiredMessage' : 'auth.sessionVerificationUnavailable')}
+                </Text>
+                {sessionError === 'unavailable' && (
+                  <TouchableOpacity onPress={() => { void retrySession(); }} style={{ padding: 12 }}>
+                    <Text style={{ color: '#c4b5fd', textAlign: 'center' }}>{t('common.refresh')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
 
             {/* Email */}
             <Text style={styles.label}>{t('auth.email')}</Text>

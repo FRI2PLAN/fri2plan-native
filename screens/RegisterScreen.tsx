@@ -73,6 +73,7 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
       const baseUrl = API_URL.replace('/api/trpc', '').replace('/trpc', '');
       const resp = await fetch(`${baseUrl}/api/google/native-signin`, {
         method: 'POST',
+        credentials: 'omit',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
@@ -100,12 +101,17 @@ export default function RegisterScreen({ onBackToLogin, onRegistered, initialInv
   // tRPC mutation for auto-login after registration
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
-      if (data?.user && data?.token) {
-        // Le serveur a déjà accepté l’invitation unique pendant l’inscription.
-        // La vérification e-mail peut donc ouvrir une nouvelle session sans perdre le cercle.
-        await login(data.user, data.token);
+      try {
+        if (data?.user && data?.token) {
+          // Le serveur a déjà accepté l’invitation unique pendant l’inscription.
+          // La vérification e-mail peut donc ouvrir une nouvelle session sans perdre le cercle.
+          await login(data.user, data.token);
+        }
+      } catch {
+        Alert.alert(t('common.error'), t('auth.sessionVerificationUnavailable'));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     },
     onError: () => {
       setLoading(false);

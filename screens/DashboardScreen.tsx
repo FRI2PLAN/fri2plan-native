@@ -19,6 +19,7 @@ import { TrialBanner } from '../components/TrialBanner';
 import MemberAvatar from '../components/MemberAvatar';
 import MemberSummaryModal from '../components/MemberSummaryModal';
 import { getMemberTaskSummary } from '../lib/dashboardTaskSummary.js';
+import { familyListState, isAuthError } from '../lib/sessionAuth';
 
 /** Parser une date locale (heure Europe/Zurich) sans ambigüité sur Android/Hermes */
 function parseLocalDate(dateStr: string | undefined | null, isUtc?: boolean): Date {
@@ -59,21 +60,28 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   const [selectedMember, setSelectedMember] = useState<any>(null);
 
   // Fetch active family
-  const { data: families } = trpc.family.list.useQuery();
+  const familiesQuery = trpc.family.list.useQuery(undefined, {
+    staleTime: 0,
+    networkMode: 'always',
+    retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
+  });
+  const { data: families, refetch: refetchFamilies } = familiesQuery;
+  const circlesState = familyListState(familiesQuery);
   // Trouver la famille active par ID (ou la première par défaut)
   const activeFamily = useMemo(() => {
+    if (circlesState !== 'ready') return undefined;
     if (!families || families.length === 0) return undefined;
     if (activeFamilyId) {
       const found = families.find((f: any) => f.id === activeFamilyId);
       if (found) return found;
     }
     return families[0];
-  }, [families, activeFamilyId]);
+  }, [families, activeFamilyId, circlesState]);
 
   // Sauvegarder automatiquement l'ID de la famille active dans AsyncStorage
   // pour que le header x-active-family-id soit envoyé correctement à chaque requête
   useEffect(() => {
-    if (activeFamily?.id && !activeFamilyId) {
+    if (activeFamily?.id && activeFamily.id !== activeFamilyId) {
       setActiveFamilyId(activeFamily.id);
     }
   }, [activeFamily?.id, activeFamilyId]);
@@ -98,7 +106,7 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
   // Fetch dashboard data
   const { data: tasks = [], refetch: refetchTasks } = trpc.tasks.list.useQuery(
     undefined,
-    { staleTime: 5 * 60 * 1000 } // 5 min — utilise le cache au lieu de refetch à chaque ouverture
+    { enabled: !!activeFamily, staleTime: 5 * 60 * 1000 } // 5 min — utilise le cache au lieu de refetch à chaque ouverture
   );
   const { data: rawEvents = [], refetch: refetchEvents } = trpc.events.list.useQuery(
     undefined,
@@ -175,13 +183,13 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([
-      refetchTasks(),
-      refetchEvents(),
-      refetchMessages(),
-      refetchMeals(),
-    ]);
-    setRefreshing(false);
+    try {
+      const result = await refetchFamilies();
+      if (result.error || !result.data?.length) return;
+      await Promise.all([refetchTasks(), refetchEvents(), refetchMessages(), refetchMeals()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Résumé personnel : les tâches communes sont rattachées à leur participant
@@ -432,7 +440,22 @@ export default function DashboardScreen({ onLogout, onPrevious, onNext, onNaviga
         }
       >
 
-        {!activeFamily ? (
+        {circlesState === 'loading' ? (
+          <View style={styles.noFamilyCard} accessibilityRole="progressbar">
+            <Text style={styles.noFamilyTitle}>{t('common.loading')}</Text>
+          </View>
+        ) : circlesState === 'error' || circlesState === 'session-invalid' ? (
+          <View style={styles.noFamilyCard} accessibilityRole="alert">
+            <Text style={styles.noFamilyTitle}>{t(circlesState === 'session-invalid' ? 'auth.sessionExpired' : 'common.error')}</Text>
+            <Text style={styles.noFamilyText}>{t(circlesState === 'session-invalid' ? 'auth.sessionExpiredMessage' : 'dashboard.circlesLoadError')}</Text>
+            <TouchableOpacity
+              style={styles.createFamilyButton}
+              onPress={circlesState === 'session-invalid' ? handleLogout : () => { void refetchFamilies(); }}
+            >
+              <Text style={styles.createFamilyButtonText}>{t(circlesState === 'session-invalid' ? 'auth.signIn' : 'common.refresh')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : circlesState === 'empty' ? (
           <View style={styles.noFamilyCard}>
             <Text style={styles.noFamilyTitle}>{t('dashboard.welcome')} 🎉</Text>
             <Text style={styles.noFamilyText}>

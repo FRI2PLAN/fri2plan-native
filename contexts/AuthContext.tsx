@@ -1,7 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, AppStateStatus } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { useOffline } from './OfflineContext';
 import { User } from '../lib/types';
+import { API_URL } from '../lib/apiConfig';
+import { clearSessionCookie, validateSession, SessionValidationError, SESSION_STORAGE_KEYS } from '../lib/sessionAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +14,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   hasSeenOnboarding: boolean;
+  sessionError: 'invalid' | 'unavailable' | null;
+  retrySession: () => Promise<void>;
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => Promise<void>;
@@ -18,311 +25,191 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-const API_URL = 'https://app.fri2plan.ch';
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
-
-  // Indique si c'est le premier chargement (démarrage à froid) ou un retour d'arrière-plan
-  const isColdStart = useRef(true);
+  const [sessionError, setSessionError] = useState<'invalid' | 'unavailable' | null>(null);
+  const queryClient = useQueryClient();
+  const { clearQueue } = useOffline();
+  // A validation started before logout must never restore that old session later.
+  const sessionGeneration = useRef(0);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  // Timestamp de mise en arrière-plan pour calculer la durée d'inactivité
   const backgroundedAtRef = useRef<number | null>(null);
-  // Durée max d'inactivité avant revalidation du token (30 minutes)
-  const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
-  // Écouter les changements d'état de l'app (active / background / inactive)
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      const prev = appStateRef.current;
-      appStateRef.current = nextAppState;
+  const clearLocalSession = useCallback(async (clearBiometric = false) => {
+    setToken(null);
+    setUser(null);
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    // No AsyncStorage.clear(): language, theme, onboarding and per-user circle
+    // preferences survive. Only credentials and private session caches are removed.
+    await Promise.all([
+      clearQueue(),
+      AsyncStorage.multiRemove(SESSION_STORAGE_KEYS),
+      ...(clearBiometric ? ['biometric_auth_token', 'biometric_auth_user', 'biometric_enabled'].map(
+        key => SecureStore.deleteItemAsync(key).catch(() => {}),
+      ) : []),
+    ]);
+  }, [queryClient, clearQueue]);
 
-      // L'app passe en arrière-plan → noter l'heure
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
-        backgroundedAtRef.current = Date.now();
-        console.log('[AuthContext] App mise en arrière-plan à', new Date().toISOString());
-      }
-
-      // L'app revient au premier plan depuis l'arrière-plan
-      if (
-        (prev === 'background' || prev === 'inactive') &&
-        nextAppState === 'active'
-      ) {
-        const backgroundedAt = backgroundedAtRef.current;
-        const elapsed = backgroundedAt ? Date.now() - backgroundedAt : 0;
-        console.log('[AuthContext] App revenue au premier plan, inactivité:', Math.round(elapsed / 1000), 'sec');
-
-        if (elapsed > SESSION_TIMEOUT_MS) {
-          // Inactivité > 30 min → revalider le token
-          console.log('[AuthContext] Inactivité > 30 min, revalidation du token...');
-          isColdStart.current = true;
-          loadUserData();
-        } else {
-          // Inactivité courte → utiliser le cache sans revalidation
-          isColdStart.current = false;
-          console.log('[AuthContext] Inactivité courte — token utilisé depuis le cache');
-        }
-        backgroundedAtRef.current = null;
-      }
-    });
-
-    return () => subscription.remove();
+  const storeVerifiedSession = useCallback(async (userData: User, authToken: string) => {
+    const userStorageEntries: Array<[string, string]> = [
+      ['authToken', authToken],
+      ['user', JSON.stringify(userData)],
+    ];
+    // Preserve this account's circle preference; never reuse another account's
+    // global header. Dashboard reconciles the choice with the server's list.
+    const selectedCircle = await AsyncStorage.getItem(`active_family_id_${userData.id}`);
+    if (selectedCircle && Number(selectedCircle) > 0) {
+      userStorageEntries.push(['active_family_id', String(Number(selectedCircle))]);
+    } else if (userData.familyId) {
+      userStorageEntries.push(
+        [`active_family_id_${userData.id}`, String(userData.familyId)],
+        ['active_family_id', String(userData.familyId)],
+      );
+    } else {
+      await AsyncStorage.removeItem('active_family_id');
+    }
+    await AsyncStorage.multiSet(userStorageEntries);
   }, []);
 
-  // Load user data on mount (démarrage à froid uniquement)
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
+    const generation = ++sessionGeneration.current;
+    setIsLoading(true);
+    setToken(null);
+    setUser(null);
+    setSessionError(null);
     try {
       const [storedToken, storedUser, storedOnboarding] = await Promise.all([
         AsyncStorage.getItem('authToken'),
         AsyncStorage.getItem('user'),
         AsyncStorage.getItem('hasSeenOnboarding'),
       ]);
-
-      // Toujours lire hasSeenOnboarding, même si pas de token (l'onboarding est lié à l'appareil)
-      if (storedOnboarding === 'true') {
-        setHasSeenOnboarding(true);
-      }
-
-      if (storedToken && storedUser) {
-        // Valider le token auprès du serveur uniquement au démarrage à froid
-        // Si l'app revient de l'arrière-plan, on utilise directement le cache
-        let tokenValid = true;
-
-        if (isColdStart.current) {
-          // Retry logic pour les 503 Cloud Run cold start (3 tentatives max)
-          const fetchAuthMe = async (retryCount = 0): Promise<Response | null> => {
-            try {
-              // Timeout 8s pour éviter le blocage Android au démarrage
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 8000);
-              let resp: Response;
-              try {
-                resp = await fetch(`${API_URL}/api/trpc/auth.me`, {
-                  headers: { Authorization: `Bearer ${storedToken}` },
-                  signal: controller.signal,
-                });
-              } finally {
-                clearTimeout(timeoutId);
-              }
-              if (resp.status === 503 && retryCount < 2) {
-                const delay = [1000, 2000][retryCount];
-                console.log(`[AuthContext] auth.me 503, retry ${retryCount + 1}/2 dans ${delay}ms`);
-                await new Promise(r => setTimeout(r, delay));
-                return fetchAuthMe(retryCount + 1);
-              }
-              return resp;
-            } catch (err: any) {
-              if (err?.name === 'AbortError') {
-                console.log('[AuthContext] auth.me timeout (8s), utilisation du cache local');
-                return null;
-              }
-              if (retryCount < 2) {
-                const delay = [1000, 2000][retryCount];
-                console.log(`[AuthContext] auth.me erreur réseau, retry ${retryCount + 1}/2 dans ${delay}ms`);
-                await new Promise(r => setTimeout(r, delay));
-                return fetchAuthMe(retryCount + 1);
-              }
-              return null;
-            }
-          };
-          try {
-            const response = await fetchAuthMe();
-            if (!response) {
-              // Toutes les tentatives échouées → utiliser le cache local (fail-open)
-              console.log('[AuthContext] auth.me inaccessible après 3 tentatives, utilisation du cache local');
-            } else if (response.status === 401 || response.status === 403) {
-              // Token vraiment invalide ou expiré → forcer la déconnexion
-              console.log('[AuthContext] Token invalide (status ' + response.status + '), nettoyage de la session');
-              tokenValid = false;
-            } else if (!response.ok) {
-              // Erreur serveur persistante → utiliser le cache local (fail-open)
-              console.log('[AuthContext] Erreur serveur (status ' + response.status + '), utilisation du cache local');
-            } else {
-              // Succès → mettre à jour le user avec les données fraîches (incluant familyId)
-              try {
-                const data = await response.json();
-                const freshUser = data?.result?.data?.json;
-                if (freshUser && freshUser.id) {
-                  console.log('[AuthContext] User mis à jour depuis auth.me:', JSON.stringify(freshUser, null, 2));
-                  await AsyncStorage.setItem('user', JSON.stringify(freshUser));
-                  storedUser = JSON.stringify(freshUser);
-                }
-              } catch (_) {}
-            }
-          } catch (networkError) {
-            // Pas de réseau → utiliser le cache local (fail-open)
-            console.log('[AuthContext] Pas de réseau, utilisation du cache local');
-          }
-        } else {
-          console.log('[AuthContext] Retour arrière-plan — token utilisé depuis le cache sans revalidation');
-        }
-
-        if (!tokenValid) {
-          // Ne pas supprimer hasSeenOnboarding — l'onboarding est lié à l'appareil, pas à la session
-          await AsyncStorage.multiRemove(['authToken', 'user']);
-          return;
-        }
-
-        const parsedUser = JSON.parse(storedUser);
-        console.log('[AuthContext] Loaded user from storage:', JSON.stringify(parsedUser, null, 2));
-        setToken(storedToken);
-        setUser(parsedUser);
-        setHasSeenOnboarding(storedOnboarding === 'true');
-        // Restaurer activeFamilyId depuis le user si absent d'AsyncStorage
-        if (parsedUser?.familyId) {
-          const storedFamilyId = await AsyncStorage.getItem('active_family_id');
-          if (!storedFamilyId) {
-            await AsyncStorage.setItem('active_family_id', String(parsedUser.familyId));
-            console.log('[AuthContext] active_family_id restauré depuis user.familyId:', parsedUser.familyId);
-          }
-        }
-      }
+      if (generation !== sessionGeneration.current) return;
+      setHasSeenOnboarding(storedOnboarding === 'true');
+      if (!storedToken) return;
+      let expectedId: number | undefined;
+      try { expectedId = storedUser ? JSON.parse(storedUser)?.id : undefined; } catch { /* server profile is authoritative */ }
+      const freshUser = await validateSession(storedToken, expectedId);
+      if (generation !== sessionGeneration.current) return;
+      await AsyncStorage.setItem('user', JSON.stringify(freshUser));
+      if (generation !== sessionGeneration.current) return;
+      setToken(storedToken);
+      setUser(freshUser);
     } catch (error) {
-      console.error('Error loading user data:', error);
+      if (generation !== sessionGeneration.current) return;
+      const reason = error instanceof SessionValidationError ? error.reason : 'unavailable';
+      if (reason === 'invalid') {
+        await clearLocalSession(true);
+        void clearSessionCookie();
+      }
+      // On network failure keep credentials for Retry, never expose a cached user.
+      if (generation === sessionGeneration.current) setSessionError(reason);
     } finally {
-      isColdStart.current = false;
-      setIsLoading(false);
+      if (generation === sessionGeneration.current) setIsLoading(false);
     }
-  };
+  }, [clearLocalSession]);
+
+  useEffect(() => { void loadUserData(); }, [loadUserData]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      const prev = appStateRef.current;
+      appStateRef.current = nextAppState;
+      if (nextAppState === 'background' && !backgroundedAtRef.current) backgroundedAtRef.current = Date.now();
+      if ((prev === 'background' || prev === 'inactive') && nextAppState === 'active') {
+        const elapsed = backgroundedAtRef.current ? Date.now() - backgroundedAtRef.current : 0;
+        backgroundedAtRef.current = null;
+        if (elapsed > 30 * 60 * 1000) void loadUserData();
+      }
+    });
+    return () => subscription.remove();
+  }, [loadUserData]);
 
   const login = async (userData: User, authToken: string) => {
+    const generation = ++sessionGeneration.current;
+    setSessionError(null);
     try {
-      console.log('[AuthContext] Login called with user data:', JSON.stringify(userData, null, 2));
-      // Ensure we never pass undefined values to AsyncStorage
-      if (!authToken || !userData) {
-        throw new Error('Invalid login data');
-      }
-      const userStorageEntries: Array<[string, string]> = [
-        ['authToken', authToken],
-        ['user', JSON.stringify(userData)],
-      ];
-      if (userData.familyId) {
-        userStorageEntries.push(
-          [`active_family_id_${userData.id}`, String(userData.familyId)],
-          ['active_family_id', String(userData.familyId)],
-        );
-      }
-      await AsyncStorage.multiSet(userStorageEntries);
+      if (!authToken || !userData?.id) throw new SessionValidationError('invalid');
+      // Remove the old Bearer/cache before validating the candidate. The candidate
+      // is passed directly to auth.me, not read from storage or a cookie.
+      await clearLocalSession();
+      await clearSessionCookie();
+      const freshUser = await validateSession(authToken, userData.id);
+      if (generation !== sessionGeneration.current) throw new SessionValidationError('invalid');
+      await storeVerifiedSession(freshUser, authToken);
+      if (generation !== sessionGeneration.current) return;
       setToken(authToken);
-      setUser(userData);
+      setUser(freshUser);
 
-      // La préférence active (locale ou choisie par l'utilisateur) devient aussi
-      // la langue de référence du serveur pour les emails et notifications.
       try {
         const { getCurrentLanguage, syncLanguagePreference } = await import('../i18n');
         await syncLanguagePreference(getCurrentLanguage());
-      } catch (languageSyncError) {
-        console.warn('[AuthContext] Impossible de synchroniser la langue:', languageSyncError);
+      } catch (error) {
+        console.warn('[AuthContext] Language sync unavailable:', error);
       }
-
-      // Envoyer automatiquement la timezone de l'appareil au serveur
-      // Cela permet des rappels et emails à la bonne heure locale pour tous les fuseaux
       try {
-        const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (deviceTimezone) {
-          await fetch(`${API_URL}/api/trpc/settings.update`, {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone && generation === sessionGeneration.current) {
+          await fetch(`${API_URL}/settings.update`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({ json: { timezone: deviceTimezone } }),
+            credentials: 'omit',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+            body: JSON.stringify({ json: { timezone } }),
           });
-          console.log('[AuthContext] Timezone envoyée au serveur:', deviceTimezone);
         }
-      } catch (tzErr) {
-        // Non bloquant — la timezone sera mise à jour au prochain login
-        console.warn('[AuthContext] Impossible d\'envoyer la timezone:', tzErr);
+      } catch { /* Non-blocking timezone preference. */ }
+    } catch (error) {
+      if (generation === sessionGeneration.current) {
+        setToken(null);
+        setUser(null);
+        setSessionError(error instanceof SessionValidationError ? error.reason : 'unavailable');
       }
-    } catch (error) {
-      console.error('Error saving user data:', error);
       throw error;
-    }
-  };
-
-  const completeOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-      setHasSeenOnboarding(true);
-    } catch (error) {
-      console.error('Error saving onboarding status:', error);
-      throw error;
+    } finally {
+      if (generation === sessionGeneration.current) setIsLoading(false);
     }
   };
 
   const logout = async () => {
+    ++sessionGeneration.current;
+    setIsLoading(false);
+    setSessionError(null);
+    // In-memory auth is cleared even if storage or the network is unavailable.
     try {
-      await Promise.all([
-        AsyncStorage.removeItem('authToken'),
-        AsyncStorage.removeItem('user'),
-        // hasSeenOnboarding n'est PAS supprimé au logout
-        // L'onboarding est lié à l'appareil, pas à la session
-      ]);
-      setToken(null);
-      setUser(null);
-      // hasSeenOnboarding reste à true après déconnexion
-      // Réinitialiser pour que le prochain démarrage à froid revalide bien le token
-      isColdStart.current = true;
-    } catch (error) {
-      console.error('Error clearing user data:', error);
-      throw error;
+      await clearLocalSession(true);
+    } finally {
+      await clearSessionCookie();
     }
   };
 
   const updateUser = async (userData: User) => {
-    try {
-      // Ensure we never pass undefined values to AsyncStorage
-      if (!userData) {
-        throw new Error('Invalid user data');
-      }
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      console.error('Error updating user data:', error);
-      throw error;
-    }
+    if (!userData || !token || userData.id !== user?.id) return;
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    setHasSeenOnboarding(true);
   };
 
   const resetOnboarding = async () => {
-    try {
-      await AsyncStorage.removeItem('hasSeenOnboarding');
-      setHasSeenOnboarding(false);
-    } catch (error) {
-      console.error('Error resetting onboarding:', error);
-    }
+    await AsyncStorage.removeItem('hasSeenOnboarding');
+    setHasSeenOnboarding(false);
   };
 
-  const value: AuthContextType = {
-    user,
-    token,
-    isLoading,
-    isAuthenticated: !!token && !!user,
-    hasSeenOnboarding,
-    login,
-    logout,
-    updateUser,
-    completeOnboarding,
-    resetOnboarding,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{
+    user, token, isLoading, isAuthenticated: !!token && !!user, hasSeenOnboarding,
+    sessionError, retrySession: loadUserData, login, logout, updateUser,
+    completeOnboarding, resetOnboarding,
+  }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

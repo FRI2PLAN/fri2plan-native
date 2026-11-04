@@ -98,7 +98,8 @@
     "biometricNotNow": "Non merci",
     "biometricEnable": "Activer",
     "sessionExpired": "Session expirée",
-    "sessionExpiredMessage": "Veuillez vous reconnecter avec votre mot de passe."
+    "sessionExpiredMessage": "Veuillez vous reconnecter avec votre mot de passe.",
+    "sessionVerificationUnavailable": "Impossible de vérifier votre session. Vérifiez votre connexion et réessayez."
   },
   "invitation": {
     "wrongAccountTitle": "Invitation en attente",
@@ -164,6 +165,7 @@
     "eventsToday": "Événements aujourd'hui",
     "eventsThisWeek": "Événements cette semaine",
     "noBirthdays": "Aucun anniversaire à venir ce mois-ci",
+    "circlesLoadError": "Impossible de charger vos cercles. Vérifiez votre connexion et actualisez.",
     "noFamilyText": "Pour commencer, créez une famille ou rejoignez une famille existante.",
     "todayMeals": "Repas du jour",
     "noMeals": "Aucun repas prévu aujourd'hui",

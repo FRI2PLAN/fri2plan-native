@@ -1,5 +1,15 @@
 # FRI2PLAN React Native - TODO
 
+## Session et cercles — Preview, 4 novembre 2026
+- [x] Cloner les bases GitHub propres : mobile 2562b45, serveur 04b8cec.
+- [x] Corriger la priorité du Bearer mobile, sans fallback vers un autre compte.
+- [x] Tester le serveur : 92 tests passent, dont 37 cas de sécurité avec JWT signés.
+- [x] Nettoyer/revalider la session mobile et distinguer erreur de chargement et cercle absent.
+- [x] Valider 71 tests mobiles ciblés et exports Android/iOS séparés, runtime inchangé.
+- [ ] Vérifier l'isolation API/base DEV avant les tests PP admin / Jack membre de Wizard Family.
+- [ ] Tester les sessions périmées et les connexions sur les deux plateformes en Preview.
+- [ ] Déployer en Production uniquement après validation Preview et accord explicite.
+
 ## Page de connexion
 - [x] Ajouter le logo à côté du nom "FRI2PLAN"
 - [x] Rendre visible le bouton "S'inscrire" (actuellement caché)

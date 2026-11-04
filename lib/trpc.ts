@@ -5,8 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import type { AppRouter } from './types';
 
+import { API_URL } from './apiConfig';
+export { API_URL } from './apiConfig';
 export const trpc = createTRPCReact<AppRouter>();
-export const API_URL = 'https://app.fri2plan.ch/api/trpc';
 
 // Délai exponentiel entre les tentatives (ms)
 const RETRY_DELAYS = [1000, 2000, 4000]; // 3 tentatives max
@@ -32,7 +33,7 @@ async function fetchWithRetry(
   try {
     const response = await fetch(input, {
       ...(init ?? {}),
-      credentials: 'include',
+      credentials: 'omit',
     });
 
     // Réessayer uniquement pour les 503 (cold start Cloud Run)
@@ -58,7 +59,7 @@ export const createTRPCClient = () => {
   return trpc.createClient({
     links: [
       httpBatchLink({
-        url: 'https://app.fri2plan.ch/api/trpc',
+        url: API_URL,
         transformer: superjson,
         async headers() {
           const token = await AsyncStorage.getItem('authToken');
