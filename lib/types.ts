@@ -130,7 +130,7 @@ export interface Note {
   isPinned?: number | boolean;
   attachments?: string;
   userId: number;
-  familyId: number;
+  familyId: number | null; // Legacy origin unknown: not displayable or mutable.
   authorName?: string;
   createdAt: string;
   updatedAt?: string;
@@ -606,29 +606,34 @@ export type AppRouter = {
   };
   notes: {
     list: {
-      query: () => Promise<Note[]>;
-      useQuery: (input?: any, opts?: any) => { data: Note[]; isLoading: boolean; refetch: () => void };
+      query: (input: { familyId: number }) => Promise<Note[]>;
+      useQuery: (input: { familyId: number }, opts?: any) => { data: Note[]; isLoading: boolean; refetch: () => void };
+    };
+    get: {
+      query: (input: { familyId: number; noteId: number }) => Promise<Note>;
     };
     create: {
       mutate: (input: {
+        familyId: number;
         title: string;
         content?: string;
-        isPrivate?: boolean;
+        isPrivate?: boolean | 0 | 1;
         attachments?: string;
-      }) => Promise<Note>;
+      }) => Promise<{ noteId: number }>;
     };
     update: {
       mutate: (input: {
+        familyId: number;
         noteId: number;
         title?: string;
         content?: string;
         isPinned?: number;
-        isPrivate?: number;
+        isPrivate?: boolean | 0 | 1;
         attachments?: string;
-      }) => Promise<Note>;
+      }) => Promise<{ success: true }>;
     };
     delete: {
-      mutate: (input: { noteId: number }) => Promise<void>;
+      mutate: (input: { familyId: number; noteId: number }) => Promise<{ success: true }>;
     };
     uploadFile: {
       mutate: (input: { fileName: string; fileData: string; fileType: string }) => Promise<{ url: string; fileName: string; fileType: string }>;

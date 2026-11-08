@@ -4,7 +4,12 @@ import {
   KeyboardAvoidingView, Platform, Switch, Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFamily } from '../contexts/FamilyContext';
+import { createNoteScopeGuard, noteScope, noteListKey, noteInScope, notesInScope } from '../lib/noteScope';
+import type { NoteScopeToken } from '../lib/noteScope';
+import type { Note } from '../lib/types';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,6 +45,19 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
   const { isDark } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { activeFamilyId, isReady, isCircleTransitioning } = useFamily();
+  const scope = noteScope(user?.id, activeFamilyId, isReady, isCircleTransitioning);
+  const scopeGuard = useRef(createNoteScopeGuard()).current;
+  const currentScope = scopeGuard.update(scope);
+  const queryClient = useQueryClient();
+  const utils = trpc.useUtils();
+  const { isConnected, enqueue } = useOffline();
+  const connectedRef = useRef(isConnected);
+  connectedRef.current = isConnected;
+  const createFormScope = useRef<NoteScopeToken | null>(null);
+  const editFormScope = useRef<NoteScopeToken | null>(null);
+  const createFormVersion = useRef(0);
+  const editFormVersion = useRef(0);
   const { requirePremium, hasPremium, isTrialActive } = useSubscription();
   const isFree = !hasPremium && !isTrialActive;
   const [freemiumLimitVisible, setFreemiumLimitVisible] = useState(false);
@@ -66,202 +84,255 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
 
   // États édition
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editAttachments, setEditAttachments] = useState<Attachment[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Données
-  const { data: notes = [], isLoading, refetch } = trpc.notes.list.useQuery();
-
-  // Mutations
-  const createMutation = trpc.notes.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setCreateDialogOpen(false);
-      resetCreateForm();
-      Alert.alert(t('common.success'), t('notes.created'));
+  // The tRPC hook derives keys from API input only. Use the same Notes-only
+  // React Query key here and in prefetch, including the authenticated owner.
+  const { data: notes = [], isLoading, isError, refetch } = useQuery<Note[]>({
+    queryKey: noteListKey(scope),
+    queryFn: ({ signal }) => {
+      if (!scope) throw new Error(t('notes.scopeUnavailable'));
+      return utils.client.notes.list.query({ familyId: scope.familyId }, { signal });
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.createError'))});
+    enabled: !!scope,
+    placeholderData: undefined,
+  });
+  const scopedNotes = useMemo(() => notesInScope<Note>(notes, scope), [notes, currentScope]);
 
-  const updateMutation = trpc.notes.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      setEditDialogOpen(false);
-      setSelectedNote(null);
-      Alert.alert(t('common.success'), t('notes.updated'));
-    },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.updateError'))});
-
-  const deleteMutation = trpc.notes.delete.useMutation({
-    onSuccess: () => {
-      refetch();
-      setEditDialogOpen(false);
-      setSelectedNote(null);
-      Alert.alert(t('common.success'), t('notes.deleted'));
-    },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.deleteError'))});
-
-  const uploadFileMutation = trpc.notes.uploadFile.useMutation({
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('notes.uploadError'))});
+  // Never allow React Query to pause a Notes mutation and resume it in B.
+  // Explicit offline Notes actions use the immutable queue instead.
+  const createMutation = trpc.notes.create.useMutation({ networkMode: 'always', retry: false });
+  const updateMutation = trpc.notes.update.useMutation({ networkMode: 'always', retry: false });
+  const deleteMutation = trpc.notes.delete.useMutation({ networkMode: 'always', retry: false });
+  const uploadFileMutation = trpc.notes.uploadFile.useMutation({ networkMode: 'always', retry: false });
 
   const resetCreateForm = () => {
+    createFormScope.current = null;
+    createFormVersion.current += 1;
     setNewTitle('');
     setNewContent('');
     setNewIsPrivate(false);
     setNewAttachments([]);
   };
+  const resetEditForm = () => {
+    editFormScope.current = null;
+    editFormVersion.current += 1;
+    setSelectedNote(null);
+    setEditTitle('');
+    setEditContent('');
+    setEditIsPrivate(false);
+    setEditAttachments([]);
+  };
 
-  const openEditDialog = (note: any) => {
+  useEffect(() => {
+    const hadForm = createFormScope.current || editFormScope.current;
+    setCreateDialogOpen(false);
+    setEditDialogOpen(false);
+    resetCreateForm();
+    resetEditForm();
+    setUploadingFile(false);
+    setRefreshing(false);
+    setFreemiumLimitVisible(false);
+    setSearchQuery('');
+    setFilterPrivacy('all');
+    if (hadForm) Alert.alert(t('common.error'), t('notes.scopeChanged'));
+  }, [currentScope]);
+  useEffect(() => () => { scopeGuard.update(null); }, [scopeGuard]);
+
+  const requireScope = (origin: NoteScopeToken | null, note?: Note | null): origin is NoteScopeToken => {
+    if (!scopeGuard.isCurrent(origin) || (note && !noteInScope(note, origin))) {
+      Alert.alert(t('common.error'), t('notes.scopeChanged'));
+      return false;
+    }
+    return true;
+  };
+  const openCreateDialog = () => {
+    const origin = scopeGuard.capture();
+    if (!requireScope(origin)) return;
+    resetCreateForm();
+    createFormScope.current = origin;
+    setCreateDialogOpen(true);
+  };
+  const openEditDialog = (note: Note) => {
+    const origin = scopeGuard.capture();
+    if (!requireScope(origin, note)) return;
+    resetEditForm();
+    editFormScope.current = origin;
     setSelectedNote(note);
     setEditTitle(note.title);
     setEditContent(note.content || '');
     setEditIsPrivate(note.isPrivate === 1 || note.isPrivate === true);
-    try {
-      setEditAttachments(note.attachments ? JSON.parse(note.attachments) : []);
-    } catch {
-      setEditAttachments([]);
-    }
+    try { setEditAttachments(note.attachments ? JSON.parse(note.attachments) : []); }
+    catch { setEditAttachments([]); }
     setEditDialogOpen(true);
   };
 
-  const { isConnected, enqueue } = useOffline();
+  const runNoteAction = async (
+    type: 'note.create' | 'note.update' | 'note.delete',
+    payload: Record<string, unknown> & { familyId: number },
+    origin: NoteScopeToken,
+    formVersion?: number,
+  ) => {
+    if (!requireScope(origin)) return;
+    const queued = !connectedRef.current;
+    try {
+      if (queued) {
+        // Await durable storage before presenting a queued-success message.
+        await enqueue({ type, payload, scope: { userId: origin.userId, familyId: origin.familyId } } as any);
+      } else {
+        const mutation = type === 'note.create' ? createMutation : type === 'note.update' ? updateMutation : deleteMutation;
+        await mutation.mutateAsync(payload as any);
+        // Target the origin, never refetch whatever circle is current now.
+        void queryClient.invalidateQueries({ queryKey: noteListKey(origin), exact: true });
+      }
+      if (!scopeGuard.isCurrent(origin)) return;
+      if (formVersion !== undefined && formVersion !== (type === 'note.create'
+        ? createFormVersion.current : editFormVersion.current)) return;
+      if (type === 'note.create' && formVersion === createFormVersion.current) {
+        setCreateDialogOpen(false); resetCreateForm();
+      } else if (type !== 'note.create' && formVersion === editFormVersion.current) {
+        setEditDialogOpen(false); resetEditForm();
+      }
+      Alert.alert(t('common.success'), t(queued ? 'notes.offlineQueued'
+        : type === 'note.create' ? 'notes.created' : type === 'note.update' ? 'notes.updated' : 'notes.deleted'));
+    } catch (err: any) {
+      if (!scopeGuard.isCurrent(origin)) return;
+      Alert.alert(t('common.error'), err.message || t(type === 'note.create' ? 'notes.createError'
+        : type === 'note.update' ? 'notes.updateError' : 'notes.deleteError'));
+    }
+  };
 
   const handleCreate = () => {
-    // Vérification limite freemium : 5 notes max
-    if (isFree && (notes || []).length >= 5) {
-      setCreateDialogOpen(false);
-      setFreemiumLimitVisible(true);
-      return;
+    const origin = createFormScope.current;
+    if (!requireScope(origin)) return;
+    if (isError || isLoading) { Alert.alert(t('common.error'), t('notes.loadError')); return; }
+    // Free quota counts only Notes from this circle (private or shared).
+    if (isFree && scopedNotes.length >= 5) {
+      setCreateDialogOpen(false); resetCreateForm(); setFreemiumLimitVisible(true); return;
     }
-    if (!newTitle.trim()) {
-      Alert.alert(t('common.error'), t('notes.titleRequired'));
-      return;
-    }
-    const payload = {
+    if (!newTitle.trim()) { Alert.alert(t('common.error'), t('notes.titleRequired')); return; }
+    void runNoteAction('note.create', {
+      familyId: origin.familyId,
       title: newTitle.trim(),
       content: newContent.trim() || undefined,
       isPrivate: newIsPrivate,
-      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined
-    };
-    if (!isConnected) {
-      enqueue({ type: 'note.create', payload });
-      Alert.alert('📵', 'Note mise en file d\'attente (hors ligne). Elle sera créée à la reconnexion.');
-    } else {
-      createMutation.mutate(payload);
-    }
+      attachments: newAttachments.length > 0 ? JSON.stringify(newAttachments) : undefined,
+    }, origin, createFormVersion.current);
   };
-
   const handleUpdate = () => {
-    if (!selectedNote || !editTitle.trim()) {
-      Alert.alert(t('common.error'), t('notes.titleRequired'));
-      return;
-    }
-    updateMutation.mutate({
-      noteId: selectedNote.id,
-      title: editTitle.trim(),
-      content: editContent.trim() || undefined,
-      isPrivate: editIsPrivate ? 1 : 0,
-      attachments: editAttachments.length > 0 ? JSON.stringify(editAttachments) : undefined});
+    const origin = editFormScope.current;
+    if (!selectedNote || !requireScope(origin, selectedNote)) return;
+    if (!editTitle.trim()) { Alert.alert(t('common.error'), t('notes.titleRequired')); return; }
+    void runNoteAction('note.update', {
+      familyId: origin.familyId, noteId: selectedNote.id,
+      title: editTitle.trim(), content: editContent.trim() || undefined,
+      // Only the author can change privacy; omit it for shared-note collaborators.
+      ...(selectedNote.userId === origin.userId ? { isPrivate: editIsPrivate } : {}),
+      attachments: editAttachments.length > 0 ? JSON.stringify(editAttachments) : undefined,
+    }, origin, editFormVersion.current);
   };
-
   const handleDelete = () => {
-    if (!selectedNote) return;
-    Alert.alert(
-      t('notes.deleteConfirmTitle'),
-      t('notes.deleteConfirmMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: () => {
-          if (!isConnected) {
-            enqueue({ type: 'note.delete', payload: { noteId: selectedNote.id } });
-            Alert.alert('📵', 'Suppression mise en file d\'attente (hors ligne)');
-          } else {
-            deleteMutation.mutate({ noteId: selectedNote.id });
-          }
-        }}
-      ]
-    );
+    const origin = editFormScope.current;
+    const note = selectedNote;
+    const formVersion = editFormVersion.current;
+    if (!note || !requireScope(origin, note)) return;
+    Alert.alert(t('notes.deleteConfirmTitle'), t('notes.deleteConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => {
+        if (!requireScope(origin, note) || formVersion !== editFormVersion.current) return;
+        void runNoteAction('note.delete', { familyId: origin.familyId, noteId: note.id }, origin, formVersion);
+      } },
+    ]);
+  };
+  const handleTogglePin = (note: Note) => {
+    const origin = scopeGuard.capture();
+    if (!requireScope(origin, note)) return;
+    void runNoteAction('note.update', { familyId: origin.familyId, noteId: note.id, isPinned: note.isPinned ? 0 : 1 }, origin);
   };
 
-  const handleTogglePin = (note: any) => {
-    const newPinned = note.isPinned ? 0 : 1;
-    updateMutation.mutate({ noteId: note.id, isPinned: newPinned });
+  const uploadTarget = (isEdit: boolean) => {
+    const origin = isEdit ? editFormScope.current : createFormScope.current;
+    return origin && scopeGuard.isCurrent(origin) ? {
+      origin, version: isEdit ? editFormVersion.current : createFormVersion.current,
+    } : null;
   };
+  const targetIsCurrent = (target: NonNullable<ReturnType<typeof uploadTarget>>, isEdit: boolean) =>
+    scopeGuard.isCurrent(target.origin) && target.version === (isEdit ? editFormVersion.current : createFormVersion.current)
+      && target.origin === (isEdit ? editFormScope.current : createFormScope.current);
 
   const handlePickImage = async (isEdit: boolean) => {
+    const target = uploadTarget(isEdit);
+    if (!target || !requireScope(target.origin)) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('notes.permissionRequired'));
-      return;
-    }
+    if (!targetIsCurrent(target, isEdit)) return;
+    if (status !== 'granted') { Alert.alert(t('common.error'), t('notes.permissionRequired')); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      base64: true});
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8, base64: true,
+    });
+    if (!targetIsCurrent(target, isEdit)) return;
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      await uploadFileFromBase64(asset.base64 || '', asset.fileName || 'photo.jpg', 'image/jpeg', isEdit);
+      await uploadFileFromBase64(asset.base64 || '', asset.fileName || 'photo.jpg', 'image/jpeg', isEdit, target);
     }
   };
-
   const handlePickFile = async (isEdit: boolean) => {
+    const target = uploadTarget(isEdit);
+    if (!target || !requireScope(target.origin)) return;
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      if (!targetIsCurrent(target, isEdit)) return;
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        // Utiliser fetch pour lire l'URI (compatible content:// Android)
         const response = await fetch(asset.uri);
         const arrayBuffer = await response.arrayBuffer();
+        if (!targetIsCurrent(target, isEdit)) return;
         const bytes = new Uint8Array(arrayBuffer);
         let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        const base64 = btoa(binary);
-        await uploadFileFromBase64(base64, asset.name, asset.mimeType || 'application/octet-stream', isEdit);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        await uploadFileFromBase64(btoa(binary), asset.name, asset.mimeType || 'application/octet-stream', isEdit, target);
       }
-    } catch (err) {
-      Alert.alert(t('common.error'), t('notes.uploadError'));
+    } catch {
+      if (targetIsCurrent(target, isEdit)) Alert.alert(t('common.error'), t('notes.uploadError'));
     }
   };
-
-  const uploadFileFromBase64 = async (base64: string, fileName: string, fileType: string, isEdit: boolean) => {
-    if (!base64) return;
+  const uploadFileFromBase64 = async (base64: string, fileName: string, fileType: string, isEdit: boolean,
+    target: NonNullable<ReturnType<typeof uploadTarget>>) => {
+    if (!base64 || !targetIsCurrent(target, isEdit)) return;
+    if (!connectedRef.current) { Alert.alert(t('common.error'), t('notes.offlineUploadUnavailable')); return; }
     setUploadingFile(true);
     try {
       const result = await uploadFileMutation.mutateAsync({ fileName, fileData: base64, fileType });
-      if (isEdit) {
-        setEditAttachments(prev => [...prev, result]);
-      } else {
-        setNewAttachments(prev => [...prev, result]);
-      }
-    } catch (err) {
-      // error handled by mutation
+      if (!targetIsCurrent(target, isEdit)) return;
+      if (isEdit) setEditAttachments(prev => [...prev, result]);
+      else setNewAttachments(prev => [...prev, result]);
+    } catch (err: any) {
+      if (targetIsCurrent(target, isEdit)) Alert.alert(t('common.error'), err.message || t('notes.uploadError'));
     } finally {
-      setUploadingFile(false);
+      if (targetIsCurrent(target, isEdit)) setUploadingFile(false);
     }
   };
-
   const removeAttachment = (index: number, isEdit: boolean) => {
-    if (isEdit) {
-      setEditAttachments(prev => prev.filter((_, i) => i !== index));
-    } else {
-      setNewAttachments(prev => prev.filter((_, i) => i !== index));
-    }
+    const target = uploadTarget(isEdit);
+    if (!target) return;
+    if (isEdit) setEditAttachments(prev => prev.filter((_, i) => i !== index));
+    else setNewAttachments(prev => prev.filter((_, i) => i !== index));
   };
-
   const onRefresh = async () => {
+    const origin = scopeGuard.capture();
+    if (!origin) return;
     setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    try { await refetch(); }
+    finally { if (scopeGuard.isCurrent(origin)) setRefreshing(false); }
   };
 
   // Filtrage
   const { filteredNotes, pinnedNotes, unpinnedNotes } = useMemo(() => {
-    const filtered = (notes as any[]).filter((note: any) => {
+    const filtered = scopedNotes.filter((note: Note) => {
       const matchSearch = !searchQuery ||
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -275,12 +346,11 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       pinnedNotes: filtered.filter((note: any) => note.isPinned === 1 || note.isPinned === true),
       unpinnedNotes: filtered.filter((note: any) => !note.isPinned || note.isPinned === 0),
     };
-  }, [notes, searchQuery, filterPrivacy]);
+  }, [scopedNotes, searchQuery, filterPrivacy]);
 
-  const renderNoteCard = (note: any) => {
+  const renderNoteCard = (note: Note) => {
     const isPinned = note.isPinned === 1 || note.isPinned === true;
     const isPrivate = note.isPrivate === 1 || note.isPrivate === true;
-    const isOwner = note.userId === user?.id;
     let attachments: Attachment[] = [];
     try { attachments = note.attachments ? JSON.parse(note.attachments) : []; } catch {}
 
@@ -298,13 +368,11 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
             {isPrivate && <Text style={styles.lockIcon}>🔒</Text>}
             {attachments.length > 0 && <Text style={styles.attachIcon}>📎</Text>}
           </View>
-          {isOwner && (
-            <TouchableOpacity onPress={() => handleTogglePin(note)} style={styles.pinButton}>
-              <Text style={[styles.pinButtonText, isPinned && styles.pinButtonActive]}>
-                {isPinned ? '📌' : '📍'}
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => handleTogglePin(note)} style={styles.pinButton}>
+            <Text style={[styles.pinButtonText, isPinned && styles.pinButtonActive]}>
+              {isPinned ? '📌' : '📍'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {note.content && (
@@ -365,7 +433,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={styles.addButton} onPress={() => setCreateDialogOpen(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={openCreateDialog} disabled={!scope}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -393,7 +461,14 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {isLoading ? (
+        {!scope ? (
+          <View style={styles.emptyContainer}><Text style={styles.emptySubtext}>{t('notes.scopeUnavailable')}</Text></View>
+        ) : isError ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>{t('notes.loadError')}</Text>
+            <TouchableOpacity onPress={onRefresh}><Text style={styles.emptyText}>{t('notes.retry')}</Text></TouchableOpacity>
+          </View>
+        ) : isLoading ? (
           <ActivityIndicator size="large" color="#7c3aed" style={{ marginTop: 40 }} />
         ) : filteredNotes.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -419,7 +494,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       </ScrollView>
 
       {/* Modal création */}
-      <Modal visible={createDialogOpen} transparent animationType="slide">
+      <Modal visible={createDialogOpen && !!scope && createFormScope.current === currentScope} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -475,7 +550,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
                 <TouchableOpacity style={styles.cancelButton} onPress={() => { setCreateDialogOpen(false); resetCreateForm(); }}>
                   <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.primaryButton} onPress={handleCreate} disabled={createMutation.isPending}>
+                <TouchableOpacity style={styles.primaryButton} onPress={handleCreate} disabled={createMutation.isPending || uploadingFile || !scope}>
                   {createMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryButtonText}>{t('common.create')}</Text>}
                 </TouchableOpacity>
               </View>
@@ -485,13 +560,13 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
       </Modal>
 
       {/* Modal édition */}
-      <Modal visible={editDialogOpen} transparent animationType="slide">
+      <Modal visible={editDialogOpen && !!scope && editFormScope.current === currentScope} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={styles.editHeader}>
                 <Text style={styles.modalTitle}>{t('notes.editTitle')}</Text>
-                <TouchableOpacity onPress={() => setEditDialogOpen(false)}>
+                <TouchableOpacity onPress={() => { setEditDialogOpen(false); resetEditForm(); }}>
                   <Text style={styles.closeButton}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -520,6 +595,7 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
                 <Text style={styles.fieldLabel}>{t('notes.private')}</Text>
                 <Switch
                   value={editIsPrivate}
+                  disabled={!selectedNote || selectedNote.userId !== currentScope?.userId}
                   onValueChange={setEditIsPrivate}
                   trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
                   thumbColor={editIsPrivate ? '#fff' : '#f4f3f4'}
@@ -544,18 +620,16 @@ export default function NotesScreen({ onNavigate, onPrevious, onNext }: NotesScr
 
               {/* Actions */}
               <View style={styles.editActions}>
-                {selectedNote?.userId === user?.id && (
-                  <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                    <Text style={styles.deleteButtonText}>🗑️ {t('common.delete')}</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                  <Text style={styles.deleteButtonText}>🗑️ {t('common.delete')}</Text>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setEditDialogOpen(false)}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => { setEditDialogOpen(false); resetEditForm(); }}>
                   <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.primaryButton} onPress={handleUpdate} disabled={updateMutation.isPending}>
+                <TouchableOpacity style={styles.primaryButton} onPress={handleUpdate} disabled={updateMutation.isPending || uploadingFile || !scope}>
                   {updateMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryButtonText}>{t('common.save')}</Text>}
                 </TouchableOpacity>
               </View>

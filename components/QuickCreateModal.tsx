@@ -3,7 +3,7 @@
  * Ouvre un formulaire léger par-dessus la page courante, sans navigation.
  * Types supportés : event | task | note | expense | request
  */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Modal, ScrollView,
   StyleSheet, ActivityIndicator, Switch, Alert, Platform, KeyboardAvoidingView,
@@ -15,6 +15,10 @@ import { trpc } from '../lib/trpc';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useOffline } from '../contexts/OfflineContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { createNoteScopeGuard, noteScope, noteListKey } from '../lib/noteScope';
+import type { NoteScopeToken } from '../lib/noteScope';
 
 export type QuickCreateType = 'event' | 'task' | 'note' | 'expense' | 'request';
 
@@ -129,7 +133,16 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const { user } = useAuth();
-  const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { activeFamilyId: ctxFamilyId, isReady, isCircleTransitioning } = useFamily();
+  const { isConnected } = useOffline();
+  const queryClient = useQueryClient();
+  // Notes alone use the context ID: never the family-list visual fallback.
+  const noteGuard = useRef(createNoteScopeGuard()).current;
+  const noteOrigin = noteGuard.update(visible && type === 'note'
+    ? noteScope(user?.id, ctxFamilyId, isReady, isCircleTransitioning) : null);
+  const noteOpeningScope = useRef<NoteScopeToken | null>(null);
+  const [noteFormOrigin, setNoteFormOrigin] = useState<NoteScopeToken | null>(null);
+  const noteWasOpen = useRef(false);
   const styles = getStyles(isDark);
   const reminderOptions = useMemo(() => getReminderOptions(t), [t]);
 
@@ -199,6 +212,22 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
 
   // ── Note ──
   const [notePrivate, setNotePrivate] = useState(false);
+  useEffect(() => {
+    const open = visible && type === 'note';
+    if (open && !noteWasOpen.current) {
+      noteOpeningScope.current = noteOrigin;
+      setNoteFormOrigin(noteOrigin);
+    } else if (open && !noteGuard.isCurrent(noteOpeningScope.current)) {
+      noteOpeningScope.current = null;
+      setNoteFormOrigin(null);
+      setTitle(''); setDescription(''); setNotePrivate(false);
+      Alert.alert(t('common.error'), t('notes.scopeChanged'));
+      onClose();
+    }
+    if (!open) { noteOpeningScope.current = null; setNoteFormOrigin(null); }
+    noteWasOpen.current = open;
+  }, [visible, type, noteOrigin]);
+  useEffect(() => () => { noteGuard.update(null); }, [noteGuard]);
 
   // ── Dépense ──
   const [expenseType, setExpenseType] = useState<'expense' | 'income'>('expense');
@@ -226,10 +255,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
     onError: (e) => Alert.alert('Erreur', e.message),
   });
 
-  const createNote = trpc.notes.create.useMutation({
-    onSuccess: () => { utils.notes.list.invalidate(); handleClose(); },
-    onError: (e) => Alert.alert('Erreur', e.message),
-  });
+  const createNote = trpc.notes.create.useMutation({ networkMode: 'always', retry: false });
 
   const createTx = trpc.budget.createTransaction.useMutation({
     onSuccess: () => { utils.budget.invalidate(); handleClose(); },
@@ -258,6 +284,13 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
 
   // ── Reset & fermeture ──
   const handleClose = () => {
+    if (type === 'note') {
+      noteOpeningScope.current = null;
+      noteGuard.update(null);
+      setTitle(''); setDescription(''); setNotePrivate(false);
+      onClose();
+      return;
+    }
     setTitle(''); setDescription('');
     setEventCategory('other'); setEventDate(initialDate ?? new Date()); setEventEndDate(initialDate ?? new Date());
     setIsAllDay(false); setIsMultiDay(false);
@@ -328,10 +361,26 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
         break;
       }
       case 'note': {
-        createNote.mutate({
+        const origin = noteOpeningScope.current;
+        if (!noteGuard.isCurrent(origin)) {
+          Alert.alert(t('common.error'), t('notes.scopeChanged')); return;
+        }
+        // Quick-create Notes has no quota listing: online only, no paused mutation.
+        if (!isConnected) {
+          Alert.alert(t('common.error'), t('notes.offlineQuickCreateUnavailable')); return;
+        }
+        createNote.mutateAsync({
+          familyId: origin.familyId,
           title: title.trim(),
           content: description.trim() || undefined,
           isPrivate: notePrivate,
+        }).then(() => {
+          void queryClient.invalidateQueries({ queryKey: noteListKey(origin), exact: true });
+          if (!noteGuard.isCurrent(origin) || noteOpeningScope.current !== origin) return;
+          handleClose();
+        }).catch((e: any) => {
+          if (noteGuard.isCurrent(origin) && noteOpeningScope.current === origin)
+            Alert.alert(t('common.error'), e.message || t('notes.createError'));
         });
         break;
       }
@@ -718,6 +767,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
                 thumbColor={notePrivate ? '#fff' : '#f3f4f6'}
               />
             </View>
+            <Text style={styles.label}>{t(notePrivate ? 'notes.privateHint' : 'notes.publicHint')}</Text>
           </>
         );
 
@@ -848,7 +898,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+    <Modal visible={visible && (type !== 'note' || (!!noteOrigin && noteFormOrigin === noteOrigin))} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
