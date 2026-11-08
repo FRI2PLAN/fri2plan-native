@@ -52,6 +52,6 @@ describe('Récompenses — vitrine de progression', () => {
     expect(rewardsScreen).toContain('disabled={!canAfford || alreadyClaimed || claimMutation.isLoading}');
     expect(rewardsScreen).toContain('const canReviewClaim = Number(claim.userId) !== Number(user?.id);');
     expect(rewardsScreen).toContain("t('rewards.selfClaimReviewBlocked')");
-    expect(rewardsScreen).toContain('utils.rewards.myPoints.invalidate();');
+    expect(rewardsScreen).toMatch(/utils\.rewards\.myPoints\.invalidate\(input\)/);
   });
 });

@@ -766,8 +766,12 @@ export type AppRouter = {
       query: (input: { familyId: number }) => Promise<Array<{ userId: number; name: string; totalPoints: number }>>;
     };
     myEarnedRewards: {
-      useQuery: (opts?: any) => any;
-      query: () => Promise<Array<{ id: number; rewardId: number; rewardName: string; pointsCost: number; status: string; claimedAt: string }>>;
+      useQuery: (input?: { familyId: number }, opts?: any) => any;
+      query: (input?: { familyId: number }) => Promise<Array<{
+        id: number; rewardId: number | null; pointsEarned: number; earnedAt: string;
+        rewardName: string | null; rewardDescription: string | null; rewardIcon: string | null;
+        approvedByName: string | null;
+      }>>;
     };
     create: {
       useMutation: (opts?: any) => any;
@@ -804,6 +808,31 @@ export type AppRouter = {
     statistics: {
       useQuery: (opts?: any) => any;
       query: () => Promise<{ totalPoints: number; rank: number; totalMembers: number; badgesEarned: number }>;
+    };
+  };
+  rewardClaims: {
+    listByUser: {
+      useQuery: (input?: { familyId: number }, opts?: any) => any;
+      query: (input?: { familyId: number }) => Promise<Array<{
+        id: number; userId: number; familyId: number; rewardId: number;
+        status: string; claimedAt: string;
+      }>>;
+    };
+    listPending: {
+      useQuery: (input: { familyId: number }, opts?: any) => any;
+      query: (input: { familyId: number }) => Promise<any[]>;
+    };
+    claim: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { rewardId: number; familyId: number }) => Promise<any>;
+    };
+    approve: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { claimId: number; reviewComment?: string }) => Promise<any>;
+    };
+    reject: {
+      useMutation: (opts?: any) => any;
+      mutate: (input: { claimId: number; reviewComment?: string }) => Promise<any>;
     };
   };
   members: {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Alert, Modal,
@@ -60,9 +60,17 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const [formPoints, setFormPoints] = useState("10");
   const [formIcon, setFormIcon] = useState("gift");
 
-  const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { activeFamilyId: ctxFamilyId, isReady, isCircleTransitioning } = useFamily();
   const { data: families } = trpc.family.list.useQuery();
   const activeFamilyId = ctxFamilyId ?? (families as any[])?.[0]?.id ?? 0;
+  // Ces historiques sont familiaux : jamais la première famille ni une clé globale.
+  const historyFamilyId = ctxFamilyId ?? 0;
+  const historyEnabled = historyFamilyId > 0 && isReady && !isCircleTransitioning;
+  const mutationScopeRef = useRef<{ userId?: number; familyId: number } | null>(null);
+  mutationScopeRef.current = { userId: user?.id, familyId: historyFamilyId };
+  useEffect(() => () => { mutationScopeRef.current = null; }, []);
+  const canInvalidate = (origin: { userId?: number; familyId: number } | undefined | null) =>
+    !!origin?.userId && origin.familyId > 0 && origin.userId === mutationScopeRef.current?.userId;
 
   // isAdmin : user cache (dispo immédiatement) + freshMe comme confirmation après chargement
   const { data: freshMe } = trpc.auth.me.useQuery(undefined, { staleTime: 30_000 });
@@ -91,8 +99,12 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId }
   );
   const { data: myBadges = [] } = trpc.badges.myBadges.useQuery();
-  const { data: earnedRewards = [] } = trpc.rewards.myEarnedRewards.useQuery();
-  const { data: myClaims = [] } = trpc.rewardClaims.listByUser.useQuery();
+  const { data: earnedRewards = [] } = trpc.rewards.myEarnedRewards.useQuery(
+    { familyId: historyFamilyId }, { enabled: historyEnabled }
+  );
+  const { data: myClaims = [] } = trpc.rewardClaims.listByUser.useQuery(
+    { familyId: historyFamilyId }, { enabled: historyEnabled }
+  );
   const { data: pendingClaims = [] } = trpc.rewardClaims.listPending.useQuery(
     { familyId: activeFamilyId }, { enabled: !!activeFamilyId && isAdmin, staleTime: 0, refetchOnMount: true }
   );
@@ -101,34 +113,52 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
   const utils = trpc.useUtils();
 
   const claimMutation = trpc.rewardClaims.claim.useMutation({
-    onSuccess: () => {
-      utils.rewardClaims.listByUser.invalidate();
-      utils.rewardClaims.listPending.invalidate();
-      utils.rewards.list.invalidate();
+    onMutate: ({ familyId }: { familyId: number }) => ({ ...mutationScopeRef.current, familyId }),
+    onSuccess: (_data: any, _variables: any, origin: any) => {
+      if (!canInvalidate(origin)) return;
+      const input = { familyId: origin.familyId };
+      utils.rewardClaims.listByUser.invalidate(input);
+      utils.rewardClaims.listPending.invalidate(input);
+      utils.rewards.list.invalidate(input);
+      if (origin.familyId !== mutationScopeRef.current?.familyId) return;
       Alert.alert("✅", "Réclamation envoyée ! En attente d'approbation.");
     },
     onError: (e: any) => Alert.alert("Erreur", e.message || "Erreur lors de la réclamation")
   });
   const approveMutation = trpc.rewardClaims.approve.useMutation({
-    onSuccess: () => {
-      utils.rewardClaims.listPending.invalidate();
-      utils.rewardClaims.listByUser.invalidate();
+    onMutate: () => mutationScopeRef.current,
+    onSuccess: (_data: any, _variables: any, origin: any) => {
+      if (!canInvalidate(origin)) return;
+      const input = { familyId: origin.familyId };
+      utils.rewardClaims.listPending.invalidate(input);
+      utils.rewardClaims.listByUser.invalidate(input);
       utils.badges.myBadges.invalidate();
-      utils.rewards.familyPoints.invalidate();
-      utils.rewards.myPoints.invalidate();
-      utils.rewards.list.invalidate();
-      utils.rewards.myEarnedRewards.invalidate();
+      utils.rewards.familyPoints.invalidate(input);
+      utils.rewards.myPoints.invalidate(input);
+      utils.rewards.list.invalidate(input);
+      utils.rewards.myEarnedRewards.invalidate(input);
+      if (origin.familyId !== mutationScopeRef.current?.familyId) return;
       Alert.alert("🎉", "Réclamation approuvée !");
     },
     onError: (e: any) => Alert.alert("Erreur", e.message || "Erreur")
   });
   const rejectMutation = trpc.rewardClaims.reject.useMutation({
-    onSuccess: () => { utils.rewardClaims.listPending.invalidate(); Alert.alert("✅", "Réclamation rejetée."); },
+    onMutate: () => mutationScopeRef.current,
+    onSuccess: (_data: any, _variables: any, origin: any) => {
+      if (!canInvalidate(origin)) return;
+      utils.rewardClaims.listPending.invalidate({ familyId: origin.familyId });
+      utils.rewardClaims.listByUser.invalidate({ familyId: origin.familyId });
+      if (origin.familyId !== mutationScopeRef.current?.familyId) return;
+      Alert.alert("✅", "Réclamation rejetée.");
+    },
     onError: (e: any) => Alert.alert("Erreur", e.message || "Erreur")
   });
   const createMutation = trpc.rewards.create.useMutation({
-    onSuccess: () => {
-      utils.rewards.list.invalidate();
+    onMutate: () => mutationScopeRef.current,
+    onSuccess: (_data: any, _variables: any, origin: any) => {
+      if (!canInvalidate(origin)) return;
+      utils.rewards.list.invalidate({ familyId: origin.familyId });
+      if (origin.familyId !== mutationScopeRef.current?.familyId) return;
       setCreateOpen(false);
       setFormName(""); setFormDesc(""); setFormPoints("10"); setFormIcon("gift");
       Alert.alert("✅", "Récompense créée !");
@@ -136,18 +166,26 @@ export default function RewardsScreen({ onNavigate, onPrevious, onNext }: Reward
     onError: (e: any) => Alert.alert("Erreur", e.message || "Erreur")
   });
   const deleteMutation = trpc.rewards.delete.useMutation({
-    onSuccess: () => { utils.rewards.list.invalidate(); Alert.alert("✅", "Récompense supprimée."); },
+    onMutate: () => mutationScopeRef.current,
+    onSuccess: (_data: any, _variables: any, origin: any) => {
+      if (!canInvalidate(origin)) return;
+      utils.rewards.list.invalidate({ familyId: origin.familyId });
+      if (origin.familyId !== mutationScopeRef.current?.familyId) return;
+      Alert.alert("✅", "Récompense supprimée.");
+    },
     onError: (e: any) => Alert.alert("Erreur", e.message || "Erreur")
   });
 
   const onRefresh = async () => {
     setRefreshing(true);
+    const input = { familyId: historyFamilyId };
+    if (!historyEnabled) { setRefreshing(false); return; }
     await Promise.all([
-      utils.rewards.list.invalidate(),
+      utils.rewards.list.invalidate(input),
       utils.badges.myBadges.invalidate(),
-      utils.rewards.myEarnedRewards.invalidate(),
-      utils.rewards.myPoints.invalidate(),
-      utils.rewardClaims.listByUser.invalidate(),
+      utils.rewards.myEarnedRewards.invalidate(input),
+      utils.rewards.myPoints.invalidate(input),
+      utils.rewardClaims.listByUser.invalidate(input),
     ]);
     setRefreshing(false);
   };
