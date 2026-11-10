@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const calendar = readFileSync(new URL('./CalendarScreen.tsx', import.meta.url), 'utf8');
+const calendarViewModel = readFileSync(new URL('../lib/calendarViewModel.js', import.meta.url), 'utf8');
 const quickCreate = readFileSync(new URL('../components/QuickCreateModal.tsx', import.meta.url), 'utf8');
 
 describe('Calendrier — récurrence native', () => {
@@ -13,9 +14,18 @@ describe('Calendrier — récurrence native', () => {
   });
 
   it('affiche les occurrences natives dans les vues calendrier et agenda', () => {
-    expect(calendar).toContain('isRecurringEventOnDay(start, event.recurrence, day, recurrenceEndDate)');
-    expect(calendar).toContain('getNextRecurringEventDate(');
-    expect(calendar).toContain('const weekDays = eachDayOfInterval');
+    expect(calendarViewModel).toMatch(/from\s+['"](?:\.\/|\.\.\/lib\/)eventRecurrence\.js['"]/);
+    expect(calendarViewModel).toMatch(/isRecurringEventOnDay\s*\(/);
+    expect(calendarViewModel).toMatch(/getNextRecurringEventDate\s*\(/);
+    expect(calendarViewModel).toContain('hasNativeRecurrence');
+    expect(calendarViewModel).toContain('recurrenceEnd');
+    expect(calendar).toMatch(/buildCalendarDayIndex\s*\(/);
+    expect(calendar).toMatch(/\.byDay\s*\[/);
+    expect(calendar).toMatch(/\.byDayHour\s*\[/);
+    expect(calendar).toMatch(/buildCalendarAgenda\s*\(/);
+    expect(calendar).toContain('const weekDays = useMemo(() => {');
+    expect(calendar).toContain('return eachDayOfInterval({');
+    expect(calendar).toContain('weekDays.map(({ day }) => (');
     expect(calendar).toContain('const occurrenceStart = hasNativeRecurrence(event)');
   });
 

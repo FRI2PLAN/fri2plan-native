@@ -1,5 +1,18 @@
 # FRI2PLAN React Native - TODO
 
+## Calendrier — réactivité locale, Preview uniquement, 9 novembre 2026
+- [x] Clone propre puis fetch GitHub ; base exacte de la Preview publiée : fe90ce1fb69456386939e2940f5b1205e74e690f. Branche locale preview/calendar-local-render-performance, aucun commit/push/OTA.
+- [x] Deux audits lecture seule : le clic jour et les flèches jour/semaine/mois ne déclenchent pas de requête date ; les recalculs locaux redondants peuvent expliquer l'attente Android, sans profil appareil ni durée native mesurée.
+- [x] Préparer seulement CalendarScreen et un helper pur calendarViewModel : dates/entrées stables, index visibles bornés, Mois indépendant de la sélection, index Jour/Semaine partagés, Agenda uniquement actif, détails conditionnés avec fermeture conservée, flèches fonctionnelles.
+- [x] Horloge locale minute/minuit/retour AppState et entrée Agenda pour ne pas figer aujourd'hui ou les prochaines occurrences après mémoïsation ; aucun appel réseau ajouté.
+- [x] Tests ciblés sur seconde copie : 294/294 réussis sur 56 fichiers, dont 34 nouveaux tests helpers/intégration/callbacks. Sessions, Notes, Points, swipe, sources externes, récurrences, multi-jours, UTC/local/DST et i18n couverts par les régressions ; ce ne sont pas des tests UI Android.
+- [x] Suite complète comparée à pristine : 306 tests passent après patch contre 272 avant ; mêmes quatre assertions en échec et même suite serveur-relative indisponible, soit les cinq fichiers préexistants, aucune nouvelle régression. Aucun de ces cinq fichiers corrigé ici.
+- [x] Exports Android puis iOS séparés réussis vers DEV, cache vidé et --no-bytecode ; API DEV présente et API Production absente dans chacun des deux bundles. Dépendances existantes copiées physiquement dans la validation pour Metro, aucune installation ni modification de manifeste/lockfile.
+- [x] Patch final recontrôlé par git apply --check sur une copie propre et git diff --check ; app.json/runtime/builds/manifests/lockfiles, Dashboard, sessions et moteur eventRecurrence.js préservés. Aucun commit/push/publication.
+- [ ] Vérifier la copie Windows et revalider avant toute publication ; Android Preview seulement après accord distinct, puis test réel Android à cache constant et réseau lent/hors ligne. Aucun refresh manuel requis pour naviguer dans les données du cercle déjà chargées.
+- [ ] Tester minuit/retour arrière-plan, taps successifs et fin de mois, filtres inchangés, ouverture/fermeture/réouverture des détails, création/édition/suppression et changement de cercle. iOS Preview et Production restent non autorisées.
+- [ ] Hors périmètre : participants, suppression de cercle, fraîcheur réseau générale, warmup/rollbacks décrits dans l'audit. Le correctif n'ajoute pas de garantie de synchronisation temps réel.
+
 ## Points par cercle — Preview uniquement, 8 novembre 2026
 - [x] Bases propres clonées avec gh : mobile 470f6ab, serveur 42b6f97 ; correctifs Notes et session conservés. Branche locale preview/fix-points-family-isolation.
 - [x] Notes : isolation et permissions testées par l'utilisateur sur Android et iOS Preview ; reprise historique et déploiement Notes Production toujours en attente. Suivi détaillé /home/ubuntu/fri2plan-notes-isolation-20261105/mobile/todo.md.
