@@ -373,37 +373,69 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         copyToCacheDirectory: true});
       if (result.canceled) return;
       setIsImporting(true);
-      const file = result.assets[0];
+      const file = result.assets?.[0];
+      if (!file || typeof file.uri !== 'string' || !file.uri.trim()) {
+        throw new Error('ICS file unavailable');
+      }
       const response = await fetch(file.uri);
+      if (response.ok === false) throw new Error('ICS file read failed');
       const icsContent = await response.text();
       const eventsToImport = parseICS(icsContent);
+      if (eventsToImport.length === 0) {
+        setImportModalOpen(false);
+        Alert.alert(
+          t('calendar.importEmptyTitle'),
+          t('calendar.importEmptyMessage', { count: 0 }),
+          [{ text: 'OK' }]
+        );
+        return;
+      }
       let successCount = 0;
+      let failedCount = 0;
       for (const event of eventsToImport) {
         try {
           // skipNotification=true : pas de notif individuelle par événement
           await createEvent.mutateAsync({ ...event, skipNotification: true });
           successCount++;
-        } catch {}
+        } catch {
+          failedCount++;
+        }
       }
-      setIsImporting(false);
       setImportModalOpen(false);
-      refetch();
-      // Notification groupée unique à la fin de l'import
+      const resultKind = successCount === 0 ? 'Failed' : failedCount > 0 ? 'Partial' : 'Success';
+      const resultTitle = t(`calendar.import${resultKind}Title`);
+      const resultMessage = t(`calendar.import${resultKind}Message`, { count: successCount, failedCount });
+      // Le bilan ne dépend ni de la revalidation ni de la notification groupée.
+      Alert.alert(resultTitle, resultMessage, [{ text: 'OK' }]);
       if (successCount > 0) {
-        trpc.notifications.createForSelf.mutate({
-          type: 'event_created',
-          title: t('calendar.importSuccessTitle') || 'Import ICS terminé',
-          message: t('calendar.importSuccessMessage', { count: successCount }) || `${successCount} événement(s) importé(s) avec succès.`,
-        }).catch(() => {});
+        try {
+          void Promise.resolve(refetch()).catch(() => {
+            console.warn('ICS import refresh unavailable');
+          });
+        } catch {
+          console.warn('ICS import refresh unavailable');
+        }
+        // Une seule notification, sans attendre le réseau et sans modifier le bilan.
+        try {
+          void Promise.resolve(createImportNotification.mutateAsync({
+            type: 'event_created',
+            title: resultTitle,
+            message: resultMessage,
+          })).catch(() => {
+            console.warn('ICS import notification unavailable');
+          });
+        } catch {
+          console.warn('ICS import notification unavailable');
+        }
       }
+    } catch {
       Alert.alert(
-        t('calendar.importSuccessTitle') || 'Import réussi',
-        `${successCount} événement(s) importé(s).`,
+        t('calendar.importReadErrorTitle'),
+        t('calendar.importReadErrorMessage', { count: 0 }),
         [{ text: 'OK' }]
       );
-    } catch (error) {
+    } finally {
       setIsImporting(false);
-      Alert.alert('Erreur', "Impossible d'importer le fichier.", [{ text: 'OK' }]);
     }
   };
 
@@ -550,6 +582,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const refetch = eventsQuery.refetch;
 
   const createEvent = trpc.events.create.useMutation();
+  const createImportNotification = (trpc as any).notifications.createForSelf.useMutation();
   const updateEvent = trpc.events.update.useMutation();
   const deleteEvent = trpc.events.delete.useMutation();
 

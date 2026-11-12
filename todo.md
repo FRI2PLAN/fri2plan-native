@@ -1,5 +1,19 @@
 # FRI2PLAN React Native - TODO
 
+## Import ICS — correctif de résultat, Preview uniquement, 12 novembre 2026
+- [x] Autorisation utilisateur : préparer uniquement le correctif mobile Preview. Clone GitHub propre puis fetch ; base publiée e27e2e62ec6f7edfd2723034d846463b96efddbc, branche locale preview/fix-ics-import-result. Aucun commit/push/OTA/DB à cette étape.
+- [x] État Calendrier courant : e27e2e6 publié le 10 novembre en Preview Android et iOS, runtime 1.1.7, groupe d57278a3-a6f7-4398-9e15-eff57e659afa. Android utilisateur : réactif dès l'ouverture, cartes aux bonnes dates ; sources externes avec synchronisation active et iOS appareil non validés. Production non autorisée.
+- [x] Diagnostic DEV : fichier de trois événements [ICS-DEV-20261112] lu et importé sous Jack (60001), Test (1). Lecture utilisateur : ids 605/607/609, UID ICS et horaires 09:00/10:00/11:00 conservés ; événements également visibles dans l'application malgré « Impossible d'importer le fichier ».
+- [x] Erreur reproduite hors ligne avec le vrai createTRPCReact : appel direct notifications.createForSelf.mutate invalide (TypeError hooks[lastArg] is not a function). Erreur après insertion capturée par le catch global, d'où le faux échec.
+- [x] Baseline pristine e27e2e6 : 306 tests réussis, quatre assertions préexistantes en échec et une suite serveur-relative indisponible (cinq fichiers). Ne pas intégrer ces autres sujets au patch.
+- [x] Correctif minimal : hook createForSelf.useMutation, notification groupée non bloquante/non fatale, refetch utile indépendant du résultat, comptages importés/échoués fidèles, messages traduits dans les cinq langues et spinner nettoyé.
+- [x] 33 tests du vrai handler extrait : succès complet, notification qui lève/rejette/reste en attente, refetch qui échoue, import partiel/totalement rejeté, vide, annulation, lecture invalide et cinq langues. Ce n'est pas un montage UI Android.
+- [x] Patch appliqué après git apply --check à une seconde copie propre. Régressions ciblées : 327/327 réussies sur 57 fichiers. Suite complète : 339 réussis, mêmes quatre assertions en échec et même suite indisponible que la baseline, aucune nouvelle régression. git diff --check réussi.
+- [x] Exports Android puis iOS séparés DEV/cache vidé/--no-bytecode réussis ; aucun changement de manifeste ou lockfile. Contrôle tRPC DEV présent/Production absent, pas une validation des anciennes URLs REST Google.
+- [ ] Revalider sous Windows puis publication Android Preview seulement après accord distinct. Préserver parser/dates/UID/récurrences externes, calendarViewModel, gestes Dashboard, sessions, Notes, Points, Google, API, serveur, runtime/builds.
+- [ ] Préférence utilisateur pour import/abonnement : nettoyage de l'environnement DEV après corrections avant retest. Confirmer le scope et le payload avant tout SQL destructif ; ne pas purger implicitement comptes, cercles, Notes, Points ou Production. Aucune donnée supprimée pendant la préparation.
+- [ ] Après import fiable, tester abonnement URL ICS fictif avec sync réelle dans DEV fixe https://fri2plan-server-production-f184.up.railway.app/ ; Google reste séparé : start/poll/subscribe codés vers app.fri2plan.ch, isolation DEV à contrôler avant connexion. Pas de connexion personnelle.
+
 ## Calendrier — réactivité locale, Preview uniquement, 9 novembre 2026
 - [x] Clone propre puis fetch GitHub ; base exacte de la Preview publiée : fe90ce1fb69456386939e2940f5b1205e74e690f. Branche locale preview/calendar-local-render-performance, aucun commit/push/OTA.
 - [x] Deux audits lecture seule : le clic jour et les flèches jour/semaine/mois ne déclenchent pas de requête date ; les recalculs locaux redondants peuvent expliquer l'attente Android, sans profil appareil ni durée native mesurée.
