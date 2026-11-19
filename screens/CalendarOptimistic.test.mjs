@@ -11,10 +11,13 @@ describe('Calendrier — réponse visuelle immédiate', () => {
     expect(screen).toContain('event.id === optimisticId ? { ...event, id: result.eventId, optimistic: false }');
   });
 
-  it('modifie et supprime localement, puis restaure la liste en cas d’échec', () => {
-    expect(screen).toContain('const previousEvents = calendarUtils.events.list.getData(undefined)');
-    expect(screen).toContain('calendarUtils.events.list.setData(undefined, previousEvents)');
-    expect(screen).toContain('previous?.filter(event => event.id !== selectedEvent.id)');
+  it('modifie et supprime localement, puis réconcilie seulement l’objet sans restaurer un cache périmé', () => {
+    expect(screen).toContain('const previousEvent = calendarUtils.events.list.getData(undefined)?.find');
+    expect(screen).toContain('previous?.filter(event => event.id !== eventId)');
+    expect(screen).toContain('rollbackEventUpdate(events, previousEvent, optimisticEvent)');
+    expect(screen).toContain('rollbackEventDelete(events, previousEvent, optimisticList)');
+    expect(screen).toContain('if (isEventNotFound(error))');
+    expect(screen).not.toContain('calendarUtils.events.list.setData(undefined, previousEvents)');
   });
 
   it('ouvre et ferme la modale sans attendre le nettoyage du formulaire', () => {

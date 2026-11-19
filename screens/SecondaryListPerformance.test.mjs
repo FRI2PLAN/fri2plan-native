@@ -11,7 +11,8 @@ describe('Écrans secondaires — listes fluides', () => {
   });
 
   it('mémorise les demandes filtrées selon les actions visibles', () => {
-    expect(requests).toContain("import { useMemo, useState } from 'react'");
+    expect(requests).toMatch(/import\s*\{[^}]*\buseMemo\b[^}]*\}\s*from\s*'react'/);
+    expect(requests).toMatch(/import\s*\{[^}]*\buseState\b[^}]*\}\s*from\s*'react'/);
     expect(requests).toContain('const filteredRequests = useMemo');
   });
 

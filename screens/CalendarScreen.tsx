@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, addDays, subDays, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { fr, de, enUS, es, it } from 'date-fns/locale';
 import { trpc } from '../lib/trpc';
+import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
+import { createRequestCalendarScopeGuard, requestCalendarScope, resolveScopedSelection, isEventNotFound, rollbackEventUpdate, rollbackEventDelete, reconcileRequestCalendar } from '../lib/requestCalendarReconciliation.js';
 import { useAuth } from '../contexts/AuthContext';
 import { useFamily } from '../contexts/FamilyContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -83,7 +85,12 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   ];
   const styles = useMemo(() => getStyles(isDark), [isDark]);
   const { user } = useAuth();
-  const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { activeFamilyId: ctxFamilyId, isReady, isCircleTransitioning } = useFamily();
+  const eventQueryClient = useQueryClient();
+  const isRestoring = useIsRestoring();
+  const scopeGuard = useRef(createRequestCalendarScopeGuard()).current;
+  const scopeToken = scopeGuard.update(requestCalendarScope(user?.id, ctxFamilyId, isReady, isCircleTransitioning));
+  useEffect(() => () => { scopeGuard.update(null); }, [scopeGuard]);
   const { hasPremium, isTrialActive } = useSubscription();
   const isFree = !hasPremium && !isTrialActive;
   const { data: families } = trpc.family.list.useQuery();
@@ -123,7 +130,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [subscribeUrl, setSubscribeUrl] = useState('');
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [eventSnapshot, setSelectedEvent] = useState<any>(null);
+  const eventOpening = useRef<any>(null);
+  const eventOpeningSequence = useRef(0);
+  const editCleanupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [googleCalendarModal, setGoogleCalendarModal] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
@@ -569,6 +579,14 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   const eventsQuery = trpc.events.list.useQuery(undefined, { refetchOnWindowFocus: false });
 
   const isLoadingEvents = eventsQuery.isLoading;
+  const eventsAuthoritative = eventsQuery.isSuccess && !eventsQuery.isFetching && !eventsQuery.isPlaceholderData && Array.isArray(eventsQuery.data);
+  const eventScopeCurrent = scopeGuard.isCurrent(eventOpening.current?.origin);
+  const selectedEvent = resolveScopedSelection(eventSnapshot, eventsQuery.data, eventsAuthoritative && !isRestoring, eventScopeCurrent);
+  const eventActionable = !!selectedEvent && eventScopeCurrent && eventsAuthoritative && !isRestoring;
+  useEffect(() => {
+    if (eventSnapshot && !selectedEvent && eventOpening.current) closeEditModal();
+  }, [scopeToken, selectedEvent, eventSnapshot]);
+  useEffect(() => () => { if (editCleanupTimer.current) clearTimeout(editCleanupTimer.current); }, []);
   const preparedEvents = useMemo(
     () => prepareCalendarEvents(eventsQuery.data || []),
     [eventsQuery.data, user?.id, ctxFamilyId, activeFamily?.id],
@@ -974,7 +992,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const handleUpdateEvent = async () => {
-    if (!selectedEvent) return;
+    if (!scopeGuard.isCurrent(eventOpening.current?.origin) || !eventActionable || updateEvent.isPending || deleteEvent.isPending) return;
+    const opening = eventOpening.current;
+    const origin = opening.origin;
+    const eventId = selectedEvent.id;
     try {
       const dateStr = format(eventDate, 'yyyy-MM-dd');
       const startDateTime = new Date(`${dateStr}T${format(startTimeDate, 'HH:mm')}:00`);
@@ -985,7 +1006,7 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
       const endDateUtc = endDateTime.toISOString().slice(0, 19).replace('T', ' ');
       const isExternallyManagedEvent = Boolean(selectedEvent.icalUid || selectedEvent.calendarSubscriptionId || selectedEvent.syncedCalendarId);
       const payload = {
-        eventId: selectedEvent.id,
+        eventId,
         title: formData.title,
         description: formData.description,
         startDate: startDateUtc,
@@ -997,16 +1018,34 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
         isPrivate: formData.isPrivate ? 1 : 0,
         isUtc: 1,
       };
-      const previousEvents = calendarUtils.events.list.getData(undefined);
-      calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.map(event =>
-        event.id === selectedEvent.id ? { ...event, ...payload, endDate: endDateUtc } : event,
-      ));
-      closeEditModal();
+      const previousEvent = calendarUtils.events.list.getData(undefined)?.find((event: any) => event.id === eventId);
+      if (!previousEvent || !scopeGuard.isCurrent(origin) || eventOpening.current !== opening) return;
+      let optimisticEvent: any;
+      calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.map(event => {
+        if (event.id !== eventId) return event;
+        optimisticEvent = { ...event, ...payload, endDate: endDateUtc };
+        return optimisticEvent;
+      }));
+      // Capture the actual cache object (TanStack may structurally share data).
+      optimisticEvent = calendarUtils.events.list.getData(undefined)?.find((event: any) => event.id === eventId);
+      const optimisticRevision = eventQueryClient.getQueryState(calendarUtils.events.list.queryOptions(undefined).queryKey)?.dataUpdateCount;
+      const closedOpening = closeEditModal();
       updateEvent.mutate(payload, {
-        onSuccess: () => calendarUtils.events.list.invalidate(),
-        onError: (error: any) => {
-          calendarUtils.events.list.setData(undefined, previousEvents);
-          Alert.alert(t('common.error'), error?.message || t('calendar.saveError'));
+        onSuccess: async () => {
+          if (!scopeGuard.isCurrent(origin)) return;
+          await revalidateEvents(origin);
+        },
+        onError: async (error: any) => {
+          if (!scopeGuard.isCurrent(origin)) return;
+          if (isEventNotFound(error)) {
+            calendarUtils.events.list.setData(undefined, (events: any[] | undefined) => events?.filter(event => event.id !== eventId));
+            if (eventOpening.current?.eventId === eventId) closeEditModal();
+          } else {
+            const revision = eventQueryClient.getQueryState(calendarUtils.events.list.queryOptions(undefined).queryKey)?.dataUpdateCount;
+            if (revision === optimisticRevision) calendarUtils.events.list.setData(undefined, (events: any[] | undefined) => rollbackEventUpdate(events, previousEvent, optimisticEvent));
+          }
+          if (!isEventNotFound(error) && eventOpeningSequence.current === closedOpening) Alert.alert(t('common.error'), error?.message || t('calendar.saveError'));
+          await revalidateEvents(origin);
         },
       });
     } catch (error) {
@@ -1017,7 +1056,10 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
   };
 
   const handleDeleteEvent = () => {
-    if (!selectedEvent) return;
+    if (!scopeGuard.isCurrent(eventOpening.current?.origin) || !eventActionable || updateEvent.isPending || deleteEvent.isPending) return;
+    const opening = eventOpening.current;
+    const origin = opening.origin;
+    const eventId = selectedEvent.id;
     const isRecurringSeries = hasNativeRecurrence(selectedEvent);
     Alert.alert(
       isRecurringSeries ? t('calendar.deleteSeriesTitle') : t('calendar.deleteEventTitle'),
@@ -1030,14 +1072,29 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            const previousEvents = calendarUtils.events.list.getData(undefined);
-            calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.filter(event => event.id !== selectedEvent.id));
-            closeEditModal();
-            deleteEvent.mutate({ eventId: selectedEvent.id }, {
-              onSuccess: () => calendarUtils.events.list.invalidate(),
-              onError: (error: any) => {
-                calendarUtils.events.list.setData(undefined, previousEvents);
-                Alert.alert(t('common.error'), error?.message || t('calendar.deleteError'));
+            if (!scopeGuard.isCurrent(origin) || eventOpening.current !== opening || updateEvent.isPending || deleteEvent.isPending) return;
+            const previousEvent = calendarUtils.events.list.getData(undefined)?.find((event: any) => event.id === eventId);
+            if (!previousEvent) { closeEditModal(); void revalidateEvents(origin); return; }
+            calendarUtils.events.list.setData(undefined, (previous: any[] | undefined) => previous?.filter(event => event.id !== eventId));
+            const optimisticList = calendarUtils.events.list.getData(undefined);
+            const optimisticRevision = eventQueryClient.getQueryState(calendarUtils.events.list.queryOptions(undefined).queryKey)?.dataUpdateCount;
+            const closedOpening = closeEditModal();
+            deleteEvent.mutate({ eventId }, {
+              onSuccess: async () => {
+                if (!scopeGuard.isCurrent(origin)) return;
+                await revalidateEvents(origin);
+              },
+              onError: async (error: any) => {
+                if (!scopeGuard.isCurrent(origin)) return;
+                if (isEventNotFound(error)) {
+                  calendarUtils.events.list.setData(undefined, (events: any[] | undefined) => events?.filter(event => event.id !== eventId));
+                  if (eventOpening.current?.eventId === eventId) closeEditModal();
+                } else {
+                  const revision = eventQueryClient.getQueryState(calendarUtils.events.list.queryOptions(undefined).queryKey)?.dataUpdateCount;
+                  if (revision === optimisticRevision) calendarUtils.events.list.setData(undefined, (events: any[] | undefined) => rollbackEventDelete(events, previousEvent, optimisticList));
+                }
+                if (!isEventNotFound(error) && eventOpeningSequence.current === closedOpening) Alert.alert(t('common.error'), error?.message || t('calendar.deleteError'));
+                await revalidateEvents(origin);
               },
             });
           },
@@ -1058,34 +1115,52 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
 
   // La fermeture doit rendre le calendrier tout de suite. Le reset du formulaire
   // est volontairement différé pour ne pas bloquer l’animation native de la modale.
+  const revalidateEvents = (origin: any) => reconcileRequestCalendar(
+    calendarUtils, origin, (token: any) => scopeGuard.isCurrent(token), { eventsOnly: true },
+  );
   const closeEditModal = () => {
+    const closedOpening = ++eventOpeningSequence.current;
+    eventOpening.current = null;
     setEditModalOpen(false);
-    setTimeout(() => {
+    if (editCleanupTimer.current) clearTimeout(editCleanupTimer.current);
+    editCleanupTimer.current = setTimeout(() => {
+      if (eventOpeningSequence.current !== closedOpening) return;
+      editCleanupTimer.current = null;
       setSelectedEvent(null);
       resetForm();
     }, 260);
+    return closedOpening;
   };
 
   const openEditModal = (event: any) => {
+    if (!scopeGuard.isCurrent(scopeToken)) return;
+    // Seul le Calendrier intime de l'auteur suit l'utilisateur entre ses cercles.
+    const isOwnIntimateEvent = (event.isPrivate === 1 || event.isPrivate === true) && event.userId === scopeToken.userId;
+    if (event.familyId != null && event.familyId !== scopeToken.familyId && !isOwnIntimateEvent) return;
+    if (eventsAuthoritative && !isRestoring && !eventsQuery.data?.some((row: any) => row.id === event.id)) return;
+    if (editCleanupTimer.current) { clearTimeout(editCleanupTimer.current); editCleanupTimer.current = null; }
+    const opening = { origin: scopeToken, eventId: event.id, opening: ++eventOpeningSequence.current };
+    eventOpening.current = opening;
     setSelectedEvent(event);
     setEditModalOpen(true);
-    // Ouvre immédiatement la modale ; les champs se remplissent au frame suivant.
-    // Cela évite que les calculs de date retardent son apparition perceptible.
+    // Open immediately, then fill the fields at the next frame, guarded against
+    // a closed/reopened detail or an account/circle transition.
     requestAnimationFrame(() => {
-    const startTime = parseLocalDate(event.startTime, !!event.isUtc);
-    const endTime = parseLocalDate(event.endTime, !!event.isUtc);
-    setEventDate(startTime);
-    setStartTimeDate(startTime);
-    setEndTimeDate(endTime);
-    setFormData({
-      title: event.title,
-      description: event.description || '',
-      startTime: format(startTime, 'HH:mm'),
-      endTime: format(endTime, 'HH:mm'),
-      category: event.category || 'other',
-      recurrence: event.recurrence || 'none',
-      reminder: (event.reminderMinutes ?? event.reminder)?.toString() || defaultReminderStr,
-      isPrivate: event.isPrivate || false});
+      if (!scopeGuard.isCurrent(opening.origin) || eventOpening.current !== opening) return;
+      const startTime = parseLocalDate(event.startTime, !!event.isUtc);
+      const endTime = parseLocalDate(event.endTime, !!event.isUtc);
+      setEventDate(startTime);
+      setStartTimeDate(startTime);
+      setEndTimeDate(endTime);
+      setFormData({
+        title: event.title,
+        description: event.description || '',
+        startTime: format(startTime, 'HH:mm'),
+        endTime: format(endTime, 'HH:mm'),
+        category: event.category || 'other',
+        recurrence: event.recurrence || 'none',
+        reminder: (event.reminderMinutes ?? event.reminder)?.toString() || defaultReminderStr,
+        isPrivate: event.isPrivate || false});
     });
   };
 
@@ -1674,13 +1749,13 @@ export default function CalendarScreen({ onNavigate, onPrevious, onNext }: Calen
             )}
             {/* Boutons icônes : Supprimer | Annuler | Sauvegarder */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, paddingVertical: 16 }}>
-              <TouchableOpacity onPress={handleDeleteEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity onPress={handleDeleteEvent} disabled={!eventActionable || deleteEvent.isPending || updateEvent.isPending} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ fontSize: 24 }}>🗑️</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={closeEditModal} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#6b7280', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ fontSize: 22, color: '#fff', fontWeight: 'bold' }}>✕</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleUpdateEvent} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity onPress={handleUpdateEvent} disabled={!eventActionable || deleteEvent.isPending || updateEvent.isPending} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ fontSize: 24 }}>✓</Text>
               </TouchableOpacity>
             </View>

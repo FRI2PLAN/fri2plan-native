@@ -92,9 +92,13 @@ describe('Notes — structure de l’expérience isolée', () => {
   });
 
   it('maintient les autres mutations quick-create/preload sans scope Notes', () => {
-    for (const name of ['events', 'tasks', 'requests']) {
+    for (const name of ['events', 'tasks']) {
       expect(quick).toContain(`utils.${name}.list.invalidate(); handleClose();`);
     }
+    const requestMutation = between(quick, 'const createRequest =', 'const isPending =');
+    expect(requestMutation).toContain('reconcileRequestCalendar(utils, context.origin');
+    expect(requestMutation).toContain('requestGuard.isCurrent(context?.origin)');
+    expect(requestMutation).not.toMatch(/noteScope|noteGuard|notes\./);
     expect(quick).toContain('utils.budget.invalidate(); handleClose();');
     expect(prefetch).toContain('trpc.tasks.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN })');
     expect(prefetch).toContain('trpc.rewards.list.useQuery(undefined, { enabled: ready, staleTime: STALE_2MIN })');

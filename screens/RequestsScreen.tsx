@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, RefreshControl, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { useIsRestoring } from '@tanstack/react-query';
+import { createRequestCalendarScopeGuard, requestCalendarScope, requestCalendarMutationContext, resolveScopedSelection, reconcileRequestCalendar } from '../lib/requestCalendarReconciliation.js';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -69,7 +71,11 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   // États détail / commentaires
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [requestSnapshot, setSelectedRequest] = useState<any>(null);
+  const requestOpening = useRef<any>(null);
+  const createOpening = useRef<any>(null);
+  const openingSequence = useRef(0);
+  const actionOrigins = useRef(new WeakMap<object, any>()).current;
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [reviewComment, setReviewComment] = useState('');
   const [newComment, setNewComment] = useState('');
@@ -77,9 +83,14 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
 
   // Récupérer la famille
-  const { activeFamilyId: ctxFamilyId } = useFamily();
+  const { activeFamilyId: ctxFamilyId, isReady, isCircleTransitioning } = useFamily();
   const { data: families = [] } = trpc.family.list.useQuery();
   const activeFamilyId = ctxFamilyId ?? (families as any[])[0]?.id ?? 0;
+  const utils: any = trpc.useUtils();
+  const isRestoring = useIsRestoring();
+  const scopeGuard = useRef(createRequestCalendarScopeGuard()).current;
+  const scopeToken = scopeGuard.update(requestCalendarScope(user?.id, ctxFamilyId, isReady, isCircleTransitioning));
+  useEffect(() => () => { scopeGuard.update(null); }, [scopeGuard]);
 
   const { data: members = [] } = trpc.family.members.useQuery(
     { familyId: activeFamilyId },
@@ -90,10 +101,28 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
   const isParent = currentMember?.familyRole === 'admin';
 
   // Requêtes
-  const { data: requests = [], isLoading, refetch } = trpc.requests.list.useQuery(
+  const requestsQuery = trpc.requests.list.useQuery(
     { familyId: activeFamilyId },
-    { enabled: !!activeFamilyId }
+    { enabled: !!scopeToken }
   );
+  const { data: requests = [], isLoading, refetch } = requestsQuery;
+  const requestsAuthoritative = requestsQuery.isSuccess && !requestsQuery.isFetching && !requestsQuery.isPlaceholderData && Array.isArray(requestsQuery.data);
+  const requestScopeCurrent = scopeGuard.isCurrent(requestOpening.current?.origin);
+  const selectedRequest = resolveScopedSelection(requestSnapshot, requestsQuery.data, requestsAuthoritative && !isRestoring, requestScopeCurrent);
+  const requestActionable = !!selectedRequest && requestScopeCurrent && requestsAuthoritative && !isRestoring;
+
+  useEffect(() => {
+    if (requestSnapshot && !selectedRequest) {
+      requestOpening.current = null;
+      setDetailDialogOpen(false);
+      setSelectedRequest(null);
+    }
+    if (createOpening.current && !scopeGuard.isCurrent(createOpening.current.origin)) {
+      createOpening.current = null;
+      setCreateDialogOpen(false);
+      resetForm();
+    }
+  }, [scopeToken, selectedRequest, requestSnapshot]);
 
   // Commentaires
   const { data: comments = [], refetch: refetchComments } = trpc.requests.listComments.useQuery(
@@ -107,50 +136,117 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
     { enabled: !!activeFamilyId }
   );
 
-  const markCommentsRead = trpc.requests.markCommentsRead.useMutation();
-
-  // Mutations
-  const createRequest = trpc.requests.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setCreateDialogOpen(false);
-      resetForm();
-      Alert.alert(t('common.success'), t('requests.created'));
+  const markCommentsRead = trpc.requests.markCommentsRead.useMutation({
+    onMutate: (variables: any) => requestCalendarMutationContext(actionOrigins, variables, scopeGuard),
+    onSuccess: (_data: any, _variables: any, context: any) => {
+      if (scopeGuard.isCurrent(context?.origin)) {
+        void reconcileRequestCalendar(utils, context.origin, (origin: any) => scopeGuard.isCurrent(origin), { badgesOnly: true });
+      }
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.createError'))});
+  });
+
+  const reconcile = (context: any, options: any = {}) => reconcileRequestCalendar(
+    utils, context?.origin, (origin: any) => scopeGuard.isCurrent(origin), options,
+  );
+  const detailStillCurrent = (context: any) => scopeGuard.isCurrent(context?.origin) && requestOpening.current === context;
+  const createStillCurrent = (context: any) => scopeGuard.isCurrent(context?.origin) && createOpening.current === context;
+  const closeDetail = () => {
+    requestOpening.current = null;
+    setDetailDialogOpen(false);
+    setSelectedRequest(null);
+  };
+  const openCreate = () => {
+    if (!scopeGuard.isCurrent(scopeToken)) return;
+    createOpening.current = { origin: scopeToken, opening: ++openingSequence.current };
+    setCreateDialogOpen(true);
+  };
+  const closeCreate = () => {
+    createOpening.current = null;
+    setCreateDialogOpen(false);
+    resetForm();
+  };
+
+  // Business success is not changed into an error if the separate re-read fails.
+  const createRequest = trpc.requests.create.useMutation({
+    onMutate: (variables: any) => requestCalendarMutationContext(actionOrigins, variables, scopeGuard),
+    onSuccess: async (_data: any, _variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      if (createStillCurrent(context)) {
+        closeCreate();
+        Alert.alert(t('common.success'), t('requests.created'));
+      }
+      await reconcile(context);
+    },
+    onError: async (err: any, _variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      if (createStillCurrent(context)) Alert.alert(t('common.error'), err.message || t('requests.createError'));
+      await reconcile(context);
+    },
+  });
 
   const reviewRequest = trpc.requests.review.useMutation({
-    onSuccess: () => {
-      refetch();
-      setDetailDialogOpen(false);
-      setReviewComment('');
-      Alert.alert(t('common.success'), t('requests.reviewed'));
+    onMutate: (variables: any) => requestCalendarMutationContext(actionOrigins, variables, scopeGuard),
+    onSuccess: async (data: any, variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      if (detailStillCurrent(context)) {
+        closeDetail();
+        setReviewComment('');
+        Alert.alert(t('common.success'), t('requests.reviewed'));
+      }
+      await reconcile(context, {
+        requestId: variables.requestId,
+        removeLinked: variables.status === 'rejected',
+        deletedEventIds: data?.deletedEventIds ?? [],
+      });
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.reviewError'))});
+    onError: async (err: any, _variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      // Keep the entered comment; the re-read, not this error, determines status.
+      if (detailStillCurrent(context)) Alert.alert(t('common.error'), err.message || t('requests.reviewError'));
+      await reconcile(context);
+    },
+  });
 
   const deleteRequest = trpc.requests.delete.useMutation({
-    onSuccess: () => {
-      refetch();
-      setDetailDialogOpen(false);
-      Alert.alert(t('common.success'), t('requests.deleted'));
+    onMutate: (variables: any) => requestCalendarMutationContext(actionOrigins, variables, scopeGuard),
+    onSuccess: async (data: any, variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      if (detailStillCurrent(context)) {
+        closeDetail();
+        Alert.alert(t('common.success'), t('requests.deleted'));
+      }
+      await reconcile(context, { requestId: variables.requestId, removeLinked: true, deletedEventIds: data?.deletedEventIds ?? [] });
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.deleteError'))});
+    onError: async (err: any, _variables: any, context: any) => {
+      if (!scopeGuard.isCurrent(context?.origin)) return;
+      if (detailStillCurrent(context)) Alert.alert(t('common.error'), err.message || t('requests.deleteError'));
+      await reconcile(context);
+    },
+  });
 
   const addComment = trpc.requests.addComment.useMutation({
-    onSuccess: () => {
+    onMutate: (variables: any) => requestCalendarMutationContext(actionOrigins, variables, scopeGuard),
+    onSuccess: (_data: any, _variables: any, context: any) => {
+      if (!detailStillCurrent(context)) return;
       setNewComment('');
-      refetchComments();
+      void refetchComments();
     },
-    onError: (err: any) => Alert.alert(t('common.error'), err.message || t('requests.commentError'))});
+    onError: (err: any, _variables: any, context: any) => {
+      if (detailStillCurrent(context)) Alert.alert(t('common.error'), err.message || t('requests.commentError'));
+    },
+  });
 
   const resetForm = () => {
     setFormType('outing');
     setFormTitle('');
     setFormDescription('');
     setFormDate(undefined);
+    setShowDatePicker(false);
+    setShowTimePicker(false);
   };
 
   const handleCreate = () => {
+    if (!createStillCurrent(createOpening.current) || createRequest.isPending) return;
     if (!formTitle.trim()) {
       Alert.alert(t('common.error'), t('requests.titleRequired'));
       return;
@@ -159,50 +255,71 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       Alert.alert(t('common.error'), t('requests.dateRequired'));
       return;
     }
-    createRequest.mutate({
-      type: formType,
-      title: formTitle.trim(),
-      description: formDescription.trim() || undefined,
-      requestedDate: formDate});
+    const opening = createOpening.current;
+    const payload = { type: formType, title: formTitle.trim(), description: formDescription.trim() || undefined, requestedDate: formDate, familyId: opening.origin.familyId, expectedUserId: opening.origin.userId };
+    actionOrigins.set(payload, opening);
+    createRequest.mutate(payload);
   };
 
   const handleReview = (status: 'approved' | 'rejected') => {
-    if (!selectedRequest) return;
-    reviewRequest.mutate({
-      requestId: selectedRequest.id,
-      status,
-      reviewComment: reviewComment.trim() || undefined});
+    if (!detailStillCurrent(requestOpening.current) || !requestActionable || selectedRequest.status !== 'pending' || reviewRequest.isPending) return;
+    const opening = requestOpening.current;
+    const fresh = utils.requests.list.getData({ familyId: opening.origin.familyId })?.find((request: any) => request.id === selectedRequest.id);
+    if (!fresh || fresh.status !== 'pending') return;
+    const payload = { requestId: selectedRequest.id, status, reviewComment: reviewComment.trim() || undefined, familyId: opening.origin.familyId, expectedUserId: opening.origin.userId };
+    actionOrigins.set(payload, opening);
+    reviewRequest.mutate(payload);
   };
 
   const handleDelete = () => {
-    if (!selectedRequest) return;
+    if (!detailStillCurrent(requestOpening.current) || !requestActionable || deleteRequest.isPending) return;
+    const opening = requestOpening.current;
+    const requestId = selectedRequest.id;
     Alert.alert(
       t('requests.deleteConfirmTitle'),
       t('requests.deleteConfirmMessage'),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: () => deleteRequest.mutate({ requestId: selectedRequest.id }) }
+        { text: t('common.delete'), style: 'destructive', onPress: () => {
+          if (!detailStillCurrent(opening) || deleteRequest.isPending) return;
+          const fresh = utils.requests.list.getData({ familyId: opening.origin.familyId });
+          if (!fresh?.some((request: any) => request.id === requestId)) return;
+          const payload = { requestId, familyId: opening.origin.familyId, expectedUserId: opening.origin.userId };
+          actionOrigins.set(payload, opening);
+          deleteRequest.mutate(payload);
+        } }
       ]
     );
   };
 
   const handleOpenDetail = (request: any) => {
+    if (!scopeGuard.isCurrent(scopeToken) || request.familyId !== scopeToken.familyId) return;
+    const opening = { origin: scopeToken, requestId: request.id, opening: ++openingSequence.current };
+    requestOpening.current = opening;
+    setReviewComment('');
+    setNewComment('');
     setSelectedRequest(request);
     setDetailDialogOpen(true);
+    void reconcile(opening);
     if ((unreadCounts as any)[request.id] > 0) {
-      markCommentsRead.mutate({ requestId: request.id });
+      const payload = { requestId: request.id };
+      actionOrigins.set(payload, opening);
+      markCommentsRead.mutate(payload);
     }
   };
 
   const handleSendComment = () => {
-    if (!newComment.trim() || !selectedRequest) return;
-    addComment.mutate({ requestId: selectedRequest.id, message: newComment.trim() });
+    if (!detailStillCurrent(requestOpening.current) || !newComment.trim() || !requestActionable || addComment.isPending) return;
+    const payload = { requestId: selectedRequest.id, message: newComment.trim() };
+    actionOrigins.set(payload, requestOpening.current);
+    addComment.mutate(payload);
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    const origin = scopeToken;
+    await reconcile({ origin });
+    if (scopeGuard.isCurrent(origin)) setRefreshing(false);
   };
 
   // Filtrage
@@ -342,7 +459,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
           )}
          </View>
         {/* Bouton + */}
-        <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(() => setCreateDialogOpen(true))}>
+        <TouchableOpacity style={styles.addButton} onPress={() => requirePremium(openCreate)}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -368,7 +485,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
       {/* Modal création */}
       <Modal visible={createDialogOpen} transparent animationType="slide">
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => { setCreateDialogOpen(false); resetForm(); }} />
+          <Pressable style={styles.modalBackdrop} onPress={closeCreate} />
           <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>{t('requests.createTitle')}</Text>
@@ -491,7 +608,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
               )}
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => { setCreateDialogOpen(false); resetForm(); }}>
+                <TouchableOpacity style={styles.cancelButton} onPress={closeCreate}>
                   <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.primaryButton} onPress={handleCreate} disabled={createRequest.isPending}>
@@ -515,7 +632,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
               <>
                 <View style={styles.detailHeader}>
                   <Text style={styles.modalTitle} numberOfLines={2}>{selectedRequest.title}</Text>
-                  <TouchableOpacity onPress={() => setDetailDialogOpen(false)}>
+                  <TouchableOpacity onPress={closeDetail}>
                     <Text style={styles.closeButton}>✕</Text>
                   </TouchableOpacity>
                 </View>
@@ -578,14 +695,14 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                         <TouchableOpacity
                           style={[styles.reviewButton, styles.approveButton]}
                           onPress={() => handleReview('approved')}
-                          disabled={reviewRequest.isPending}
+                          disabled={reviewRequest.isPending || !requestActionable}
                         >
                           <Text style={styles.reviewButtonText}>✅ {t('requests.approve')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.reviewButton, styles.rejectButton]}
                           onPress={() => handleReview('rejected')}
-                          disabled={reviewRequest.isPending}
+                          disabled={reviewRequest.isPending || !requestActionable}
                         >
                           <Text style={styles.reviewButtonText}>❌ {t('requests.reject')}</Text>
                         </TouchableOpacity>
@@ -626,7 +743,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
                   <TouchableOpacity
                     style={[styles.sendCommentButton, !newComment.trim() && styles.sendCommentButtonDisabled]}
                     onPress={handleSendComment}
-                    disabled={!newComment.trim() || addComment.isPending}
+                    disabled={!newComment.trim() || addComment.isPending || !requestActionable}
                   >
                     <Text style={styles.sendCommentButtonText}>➤</Text>
                   </TouchableOpacity>
@@ -634,7 +751,7 @@ export default function RequestsScreen({ onNavigate, onPrevious, onNext }: Reque
 
                 {/* Supprimer (créateur uniquement) */}
                 {selectedRequest.userId === user?.id && (
-                  <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                  <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} disabled={deleteRequest.isPending || !requestActionable}>
                     <Text style={styles.deleteButtonText}>🗑️ {t('requests.delete')}</Text>
                   </TouchableOpacity>
                 )}

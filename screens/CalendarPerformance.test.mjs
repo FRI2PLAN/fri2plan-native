@@ -132,7 +132,8 @@ describe('Calendrier — intégration locale du view model (pas de test RN)', ()
     expect(text(query[0])).toContain('refetchOnWindowFocus: false');
     expect(calendar).toContain('calendarUtils.events.list.invalidate()');
     expect(calendar).toContain('calendarUtils.events.list.setData(undefined');
-    expect(calendar).toContain('deleteEvent.mutate({ eventId: selectedEvent.id }');
+    expect(calendar).toContain('const eventId = selectedEvent.id;');
+    expect(calendar).toContain('deleteEvent.mutate({ eventId }, {');
     expect(calendar).toContain('isTodayDate && !isSelected && styles.dayCellToday');
     expect(calendar).toContain('const isTodayDate = isSameDay(day, calendarNow);');
     expect(calendar).toContain('isSameDay(day, calendarNow) && styles.weekDayNameToday');

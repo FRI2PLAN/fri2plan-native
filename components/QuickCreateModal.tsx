@@ -19,6 +19,7 @@ import { useOffline } from '../contexts/OfflineContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { createNoteScopeGuard, noteScope, noteListKey } from '../lib/noteScope';
 import type { NoteScopeToken } from '../lib/noteScope';
+import { createRequestCalendarScopeGuard, requestCalendarScope, requestCalendarMutationContext, reconcileRequestCalendar } from '../lib/requestCalendarReconciliation.js';
 
 export type QuickCreateType = 'event' | 'task' | 'note' | 'expense' | 'request';
 
@@ -143,6 +144,25 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   const noteOpeningScope = useRef<NoteScopeToken | null>(null);
   const [noteFormOrigin, setNoteFormOrigin] = useState<NoteScopeToken | null>(null);
   const noteWasOpen = useRef(false);
+  const requestGuard = useRef(createRequestCalendarScopeGuard()).current;
+  const requestScopeToken = requestGuard.update(requestCalendarScope(user?.id, ctxFamilyId, isReady, isCircleTransitioning));
+  const requestOpening = useRef<any>(null);
+  const requestWasOpen = useRef(false);
+  const requestOpeningSequence = useRef(0);
+  const requestActionOrigins = useRef(new WeakMap<object, any>()).current;
+  useEffect(() => {
+    const open = visible && type === 'request';
+    if (open && !requestWasOpen.current && requestScopeToken) {
+      requestOpening.current = { origin: requestScopeToken, opening: ++requestOpeningSequence.current };
+    } else if (open && requestOpening.current && !requestGuard.isCurrent(requestOpening.current.origin)) {
+      requestOpening.current = null;
+      setTitle(''); setDescription(''); setRequestDate(undefined);
+      onClose();
+    }
+    if (!open) requestOpening.current = null;
+    requestWasOpen.current = open && !!requestOpening.current;
+  }, [visible, type, requestScopeToken]);
+  useEffect(() => () => { requestGuard.update(null); }, [requestGuard]);
   const styles = getStyles(isDark);
   const reminderOptions = useMemo(() => getReminderOptions(t), [t]);
 
@@ -263,8 +283,17 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
   });
 
   const createRequest = trpc.requests.create.useMutation({
-    onSuccess: () => { utils.requests.list.invalidate(); handleClose(); },
-    onError: (e) => Alert.alert('Erreur', e.message),
+    onMutate: (variables: any) => requestCalendarMutationContext(requestActionOrigins, variables, requestGuard),
+    onSuccess: async (_data: any, _variables: any, context: any) => {
+      if (!requestGuard.isCurrent(context?.origin)) return;
+      if (requestOpening.current === context) handleClose();
+      await reconcileRequestCalendar(utils, context.origin, (origin: any) => requestGuard.isCurrent(origin));
+    },
+    onError: async (e: any, _variables: any, context: any) => {
+      if (!requestGuard.isCurrent(context?.origin)) return;
+      if (requestOpening.current === context) Alert.alert(t('common.error'), e.message || t('requests.createError'));
+      await reconcileRequestCalendar(utils, context.origin, (origin: any) => requestGuard.isCurrent(origin));
+    },
   });
 
   const isPending = createEvent.isPending || createTask.isPending || createNote.isPending || createTx.isPending || createRequest.isPending;
@@ -284,6 +313,7 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
 
   // ── Reset & fermeture ──
   const handleClose = () => {
+    if (type === 'request') requestOpening.current = null;
     if (type === 'note') {
       noteOpeningScope.current = null;
       noteGuard.update(null);
@@ -400,16 +430,15 @@ export default function QuickCreateModal({ visible, type, onClose, initialDate }
         break;
       }
       case 'request': {
+        if (!requestGuard.isCurrent(requestOpening.current?.origin) || createRequest.isPending) return;
         if ((requestType === 'outing' || requestType === 'permission') && !requestDate) {
           Alert.alert('Erreur', 'Date requise pour ce type de requête');
           return;
         }
-        createRequest.mutate({
-          type: requestType,
-          title: title.trim(),
-          description: description.trim() || undefined,
-          requestedDate: requestDate,
-        });
+        const opening = requestOpening.current;
+        const payload = { type: requestType, title: title.trim(), description: description.trim() || undefined, requestedDate: requestDate, familyId: opening.origin.familyId, expectedUserId: opening.origin.userId };
+        requestActionOrigins.set(payload, opening);
+        createRequest.mutate(payload);
         break;
       }
     }

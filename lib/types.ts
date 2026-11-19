@@ -37,6 +37,7 @@ export interface Event {
   isPrivate: boolean;
   createdBy: number;
   familyId: number;
+  relatedRequestId?: number | null;
 }
 
 export interface TaskParticipant {
@@ -307,10 +308,10 @@ export type AppRouter = {
       mutate: (input: Partial<Event>) => Promise<Event>;
     };
     update: {
-      mutate: (input: { id: number } & Partial<Event>) => Promise<Event>;
+      mutate: (input: { eventId: number } & Partial<Event>) => Promise<Event>;
     };
     delete: {
-      mutate: (input: { id: number }) => Promise<void>;
+      mutate: (input: { eventId: number }) => Promise<void>;
     };
   };
   tasks: {
@@ -887,13 +888,15 @@ export type AppRouter = {
         description?: string;
         requestedDate?: Date;
         targetAdminId?: number | null;
-      }) => Promise<{ requestId: number }>;
+        familyId?: number;
+        expectedUserId?: number;
+      }) => Promise<{ requestId: number; eventId?: number; familyId?: number }>;
     };
     review: {
-      mutate: (input: { requestId: number; status: 'approved' | 'rejected'; reviewComment?: string }) => Promise<{ success: boolean }>;
+      mutate: (input: { requestId: number; status: 'approved' | 'rejected'; reviewComment?: string; familyId?: number; expectedUserId?: number }) => Promise<{ success: true; requestId?: number; familyId?: number; deletedEventIds?: number[]; changed?: boolean }>;
     };
     delete: {
-      mutate: (input: { requestId: number }) => Promise<{ success: boolean }>;
+      mutate: (input: { requestId: number; familyId?: number; expectedUserId?: number }) => Promise<{ success: true; requestId?: number; familyId?: number; deletedEventIds?: number[]; changed?: boolean }>;
     };
     addComment: {
       mutate: (input: { requestId: number; message: string }) => Promise<{ success: boolean }>;

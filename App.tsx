@@ -40,6 +40,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import * as Notifications from 'expo-notifications';
 import { Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { createRequestCalendarScopeGuard, requestCalendarScope, isRequestNotice, reconcileRequestCalendar } from './lib/requestCalendarReconciliation.js';
 
 // ─── Store global pour les deep links Google Calendar ────────────────────────
 // Permet de capturer les deep links avant que CalendarScreen soit monté
@@ -216,6 +217,57 @@ function PushRegistrar() {
     return () => clearTimeout(pushTimer);
   }, [isAuthenticated, token]);
 
+  return null;
+}
+
+// Mounted only alongside the authenticated navigator, after the existing cache
+// gates. Observes existing request notices; never sends notices or touches reminders.
+function RequestCalendarReception() {
+  const { user } = useAuth();
+  const { activeFamilyId, isReady, isCircleTransitioning } = useFamily();
+  const { isConnected } = useOffline();
+  const utils: any = trpc.useUtils();
+  const scopeGuard = useRef(createRequestCalendarScopeGuard()).current;
+  const origin = scopeGuard.update(requestCalendarScope(user?.id, activeFamilyId, isReady, isCircleTransitioning));
+  const connectionRef = useRef(isConnected);
+  connectionRef.current = isConnected;
+  useEffect(() => () => { scopeGuard.update(null); }, [scopeGuard]);
+
+  useEffect(() => {
+    if (!origin) return;
+    let running = false;
+    let queued = false;
+    let disposed = false;
+    const refresh = async () => {
+      if (disposed || !scopeGuard.isCurrent(origin) || !connectionRef.current || !onlineManager.isOnline()) return;
+      if (running) { queued = true; return; }
+      running = true;
+      do {
+        queued = false;
+        await reconcileRequestCalendar(utils, origin, (token: any) => !disposed && scopeGuard.isCurrent(token));
+      } while (queued && !disposed && scopeGuard.isCurrent(origin) && connectionRef.current);
+      running = false;
+    };
+    const received = Notifications.addNotificationReceivedListener(notification => {
+      if (isRequestNotice(notification.request.content.data, origin.familyId)) void refresh();
+    });
+    const response = Notifications.addNotificationResponseReceivedListener(event => {
+      if (isRequestNotice(event.notification.request.content.data, origin.familyId)) void refresh();
+    });
+    let previousState = AppState.currentState;
+    const foreground = AppState.addEventListener('change', state => {
+      const resumed = state === 'active' && previousState !== 'active';
+      previousState = state;
+      if (resumed) void refresh();
+    });
+    const reconnect = onlineManager.subscribe(online => { if (online) void refresh(); });
+    // Initial navigator entry is useful with a restored five-minute cache.
+    void refresh();
+    return () => {
+      disposed = true;
+      received.remove(); response.remove(); foreground.remove(); reconnect();
+    };
+  }, [origin, scopeGuard, utils, isConnected]);
   return null;
 }
 
@@ -483,6 +535,7 @@ function AppContent() {
               />
             ) : (
               <>
+                <RequestCalendarReception />
                 <AppNavigator onLogout={effectiveLogout} />
                 <CircleTransitionOverlay />
                 {showFamilyLoading && (
